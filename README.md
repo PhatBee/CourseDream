@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -39,6 +39,10 @@ EMAIL_USER=YOUR_EMAIL@gmail.com
 EMAIL_PASS=
 
 GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+
+FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID
+FACEBOOK_APP_SECRET=YOUR_FACEBOOK_APP_SECRET
+
 # env trong client
 VITE_API_URL="http://localhost:5000/api"
 VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com

@@ -15,8 +15,13 @@ const UserSchema = new mongoose.Schema({
   },
   authProvider: {
     type: String,
-    enum: ['local', 'google'],
+    enum: ['local', 'google', 'facebook'],
     default: 'local',
+  },
+  phone: {
+    type: String,
+    default: null,
+    unique: true,
   },
   role: { 
     type: String, 
