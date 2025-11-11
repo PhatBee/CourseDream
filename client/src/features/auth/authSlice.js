@@ -9,9 +9,12 @@ const initialState = {
   user: user ? user : null,
   token: token ? token : null,
   isError: false,
-  isSuccess: false,
+  // isSuccess: false,
   isLoading: false,
   message: '',
+  isRegisterSuccess: false, // Cho trang Register
+  isVerifySuccess: false,   // Cho trang VerifyOTP
+  registrationEmail: null,  // Lưu email để dùng ở trang OTP
 };
 
 // Async Thunk cho Đăng nhập
@@ -55,6 +58,23 @@ export const register = createAsyncThunk(
   }
 );
 
+// THUNK: Verify OTP
+export const verifyOTP = createAsyncThunk(
+  'auth/verifyOTP',
+  async (otpData, thunkAPI) => {
+    try {
+      return await authService.verifyOTP(otpData);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
 
 export const authSlice = createSlice({
   name: 'auth',
@@ -66,7 +86,13 @@ export const authSlice = createSlice({
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
+      state.isRegisterSuccess = false; 
+      state.isVerifySuccess = false;   
     },
+    // Thêm reducer để set email
+    setRegistrationEmail: (state, action) => {
+      state.registrationEmail = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -100,9 +126,10 @@ export const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.isSuccess = true;
+        state.isRegisterSuccess = true; // <-- Dùng cờ riêng
         // KHÔNG set user/token, chỉ set message
         state.message = action.payload.message; 
+        state.registrationEmail = action.payload.email; // <-- Lưu email
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
@@ -110,9 +137,24 @@ export const authSlice = createSlice({
         state.message = action.payload; // Lấy lỗi từ payload
         state.user = null;
         state.token = null;
+      })
+      // === VERIFY OTP CASES ===
+      .addCase(verifyOTP.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(verifyOTP.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isVerifySuccess = true; // <-- Dùng cờ riêng
+        state.message = action.payload.message;
+        state.registrationEmail = null; // Xóa email sau khi xong
+      })
+      .addCase(verifyOTP.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       });
   },
 });
 
-export const { reset } = authSlice.actions;
+export const { reset, setRegistrationEmail } = authSlice.actions;
 export default authSlice.reducer;

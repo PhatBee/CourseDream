@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { register, reset } from "../features/auth/authSlice";
+import { register, reset, setRegistrationEmail } from "../features/auth/authSlice";
 import { toast } from "react-hot-toast";
 
 import authImg from "../assets/img/auth/auth-1.svg";
@@ -20,7 +20,12 @@ const Register = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { isLoading, isError, isSuccess, message } = useSelector(
+  const { 
+    isLoading, 
+    isError, 
+    message, 
+    isRegisterSuccess // <-- Dùng cờ riêng
+  } = useSelector(
     (state) => state.auth
   );
 
@@ -30,12 +35,14 @@ const Register = () => {
       toast.error(message || "Đăng ký thất bại");
       dispatch(reset());
     }
-    if (isSuccess && message) {
-      toast.success(message);
+    // Khi register() thành công (đã gửi OTP)
+    if (isRegisterSuccess && message) {
+      toast.success(message); // "Mã OTP đã được gửi..."
+      // Không cần dispatch(setRegistrationEmail) vì slice đã tự làm
       dispatch(reset());
-      navigate("/login");
+      navigate("/verify-otp"); // Chuyển sang trang nhập OTP
     }
-  }, [isError, isSuccess, message, navigate, dispatch]);
+  }, [isError, isRegisterSuccess, message, navigate, dispatch]);
 
   const onChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -46,6 +53,8 @@ const Register = () => {
       toast.error("Mật khẩu không khớp!");
       return;
     }
+    // Ghi nhớ email để gửi đi
+    dispatch(setRegistrationEmail(email)); 
     dispatch(register({ name, email, password }));
   };
 
