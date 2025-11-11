@@ -16,9 +16,8 @@ $ git clone https://github.com/PhatBee/coursedream.git
 $ cd coursedream
 
 # Server 
-cd client && npm install 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -26,3 +25,18 @@ npm install --save-dev nodemon
 cd client
 npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify
 ```
+
+### Cấu hình môi trường
+```bash
+# env trong server
+PORT=5000
+MONGO_URI=
+JWT_SECRET=
+
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=YOUR_EMAIL@gmail.com
+EMAIL_PASS=
+
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+# env trong client

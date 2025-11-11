@@ -11,7 +11,12 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true, // Mật khẩu là bắt buộc
+    required: function () { return this.authProvider === 'local'; },
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local',
   },
   role: { 
     type: String, 
