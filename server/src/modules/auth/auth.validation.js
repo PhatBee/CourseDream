@@ -19,7 +19,8 @@ export const validateRegister = [
   body('name')
     .trim()
     .notEmpty().withMessage('Họ và tên là bắt buộc')
-    .matches(/^[A-Za-z\s]+$/).withMessage('Họ và tên chỉ được chứa chữ cái và khoảng trắng'),
+    .matches(/^[\p{L}\s]+$/u).withMessage('Họ và tên chỉ được chứa chữ cái và khoảng trắng')
+    .customSanitizer(value => value.trim()),
 
   // 2. Kiểm tra 'email'
   body('email')

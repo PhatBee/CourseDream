@@ -7,6 +7,8 @@ const login = async (userData) => {
   return axiosClient.post(`${path}/login`, userData);
 };
 ;
+const register = (userData) => {
+  return axiosClient.post(`${path}/register`, userData);
+};
 
-
-export const authApi = { login }
+export const authApi = { login, register }

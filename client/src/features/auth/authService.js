@@ -25,11 +25,21 @@ const logout = () => {
   localStorage.removeItem('token');
 };
 
-// (Bạn có thể thêm hàm register ở đây nếu muốn)
+/**
+ * Gọi API đăng ký
+ * @param {object} userData - { name, email, password }
+ * @returns {Promise<object>} - Dữ liệu trả về từ API
+ */
+const register = async (userData) => {
+  const response = await authApi.register(userData);
+  // KHÔNG lưu vào localStorage, chỉ trả về response
+  return response.data;
+};
 
 const authService = {
   login,
   logout,
+  register,
 };
 
 export default authService;
