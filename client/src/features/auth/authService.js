@@ -36,10 +36,21 @@ const register = async (userData) => {
   return response.data;
 };
 
+/**
+ * Gọi API xác thực OTP
+ * @param {object} otpData - { email, otp }
+ * @returns {Promise<object>} - Dữ liệu trả về từ API
+ */
+const verifyOTP = async (otpData) => {
+  const response = await authApi.verifyOTP(otpData);
+  return response.data;
+};
+
 const authService = {
   login,
   logout,
   register,
+  verifyOTP,
 };
 
 export default authService;
