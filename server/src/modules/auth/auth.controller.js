@@ -3,6 +3,7 @@ import { hashPassword, comparePassword } from '../../utils/password.utils.js';
 import { generateToken } from '../../utils/jwt.utils.js';
 import { generateOTP } from '../../utils/otp.utils.js';
 import { sendEmail } from '../../utils/email.utils.js';
+import axios from 'axios';
 
 import { OAuth2Client } from 'google-auth-library';
 
@@ -78,6 +79,85 @@ const googleLogin = async (req, res, next) => {
   } catch (error) {
     // Nếu token không hợp lệ, nó sẽ ném ra lỗi
     next(error);
+  }
+};
+
+/**
+ * @desc    Đăng nhập/Đăng ký bằng Facebook
+ * @route   POST /api/auth/facebook
+ * @access  Public
+ */
+const facebookLogin = async (req, res, next) => {
+  try {
+    const { accessToken } = req.body;
+
+    // 1. Xác thực accessToken với Facebook và lấy thông tin user
+    // Chúng ta cần lấy 'id, name, email, picture'
+    const fbGraphUrl = `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`;
+    
+    const { data } = await axios.get(fbGraphUrl);
+    
+    const { email, name, picture } = data;
+    const avatar = picture.data.url;
+
+    // 2. Kiểm tra xem có email không (rất quan trọng)
+    if (!email) {
+      const err = new Error('Không thể lấy email từ tài khoản Facebook. Vui lòng thử cách khác.');
+      err.status = 400;
+      return next(err);
+    }
+
+    // 3. Tìm người dùng trong DB
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // 4a. Nếu user tồn tại, kiểm tra phương thức đăng nhập
+      if (user.authProvider === 'local') {
+        const err = new Error('Email này đã được đăng ký bằng mật khẩu.');
+        err.status = 400;
+        return next(err);
+      }
+      if (user.authProvider === 'google') {
+        const err = new Error('Email này đã được đăng ký bằng Google.');
+        err.status = 400;
+        return next(err);
+      }
+      // Nếu user.authProvider === 'facebook', thì đây là đăng nhập -> tiếp tục
+    } else {
+      // 4b. Nếu user không tồn tại, tạo user mới
+      user = await User.create({
+        name,
+        email,
+        avatar,
+        authProvider: 'facebook', // Đặt phương thức là facebook
+        isVerified: true,       // Email đã được Facebook xác thực
+        role: 'student',        // Vai trò mặc định
+      });
+    }
+
+    // 5. Tạo JWT của hệ thống
+    const token = generateToken(user._id, user.role);
+
+    // 6. Lọc thông tin trả về
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+    };
+
+    // 7. Trả về token và user (giống hệt hàm login)
+    res.status(200).json({
+      message: 'Đăng nhập Facebook thành công!',
+      token,
+      user: userResponse,
+    });
+  } catch (error) {
+    console.error("Lỗi Facebook Login:", error.response?.data || error.message);
+    const err = new Error('Xác thực Facebook thất bại.');
+    err.status = 401;
+    next(err);
   }
 };
 
@@ -255,4 +335,4 @@ const login = async (req, res, next) => {
   }
 };
 
-export { register, login, verifyOTP, googleLogin };
+export { register, login, verifyOTP, googleLogin, facebookLogin };

@@ -19,4 +19,7 @@ const googleLogin = (credential) => {
   return axiosClient.post(`${path}/google`, { credential });
 };
 
-export const authApi = { login, register, verifyOTP, googleLogin };
+const facebookLogin = (accessToken) => {
+  return axiosClient.post(`${path}/facebook`, { accessToken });
+};
+export const authApi = { login, register, verifyOTP, googleLogin, facebookLogin };
