@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 
-// import authRoutes from "./modules/auth/auth.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 // import categoryRoutes from "./modules/category/category.routes.js";
 // import courseRoutes from "./modules/course/course.routes.js";
 // import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
@@ -15,16 +15,14 @@ import morgan from "morgan";
 const app = express();
 
 app.use(express.json());
-app.use(cors(
-    {
-        origin: 'http://localhost:5173',
-        credential: true
-    }
-));
+app.use(cors({
+  origin: 'http://localhost:5173', // Specify the allowed origin
+  credentials: true, // Allow credentials
+}));
 app.use(morgan("dev"));
 
 
-// app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/courses", courseRoutes);
 // app.use("/api/enrollments", enrollmentRoutes);
