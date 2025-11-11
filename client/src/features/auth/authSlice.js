@@ -94,6 +94,24 @@ export const googleLogin = createAsyncThunk(
   }
 );
 
+// === THUNK: Facebook Login ===
+export const facebookLogin = createAsyncThunk(
+  'auth/facebookLogin',
+  async (accessToken, thunkAPI) => {
+    try {
+      return await authService.facebookLogin(accessToken);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -182,6 +200,23 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
       })
       .addCase(googleLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+        state.user = null;
+        state.token = null;
+      })
+      // === FACEBOOK LOGIN CASES (Giống hệt login) ===
+      .addCase(facebookLogin.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(facebookLogin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+      })
+      .addCase(facebookLogin.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;

@@ -23,7 +23,8 @@ npm install --save-dev nodemon
 
 # Client
 cd client
-npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google
+npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google react-facebook-login
+npm install react-facebook-login -S --force
 ```
 
 ### Cấu hình môi trường
@@ -46,3 +47,4 @@ FACEBOOK_APP_SECRET=YOUR_FACEBOOK_APP_SECRET
 # env trong client
 VITE_API_URL="http://localhost:5000/api"
 VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+VITE_FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID

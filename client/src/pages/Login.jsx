@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { login, reset, googleLogin } from "../features/auth/authSlice";
+import { login, reset, googleLogin, facebookLogin } from "../features/auth/authSlice";
 import { GoogleLogin } from '@react-oauth/google';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props'; // <-- Import render-props
 import { toast } from "react-hot-toast";
 
 
@@ -58,6 +59,19 @@ const Login = () => {
 
     const handleGoogleError = () => {
         toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
+    };
+
+    // Thêm handlers cho Facebook Login
+    const responseFacebook = (response) => {
+        if (response.accessToken) {
+            const id = toast.loading("Đang đăng nhập Facebook...");
+            dispatch(facebookLogin(response.accessToken))
+                .unwrap()
+                .then(() => toast.dismiss(id))
+                .catch(() => toast.dismiss(id));
+        } else {
+            toast.error("Đăng nhập Facebook thất bại. Vui lòng thử lại.");
+        }
     };
 
 
@@ -194,13 +208,22 @@ const Login = () => {
                                 text="continue_with"
                                 width="300px" // Bạn có thể tùy chỉnh
                             />
-                            <a
-                                href="#"
-                                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm hover:bg-gray-50"
-                            >
-                                <img src={facebook} alt="Facebook" className="h-5 w-5" />
-                                Facebook
-                            </a>
+                            <FacebookLogin
+                                appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                                autoLoad={false}
+                                fields="name,email,picture"
+                                callback={responseFacebook}
+                                render={renderProps => (
+                                    <button
+                                        onClick={renderProps.onClick}
+                                        disabled={renderProps.disabled}
+                                        className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm hover:bg-gray-50"
+                                    >
+                                        <img src={facebook} alt="Facebook" className="h-5 w-5" />
+                                        Facebook
+                                    </button>
+                                )}
+                            />
                         </div>
 
                         <p className="mb-10 text-center text-sm text-gray-600">

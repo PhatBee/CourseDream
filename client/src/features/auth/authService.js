@@ -63,12 +63,30 @@ const googleLogin = async (credential) => {
   return response.data;
 };
 
+/**
+ * Gọi API đăng nhập Facebook
+ * @param {string} accessToken - accessToken từ Facebook
+ * @returns {Promise<object>} - Dữ liệu trả về từ API (token, user)
+ */
+const facebookLogin = async (accessToken) => {
+  const response = await authApi.facebookLogin(accessToken);
+
+  // Nếu đăng nhập thành công, lưu token và user vào localStorage
+  if (response.data) {
+    localStorage.setItem('user', JSON.stringify(response.data.user));
+    localStorage.setItem('token', JSON.stringify(response.data.token));
+  }
+
+  return response.data;
+};
+
 const authService = {
   login,
   logout,
   register,
   verifyOTP,
   googleLogin,
+  facebookLogin,
 };
 
 export default authService;
