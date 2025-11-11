@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { login, reset } from "../features/auth/authSlice";
+import { login, reset, googleLogin } from "../features/auth/authSlice";
+import { GoogleLogin } from '@react-oauth/google';
 import { toast } from "react-hot-toast";
 
 
@@ -43,6 +44,20 @@ const Login = () => {
             .unwrap()
             .then(() => toast.dismiss(id))          // success đã toast trong useEffect
             .catch(() => toast.dismiss(id));        // error đã toast trong useEffect
+    };
+
+    // Thêm handlers cho Google Login
+    const handleGoogleSuccess = (credentialResponse) => {
+        const credential = credentialResponse.credential;
+        const id = toast.loading("Đang đăng nhập Google...");
+        dispatch(googleLogin(credential))
+            .unwrap()
+            .then(() => toast.dismiss(id))
+            .catch(() => toast.dismiss(id));
+    };
+
+    const handleGoogleError = () => {
+        toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
     };
 
 
@@ -171,13 +186,14 @@ const Login = () => {
 
                         {/* Socials */}
                         <div className="mb-8 flex items-center justify-center gap-3">
-                            <a
-                                href="#"
-                                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm hover:bg-gray-50"
-                            >
-                                <img src={google} alt="Google" className="h-5 w-5" />
-                                Google
-                            </a>
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
+                                shape="circle"
+                                theme="outline"
+                                text="continue_with"
+                                width="300px" // Bạn có thể tùy chỉnh
+                            />
                             <a
                                 href="#"
                                 className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm hover:bg-gray-50"

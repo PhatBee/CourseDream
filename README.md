@@ -23,7 +23,7 @@ npm install --save-dev nodemon
 
 # Client
 cd client
-npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify
+npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google
 ```
 
 ### Cấu hình môi trường
@@ -40,3 +40,5 @@ EMAIL_PASS=
 
 GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
 # env trong client
+VITE_API_URL="http://localhost:5000/api"
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com

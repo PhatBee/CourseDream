@@ -15,4 +15,8 @@ const verifyOTP = (otpData) => {
   return axiosClient.post(`${path}/verify-otp`, otpData);
 };
 
-export const authApi = { login, register, verifyOTP }
+const googleLogin = (credential) => {
+  return axiosClient.post(`${path}/google`, { credential });
+};
+
+export const authApi = { login, register, verifyOTP, googleLogin };

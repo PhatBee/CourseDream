@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { register, reset, setRegistrationEmail } from "../features/auth/authSlice";
+import { register, reset, setRegistrationEmail, googleLogin } from "../features/auth/authSlice";
+import { GoogleLogin } from '@react-oauth/google';
 import { toast } from "react-hot-toast";
 
 import authImg from "../assets/img/auth/auth-1.svg";
@@ -20,10 +21,10 @@ const Register = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { 
-    isLoading, 
-    isError, 
-    message, 
+  const {
+    isLoading,
+    isError,
+    message,
     isRegisterSuccess // <-- Dùng cờ riêng
   } = useSelector(
     (state) => state.auth
@@ -44,6 +45,17 @@ const Register = () => {
     }
   }, [isError, isRegisterSuccess, message, navigate, dispatch]);
 
+  // *** THÊM useEffect cho Google Login (copy từ Login.jsx) ***
+  const { user, isSuccess } = useSelector((state) => state.auth);
+  useEffect(() => {
+    if (isSuccess || user) {
+      toast.success("Đăng nhập Google thành công");
+      if (user?.role === "instructor") navigate("/instructor/dashboard");
+      else if (user?.role === "student") navigate("/student/dashboard");
+      else navigate("/");
+    }
+  }, [user, isSuccess, navigate]);
+
   const onChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -54,8 +66,22 @@ const Register = () => {
       return;
     }
     // Ghi nhớ email để gửi đi
-    dispatch(setRegistrationEmail(email)); 
+    dispatch(setRegistrationEmail(email));
     dispatch(register({ name, email, password }));
+  };
+
+  // Thêm handlers cho Google Login
+  const handleGoogleSuccess = (credentialResponse) => {
+    const credential = credentialResponse.credential;
+    const id = toast.loading("Đang xử lý...");
+    dispatch(googleLogin(credential))
+      .unwrap()
+      .then(() => toast.dismiss(id))
+      .catch(() => toast.dismiss(id));
+  };
+
+  const handleGoogleError = () => {
+    toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
   };
 
   return (
@@ -196,7 +222,7 @@ const Register = () => {
                     required
                     className="block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-[15px] outline-none
                                focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-                />
+                  />
                   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
                     <i className="isax isax-eye-slash text-sm" />
                   </span>
@@ -250,13 +276,14 @@ const Register = () => {
 
             {/* Socials */}
             <div className="mb-8 flex items-center justify-center gap-3">
-              <a
-                href="#"
-                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm hover:bg-gray-50"
-              >
-                <img src={google} alt="Google" className="h-5 w-5" />
-                Google
-              </a>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                shape="circle"
+                theme="outline"
+                text="signup_with"
+                width="300px"
+              />
               <a
                 href="#"
                 className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm hover:bg-gray-50"
