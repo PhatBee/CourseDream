@@ -1,6 +1,6 @@
 import User from './auth.model.js'; // Import model đã sửa
 import { hashPassword, comparePassword } from '../../utils/password.utils.js';
-import { generateToken } from '../../utils/jwt.utils.js';
+import { generateToken, resetToken } from '../../utils/jwt.utils.js';
 import { generateOTP } from '../../utils/otp.utils.js';
 import { sendEmail } from '../../utils/email.utils.js';
 import axios from 'axios';
@@ -335,4 +335,138 @@ const login = async (req, res, next) => {
   }
 };
 
-export { register, login, verifyOTP, googleLogin, facebookLogin };
+/**
+ * @desc    Bước 1: Quên mật khẩu (Gửi OTP)
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // 1. Tìm user
+    const user = await User.findOne({ email });
+    if (!user) {
+      const err = new Error('Email không tồn tại.');
+      err.status = 404;
+      return next(err);
+    }
+
+    // 2. YÊU CẦU: Chỉ cho tài khoản 'local'
+    if (user.authProvider !== 'local') {
+      const err = new Error(`Tài khoản này được đăng ký qua ${user.authProvider}. Không thể đặt lại mật khẩu.`);
+      err.status = 400;
+      return next(err);
+    }
+
+    // 3. Tạo OTP và thời gian hết hạn (10 phút)
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
+    await user.save();
+
+    // 4. Gửi email
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Mã khôi phục mật khẩu DreamsCourse',
+        html: `<p>Chào ${user.name},</p>
+               <p>Mã OTP khôi phục mật khẩu của bạn là: <strong>${otp}</strong></p>
+               <p>Mã này sẽ hết hạn sau 10 phút.</p>`,
+      });
+
+      // 5. Trả về thông báo thành công
+      res.status(200).json({
+        message: 'Mã OTP đã được gửi. Vui lòng kiểm tra email.',
+        email: user.email, // Trả về email để frontend dùng
+      });
+    } catch (emailError) {
+      console.error("Lỗi gửi email:", emailError);
+      const err = new Error('Không thể gửi email. Vui lòng thử lại.');
+      err.status = 500;
+      return next(err);
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Bước 2: Xác thực OTP (Cấp token reset)
+ * @route   POST /api/auth/verify-reset-otp
+ * @access  Public
+ */
+const verifyResetOTP = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    // 1. Tìm user bằng email, OTP và thời gian
+    const user = await User.findOne({
+      email,
+      otp,
+      otpExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      const err = new Error('Mã OTP không hợp lệ hoặc đã hết hạn.');
+      err.status = 400;
+      return next(err);
+    }
+
+    // 2. Xóa OTP sau khi xác thực
+    user.otp = null;
+    user.otpExpires = null;
+    await user.save();
+
+    // 3. Tạo một token reset ngắn hạn (10 phút)
+    // Token này chứng minh user đã vượt qua bước OTP
+    const resetToken = await resetToken(user._id);
+
+    // 4. Trả về token
+    res.status(200).json({
+      message: 'Xác thực OTP thành công!',
+      resetToken,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Bước 3: Đặt mật khẩu mới
+ * @route   POST /api/auth/set-password
+ * @access  Public (nhưng cần token)
+ */
+const setPassword = async (req, res, next) => {
+  try {
+    const { resetToken, password } = req.body;
+
+    // 1. Xác thực token reset
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      const err = new Error('Token không hợp lệ hoặc đã hết hạn.');
+      err.status = 401;
+      return next(err);
+    }
+
+    // 2. Tìm user từ ID trong token
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      const err = new Error('Không tìm thấy người dùng.');
+      err.status = 404;
+      return next(err);
+    }
+
+    // 3. Băm và cập nhật mật khẩu mới
+    user.password = await hashPassword(password);
+    await user.save();
+
+    res.status(200).json({ message: 'Đặt lại mật khẩu thành công!' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { register, login, verifyOTP, googleLogin, facebookLogin, forgotPassword, verifyResetOTP, setPassword };
