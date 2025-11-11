@@ -22,5 +22,5 @@ npm install --save-dev nodemon
 
 # Client
 cd client
-npm install axios react-router-dom redux @reduxjs/toolkit
+npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast
 ```

@@ -15,12 +15,10 @@ import authRoutes from "./modules/auth/auth.routes.js";
 const app = express();
 
 app.use(express.json());
-app.use(cors(
-    {
-        origin: 'http://localhost:5173',
-        credential: true
-    }
-));
+app.use(cors({
+  origin: 'http://localhost:5173', // Specify the allowed origin
+  credentials: true, // Allow credentials
+}));
 app.use(morgan("dev"));
 
 
