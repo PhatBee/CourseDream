@@ -4,6 +4,83 @@ import { generateToken } from '../../utils/jwt.utils.js';
 import { generateOTP } from '../../utils/otp.utils.js';
 import { sendEmail } from '../../utils/email.utils.js';
 
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+/**
+ * @desc    Đăng nhập/Đăng ký bằng Google
+ * @route   POST /api/auth/google
+ * @access  Public
+ */
+const googleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body; // 'credential' là id_token từ frontend
+
+    // 1. Xác thực id_token với Google
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    const { name, email, picture: avatar, email_verified } = payload;
+
+    // 2. Kiểm tra email đã được Google xác thực chưa
+    if (!email_verified) {
+      const err = new Error('Email Google chưa được xác thực.');
+      err.status = 400;
+      return next(err);
+    }
+
+    // 3. Tìm người dùng trong DB
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // 4a. Nếu user tồn tại, kiểm tra phương thức đăng nhập
+      if (user.authProvider === 'local') {
+        const err = new Error('Email này đã được đăng ký bằng mật khẩu. Vui lòng đăng nhập bằng mật khẩu.');
+        err.status = 400;
+        return next(err);
+      }
+      // Nếu user.authProvider === 'google', thì đây là đăng nhập -> tiếp tục
+    } else {
+      // 4b. Nếu user không tồn tại, tạo user mới
+      user = await User.create({
+        name,
+        email,
+        avatar,
+        authProvider: 'google', // Đặt phương thức là google
+        isVerified: true,       // Email đã được Google xác thực
+        role: 'student',        // Vai trò mặc định
+        // Mật khẩu không cần thiết (model đã xử lý)
+      });
+    }
+
+    // 5. Tạo JWT của hệ thống
+    const token = generateToken(user._id, user.role);
+
+    // 6. Lọc thông tin trả về
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+    };
+
+    // 7. Trả về token và user (giống hệt hàm login)
+    res.status(200).json({
+      message: 'Đăng nhập Google thành công!',
+      token,
+      user: userResponse,
+    });
+  } catch (error) {
+    // Nếu token không hợp lệ, nó sẽ ném ra lỗi
+    next(error);
+  }
+};
+
 /**
  * @desc    Bước 1: Bắt đầu đăng ký (Gửi OTP)
  * @route   POST /api/auth/register
@@ -178,4 +255,4 @@ const login = async (req, res, next) => {
   }
 };
 
-export { register, login, verifyOTP };
+export { register, login, verifyOTP, googleLogin };

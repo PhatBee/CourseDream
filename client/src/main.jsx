@@ -5,6 +5,9 @@ import { Provider } from "react-redux";
 import { store } from "./app/store";
 import './index.css'
 import { Toaster } from "react-hot-toast";
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 // import './assets/css/bootstrap.min.css'
 // import './assets/css/style.css'
@@ -21,14 +24,16 @@ import { Toaster } from "react-hot-toast";
 import App from './App.jsx'
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <Provider store={store}>
-    <AppRoutes />
-    <Toaster
-      position="top-right"
-      toastOptions={{
-        duration: 4000,
-        className: "rounded-xl shadow-lg",
-      }}
-    />
-  </Provider>
+  <GoogleOAuthProvider clientId={googleClientId}>
+    <Provider store={store}>
+      <AppRoutes />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          className: "rounded-xl shadow-lg",
+        }}
+      />
+    </Provider>
+  </GoogleOAuthProvider>
 );

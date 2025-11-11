@@ -76,6 +76,24 @@ export const verifyOTP = createAsyncThunk(
   }
 );
 
+// === THUNK: Google Login ===
+export const googleLogin = createAsyncThunk(
+  'auth/googleLogin',
+  async (credential, thunkAPI) => {
+    try {
+      return await authService.googleLogin(credential);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -152,6 +170,23 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+      })
+      // === GOOGLE LOGIN CASES (Giống hệt login) ===
+      .addCase(googleLogin.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+        state.user = null;
+        state.token = null;
       });
   },
 });
