@@ -18,11 +18,11 @@ $ cd coursedream
 # Server 
 cd client && npm install 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
 # Client
 cd client
-npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast
+npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify
 ```

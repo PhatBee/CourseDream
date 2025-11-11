@@ -9,30 +9,33 @@ import { generateToken } from '../../utils/jwt.utils.js';
  */
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    // Chỉ lấy name, email, password từ body.
+    // Chúng ta KHÔNG lấy 'role' để tránh user tự ý gán vai trò.
+    const { name, email, password } = req.body;
 
     // 1. Kiểm tra xem email đã tồn tại chưa
+    // (Validation cơ bản đã được middleware xử lý)
     const userExists = await User.findOne({ email });
     if (userExists) {
       const err = new Error('Email đã tồn tại');
-      err.status = 400; // 400 Bad Request
+      err.status = 400; 
       return next(err);
     }
 
     // 2. Băm mật khẩu
     const hashedPassword = await hashPassword(password);
 
-    // 3. Tạo người dùng mới
+    // 3. Tạo người dùng mới, GÁN VAI TRÒ "student" CỨNG
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role, // Role có thể được truyền vào (ví dụ: 'instructor') hoặc để mặc định 'student'
+      role: 'student', // <-- Gán cứng vai trò là 'student'
     });
 
-    // 4. Trả về thông tin cơ bản (không trả mật khẩu)
+    // 4. Trả về thông tin cơ bản
     res.status(201).json({
-      message: 'Đăng ký thành công!',
+      message: 'Đăng ký thành công! Vui lòng đăng nhập.', 
       user: {
         _id: user._id,
         name: user.name,

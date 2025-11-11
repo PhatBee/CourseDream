@@ -37,6 +37,24 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   await authService.logout();
 });
 
+// Async Thunk cho Đăng ký
+export const register = createAsyncThunk(
+  'auth/register',
+  async (userData, thunkAPI) => {
+    try {
+      return await authService.register(userData);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 
 export const authSlice = createSlice({
   name: 'auth',
@@ -73,6 +91,23 @@ export const authSlice = createSlice({
       })
       // Xử lý khi 'logout'
       .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+      })
+      // === REGISTER CASES ===
+      .addCase(register.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(register.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        // KHÔNG set user/token, chỉ set message
+        state.message = action.payload.message; 
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload; // Lấy lỗi từ payload
         state.user = null;
         state.token = null;
       });
