@@ -18,11 +18,37 @@ const UserSchema = new mongoose.Schema({
     enum: ["student", "instructor", "admin"], 
     default: "student" 
   },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  otp: {
+    type: String,
+    default: null,
+  },
+  otpExpires: {
+    type: Date,
+    default: null,
+  },
   avatar: String,
   bio: String,
   expertise: [String], // dành cho instructor
 }, { timestamps: true });
 
-// Sửa từ module.export thành export default
+/**
+ * TỰ ĐỘNG XÓA TÀI LIỆU
+ * Tạo một TTL (Time-To-Live) index trên trường `otpExpires`.
+ * MongoDB sẽ tự động xóa tài liệu sau 0 giây (expireAfterSeconds: 0)
+ * khi thời gian ở `otpExpires` đã trôi qua,
+ * NHƯNG CHỈ KHI `isVerified` vẫn là `false`.
+ */
+UserSchema.index(
+  { otpExpires: 1 }, 
+  { 
+    expireAfterSeconds: 0, 
+    partialFilterExpression: { isVerified: false } 
+  }
+);
+
 const User = mongoose.model('User', UserSchema);
 export default User;
