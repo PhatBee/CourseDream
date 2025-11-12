@@ -1,6 +1,6 @@
 import express from 'express';
-import { register, login, verifyOTP, googleLogin, facebookLogin } from './auth.controller.js';
-import { validateRegister } from './auth.validation.js';
+import { register, login, verifyOTP, googleLogin, facebookLogin, forgotPassword, verifyResetOTP, setPassword } from './auth.controller.js';
+import { validateRegister, validateResetPassword } from './auth.validation.js';
 
 const router = express.Router();
 
@@ -9,5 +9,8 @@ router.post('/verify-otp', verifyOTP);
 router.post('/login', login);
 router.post('/google', googleLogin);
 router.post('/facebook', facebookLogin);
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-reset-otp', verifyResetOTP);
+router.post('/set-password', validateResetPassword, setPassword);
 
 export default router;

@@ -15,6 +15,11 @@ const initialState = {
   isRegisterSuccess: false, // Cho trang Register
   isVerifySuccess: false,   // Cho trang VerifyOTP
   registrationEmail: null,  // Lưu email để dùng ở trang OTP
+  resetEmail: null, // Lưu email từ Forgot -> Verify
+  resetToken: null, // Lưu token từ Verify -> SetPassword
+  isForgotSuccess: false,
+  isVerifyResetSuccess: false,
+  isSetPasswordSuccess: false,
 };
 
 // Async Thunk cho Đăng nhập
@@ -112,6 +117,57 @@ export const facebookLogin = createAsyncThunk(
   }
 );
 
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (emailData, thunkAPI) => {
+    try {
+      return await authService.forgotPassword(emailData);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+export const verifyResetOTP = createAsyncThunk(
+  'auth/verifyResetOTP',
+  async (otpData, thunkAPI) => {
+    try {
+      return await authService.verifyResetOTP(otpData);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+export const setNewPassword = createAsyncThunk(
+  'auth/setPassword',
+  async (passwordData, thunkAPI) => {
+    try {
+      return await authService.setPassword(passwordData);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -122,8 +178,26 @@ export const authSlice = createSlice({
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
-      state.isRegisterSuccess = false; 
-      state.isVerifySuccess = false;   
+      state.isRegisterSuccess = false;
+      state.isVerifySuccess = false;
+      state.isForgotSuccess = false;
+      state.isVerifyResetSuccess = false;
+      state.isSetPasswordSuccess = false;
+    },
+    // Reducer mới để xóa state reset (khi hoàn thành)
+    clearReset: (state) => {
+      state.resetEmail = null;
+      state.resetToken = null;
+      state.isForgotSuccess = false;
+      state.isVerifyResetSuccess = false;
+      state.isSetPasswordSuccess = false;
+    },
+    // Reducer mới để xóa trạng thái lỗi/success sau khi hoàn thành
+    clearStatus: (state) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSetPasswordSuccess = false;
+      state.message = "";
     },
     // Thêm reducer để set email
     setRegistrationEmail: (state, action) => {
@@ -164,7 +238,7 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isRegisterSuccess = true; // <-- Dùng cờ riêng
         // KHÔNG set user/token, chỉ set message
-        state.message = action.payload.message; 
+        state.message = action.payload.message;
         state.registrationEmail = action.payload.email; // <-- Lưu email
       })
       .addCase(register.rejected, (state, action) => {
@@ -222,9 +296,55 @@ export const authSlice = createSlice({
         state.message = action.payload;
         state.user = null;
         state.token = null;
+      })
+      // === FORGOT PASSWORD CASES ===
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isForgotSuccess = true;
+        state.message = action.payload.message;
+        state.resetEmail = action.payload.email; // <-- Lưu email
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+
+      // === VERIFY RESET OTP CASES ===
+      .addCase(verifyResetOTP.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(verifyResetOTP.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isVerifyResetSuccess = true;
+        state.message = action.payload.message;
+        state.resetToken = action.payload.resetToken; // <-- Lưu token
+      })
+      .addCase(verifyResetOTP.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+
+      // === SET PASSWORD CASES ===
+      .addCase(setNewPassword.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(setNewPassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSetPasswordSuccess = true;
+        state.message = action.payload.message;
+      })
+      .addCase(setNewPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       });
   },
 });
 
-export const { reset, setRegistrationEmail } = authSlice.actions;
+export const { reset, setRegistrationEmail, clearReset, clearStatus } = authSlice.actions;
 export default authSlice.reducer;

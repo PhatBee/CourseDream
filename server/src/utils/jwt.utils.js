@@ -18,3 +18,13 @@ export const generateToken = (userId, userRole) => {
     }
   );
 };
+
+export const resetToken = (userId) => {
+  return jwt.sign(
+    {
+      id: userId,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '10m' }
+  );
+}

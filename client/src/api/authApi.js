@@ -22,4 +22,16 @@ const googleLogin = (credential) => {
 const facebookLogin = (accessToken) => {
   return axiosClient.post(`${path}/facebook`, { accessToken });
 };
-export const authApi = { login, register, verifyOTP, googleLogin, facebookLogin };
+
+const forgotPassword = (email) => {
+  return axiosClient.post(`${path}/forgot-password`, { email });
+};
+
+const verifyResetOTP = (data) => {
+  return axiosClient.post(`${path}/verify-reset-otp`, data); // { email, otp }
+};
+
+const setPassword = (data) => {
+  return axiosClient.post(`${path}/set-password`, data); // { resetToken, password }
+};
+export const authApi = { login, register, verifyOTP, googleLogin, facebookLogin, forgotPassword, verifyResetOTP, setPassword };
