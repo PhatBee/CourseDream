@@ -80,6 +80,29 @@ const facebookLogin = async (accessToken) => {
   return response.data;
 };
 
+/**
+ * Gọi API Quên mật khẩu
+ */
+const forgotPassword = async (email) => {
+  const response = await authApi.forgotPassword(email);
+  return response.data;
+};
+
+/**
+ * Gọi API Xác thực OTP reset
+ */
+const verifyResetOTP = async (otpData) => {
+  const response = await authApi.verifyResetOTP(otpData);
+  return response.data; // Sẽ chứa resetToken
+};
+/**
+ * Gọi API Đặt mật khẩu mới
+ */
+const setPassword = async (passwordData) => {
+  const response = await authApi.setPassword(passwordData);
+  return response.data;
+};
+
 const authService = {
   login,
   logout,
@@ -87,6 +110,9 @@ const authService = {
   verifyOTP,
   googleLogin,
   facebookLogin,
+  forgotPassword,
+  verifyResetOTP,
+  setPassword,
 };
 
 export default authService;

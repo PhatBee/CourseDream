@@ -36,3 +36,15 @@ export const validateRegister = [
   // 4. Áp dụng middleware xử lý lỗi
   handleValidationErrors
 ];
+
+// Quy tắc validation reset password
+export const validateResetPassword = [
+  // Kiểm tra 'password'
+  body('password')
+    .isLength({ min: 8 }).withMessage('Mật khẩu phải có ít nhất 8 ký tự')
+    .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/)
+    .withMessage('Mật khẩu phải chứa ít nhất 1 chữ cái, 1 chữ số, và 1 ký tự đặc biệt'),
+
+  // Áp dụng middleware xử lý lỗi
+  handleValidationErrors
+]

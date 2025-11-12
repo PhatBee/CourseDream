@@ -1,16 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
-// Đổi path assets theo dự án của bạn
+import { useSelector, useDispatch } from "react-redux";
+import { setNewPassword, clearReset, clearStatus  } from "../features/auth/authSlice";
+
 import auth1 from "../assets/img/auth/auth-1.svg";
-import logo from "../assets/img/logo.svg";
+import logo from "../assets/img/auth/logo.svg";
 
 const SetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  // Setup Redux
+  const dispatch = useDispatch();
+  const { 
+    isLoading, 
+    isError, 
+    isSetPasswordSuccess, 
+    message, 
+    resetToken // <-- Lấy token
+  } = useSelector((state) => state.auth);
+
+  // useEffect xử lý state
+  useEffect(() => {
+    // Nếu không có token, không cho ở lại trang này
+    if (!resetToken) {
+      toast.error("Phiên đặt lại mật khẩu không hợp lệ.");
+      navigate("/forgot-password");
+    }
+  }, [resetToken, navigate]);
+
+  useEffect(() => {
+    if (isError) {
+      toast.error(message || "Đặt lại mật khẩu thất bại");
+      dispatch(clearStatus());
+    }
+    
+    // Khi setPassword() thành công
+    if (isSetPasswordSuccess) {
+      toast.success(message); // "Đặt lại mật khẩu thành công!"
+      dispatch(clearReset()); // Xóa state (token, email)
+      navigate("/login"); // Về trang đăng nhập
+    }
+  }, [isError, isSetPasswordSuccess, message, navigate, dispatch]);
 
   // Đánh giá độ mạnh đơn giản (đủ dùng cho UI)
   const getStrength = () => {
@@ -27,17 +61,8 @@ const SetPassword = () => {
     e.preventDefault();
     if (!password) return toast.error("Vui lòng nhập mật khẩu mới");
     if (password !== confirm) return toast.error("Mật khẩu xác nhận không khớp");
-    try {
-      setSubmitting(true);
-      // TODO: Gọi API đặt lại mật khẩu tại đây
-      // await api.setPassword({ password })
-      toast.success("Đặt lại mật khẩu thành công!");
-      navigate("/login");
-    } catch (err) {
-      toast.error("Đặt lại mật khẩu thất bại");
-    } finally {
-      setSubmitting(false);
-    }
+    // Dispatch action
+    dispatch(setNewPassword({ resetToken, password }));
   };
 
   return (
@@ -152,12 +177,12 @@ const SetPassword = () => {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={isLoading}
                 className="w-full rounded-full py-5 text-white text-lg font-semibold transition
                            bg-rose-500 hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-200
                            inline-flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                {submitting ? (
+                {isLoading ? (
                   <>
                     <svg
                       className="animate-spin h-5 w-5 text-white"

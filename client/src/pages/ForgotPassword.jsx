@@ -1,31 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { useSelector, useDispatch } from "react-redux";
+import { forgotPassword, reset } from "../features/auth/authSlice";
 
 import auth1 from "../assets/img/auth/auth-1.svg";
-import logo from "../assets/img/logo.svg";
+import logo from "../assets/img/auth/logo.svg";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  // Setup Redux
+  const dispatch = useDispatch();
+  const { isLoading, isError, isForgotSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
+  // useEffect xử lý state
+  useEffect(() => {
+    if (isError) {
+      toast.error(message || "Gửi yêu cầu thất bại");
+      dispatch(reset());
+    }
+    
+    // Khi forgotPassword() thành công
+    if (isForgotSuccess) {
+      toast.success(message); // "Mã OTP đã được gửi..."
+      dispatch(reset());
+      navigate("/verify-reset-otp"); // Chuyển sang trang nhập OTP
+    }
+  }, [isError, isForgotSuccess, message, navigate, dispatch]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!email) return toast.error("Vui lòng nhập email");
-    try {
-      setSubmitting(true);
-      // TODO: gọi API gửi mail reset password ở đây
-      // await api.forgotPassword({ email })
-      toast.success("Đã gửi liên kết đặt lại mật khẩu!");
-      // Điều hướng giống bản HTML (set-password.html):
-      navigate("/set-password");
-    } catch (err) {
-      toast.error("Gửi yêu cầu thất bại");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    // Dispatch action
+    dispatch(forgotPassword(email));
+  }
 
   return (
     <div className="min-h-screen w-full">
@@ -107,12 +119,12 @@ const ForgotPassword = () => {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={isLoading}
                 className="w-full rounded-full py-5 text-white text-lg font-semibold transition
                            bg-rose-500 hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-200
                            inline-flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                {submitting ? (
+                {isLoading ? (
                   <>
                     <svg
                       className="animate-spin h-5 w-5 text-white"
@@ -134,7 +146,7 @@ const ForgotPassword = () => {
                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                       />
                     </svg>
-                    Submitting…
+                    Submitting...
                   </>
                 ) : (
                   <>

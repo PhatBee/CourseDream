@@ -4,6 +4,7 @@ import { generateToken, resetToken } from '../../utils/jwt.utils.js';
 import { generateOTP } from '../../utils/otp.utils.js';
 import { sendEmail } from '../../utils/email.utils.js';
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
 
 import { OAuth2Client } from 'google-auth-library';
 
@@ -420,12 +421,12 @@ const verifyResetOTP = async (req, res, next) => {
 
     // 3. Tạo một token reset ngắn hạn (10 phút)
     // Token này chứng minh user đã vượt qua bước OTP
-    const resetToken = await resetToken(user._id);
+    const resetToken2 = await resetToken(user._id);
 
     // 4. Trả về token
     res.status(200).json({
       message: 'Xác thực OTP thành công!',
-      resetToken,
+      resetToken: resetToken2,
     });
   } catch (error) {
     next(error);
