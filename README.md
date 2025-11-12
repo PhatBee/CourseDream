@@ -23,8 +23,9 @@ npm install --save-dev nodemon
 
 # Client
 cd client
-npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google react-facebook-login
+npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google
 npm install react-facebook-login -S --force
+npm i lucide-react --force
 ```
 
 ### Cấu hình môi trường
