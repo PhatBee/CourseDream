@@ -8,9 +8,15 @@ import Review from '../review/review.model.js';
  */
 export const getCourseDetailsBySlug = async (slug) => {
   const course = await Course.findOne({ slug: slug, status: 'published' })
+    .select(
+      'title slug thumbnail previewUrl shortDescription topics includes ' +
+      'audience description price priceDiscount level language requirements ' +
+      'learnOutcomes instructor categories sections rating studentsCount ' +
+      'totalLectures totalHours totalDurationSeconds status'
+    )
     .populate({
       path: 'instructor',
-      select: 'name avatar bio skills',
+      select: 'name avatar bio skills',a
     })
     .populate({
       path: 'categories',
@@ -23,7 +29,7 @@ export const getCourseDetailsBySlug = async (slug) => {
       populate: {
         path: 'lectures',
         model: 'Lecture',
-        select: 'title duration isPreviewFree order',
+        select: 'title duration isPreviewFree order videoUrl',
         options: { sort: { order: 1 } },
       },
     })

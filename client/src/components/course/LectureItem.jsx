@@ -7,8 +7,8 @@ const formatDuration = (seconds) => {
   return new Date(seconds * 1000).toISOString().substr(14, 5); // mm:ss
 };
 
-const LectureItem = ({ lecture }) => {
-  const { title, duration = 0, isPreviewFree = false } = lecture;
+const LectureItem = ({ lecture, onPreviewClick }) => {
+  const { title, duration = 0, isPreviewFree = false, videoUrl = '' } = lecture;
 
   return (
     <li className="p-4 flex justify-between items-center">
@@ -22,10 +22,15 @@ const LectureItem = ({ lecture }) => {
       </div>
       
       <div className="flex items-center gap-4">
-        {isPreviewFree && (
-          <a href="#" className="text-sm font-medium text-blue-600 hover:underline">
+        {isPreviewFree ? (
+          <a 
+            onClick={() => onPreviewClick(videoUrl)}
+            className="text-sm font-medium text-blue-600 hover:underline"
+          >
             Preview
           </a>
+        ) : (
+          null 
         )}
         <span className="text-sm text-gray-500">{formatDuration(duration)}</span>
       </div>

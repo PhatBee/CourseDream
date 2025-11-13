@@ -45,7 +45,7 @@ const CourseDetail = () => {
 
   // Xử lý trạng thái Lỗi
   if (isError) {
-     return (
+    return (
       <div className="flex justify-center items-center h-screen">
         <p className="text-red-500">Lỗi: {message || 'Không thể tải khóa học.'}</p>
       </div>
@@ -55,17 +55,17 @@ const CourseDetail = () => {
   // Render giao diện
   return (
     <>
-      <Breadcrumb title="Course Detail" />
+      {/* <Breadcrumb title="Course Detail" /> */}
 
       {/* */}
       <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4 max-w-7xl">
-          
+
           {/* Header lớn ở trên (file bạn đã có) */}
           <CourseHeader course={course} reviewCount={reviewCount} />
 
           <div className="flex flex-wrap lg:flex-nowrap mt-8 -mx-4">
-            
+
             {/* Cột chính bên trái (lg:w-8/12) */}
             <div className="w-full lg:w-2/3 px-4">
               <CourseContent course={course} reviews={reviews} />

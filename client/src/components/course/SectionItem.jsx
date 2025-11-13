@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, PlayCircle, Lock } from 'lucide-react';
 import LectureItem from './LectureItem';
 
-const SectionItem = ({ section }) => {
+const SectionItem = ({ section, onPreviewClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const totalLectures = section.lectures?.length || 0;
 
@@ -26,7 +26,11 @@ const SectionItem = ({ section }) => {
         <div className="border-t border-gray-200">
           <ul className="divide-y divide-gray-100">
             {section.lectures?.map((lecture) => (
-              <LectureItem key={lecture._id} lecture={lecture} />
+              <LectureItem 
+                key={lecture._id} 
+                lecture={lecture} 
+                onPreviewClick={onPreviewClick} // <-- Truyền xuống đây
+              />
             ))}
           </ul>
         </div>
