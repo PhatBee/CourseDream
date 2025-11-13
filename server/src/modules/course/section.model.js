@@ -1,3 +1,6 @@
+import mongoose from 'mongoose';
+import Lecture from './lecture.model.js';
+
 const SectionSchema = new mongoose.Schema({
   title: String,
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
@@ -5,4 +8,4 @@ const SectionSchema = new mongoose.Schema({
   order: Number
 });
 
-module.export = mongoose.model('Section', SectionSchema);
+export default mongoose.model('Section', SectionSchema);
