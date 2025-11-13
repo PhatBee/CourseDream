@@ -27,33 +27,17 @@ const EnrollCard = ({ course }) => {
         </div>
         
         <div className="flex justify-between gap-3 mb-3">
-          <button 
-            className={`
-              flex-1 inline-flex justify-center items-center gap-2 px-4 py-2 
-              border border-gray-300 rounded-md 
-              text-sm font-medium text-gray-700 bg-white
-              hover:bg-rose-500 hover:text-white hover:border-rose-500
-              transition-colors duration-200
-            `}
-          >
+          <button className="btn-wishlist">
             <Heart size={18} /> Add to Wishlist
           </button>
-          <button className="flex-1 inline-flex justify-center items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+          <button className="btn-wishlist">
             <Share2 size={18} /> Share
           </button>
         </div>
         
         <Link 
           to="/cart" 
-          className={`
-            w-full inline-flex justify-center items-center gap-2 px-6 py-3 
-            border border-transparent rounded-md shadow-sm 
-            text-base font-medium text-white 
-            bg-rose-500 hover:bg-indigo-700
-            transition-colors duration-200
-          `}
-        >
-          <ShoppingCart size={20} /> Enroll Now
+          className="btn-primary"> Enroll Now
         </Link>
       </div>
     </div>
