@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const LectureSchema = new mongoose.Schema({
   title: String,
   videoUrl: String,
@@ -7,4 +9,6 @@ const LectureSchema = new mongoose.Schema({
   isPreviewFree: { type: Boolean, default: false }
 });
 
-module.export = mongoose.model('Lecture', LectureSchema);
+const Lecture = mongoose.model('Lecture', LectureSchema)
+
+export default Lecture
