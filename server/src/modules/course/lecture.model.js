@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const LectureSchema = new mongoose.Schema({
   title: String,
@@ -9,6 +9,4 @@ const LectureSchema = new mongoose.Schema({
   isPreviewFree: { type: Boolean, default: false }
 });
 
-const Lecture = mongoose.model('Lecture', LectureSchema)
-
-export default Lecture
+export default mongoose.model('Lecture', LectureSchema);

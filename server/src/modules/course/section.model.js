@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import Lecture from './lecture.model.js';
 
 const SectionSchema = new mongoose.Schema({
   title: String,
@@ -7,6 +8,4 @@ const SectionSchema = new mongoose.Schema({
   order: Number
 });
 
-const Section = mongoose.model('Section', SectionSchema);
-
-export default Section;
+export default mongoose.model('Section', SectionSchema);

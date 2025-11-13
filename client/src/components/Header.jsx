@@ -9,7 +9,7 @@ import {
   MessageSquare,
   Settings,
   FileText,
-} from "lucide-react"; // 🆕 icon hiện đại
+} from "lucide-react";
 import logo from "../assets/img/auth/logo.svg";
 import avatarDefault from "../assets/img/auth/logo.svg";
 

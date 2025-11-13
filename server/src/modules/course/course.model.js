@@ -1,10 +1,12 @@
 import mongoose from 'mongoose';
-
+import Category from '../category/category.model.js';
+import Section from './section.model.js';
 
 const CourseSchema = new mongoose.Schema({
   title: String,
   slug: { type: String, unique: true },
   thumbnail: String,
+  previewUrl: String,
   shortDescription: String,
   topics: [String],
   includes: [String],
@@ -31,6 +33,4 @@ const CourseSchema = new mongoose.Schema({
   status: { type: String, enum: ["draft", "published"], default: "draft" }
 }, { timestamps: true });
 
-const Course = mongoose.model('Course', CourseSchema);
-export default Course;
-
+export default mongoose.model('Course', CourseSchema);

@@ -7,10 +7,14 @@ import VerifyOTP from "../pages/VerifyOTP";
 import ForgotPassword from "../pages/ForgotPassword";
 import VerifyResetOTP from "../pages/VerifyResetOTP";
 import SetPassword from "../pages/SetPassword";
+import CourseDetail from '../pages/CourseDetail';
+import Header from '../components/Header';
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
+      <Header />
+      <main className="pt-16"> {/* Offset cho Header fixed */}
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
@@ -21,7 +25,9 @@ export default function AppRoutes() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
           <Route path="/set-password" element={<SetPassword />} />
+          <Route path="/courses/:slug" element={<CourseDetail />} />
         </Routes>
+      </main>
     </BrowserRouter>
   );
 }
