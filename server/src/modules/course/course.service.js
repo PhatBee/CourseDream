@@ -16,7 +16,7 @@ export const getCourseDetailsBySlug = async (slug) => {
     )
     .populate({
       path: 'instructor',
-      select: 'name avatar bio skills',a
+      select: 'name avatar bio skills',
     })
     .populate({
       path: 'categories',
