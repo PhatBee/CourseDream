@@ -6,8 +6,13 @@ const CourseSchema = new mongoose.Schema({
   title: String,
   slug: { type: String, unique: true },
   thumbnail: String,
+  shortDescription: String,
+  topics: [String],
+  includes: [String],
+  audience: [String],
   description: String,
   price: Number,
+  priceDiscount: Number,
   level: { type: String, enum: ["beginner", "intermediate", "advanced"] },
   language: String,
   requirements: [String],
@@ -22,6 +27,7 @@ const CourseSchema = new mongoose.Schema({
   studentsCount: { type: Number, default: 0 },
   totalLectures: { type: Number, default: 0 },
   totalHours: { type: Number, default: 0 },
+  totalDurationSeconds: { type: Number, default: 0 },
 
   status: { type: String, enum: ["draft", "published"], default: "draft" }
 }, { timestamps: true });
