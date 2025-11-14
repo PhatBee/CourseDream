@@ -3,6 +3,8 @@ import cors from "cors";
 import morgan from "morgan";
 
 import authRoutes from "./modules/auth/auth.routes.js";
+import userRoutes from "./modules/user/user.routes.js"
+import adminRoutes from "./modules/admin/admin.routes.js";
 // import categoryRoutes from "./modules/category/category.routes.js";
 import courseRoutes from "./modules/course/course.routes.js";
 // import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
@@ -23,6 +25,8 @@ app.use(morgan("dev"));
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 // app.use("/api/categories", categoryRoutes);
 app.use("/api/courses", courseRoutes);
 // app.use("/api/enrollments", enrollmentRoutes);
