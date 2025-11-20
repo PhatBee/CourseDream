@@ -1,5 +1,6 @@
 
 import { authApi } from "../../api/authApi";
+import { userApi } from "../../api/userApi";
 /**
  * Gọi API đăng nhập
  * @param {object} userData - { email, password }
@@ -103,6 +104,23 @@ const setPassword = async (passwordData) => {
   return response.data;
 };
 
+const updateUserInStorage = (userData) => {
+  localStorage.setItem('user', JSON.stringify(userData));
+};
+
+const updateProfile = async (profileData) => {
+  const response = await userApi.updateProfile(profileData);
+  if (response.data.data) {
+    updateUserInStorage(response.data.data);
+  }
+  return response.data;
+};
+
+const changePassword = async (passwordData) => {
+  const response = await userApi.changePassword(passwordData);
+  return response.data;
+};
+
 const authService = {
   login,
   logout,
@@ -113,6 +131,9 @@ const authService = {
   forgotPassword,
   verifyResetOTP,
   setPassword,
+  updateProfile,
+  changePassword,
+  updateUserInStorage,
 };
 
 export default authService;

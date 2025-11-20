@@ -69,6 +69,7 @@ const googleLogin = async (req, res, next) => {
       email: user.email,
       role: user.role,
       avatar: user.avatar,
+      createdAt: user.createdAt,
     };
 
     // 7. Trả về token và user (giống hệt hàm login)
@@ -146,6 +147,7 @@ const facebookLogin = async (req, res, next) => {
       email: user.email,
       role: user.role,
       avatar: user.avatar,
+      createdAt: user.createdAt,
     };
 
     // 7. Trả về token và user (giống hệt hàm login)
@@ -323,6 +325,7 @@ const login = async (req, res, next) => {
       email: user.email,
       role: user.role,
       avatar: user.avatar,
+      createdAt: user.createdAt,
     };
     
     // 6. Trả về token và thông tin người dùng

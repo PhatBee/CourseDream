@@ -1,5 +1,5 @@
 // auth.middleware.js
-import User from "../models/user.model.js";
+import User from "../modules/auth/auth.model.js";
 import { verifyToken as verifyJWT } from "../utils/jwt.utils.js";
 
 export const verifyToken = async (req, res, next) => {
