@@ -34,4 +34,9 @@ const verifyResetOTP = (data) => {
 const setPassword = (data) => {
   return axiosClient.post(`${path}/set-password`, data); // { resetToken, password }
 };
-export const authApi = { login, register, verifyOTP, googleLogin, facebookLogin, forgotPassword, verifyResetOTP, setPassword };
+
+const logout = () => {
+  return axiosClient.post(`${path}/logout`);
+};
+
+export const authApi = { login, register, verifyOTP, googleLogin, facebookLogin, forgotPassword, verifyResetOTP, setPassword, logout };

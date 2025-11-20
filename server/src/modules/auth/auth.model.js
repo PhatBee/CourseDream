@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
   name: String,
-  email: { 
-    type: String, 
+  email: {
+    type: String,
     required: true, // Nên thêm required
     unique: true,
     lowercase: true, // Nên thêm để đảm bảo tính duy nhất
@@ -24,9 +24,9 @@ const UserSchema = new mongoose.Schema({
     unique: true,
   },
   role: {
-    type: String, 
-    enum: ["student", "instructor", "admin"], 
-    default: "student" 
+    type: String,
+    enum: ["student", "instructor", "admin"],
+    default: "student"
   },
   isVerified: {
     type: Boolean,
@@ -43,7 +43,7 @@ const UserSchema = new mongoose.Schema({
   avatar: String,
   bio: String,
   expertise: [String], // dành cho instructor
-  
+
   instructorApplication: {
     status: {
       type: String,
@@ -54,6 +54,10 @@ const UserSchema = new mongoose.Schema({
     submittedAt: Date,
     reviewedAt: Date,
     adminNotes: String // Admin ghi chú khi duyệt
+  },
+  refreshToken: {
+    type: String,
+    default: null,
   }
 }, { timestamps: true });
 
@@ -65,10 +69,10 @@ const UserSchema = new mongoose.Schema({
  * NHƯNG CHỈ KHI `isVerified` vẫn là `false`.
  */
 UserSchema.index(
-  { otpExpires: 1 }, 
-  { 
-    expireAfterSeconds: 0, 
-    partialFilterExpression: { isVerified: false } 
+  { otpExpires: 1 },
+  {
+    expireAfterSeconds: 0,
+    partialFilterExpression: { isVerified: false }
   }
 );
 

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 
 import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/user/user.routes.js"
@@ -17,9 +18,10 @@ import courseRoutes from "./modules/course/course.routes.js";
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors({
   origin: 'http://localhost:5173', // Specify the allowed origin
-  credentials: false, // Allow credentials
+  credentials: true, // Allow credentials
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(morgan("dev"));
