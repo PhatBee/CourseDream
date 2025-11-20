@@ -1,7 +1,9 @@
 // src/components/common/ProfileSidebar.jsx
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { Grid, User, Settings, Lock, LogOut } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Grid, User, Settings, LogOut } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../features/auth/authSlice';
 
 const SidebarLink = ({ to, icon, label }) => {
   const location = useLocation();
@@ -25,6 +27,15 @@ const SidebarLink = ({ to, icon, label }) => {
 };
 
 const ProfileSidebar = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    await dispatch(logout());
+    navigate("/login");
+  };
+
   return (
     <div className="w-full lg:w-3/12 px-4">
       <div className="bg-white p-4 rounded-lg shadow-md sticky top-24 flex flex-col h-[calc(100vh-120px)] min-h-[400px]">
@@ -60,11 +71,13 @@ const ProfileSidebar = () => {
               label="Settings"
             />
             <li>
-              {/* (Thêm logic logout vào đây) */}
-              <a href="#" className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50">
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 w-full text-left"
+              >
                 <LogOut size={18} className="mr-2" />
                 Logout
-              </a>
+              </button>
             </li>
           </ul>
         </div>
