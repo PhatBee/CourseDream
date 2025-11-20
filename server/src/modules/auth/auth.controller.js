@@ -24,7 +24,7 @@ const googleLogin = async (req, res, next) => {
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-    
+
     const payload = ticket.getPayload();
     const { name, email, picture: avatar, email_verified } = payload;
 
@@ -96,9 +96,9 @@ const facebookLogin = async (req, res, next) => {
     // 1. Xác thực accessToken với Facebook và lấy thông tin user
     // Chúng ta cần lấy 'id, name, email, picture'
     const fbGraphUrl = `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`;
-    
+
     const { data } = await axios.get(fbGraphUrl);
-    
+
     const { email, name, picture } = data;
     const avatar = picture.data.url;
 
@@ -192,7 +192,7 @@ const register = async (req, res, next) => {
     // (Giúp user có thể nhấn "đăng ký" lại nếu lỡ mất OTP)
     const user = await User.findOneAndUpdate(
       { email, isVerified: false }, // Tìm user chưa xác thực có email này
-      { 
+      {
         name,
         password: hashedPassword,
         otp,
@@ -247,7 +247,7 @@ const verifyOTP = async (req, res, next) => {
       err.status = 400;
       return next(err);
     }
-    
+
     // 2. Kiểm tra trạng thái/OTP
     if (user.isVerified) {
       const err = new Error('Tài khoản này đã được kích hoạt.');
@@ -302,9 +302,9 @@ const login = async (req, res, next) => {
 
     // 2. Kiểm tra tài khoản đã kích hoạt chưa
     if (!user.isVerified) {
-       const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email hoặc đăng ký lại.');
-       err.status = 401;
-       return next(err);
+      const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email hoặc đăng ký lại.');
+      err.status = 401;
+      return next(err);
     }
 
     // 3. So sánh mật khẩu
@@ -327,7 +327,7 @@ const login = async (req, res, next) => {
       avatar: user.avatar,
       createdAt: user.createdAt,
     };
-    
+
     // 6. Trả về token và thông tin người dùng
     res.status(200).json({
       message: 'Đăng nhập thành công!',

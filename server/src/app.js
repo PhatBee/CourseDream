@@ -19,7 +19,8 @@ const app = express();
 app.use(express.json());
 app.use(cors({
   origin: 'http://localhost:5173', // Specify the allowed origin
-  credentials: true, // Allow credentials
+  credentials: false, // Allow credentials
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(morgan("dev"));
 

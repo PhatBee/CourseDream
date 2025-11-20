@@ -12,7 +12,7 @@ const login = async (userData) => {
   // Nếu đăng nhập thành công, lưu token và user vào localStorage
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data.user));
-    localStorage.setItem('token', JSON.stringify(response.data.token));
+    localStorage.setItem('accessToken', response.data.token);
   }
 
   return response.data;
@@ -58,7 +58,7 @@ const googleLogin = async (credential) => {
   // Nếu đăng nhập thành công, lưu token và user vào localStorage
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data.user));
-    localStorage.setItem('token', JSON.stringify(response.data.token));
+    localStorage.setItem('token', response.data.token);
   }
 
   return response.data;
@@ -75,7 +75,7 @@ const facebookLogin = async (accessToken) => {
   // Nếu đăng nhập thành công, lưu token và user vào localStorage
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data.user));
-    localStorage.setItem('token', JSON.stringify(response.data.token));
+    localStorage.setItem('accessToken', response.data.token);
   }
 
   return response.data;
