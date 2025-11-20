@@ -11,6 +11,7 @@ const CourseHeader = ({ course }) => {
   const {
     title = '',
     description = '',
+    shortDescription = '',
     thumbnail = '',
     totalLectures = 0,
     totalHours = 0,
@@ -77,7 +78,7 @@ const CourseHeader = ({ course }) => {
         {/* Cột phải: Thông tin chi tiết */}
         <div className="w-full lg:pl-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{title}</h1>
-          <p className="text-sm text-gray-600 mb-3">{description}</p>
+          <p className="text-sm text-gray-600 mb-3">{shortDescription}</p>
 
           {/* Thông số nhanh */}
           <div className="flex items-center gap-3 sm:gap-4 flex-wrap my-4">

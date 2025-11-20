@@ -1,4 +1,4 @@
-// scripts/seed_add_js_course.js
+// scripts/seed_add_uiux_figma_adobexd.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -24,86 +24,116 @@ function slugify(text) {
   try {
     const uri = process.env.MONGO_URI;
     if (!uri) {
-  console.error('❌ MONGODB_URI is missing!');
-  process.exit(1);
-}
+      console.error('❌ MONGO_URI is missing!');
+      process.exit(1);
+    }
     await mongoose.connect(uri);
     console.log('Connected to MongoDB');
 
     // ====== INPUT DATA ======
-    const instructorId = '6913f6f74ef370e87cb6d779';
+    const instructorId = '6913f6f74ef370e87cb6d779'; // giữ nguyên instructor như khóa JS
 
-    const title = 'JavaScript Fundamentals Course for Beginners';
-    const shortDescription = 'JavaScript for Beginners: Learn JavaScript and Supercharge Your Web Design!';
+    const title = 'UIUX with Figma and Adobe XD';
+    const shortDescription = 'Learn User Interface and User Experience UI UX with Adobe XD and Figma';
+
     const description = `
-Are you eager to step into the dynamic and exciting world of web development? "JavaScript Fundamentals Course for Beginners" is your entry point into the realm of web programming. Whether you're an absolute newcomer to coding or someone looking to start your web development journey, this course is designed to provide a strong foundation in JavaScript, one of the most essential languages for creating interactive and dynamic web applications.
+Are you ready to embark on a journey to master the art of designing beautiful, user-friendly interfaces and captivating user experiences? Look no further! In this course, we'll take you from a beginner to a proficient UI/UX designer, equipping you with the essential skills and techniques to create stunning designs for web and mobile applications.
+
+Course Overview:
+1. Introduction to UI/UX Design: We'll start with the fundamentals, understanding the core principles of UI/UX design, the design process, and the role of designers in shaping digital experiences.
+2. Getting Started with Figma: Figma has revolutionized the design industry with its collaborative features and powerful capabilities. We'll provide you with a comprehensive introduction to Figma...
+3. Mastering Adobe XD: Adobe XD is another prominent design tool used widely in the industry...
+4. User Research and Analysis • Wireframing and Prototyping • Designing for Web & Mobile • Microinteractions • Collaborative Design • Real-World Projects
+
+By the end of this course, you'll be equipped with the expertise to create captivating UI/UX designs using Figma and Adobe XD, making you a sought-after professional in the field of user interface and experience design. Enroll now and join us on this exciting journey into the world of UI/UX design!
 `.trim();
 
-    const topics = ['Javascript', 'Phát triển web', 'phát triển'];
+    const topics = ['Figma', 'công cụ thiết kế', 'thiết kế'];
     const includes = [
-      '3 giờ video theo yêu cầu',
+      '10,5 giờ video theo yêu cầu',
+      '1 bài viết',
+      '1 tài nguyên có thể tải xuống',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'who are JavaScript Newbies',
-      'who want a thorough step by step introduction to the JavaScript language',
-      'who want to learn how to build their first JavaScript Application',
+      'Beginner who want to learn UIUX',
     ];
     const requirements = [
-      'No Prior Coding Experience Needed',
-      'If you knew the HTML and CSS then it will be helpful for learning',
+      'Basic Computer Knowledge',
     ];
     const learnOutcomes = [
-      'Understand the fundamental concepts in JavaScript',
-      'Learn and apply the best practices',
-      'JavaScript Modules',
-      'Functional Programming',
-      'Extensive, informative and interesting video lecture',
-      'All about variables, functions, objects and arrays',
-      'How to use conditional statements in JavaScript',
-      'How to architect your code using flowcharts and common patterns',
-      'Complete Code demonstrated in lecture',
-      'How to write functions in JavaScript',
-      'Manipulating web pages (DOM) with JavaScript',
-      'Finish the course with real life JavaScript skills',
+      'Thành thạo Figma từ cơ bản đến nâng cao',
+      'Sử dụng thành thạo Adobe XD để thiết kế UI/UX',
+      'Hiểu rõ quy trình thiết kế UI/UX thực tế',
+      'Thiết kế được giao diện web và mobile app chuyên nghiệp',
+      'Xây dựng được portfolio UI/UX thực tế',
     ];
 
-    // Section & lectures (23 lectures)
-    const sectionTitle = 'Introduction';
-    const lectures = [
-      { title: 'Statements',          preview: true,  duration: '6:00',  url: 'https://dai.ly/x9tlk9w' },
-      { title: 'Syntax',              preview: true,  duration: '5:47',  url: 'https://dai.ly/x9tlk9u' },
-      { title: 'Comments',            preview: true,  duration: '5:43',  url: 'https://dai.ly/x9tlk9y' },
-      { title: 'Operators',           preview: false, duration: '4:12',  url: 'https://dai.ly/x9tlkhw' },
-      { title: 'Arithmetic',          preview: false, duration: '5:57',  url: 'https://dai.ly/x9tlki2' },
-      { title: 'Assignment',          preview: false, duration: '6:34',  url: 'https://dai.ly/x9tlkhy' },
-      { title: 'Strings',             preview: false, duration: '9:07',  url: 'https://dai.ly/x9tlki4' },
-      { title: 'String Methods',      preview: false, duration: '13:15', url: 'https://dai.ly/x9tlki0' },
-      { title: 'String Search',       preview: false, duration: '7:11',  url: 'https://dai.ly/x9tlki8' },
-      { title: 'String Templates',    preview: false, duration: '8:35',  url: 'https://dai.ly/x9tlkie' },
-      { title: 'Random',              preview: false, duration: '8:12',  url: 'https://dai.ly/x9tlkig' },
-      { title: 'Booleans',            preview: false, duration: '5:55',  url: 'https://dai.ly/x9tlkic' },
-      { title: 'Switch',              preview: false, duration: '8:32',  url: 'https://dai.ly/x9totay' },
-      { title: 'Break',               preview: false, duration: '6:36',  url: 'https://dai.ly/x9totau' },
-      { title: 'Sets',                preview: false, duration: '7:21',  url: 'https://dai.ly/x9totas' },
-      { title: 'Typeof',              preview: false, duration: '5:11',  url: 'https://dai.ly/x9totaw' },
-      { title: 'RegExp',              preview: false, duration: '5:32',  url: 'https://dai.ly/x9totb0' },
-      { title: 'Scope',               preview: false, duration: '10:00', url: 'https://dai.ly/x9totb2' },
-      { title: 'Strict Mode',         preview: false, duration: '6:35',  url: 'https://dai.ly/x9totb8' },
-      { title: 'Style Guide',         preview: false, duration: '6:15',  url: 'https://dai.ly/x9totb6' },
-      { title: 'Classes Inheritance', preview: false, duration: '5:29',  url: 'https://dai.ly/x9totjo' },
-      { title: 'Static Methods',      preview: false, duration: '10:18', url: 'https://dai.ly/x9totjq' },
-      { title: 'Object Protection',   preview: false, duration: '10:38', url: 'https://dai.ly/x9totjm' },
+    // ====== SECTIONS & LECTURES ======
+    const sectionsData = [
+      {
+        title: 'Phần 1: Figma',
+        lectures: [
+          { title: 'Introduction', preview: true, duration: '07:14', url: 'https://dai.ly/x9tw5te' },
+          { title: 'Introduction to Figma', preview: false, duration: '15:48', url: 'https://dai.ly/x9tw5ti' },
+          { title: 'Interface and Workspace', preview: false, duration: '11:45', url: 'https://dai.ly/x9tw5tk' },
+          { title: 'Basic Tools in Toolbar', preview: true, duration: '28:41', url: 'https://dai.ly/x9tw5tc' },
+          { title: 'Frames, Pages and Artboard in Figma', preview: false, duration: '14:36', url: 'https://dai.ly/x9tw5tg' },
+          { title: 'Type Tool in Figma', preview: true, duration: '12:14', url: 'https://dai.ly/x9tw5tm' },
+          { title: 'Creation Tools in Figma', preview: false, duration: '11:30', url: 'https://dai.ly/x9tw5ts' },
+          { title: 'Hand tool and adding comment in Figma', preview: false, duration: '13:24', url: 'https://dai.ly/x9tw5tu' },
+          { title: 'Font colour and Stroke colour in Figma', preview: false, duration: '15:22', url: 'https://dai.ly/x9tw5tw' },
+          { title: 'Alingings in Figma', preview: false, duration: '06:20', url: 'https://dai.ly/x9tw5ty' },
+          { title: 'Masking in Figma', preview: false, duration: '06:57', url: 'https://dai.ly/x9tw65c' },
+          { title: 'Styles in Figma', preview: false, duration: '14:19', url: 'https://dai.ly/x9tw65a' },
+          { title: 'Components', preview: false, duration: '09:59', url: 'https://dai.ly/x9tw65e' },
+          { title: 'Effects in Figma', preview: false, duration: '07:59', url: 'https://dai.ly/x9ty7fe' },
+          { title: 'Constraints and Icons in Figma', preview: false, duration: '14:15', url: 'https://dai.ly/x9ty7fg' },
+          { title: 'Layout grid and the Figma Community', preview: false, duration: '13:31', url: 'https://dai.ly/x9ty7fm' },
+          { title: 'Grouping, Framing, Auto layout and Team Library', preview: false, duration: '30:56', url: 'https://dai.ly/x9ty7fq' },
+          { title: 'Design styles and Shortcut keys in Figma', preview: false, duration: '41:13', url: 'https://dai.ly/x9ty7fo' },
+          { title: 'Project of Designing Mobile app pages', preview: false, duration: '32:15', url: 'https://dai.ly/x9ty7fk' },
+          { title: 'Web page designing using Shape blocking method', preview: false, duration: '32:08', url: 'https://dai.ly/x9ty7fs' },
+          { title: 'Tips to work in Figma Efficiently', preview: false, duration: '21:31', url: 'https://dai.ly/x9ty7fu' },
+          { title: 'Making rounded text, exporting and sharing link in Figma', preview: false, duration: '12:22', url: 'https://dai.ly/x9ty7fy' },
+        ]
+      },
+      {
+        title: 'Phần 2: Adobe XD',
+        lectures: [
+          { title: 'INTRO', preview: false, duration: '02:49', url: 'https://dai.ly/x9ty7fw' },
+          { title: 'What is Adobe XD', preview: false, duration: '06:32', url: 'https://dai.ly/x9ty7k0' },
+          { title: 'Difference between UI _ UX', preview: false, duration: '04:59', url: 'https://dai.ly/x9ty7k2' },
+          { title: 'Persona _ Task Flow in UX', preview: false, duration: '10:18', url: 'https://dai.ly/x9ty7k6' },
+          { title: 'Wireframe (High Fidelity _ Low Fidelity)', preview: false, duration: '09:28', url: 'https://dai.ly/x9ty7o2' },
+          { title: 'Art Boards', preview: false, duration: '10:03', url: 'https://dai.ly/x9u2o1g' },
+          { title: 'Working With Text', preview: false, duration: '12:19', url: 'https://dai.ly/x9u2o1e' },
+          { title: 'Creating rectangle, circle and triangle and edit them in adobe XD for UI UX', preview: false, duration: '12:41', url: 'https://dai.ly/x9u2o1i' },
+          { title: 'Using Colors in Adobe XD', preview: false, duration: '07:46', url: 'https://dai.ly/x9u2o1m' },
+          { title: 'Strokes _ Copy pasting Appearance', preview: false, duration: '20:04', url: 'https://dai.ly/x9u2o1k' },
+          { title: 'Icons', preview: false, duration: '12:21', url: 'https://dai.ly/x9u2o1o' },
+          { title: 'UI KIT', preview: false, duration: '07:53', url: 'https://dai.ly/x9u2rgo' },
+          { title: 'Prototyping', preview: false, duration: '08:58', url: 'https://dai.ly/x9u2o1q' },
+          { title: 'Project: Educational Site', preview: false, duration: '01:12:25', url: 'https://dai.ly/kXwsL6siwqqUGRE1Lsy' },
+          { title: 'Project: Resturant site', preview: false, duration: '01:00:47', url: 'https://dai.ly/x9u2o1s' },
+        ]
+      }
     ];
 
-    const toSeconds = (mmss) => {
-      const [m, s] = mmss.split(':').map(Number);
-      return m * 60 + s;
+    const toSeconds = (timeStr) => {
+      const parts = timeStr.split(':').map(Number);
+      if (parts.length === 3) {
+        const [h, m, s] = parts;
+        return h * 3600 + m * 60 + s;
+      } else {
+        const [m, s] = parts;
+        return m * 60 + s;
+      }
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Javascript', 'Phát triển web', 'phát triển'];
+    const categoryNames = ['Figma', 'Công cụ thiết kế', 'Thiết kế'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -117,18 +147,23 @@ Are you eager to step into the dynamic and exciting world of web development? "J
 
     // ====== Create course ======
     const slug = slugify(title);
-    let existing = await Course.findOne({ slug });
-    if (existing) {
-      console.log('Course slug exists, updating existing course...');
+    let course = await Course.findOne({ slug });
+
+    if (course) {
+      console.log('Course already exists → updating...');
+    } else {
+      course = new Course();
+      console.log('Creating new course...');
     }
 
-    const course = existing || new Course();
     course.title = title;
     course.slug = slug;
-    course.thumbnail = ''; // cập nhật sau nếu có
+    course.thumbnail = '';        // cập nhật sau nếu có
+    course.previewUrl = '';
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 0; // miễn phí hoặc cập nhật sau
+    course.price = 869000;
+    course.priceDiscount = 169000;
     course.level = 'beginner';
     course.language = 'en';
     course.requirements = requirements;
@@ -142,79 +177,86 @@ Are you eager to step into the dynamic and exciting world of web development? "J
 
     await course.save();
 
-    // ====== Create section ======
-    let section = await Section.findOne({ course: course._id, title: sectionTitle });
-    if (!section) {
-      section = await Section.create({
-        title: sectionTitle,
-        course: course._id,
-        order: 1,
-        lectures: [],
-      });
-      console.log('Created section:', sectionTitle);
-    }
-
-    // ====== Create lectures ======
-    let order = 1;
+    // ====== Create sections & lectures ======
     let totalSeconds = 0;
-    const lectureIds = [];
-    for (const L of lectures) {
-      const duration = toSeconds(L.duration);
-      totalSeconds += duration;
+    let totalLectures = 0;
+    const sectionIds = [];
 
-      let lec = await Lecture.findOne({
-        section: section._id,
-        title: L.title,
-      });
+    for (let secIdx = 0; secIdx < sectionsData.length; secIdx++) {
+      const secData = sectionsData[secIdx];
+      const sectionOrder = secIdx + 1;
 
-      if (!lec) {
-        lec = await Lecture.create({
-          title: L.title,
-          videoUrl: L.url,
-          duration,
-          section: section._id,
-          order,
-          isPreviewFree: !!L.preview,
+      let section = await Section.findOne({ course: course._id, title: secData.title });
+      if (!section) {
+        section = await Section.create({
+          title: secData.title,
+          course: course._id,
+          order: sectionOrder,
+          lectures: [],
         });
-        console.log('Created lecture:', L.title);
-      } else {
-        // update nếu đã tồn tại
-        lec.videoUrl = L.url;
-        lec.duration = duration;
-        lec.order = order;
-        lec.isPreviewFree = !!L.preview;
-        await lec.save();
-        console.log('Updated lecture:', L.title);
+        console.log(`Created section: ${secData.title}`);
       }
 
-      lectureIds.push(lec._id);
-      order++;
+      const lectureIds = [];
+      let lectureOrder = 1;
+
+      for (const L of secData.lectures) {
+        const duration = toSeconds(L.duration);
+        totalSeconds += duration;
+        totalLectures++;
+
+        let lec = await Lecture.findOne({
+          section: section._id,
+          title: L.title,
+        });
+
+        if (!lec) {
+          lec = await Lecture.create({
+            title: L.title,
+            videoUrl: L.url,
+            duration,
+            section: section._id,
+            order: lectureOrder,
+            isPreviewFree: !!L.preview,
+          });
+          console.log(`   Created lecture: ${L.title} (${L.duration})`);
+        } else {
+          lec.videoUrl = L.url;
+          lec.duration = duration;
+          lec.order = lectureOrder;
+          lec.isPreviewFree = !!L.preview;
+          await lec.save();
+          console.log(`   Updated lecture: ${L.title}`);
+        }
+
+        lectureIds.push(lec._id);
+        lectureOrder++;
+      }
+
+      section.lectures = lectureIds;
+      await section.save();
+      sectionIds.push(section._id);
     }
 
-    // attach lectures vào section (giữ thứ tự)
-    section.lectures = lectureIds;
-    await section.save();
-
-    // cập nhật course.sections
-    const sections = await Section.find({ course: course._id }).sort({ order: 1 });
-    course.sections = sections.map(s => s._id);
-
-    // totals
-    course.totalLectures = lectureIds.length;
+    // Update course with sections & totals
+    course.sections = sectionIds;
+    course.totalLectures = totalLectures;
     course.totalDurationSeconds = totalSeconds;
-    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~2.82h (2h48m55s)
+    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~10.55 giờ
 
     await course.save();
 
-    console.log('Done. Course ID:', course._id.toString());
+    console.log('\n✅ DONE!');
+    console.log('Course ID:', course._id.toString());
+    console.log('Total sections:', sectionsData.length);
     console.log('Total lectures:', course.totalLectures);
-    console.log('Total duration (s):', course.totalDurationSeconds);
-    console.log('Total hours:', course.totalHours);
+    console.log('Total duration:', `${Math.floor(totalSeconds / 3600)}h ${Math.floor((totalSeconds % 3600) / 60)}m`);
+    console.log('Total hours (float):', course.totalHours);
 
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error:', err);
     process.exit(1);
   }
 })();

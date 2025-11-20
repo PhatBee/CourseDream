@@ -4,7 +4,22 @@ import { PlayCircle, Lock } from 'lucide-react';
 
 // Hàm format thời gian (giây -> hh:mm:ss)
 const formatDuration = (seconds) => {
-  return new Date(seconds * 1000).toISOString().substr(14, 5); // mm:ss
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  // Sử dụng padStart để đảm bảo mm và ss luôn có 2 chữ số
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+  const formattedSeconds = remainingSeconds.toString().padStart(2, '0');
+
+  if (hours > 0) {
+    // Nếu lớn hơn 1 giờ, hiển thị HH:mm:ss
+    const formattedHours = hours.toString().padStart(2, '0');
+    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+  } else {
+    // Nếu ít hơn 1 giờ, chỉ hiển thị mm:ss
+    return `${formattedMinutes}:${formattedSeconds}`;
+  }
 };
 
 const LectureItem = ({ lecture, onPreviewClick }) => {
