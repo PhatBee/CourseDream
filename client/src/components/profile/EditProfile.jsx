@@ -24,12 +24,12 @@ const EditProfile = () => {
             setName(user.name || '');
             setBio(user.bio || '');
             setPhone(user.phone || '');
-            // Nếu chưa chọn ảnh mới, hiển thị ảnh hiện tại của user
-            if (!preview) {
+            // Chỉ set preview từ user.avatar nếu chưa có file mới được chọn
+            if (!avatarFile) {
                 setPreview(user.avatar || 'https://via.placeholder.com/150');
             }
         }
-    }, [user]);
+    }, [user, avatarFile]);
 
     // 2. Xử lý phản hồi từ Redux
     useEffect(() => {
