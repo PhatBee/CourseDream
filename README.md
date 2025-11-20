@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
