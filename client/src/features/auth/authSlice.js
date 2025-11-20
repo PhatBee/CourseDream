@@ -173,7 +173,7 @@ export const updateProfile = createAsyncThunk(
   async (profileData, thunkAPI) => {
     try {
       // 'profileData' là { name, avatar, bio }
-      return await userService.updateProfile(profileData);
+      return await authService.updateProfile(profileData);
     } catch (error) {
       const message =
         (error.response &&
@@ -190,7 +190,7 @@ export const changePassword = createAsyncThunk(
   'user/changePassword',
   async (passwordData, thunkAPI) => {
     try {
-      return await userService.changePassword(passwordData);
+      return await authService.changePassword(passwordData);
     } catch (error) {
       const message =
         (error.response &&
