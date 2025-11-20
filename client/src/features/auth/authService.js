@@ -106,6 +106,17 @@ const setPassword = async (passwordData) => {
   return response.data;
 };
 
+/**
+ * Lấy thông tin profile hiện tại từ server
+ */
+const getProfile = async () => {
+  const response = await userApi.getProfile();
+  if (response.data.data) {
+    updateUserInStorage(response.data.data);
+  }
+  return response.data;
+};
+
 const updateUserInStorage = (userData) => {
   localStorage.setItem('user', JSON.stringify(userData));
 };
@@ -133,6 +144,7 @@ const authService = {
   forgotPassword,
   verifyResetOTP,
   setPassword,
+  getProfile,
   updateProfile,
   changePassword,
   updateUserInStorage,

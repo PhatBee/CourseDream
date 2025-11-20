@@ -1,7 +1,7 @@
 // src/components/profile/EditProfile.jsx
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateProfile, reset } from '../../features/auth/authSlice';
+import { updateProfile, reset, getProfile } from '../../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 
 const EditProfile = () => {
@@ -19,6 +19,10 @@ const EditProfile = () => {
     const [deleteAvatar, setDeleteAvatar] = useState(false); // Cờ đánh dấu xóa ảnh
 
     // 1. Tải dữ liệu user vào form
+    useEffect(() => {
+        dispatch(getProfile());
+    }, [dispatch]);
+
     useEffect(() => {
         if (user) {
             setName(user.name || '');

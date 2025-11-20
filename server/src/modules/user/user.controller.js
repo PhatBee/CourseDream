@@ -1,7 +1,25 @@
 import * as userService from './user.service.js';
 
 /**
- * @desc    Cập nhật thông tin cá nhân (tên, avatar, bio)
+ * @desc    Lấy thông tin profile của user hiện tại
+ * @route   GET /api/v1/users/profile
+ */
+export const getProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const user = await userService.getProfile(userId);
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Cập nhật thông tin cá nhân (tên, avatar, bio, phone)
  * @route   PUT /api/v1/users/profile
  */
 export const updateProfile = async (req, res, next) => {
@@ -11,7 +29,7 @@ export const updateProfile = async (req, res, next) => {
     // Lấy file từ Multer middleware
     const file = req.file;
 
-    // Lấy body (name, bio, deleteAvatar...)
+    // Lấy body (name, bio, phone, deleteAvatar...)
     const updateData = req.body;
 
     // Truyền cả file xuống service

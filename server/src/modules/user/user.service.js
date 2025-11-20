@@ -28,6 +28,21 @@ const getPublicIdFromUrl = (url) => {
   return `${folderPart}/${fileName}`;
 };
 
+/**
+ * Lấy thông tin profile của user
+ */
+export const getProfile = async (userId) => {
+  const user = await User.findById(userId).select('-password -otp -otpExpires -refreshToken');
+
+  if (!user) {
+    const error = new Error('Không tìm thấy người dùng.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return user;
+};
+
 export const updateProfile = async (userId, updateData, file) => {
 
   const user = await User.findById(userId);
@@ -39,8 +54,8 @@ export const updateProfile = async (userId, updateData, file) => {
 
   const cleanData = {};
   if (updateData.name) cleanData.name = updateData.name;
-  if (updateData.bio) cleanData.bio = updateData.bio;
-  if (updateData.phone) cleanData.phone = updateData.phone; // Thêm phone
+  if (updateData.bio !== undefined) cleanData.bio = updateData.bio; // Cho phép cập nhật bio rỗng
+  if (updateData.phone !== undefined) cleanData.phone = updateData.phone; // Cho phép cập nhật phone rỗng
 
   // === LOGIC XỬ LÝ ẢNH ===
 
@@ -70,7 +85,7 @@ export const updateProfile = async (userId, updateData, file) => {
     userId,
     { $set: cleanData },
     { new: true, runValidators: true }
-  ).select('-password -otp -otpExpires');
+  ).select('-password -otp -otpExpires -refreshToken');
 
   return updatedUser;
 };

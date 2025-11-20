@@ -7,6 +7,14 @@ import { validateUpdateProfile } from './user.validation.js';
 
 const router = express.Router();
 
+// GET current user profile
+router.get(
+  '/profile',
+  verifyToken,
+  userController.getProfile
+);
+
+// UPDATE user profile
 router.put(
   '/profile',
   verifyToken,
