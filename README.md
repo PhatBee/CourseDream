@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -26,6 +26,7 @@ cd client
 npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google
 npm install react-facebook-login -S --force
 npm i lucide-react --force
+npm install react-icons --force
 ```
 
 ### Cấu hình môi trường

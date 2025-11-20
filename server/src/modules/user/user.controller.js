@@ -6,11 +6,16 @@ import * as userService from './user.service.js';
  */
 export const updateProfile = async (req, res, next) => {
   try {
-    const userId = req.user.id; 
-    const { name, avatar, bio } = req.body;
-    const allowedUpdates = { name, avatar, bio };
+    const userId = req.user.id;
 
-    const updatedUser = await userService.updateProfile(userId, allowedUpdates);
+    // Lấy file từ Multer middleware
+    const file = req.file;
+
+    // Lấy body (name, bio, deleteAvatar...)
+    const updateData = req.body;
+
+    // Truyền cả file xuống service
+    const updatedUser = await userService.updateProfile(userId, updateData, file);
 
     res.status(200).json({
       success: true,

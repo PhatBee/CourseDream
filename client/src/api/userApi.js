@@ -5,8 +5,10 @@ const path = "/users";
 
 /**
  * Cập nhật profile (name, avatar, bio)
+ * @param {FormData} profileData - Phải là đối tượng FormData
  */
 const updateProfile = (profileData) => {
+  // Axios tự xử lý header khi data là FormData
   return axiosClient.put(`${path}/profile`, profileData);
 };
 
