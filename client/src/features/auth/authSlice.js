@@ -259,6 +259,9 @@ export const authSlice = createSlice({
       // Xử lý khi 'logout'
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
+        state.isSuccess = false;
+        state.isError = false;
+        state.message = '';
       })
       // === REGISTER CASES ===
       .addCase(register.pending, (state) => {
