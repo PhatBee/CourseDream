@@ -1,6 +1,6 @@
 import User from './auth.model.js'; // Import model đã sửa
 import { hashPassword, comparePassword } from '../../utils/password.utils.js';
-import { generateAccessToken, resetToken, generateRefreshToken } from '../../utils/jwt.utils.js';
+import { generateAccessToken, resetToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.utils.js';
 import { generateOTP } from '../../utils/otp.utils.js';
 import { sendEmail } from '../../utils/email.utils.js';
 import axios from 'axios';
@@ -42,7 +42,7 @@ const googleLogin = async (req, res, next) => {
         });
 
         const payload = ticket.getPayload();
-        const { name, email, picture: avatar, email_verified } = payload;
+        const { name, email, picture: avatar, email_verified, sub: googleId } = payload;
 
         // 2. Kiểm tra email đã được Google xác thực chưa
         if (!email_verified) {
@@ -55,23 +55,34 @@ const googleLogin = async (req, res, next) => {
         let user = await User.findOne({ email });
 
         if (user) {
-            // 4a. Nếu user tồn tại, kiểm tra phương thức đăng nhập
-            if (user.authProvider === 'local') {
-                const err = new Error('Email này đã được đăng ký bằng mật khẩu. Vui lòng đăng nhập bằng mật khẩu.');
-                err.status = 400;
-                return next(err);
+            // 4a. Nếu user tồn tại, kiểm tra xem đã link chưa
+            const isLinked = user.linkedAccounts && user.linkedAccounts.some(
+                acc => acc.provider === 'google' && acc.providerId === googleId
+            );
+
+            if (!isLinked) {
+                // Nếu chưa link, thêm vào linkedAccounts
+                user.linkedAccounts.push({
+                    provider: 'google',
+                    providerId: googleId,
+                    email: email
+                });
+                await user.save();
             }
-            // Nếu user.authProvider === 'google', thì đây là đăng nhập -> tiếp tục
         } else {
             // 4b. Nếu user không tồn tại, tạo user mới
             user = await User.create({
                 name,
                 email,
                 avatar,
-                authProvider: 'google', // Đặt phương thức là google
-                isVerified: true,       // Email đã được Google xác thực
-                role: 'student',        // Vai trò mặc định
-                // Mật khẩu không cần thiết (model đã xử lý)
+                authProvider: 'google', // Vẫn giữ để biết nguồn gốc ban đầu
+                isVerified: true,
+                role: 'student',
+                linkedAccounts: [{
+                    provider: 'google',
+                    providerId: googleId,
+                    email: email
+                }]
             });
         }
 
@@ -116,7 +127,7 @@ const facebookLogin = async (req, res, next) => {
         const fbGraphUrl = `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${fbAccessToken}`;
         const { data } = await axios.get(fbGraphUrl);
 
-        const { email, name, picture } = data;
+        const { email, name, picture, id: facebookId } = data;
         const avatar = picture.data.url;
 
         // 2. Kiểm tra xem có email không (rất quan trọng)
@@ -130,27 +141,33 @@ const facebookLogin = async (req, res, next) => {
         let user = await User.findOne({ email });
 
         if (user) {
-            // 4a. Nếu user tồn tại, kiểm tra phương thức đăng nhập
-            if (user.authProvider === 'local') {
-                const err = new Error('Email này đã được đăng ký bằng mật khẩu.');
-                err.status = 400;
-                return next(err);
+            // 4a. Nếu user tồn tại, kiểm tra xem đã link chưa
+            const isLinked = user.linkedAccounts && user.linkedAccounts.some(
+                acc => acc.provider === 'facebook' && acc.providerId === facebookId
+            );
+
+            if (!isLinked) {
+                user.linkedAccounts.push({
+                    provider: 'facebook',
+                    providerId: facebookId,
+                    email: email
+                });
+                await user.save();
             }
-            if (user.authProvider === 'google') {
-                const err = new Error('Email này đã được đăng ký bằng Google.');
-                err.status = 400;
-                return next(err);
-            }
-            // Nếu user.authProvider === 'facebook', thì đây là đăng nhập -> tiếp tục
         } else {
             // 4b. Nếu user không tồn tại, tạo user mới
             user = await User.create({
                 name,
                 email,
                 avatar,
-                authProvider: 'facebook', // Đặt phương thức là facebook
-                isVerified: true,       // Email đã được Facebook xác thực
-                role: 'student',        // Vai trò mặc định
+                authProvider: 'facebook',
+                isVerified: true,
+                role: 'student',
+                linkedAccounts: [{
+                    provider: 'facebook',
+                    providerId: facebookId,
+                    email: email
+                }]
             });
         }
 
@@ -329,6 +346,12 @@ const login = async (req, res, next) => {
         }
 
         // 3. So sánh mật khẩu
+        if (!user.password) {
+            const err = new Error('Tài khoản này chưa thiết lập mật khẩu. Vui lòng đăng nhập bằng Google/Facebook hoặc sử dụng chức năng Quên mật khẩu.');
+            err.status = 400;
+            return next(err);
+        }
+
         const isMatch = await comparePassword(password, user.password);
         if (!isMatch) {
             const err = new Error('Email hoặc mật khẩu không đúng');
@@ -454,12 +477,8 @@ const forgotPassword = async (req, res, next) => {
             return next(err);
         }
 
-        // 2. YÊU CẦU: Chỉ cho tài khoản 'local'
-        if (user.authProvider !== 'local') {
-            const err = new Error(`Tài khoản này được đăng ký qua ${user.authProvider}. Không thể đặt lại mật khẩu.`);
-            err.status = 400;
-            return next(err);
-        }
+        // 2. YÊU CẦU: Cho phép tất cả tài khoản reset password để có thể login local
+        // if (user.authProvider !== 'local') { ... } -> Bỏ chặn này
 
         // 3. Tạo OTP và thời gian hết hạn (10 phút)
         const otp = generateOTP();

@@ -7,7 +7,7 @@ const user = JSON.parse(localStorage.getItem('user'));
 const initialState = {
   user: user ? user : null,
   isError: false,
-  // isSuccess: false,
+  isSuccess: false,
   isLoading: false,
   message: '',
   isRegisterSuccess: false, // Cho trang Register
@@ -197,6 +197,22 @@ export const changePassword = createAsyncThunk(
         error.message ||
         error.toString();
       return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  }
+);
+
+// === GET PROFILE ===
+export const getProfile = createAsyncThunk(
+  "auth/getProfile",
+  async (_, thunkAPI) => {
+    try {
+      return await authService.getProfile(); // Trả về { success, data }
+    } catch (error) {
+      const message =
+        (error.response && error.response.data && error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
@@ -396,6 +412,20 @@ export const authSlice = createSlice({
         state.message = action.payload.message;
       })
       .addCase(changePassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+
+      // === GET PROFILE ===
+      .addCase(getProfile.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data; // Cập nhật vào Redux
+      })
+      .addCase(getProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;

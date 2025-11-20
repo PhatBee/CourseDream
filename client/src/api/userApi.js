@@ -4,7 +4,14 @@ import axiosClient from "./axiosClient";
 const path = "/users";
 
 /**
- * Cập nhật profile (name, avatar, bio)
+ * Lấy thông tin profile hiện tại
+ */
+const getProfile = () => {
+  return axiosClient.get(`${path}/profile`);
+};
+
+/**
+ * Cập nhật profile (name, avatar, bio, phone)
  * @param {FormData} profileData - Phải là đối tượng FormData
  */
 const updateProfile = (profileData) => {
@@ -20,6 +27,7 @@ const changePassword = (passwordData) => {
 };
 
 export const userApi = {
+  getProfile,
   updateProfile,
   changePassword,
 };

@@ -19,8 +19,9 @@ export const validateRegister = [
   body('name')
     .trim()
     .notEmpty().withMessage('Họ và tên là bắt buộc')
+    .isLength({ min: 2, max: 50 }).withMessage('Họ và tên phải từ 2-50 ký tự')
     .matches(/^[\p{L}\s]+$/u).withMessage('Họ và tên chỉ được chứa chữ cái và khoảng trắng')
-    .customSanitizer(value => value.trim()),
+    .customSanitizer(value => value.replace(/\s+/g, ' ').trim()), // Loại bỏ khoảng trắng thừa
 
   // 2. Kiểm tra 'email'
   body('email')

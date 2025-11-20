@@ -3,6 +3,9 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Edit2 } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { getProfile } from '../../features/auth/authSlice';
+import { useEffect } from 'react';
 
 // Component con để hiển thị thông tin
 const InfoItem = ({ label, value }) => (
@@ -29,7 +32,12 @@ const formatDate = (ts) => {
 };
 
 const MyProfile = () => {
+    const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
+
+    useEffect(() => {
+        dispatch(getProfile());
+    }, [dispatch]);
 
     if (!user) return null;
 

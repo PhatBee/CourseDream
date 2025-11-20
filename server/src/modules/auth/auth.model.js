@@ -18,10 +18,17 @@ const UserSchema = new mongoose.Schema({
     enum: ['local', 'google', 'facebook'],
     default: 'local',
   },
+  linkedAccounts: [
+    {
+      provider: { type: String, enum: ["google", "facebook"] },
+      providerId: String, // Google user id, Facebook user id
+      email: String,
+    }
+  ],
   phone: {
     type: String,
     default: null,
-    unique: true,
+    sparse: true, // Cho phép nhiều giá trị null
   },
   role: {
     type: String,
@@ -75,6 +82,10 @@ UserSchema.index(
     partialFilterExpression: { isVerified: false }
   }
 );
+
+// Tạo sparse index cho phone để cho phép nhiều giá trị null
+// nhưng vẫn đảm bảo unique cho các giá trị không null
+UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model('User', UserSchema);
 export default User;

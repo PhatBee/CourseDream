@@ -1,7 +1,7 @@
 // src/components/profile/EditProfile.jsx
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateProfile, reset } from '../../features/auth/authSlice';
+import { updateProfile, reset, getProfile } from '../../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 
 const EditProfile = () => {
@@ -20,16 +20,20 @@ const EditProfile = () => {
 
     // 1. Tải dữ liệu user vào form
     useEffect(() => {
+        dispatch(getProfile());
+    }, [dispatch]);
+
+    useEffect(() => {
         if (user) {
             setName(user.name || '');
             setBio(user.bio || '');
             setPhone(user.phone || '');
-            // Nếu chưa chọn ảnh mới, hiển thị ảnh hiện tại của user
-            if (!preview) {
+            // Chỉ set preview từ user.avatar nếu chưa có file mới được chọn
+            if (!avatarFile) {
                 setPreview(user.avatar || 'https://via.placeholder.com/150');
             }
         }
-    }, [user]);
+    }, [user, avatarFile]);
 
     // 2. Xử lý phản hồi từ Redux
     useEffect(() => {
