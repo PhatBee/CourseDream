@@ -18,6 +18,13 @@ const UserSchema = new mongoose.Schema({
     enum: ['local', 'google', 'facebook'],
     default: 'local',
   },
+  linkedAccounts: [
+    {
+      provider: { type: String, enum: ["google", "facebook"] },
+      providerId: String, // Google user id, Facebook user id
+      email: String,
+    }
+  ],
   phone: {
     type: String,
     default: null,
