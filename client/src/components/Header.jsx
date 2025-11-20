@@ -20,8 +20,8 @@ const Header = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logout());
     navigate("/login");
   };
 
@@ -39,8 +39,7 @@ const Header = () => {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `hover:text-rose-600 ${
-                  isActive ? "text-rose-600" : "text-gray-700"
+                `hover:text-rose-600 ${isActive ? "text-rose-600" : "text-gray-700"
                 }`
               }
             >
@@ -49,8 +48,7 @@ const Header = () => {
             <NavLink
               to="/courses"
               className={({ isActive }) =>
-                `hover:text-rose-600 ${
-                  isActive ? "text-rose-600" : "text-gray-700"
+                `hover:text-rose-600 ${isActive ? "text-rose-600" : "text-gray-700"
                 }`
               }
             >
@@ -59,8 +57,7 @@ const Header = () => {
             <NavLink
               to="/blog"
               className={({ isActive }) =>
-                `hover:text-rose-600 ${
-                  isActive ? "text-rose-600" : "text-gray-700"
+                `hover:text-rose-600 ${isActive ? "text-rose-600" : "text-gray-700"
                 }`
               }
             >
