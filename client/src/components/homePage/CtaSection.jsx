@@ -3,7 +3,6 @@ import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const CtaSection = () => {
-  // Danh sách lợi ích khi tham gia
   const benefits = [
     "Access Your Class anywhere",
     "Flexible Course Plan",
@@ -13,47 +12,49 @@ const CtaSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-indigo-900 text-white relative overflow-hidden">
-      {/* Background decor (giả lập ảnh nền bg-3, bg-4) */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600 rounded-full blur-[120px] opacity-30 translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-600 rounded-full blur-[100px] opacity-30 -translate-x-1/2 translate-y-1/3"></div>
+    // 1. Copy background gradient từ HeroSection
+    <section className="relative bg-gradient-to-br from-rose-50 via-white to-orange-50 py-24 overflow-hidden">
+      
+      {/* 2. Copy các đốm màu trang trí (Decoration Blobs) từ HeroSection */}
+      <div className="absolute top-0 left-0 w-64 h-64 bg-rose-200 rounded-full blur-3xl opacity-40 -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-orange-200 rounded-full blur-3xl opacity-40 translate-x-1/4 translate-y-1/4"></div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col md:flex-row items-center gap-12">
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="flex flex-col md:flex-row items-center gap-16">
            
-           {/* Ảnh minh họa bên trái */}
-           <div className="w-full md:w-1/2 flex justify-center md:justify-start" data-aos="fade-right">
+           {/* Ảnh minh họa */}
+           <div className="w-full md:w-1/2 flex justify-center md:justify-start">
              <img 
                 src="https://dreamslms.dreamstechnologies.com/html/template/assets/img/feature/feature-17.svg" 
                 alt="Share Knowledge" 
-                className="rounded-2xl shadow-2xl transform -rotate-2 hover:rotate-0 transition-all duration-500 border-4 border-white/10" 
+                className="rounded-2xl shadow-xl transform hover:-translate-y-2 transition-all duration-500" 
              />
            </div>
 
            {/* Nội dung bên phải */}
-           <div className="w-full md:w-1/2" data-aos="fade-left">
-             <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
+           <div className="w-full md:w-1/2 text-left">
+             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
                Want to share your knowledge? <br/>
-               <span className="text-indigo-300">Join us a Mentor</span>
+               <span className="text-rose-500">Join us a Mentor</span>
              </h2>
-             <p className="text-indigo-100 mb-8 text-lg opacity-90">
+             <p className="text-gray-600 mb-8 text-lg">
                High-definition video is video of higher resolution and quality than standard-definition. While there is no standardized meaning for high-definition, generally any video.
              </p>
              
              <ul className="space-y-4 mb-10">
                {benefits.map((item, i) =>(
                  <li key={i} className="flex items-center gap-3">
-                   <div className="bg-green-500/20 p-1.5 rounded-full shrink-0">
-                        <CheckCircle className="w-5 h-5 text-green-400" />
+                   <div className="bg-green-100 p-1 rounded-full shrink-0">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
                    </div>
-                   <span className="font-medium">{item}</span>
+                   <span className="font-medium text-gray-700">{item}</span>
                  </li>
                ))}
              </ul>
              
-             <div className="flex gap-4">
-                <Link to="/become-instructor" className="bg-white text-indigo-900 px-8 py-3.5 rounded-lg font-bold hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
-                  Register as Instructor <ArrowRight className="w-4 h-4" />
+             <div>
+                <Link to="/become-instructor" className="inline-flex items-center gap-2 bg-rose-600 text-white px-8 py-4 rounded-full font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
+                  Register as Instructor <ArrowRight className="w-5 h-5" />
                 </Link>
              </div>
            </div>

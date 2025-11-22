@@ -29,15 +29,13 @@ const Home = () => {
   // const { latestBlogs } = useSelector(state => state.blogs);
   return (
     <div className="font-sans text-gray-800 bg-white">
-      <main>
-        <HeroSection />
-        <StatsSection />
-        <CategoriesSection />        
-        <FeaturedCourses /> 
-        <MasterSkills />
-        <CtaSection />
-        <BlogSection />
-      </main>
+      <HeroSection />
+      <StatsSection />
+      <CategoriesSection />        
+      <FeaturedCourses /> 
+      <MasterSkills />
+      <CtaSection />
+      <BlogSection />
     </div>
   );
 };

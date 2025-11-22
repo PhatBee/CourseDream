@@ -21,7 +21,7 @@ export default function MainLayout() {
     <div className="min-h-screen bg-white">
       <Header />
       {/* chừa top padding để tránh che nội dung bởi header fixed */}
-      <main className="pt-20">
+      <main>
         <Outlet />
       </main>
     </div>

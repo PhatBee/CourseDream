@@ -3,7 +3,6 @@ import { Calendar, User, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const BlogSection = ({ blogs }) => {
-  // Fallback data nếu chưa có API thật
   const defaultBlogs = [
     {
       id: 1,
@@ -34,22 +33,24 @@ const BlogSection = ({ blogs }) => {
   const displayBlogs = blogs && blogs.length > 0 ? blogs : defaultBlogs;
 
   return (
-    <section className="py-20 bg-gray-50 relative">
-        {/* Background decor */}
+    <section className="py-24 bg-gray-50 relative">
+        {/* Background decor: Hồng nhẹ */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-             <div className="absolute top-20 left-10 w-64 h-64 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-             <div className="absolute bottom-20 right-10 w-64 h-64 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+             <div className="absolute top-20 left-10 w-96 h-96 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+             <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
         </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-12 max-w-2xl mx-auto" data-aos="fade-up">
-           <h2 className="text-3xl font-bold text-gray-900 mb-3">Latest Blogs</h2>
-           <p className="text-gray-500">Dont Miss Stay Updated with the Latest Articles and Insights from our top experts.</p>
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        
+        {/* Header Căn Trái */}
+        <div className="text-left mb-12">
+           <span className="text-rose-500 font-bold text-sm uppercase tracking-wider">Latest Articles</span>
+           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-2 mb-3">Latest from the Blog</h2>
+           <p className="text-gray-500 max-w-2xl">Stay Updated with the Latest Articles and Insights from our top experts.</p>
         </div>
         
         {/* Blog Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
           {displayBlogs.map((blog) => (
             <div key={blog.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100">
               <div className="relative overflow-hidden h-56">
@@ -60,7 +61,7 @@ const BlogSection = ({ blogs }) => {
                         className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" 
                     />
                 </Link>
-                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold text-indigo-600 uppercase tracking-wide">
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold text-rose-600 uppercase tracking-wide shadow-sm">
                     {blog.category}
                 </div>
               </div>
@@ -71,13 +72,13 @@ const BlogSection = ({ blogs }) => {
                   <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Admin</span>
                 </div>
                 
-                <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-rose-600 transition-colors">
                   <Link to={`/blog/${blog.slug}`}>
                     {blog.title}
                   </Link>
                 </h3>
                 
-                <Link to={`/blog/${blog.slug}`} className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-2">
+                <Link to={`/blog/${blog.slug}`} className="inline-flex items-center text-sm font-bold text-rose-600 hover:text-rose-800 transition-colors mt-2">
                     Read More <ArrowRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>
@@ -85,36 +86,36 @@ const BlogSection = ({ blogs }) => {
           ))}
         </div>
 
-        {/* Phần Thống kê nhỏ ở dưới (Enroll Group) - Giống template gốc */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12" data-aos="fade-up">
+        {/* Phần Thống kê nhỏ ở dưới (Stat Box) */}
+        <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12 border border-gray-100">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-100">
                  {/* Stat 1 */}
-                 <div className="flex items-center justify-center gap-4 p-4">
-                     <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-3xl">
+                 <div className="flex items-center justify-center gap-5 p-2">
+                     <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-3xl shrink-0">
                          🎓
                      </div>
-                     <div>
-                         <h3 className="text-3xl font-bold text-gray-900">3,490+</h3>
+                     <div className="text-left">
+                         <h3 className="text-3xl font-extrabold text-gray-900">3,490+</h3>
                          <p className="text-gray-500 text-sm font-medium">Students Enrolled</p>
                      </div>
                  </div>
                  {/* Stat 2 */}
-                 <div className="flex items-center justify-center gap-4 p-4">
-                     <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center text-3xl">
+                 <div className="flex items-center justify-center gap-5 p-2">
+                     <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-3xl shrink-0">
                          💻
                      </div>
-                     <div>
-                         <h3 className="text-3xl font-bold text-gray-900">255+</h3>
+                     <div className="text-left">
+                         <h3 className="text-3xl font-extrabold text-gray-900">255+</h3>
                          <p className="text-gray-500 text-sm font-medium">Total Courses</p>
                      </div>
                  </div>
                  {/* Stat 3 */}
-                 <div className="flex items-center justify-center gap-4 p-4">
-                     <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center text-3xl">
+                 <div className="flex items-center justify-center gap-5 p-2">
+                     <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-3xl shrink-0">
                          🌍
                      </div>
-                     <div>
-                         <h3 className="text-3xl font-bold text-gray-900">15+</h3>
+                     <div className="text-left">
+                         <h3 className="text-3xl font-extrabold text-gray-900">15+</h3>
                          <p className="text-gray-500 text-sm font-medium">Countries</p>
                      </div>
                  </div>
