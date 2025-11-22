@@ -1,4 +1,4 @@
-// scripts/seed_add_uiux_figma_adobexd.js
+// scripts/seed_add_python_datascience.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -24,99 +24,118 @@ function slugify(text) {
   try {
     const uri = process.env.MONGO_URI;
     if (!uri) {
-      console.error('❌ MONGO_URI is missing!');
+      console.error('MONGO_URI is missing!');
       process.exit(1);
     }
     await mongoose.connect(uri);
     console.log('Connected to MongoDB');
 
     // ====== INPUT DATA ======
-    const instructorId = '6913f6f74ef370e87cb6d779'; // giữ nguyên instructor như khóa JS
+    const instructorId = '6913f6f74ef370e87cb6d779';
 
-    const title = 'UIUX with Figma and Adobe XD';
-    const shortDescription = 'Learn User Interface and User Experience UI UX with Adobe XD and Figma';
+    const title = 'Python for Data Science Pro: The Complete Mastery Course';
+    const shortDescription = 'Become a Data Science Pro: Master Data Analysis, Visualization, and Machine Learning with Python';
 
     const description = `
-Are you ready to embark on a journey to master the art of designing beautiful, user-friendly interfaces and captivating user experiences? Look no further! In this course, we'll take you from a beginner to a proficient UI/UX designer, equipping you with the essential skills and techniques to create stunning designs for web and mobile applications.
+Starting with the fundamentals of Python, you’ll quickly progress to advanced topics, including data manipulation with Pandas, statistical analysis, and machine learning with scikit-learn. You’ll also explore powerful data visualization tools like Matplotlib and Seaborn, enabling you to present data insights clearly and effectively. The course is packed with hands-on projects and real-world datasets, providing you with practical experience that mirrors the demands of the data science field.
 
-Course Overview:
-1. Introduction to UI/UX Design: We'll start with the fundamentals, understanding the core principles of UI/UX design, the design process, and the role of designers in shaping digital experiences.
-2. Getting Started with Figma: Figma has revolutionized the design industry with its collaborative features and powerful capabilities. We'll provide you with a comprehensive introduction to Figma...
-3. Mastering Adobe XD: Adobe XD is another prominent design tool used widely in the industry...
-4. User Research and Analysis • Wireframing and Prototyping • Designing for Web & Mobile • Microinteractions • Collaborative Design • Real-World Projects
+By the end of this course, you’ll have the expertise to analyze, visualize, and model data using Python, making you a highly sought-after data science professional.
 
-By the end of this course, you'll be equipped with the expertise to create captivating UI/UX designs using Figma and Adobe XD, making you a sought-after professional in the field of user interface and experience design. Enroll now and join us on this exciting journey into the world of UI/UX design!
+What You'll Learn:
+• Python Basics for Data Science
+• Data Manipulation with Pandas
+• Statistical Analysis
+• Machine Learning with scikit-learn
+• Data Visualization with Matplotlib & Seaborn
+• Best Practices for clean, reproducible code
+
+Who This Course is For:
+• Aspiring data scientists
+• Python developers wanting to specialize in data analysis & ML
+• Data analysts upgrading their skills
+• Professionals who want to leverage data for decision-making
+
+Enroll today and start your journey to becoming a proficient data scientist!
 `.trim();
 
-    const topics = ['Figma', 'công cụ thiết kế', 'thiết kế'];
+    const topics = ['Python', 'Khoa học dữ liệu', 'Phát triển'];
     const includes = [
-      '10,5 giờ video theo yêu cầu',
-      '1 bài viết',
-      '1 tài nguyên có thể tải xuống',
+      '4 giờ video theo yêu cầu',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'Beginner who want to learn UIUX',
+      'Anyone who want to learn master Python for data science.',
+      'Python developers looking to specialize in data analysis and machine learning.',
     ];
-    const requirements = [
-      'Basic Computer Knowledge',
-    ];
+    const requirements = ['No prior knowledge is required!'];
     const learnOutcomes = [
-      'Thành thạo Figma từ cơ bản đến nâng cao',
-      'Sử dụng thành thạo Adobe XD để thiết kế UI/UX',
-      'Hiểu rõ quy trình thiết kế UI/UX thực tế',
-      'Thiết kế được giao diện web và mobile app chuyên nghiệp',
-      'Xây dựng được portfolio UI/UX thực tế',
+      'Thành thạo Python cho Data Science từ cơ bản đến nâng cao',
+      'Làm sạch, xử lý và phân tích dữ liệu với Pandas',
+      'Trực quan hóa dữ liệu chuyên nghiệp bằng Matplotlib & Seaborn',
+      'Xây dựng và đánh giá mô hình Machine Learning',
+      'Hiểu sâu về thống kê và các phân phối quan trọng',
+      'Thực hiện dự án thực tế từ đầu đến cuối',
     ];
 
-    // ====== SECTIONS & LECTURES ======
+    // ====== SECTIONS & LECTURES (6 modules) ======
     const sectionsData = [
       {
-        title: 'Phần 1: Figma',
+        title: 'Module 1: Introduction to Python and Data Science',
         lectures: [
-          { title: 'Introduction', preview: true, duration: '07:14', url: 'https://dai.ly/x9tw5te' },
-          { title: 'Introduction to Figma', preview: false, duration: '15:48', url: 'https://dai.ly/x9tw5ti' },
-          { title: 'Interface and Workspace', preview: false, duration: '11:45', url: 'https://dai.ly/x9tw5tk' },
-          { title: 'Basic Tools in Toolbar', preview: true, duration: '28:41', url: 'https://dai.ly/x9tw5tc' },
-          { title: 'Frames, Pages and Artboard in Figma', preview: false, duration: '14:36', url: 'https://dai.ly/x9tw5tg' },
-          { title: 'Type Tool in Figma', preview: true, duration: '12:14', url: 'https://dai.ly/x9tw5tm' },
-          { title: 'Creation Tools in Figma', preview: false, duration: '11:30', url: 'https://dai.ly/x9tw5ts' },
-          { title: 'Hand tool and adding comment in Figma', preview: false, duration: '13:24', url: 'https://dai.ly/x9tw5tu' },
-          { title: 'Font colour and Stroke colour in Figma', preview: false, duration: '15:22', url: 'https://dai.ly/x9tw5tw' },
-          { title: 'Alingings in Figma', preview: false, duration: '06:20', url: 'https://dai.ly/x9tw5ty' },
-          { title: 'Masking in Figma', preview: false, duration: '06:57', url: 'https://dai.ly/x9tw65c' },
-          { title: 'Styles in Figma', preview: false, duration: '14:19', url: 'https://dai.ly/x9tw65a' },
-          { title: 'Components', preview: false, duration: '09:59', url: 'https://dai.ly/x9tw65e' },
-          { title: 'Effects in Figma', preview: false, duration: '07:59', url: 'https://dai.ly/x9ty7fe' },
-          { title: 'Constraints and Icons in Figma', preview: false, duration: '14:15', url: 'https://dai.ly/x9ty7fg' },
-          { title: 'Layout grid and the Figma Community', preview: false, duration: '13:31', url: 'https://dai.ly/x9ty7fm' },
-          { title: 'Grouping, Framing, Auto layout and Team Library', preview: false, duration: '30:56', url: 'https://dai.ly/x9ty7fq' },
-          { title: 'Design styles and Shortcut keys in Figma', preview: false, duration: '41:13', url: 'https://dai.ly/x9ty7fo' },
-          { title: 'Project of Designing Mobile app pages', preview: false, duration: '32:15', url: 'https://dai.ly/x9ty7fk' },
-          { title: 'Web page designing using Shape blocking method', preview: false, duration: '32:08', url: 'https://dai.ly/x9ty7fs' },
-          { title: 'Tips to work in Figma Efficiently', preview: false, duration: '21:31', url: 'https://dai.ly/x9ty7fu' },
-          { title: 'Making rounded text, exporting and sharing link in Figma', preview: false, duration: '12:22', url: 'https://dai.ly/x9ty7fy' },
+          { title: 'Variables, data types, and operators', preview: true, duration: '09:20', url: 'https://dai.ly/x9u2rj0' },
+          { title: 'Control Flow: Conditionals and Loops', preview: true, duration: '06:14', url: 'https://dai.ly/x9u2riy' },
+          { title: 'Functions and Modules', preview: false, duration: '07:08', url: 'https://dai.ly/x9u2riw' },
+          { title: 'Functions with Inputs', preview: false, duration: '08:10', url: 'https://dai.ly/x9u577i' },
         ]
       },
       {
-        title: 'Phần 2: Adobe XD',
+        title: 'Module 2: Data Manipulation with Python',
         lectures: [
-          { title: 'INTRO', preview: false, duration: '02:49', url: 'https://dai.ly/x9ty7fw' },
-          { title: 'What is Adobe XD', preview: false, duration: '06:32', url: 'https://dai.ly/x9ty7k0' },
-          { title: 'Difference between UI _ UX', preview: false, duration: '04:59', url: 'https://dai.ly/x9ty7k2' },
-          { title: 'Persona _ Task Flow in UX', preview: false, duration: '10:18', url: 'https://dai.ly/x9ty7k6' },
-          { title: 'Wireframe (High Fidelity _ Low Fidelity)', preview: false, duration: '09:28', url: 'https://dai.ly/x9ty7o2' },
-          { title: 'Art Boards', preview: false, duration: '10:03', url: 'https://dai.ly/x9u2o1g' },
-          { title: 'Working With Text', preview: false, duration: '12:19', url: 'https://dai.ly/x9u2o1e' },
-          { title: 'Creating rectangle, circle and triangle and edit them in adobe XD for UI UX', preview: false, duration: '12:41', url: 'https://dai.ly/x9u2o1i' },
-          { title: 'Using Colors in Adobe XD', preview: false, duration: '07:46', url: 'https://dai.ly/x9u2o1m' },
-          { title: 'Strokes _ Copy pasting Appearance', preview: false, duration: '20:04', url: 'https://dai.ly/x9u2o1k' },
-          { title: 'Icons', preview: false, duration: '12:21', url: 'https://dai.ly/x9u2o1o' },
-          { title: 'UI KIT', preview: false, duration: '07:53', url: 'https://dai.ly/x9u2rgo' },
-          { title: 'Prototyping', preview: false, duration: '08:58', url: 'https://dai.ly/x9u2o1q' },
-          { title: 'Project: Educational Site', preview: false, duration: '01:12:25', url: 'https://dai.ly/kXwsL6siwqqUGRE1Lsy' },
-          { title: 'Project: Resturant site', preview: false, duration: '01:00:47', url: 'https://dai.ly/x9u2o1s' },
+          { title: 'Understanding Arrays and Matrices', preview: false, duration: '07:40', url: 'https://dai.ly/x9u577e' },
+          { title: 'Array Operations', preview: false, duration: '08:06', url: 'https://dai.ly/x9u577c' },
+          { title: 'DataFrames and Series', preview: false, duration: '06:53', url: 'https://dai.ly/x9u577g' },
+          { title: 'Data Cleaning and Preparation', preview: false, duration: '08:23', url: 'https://dai.ly/x9u577s' },
+          { title: 'Handling Missing Data', preview: false, duration: '06:47', url: 'https://dai.ly/x9u577a' },
+          { title: 'Merging and Joining Data', preview: false, duration: '09:09', url: 'https://dai.ly/x9u577k' },
+          { title: 'Sorting and Filtering Data', preview: false, duration: '10:41', url: 'https://dai.ly/x9u577q' },
+          { title: 'Grouping and Aggregation', preview: false, duration: '09:36', url: 'https://dai.ly/x9u577m' },
+        ]
+      },
+      {
+        title: 'Module 3: Data Visualization',
+        lectures: [
+          { title: 'Basic Plots: Line, Bar, Scatter', preview: false, duration: '11:52', url: 'https://dai.ly/x9u577o' },
+          { title: 'Customizing Plots', preview: false, duration: '10:59', url: 'https://dai.ly/x9u57dg' },
+          { title: 'Subplots and Figures', preview: false, duration: '06:18', url: 'https://dai.ly/x9u57dk' },
+          { title: 'Creating Interactive Charts', preview: false, duration: '09:26', url: 'https://dai.ly/x9u57di' },
+        ]
+      },
+      {
+        title: 'Module 4: Statistical Analysis',
+        lectures: [
+          { title: 'Measures of Central Tendency', preview: false, duration: '08:25', url: 'https://dai.ly/x9u57nk' },
+          { title: 'Measures of Variability', preview: false, duration: '07:29', url: 'https://dai.ly/x9u9ad6' },
+          { title: 'Normal, Binomial, and Other Distributions', preview: false, duration: '12:29', url: 'https://dai.ly/x9u9ad4' },
+          { title: 'Null and Alternative Hypotheses', preview: false, duration: '09:06', url: 'https://dai.ly/x9u9ad8' },
+        ]
+      },
+      {
+        title: 'Module 5: Introduction to Machine Learning',
+        lectures: [
+          { title: 'Feature Scaling and Normalization', preview: false, duration: '08:03', url: 'https://dai.ly/x9u9hws' },
+          { title: 'Encoding Categorical Variables', preview: false, duration: '11:59', url: 'https://dai.ly/x9u9hwy' },
+          { title: 'Handling Imbalanced Data', preview: false, duration: '09:25', url: 'https://dai.ly/x9u9hwu' },
+          { title: 'Linear and Logistic Regression', preview: false, duration: '11:23', url: 'https://dai.ly/x9u9hww' },
+        ]
+      },
+      {
+        title: 'Module 6: Advanced Topics in Data Science',
+        lectures: [
+          { title: 'Introduction to Time Series Data', preview: false, duration: '07:02', url: 'https://dai.ly/x9u9hzu' },
+          { title: 'Decomposition, ARIMA Models', preview: false, duration: '10:57', url: 'https://dai.ly/x9u9hzw' },
+          { title: 'Text Preprocessing', preview: false, duration: '08:09', url: 'https://dai.ly/x9u9hzs' },
+          { title: 'Sentiment Analysis', preview: false, duration: '05:53', url: 'https://dai.ly/x9u9hzy' },
         ]
       }
     ];
@@ -126,14 +145,13 @@ By the end of this course, you'll be equipped with the expertise to create capti
       if (parts.length === 3) {
         const [h, m, s] = parts;
         return h * 3600 + m * 60 + s;
-      } else {
-        const [m, s] = parts;
-        return m * 60 + s;
       }
+      const [m, s] = parts;
+      return m * 60 + s;
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Figma', 'Công cụ thiết kế', 'Thiết kế'];
+    const categoryNames = ['Python', 'Khoa học dữ liệu', 'Phát triển'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -145,7 +163,7 @@ By the end of this course, you'll be equipped with the expertise to create capti
       categoryIds.push(cat._id);
     }
 
-    // ====== Create course ======
+    // ====== Create / Update course ======
     const slug = slugify(title);
     let course = await Course.findOne({ slug });
 
@@ -158,13 +176,13 @@ By the end of this course, you'll be equipped with the expertise to create capti
 
     course.title = title;
     course.slug = slug;
-    course.thumbnail = '';        // cập nhật sau nếu có
+    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6137323_e6a1_3.jpg';
     course.previewUrl = '';
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 869000;
-    course.priceDiscount = 169000;
-    course.level = 'beginner';
+    course.price = 399000;               // bạn có thể đổi thành giá thực: ví dụ 799000
+    course.priceDiscount = 199000;
+    course.level = 'alllevels';    // hoặc 'beginner' / 'intermediate'
     course.language = 'en';
     course.requirements = requirements;
     course.learnOutcomes = learnOutcomes;
@@ -182,9 +200,9 @@ By the end of this course, you'll be equipped with the expertise to create capti
     let totalLectures = 0;
     const sectionIds = [];
 
-    for (let secIdx = 0; secIdx < sectionsData.length; secIdx++) {
-      const secData = sectionsData[secIdx];
-      const sectionOrder = secIdx + 1;
+    for (let s = 0; s < sectionsData.length; s++) {
+      const secData = sectionsData[s];
+      const sectionOrder = s + 1;
 
       let section = await Section.findOne({ course: course._id, title: secData.title });
       if (!section) {
@@ -198,17 +216,14 @@ By the end of this course, you'll be equipped with the expertise to create capti
       }
 
       const lectureIds = [];
-      let lectureOrder = 1;
+      let lecOrder = 1;
 
       for (const L of secData.lectures) {
         const duration = toSeconds(L.duration);
         totalSeconds += duration;
         totalLectures++;
 
-        let lec = await Lecture.findOne({
-          section: section._id,
-          title: L.title,
-        });
+        let lec = await Lecture.findOne({ section: section._id, title: L.title });
 
         if (!lec) {
           lec = await Lecture.create({
@@ -216,21 +231,21 @@ By the end of this course, you'll be equipped with the expertise to create capti
             videoUrl: L.url,
             duration,
             section: section._id,
-            order: lectureOrder,
+            order: lecOrder,
             isPreviewFree: !!L.preview,
           });
           console.log(`   Created lecture: ${L.title} (${L.duration})`);
         } else {
           lec.videoUrl = L.url;
           lec.duration = duration;
-          lec.order = lectureOrder;
+          lec.order = lecOrder;
           lec.isPreviewFree = !!L.preview;
           await lec.save();
           console.log(`   Updated lecture: ${L.title}`);
         }
 
         lectureIds.push(lec._id);
-        lectureOrder++;
+        lecOrder++;
       }
 
       section.lectures = lectureIds;
@@ -238,25 +253,25 @@ By the end of this course, you'll be equipped with the expertise to create capti
       sectionIds.push(section._id);
     }
 
-    // Update course with sections & totals
+    // ====== Update course totals ======
     course.sections = sectionIds;
     course.totalLectures = totalLectures;
     course.totalDurationSeconds = totalSeconds;
-    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~10.55 giờ
+    course.totalHours = Number((totalSeconds / 3600).toFixed(2));
 
     await course.save();
 
-    console.log('\n✅ DONE!');
-    console.log('Course ID:', course._id.toString());
-    console.log('Total sections:', sectionsData.length);
-    console.log('Total lectures:', course.totalLectures);
-    console.log('Total duration:', `${Math.floor(totalSeconds / 3600)}h ${Math.floor((totalSeconds % 3600) / 60)}m`);
-    console.log('Total hours (float):', course.totalHours);
+    console.log('\nDONE!');
+    console.log('Course ID      :', course._id.toString());
+    console.log('Total sections :', sectionsData.length);
+    console.log('Total lectures :', course.totalLectures);
+    console.log('Total duration :', `${Math.floor(totalSeconds / 3600)}h ${Math.floor((totalSeconds % 3600) / 60)}m`);
+    console.log('Total hours    :', course.totalHours);
 
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error:', err);
+    console.error('Error:', err);
     process.exit(1);
   }
 })();
