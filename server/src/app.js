@@ -6,14 +6,14 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/user/user.routes.js"
 import adminRoutes from "./modules/admin/admin.routes.js";
-// import categoryRoutes from "./modules/category/category.routes.js";
+import categoryRoutes from "./modules/category/category.routes.js";
 import courseRoutes from "./modules/course/course.routes.js";
 // import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
 // import paymentRoutes from "./modules/payment/payment.routes.js";
 // import progressRoutes from "./modules/progress/progress.routes.js";
 // import reviewRoutes from "./modules/review/review.routes.js";
-// import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
-
+import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
+import { verifyToken } from "./middlewares/auth.middleware.js"
 
 const app = express();
 
@@ -28,15 +28,15 @@ app.use(morgan("dev"));
 
 
 app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
+app.use("/api/users", verifyToken, userRoutes);
 app.use("/api/admin", adminRoutes);
-// app.use("/api/categories", categoryRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/courses", courseRoutes);
 // app.use("/api/enrollments", enrollmentRoutes);
 // app.use("/api/payments", paymentRoutes);
 // app.use("/api/progress", progressRoutes);
 // app.use("/api/reviews", reviewRoutes);
-// app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/wishlist", verifyToken, wishlistRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

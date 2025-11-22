@@ -1,7 +1,7 @@
 // src/components/common/ProfileSidebar.jsx
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Grid, User, Settings, LogOut } from 'lucide-react';
+import { Grid, User, Settings, LogOut, Heart } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 
@@ -53,6 +53,11 @@ const ProfileSidebar = () => {
               to="/profile"
               icon={<User size={18} className="mr-2" />}
               label="My Profile"
+            />
+            <SidebarLink
+              to="/profile/wishlist"
+              icon={<Heart size={18} className="mr-2" />}
+              label="Wishlist"
             />
             {/* (Thêm các link khác từ HTML vào đây: Enrolled Courses, Wishlist...) */}
           </ul>

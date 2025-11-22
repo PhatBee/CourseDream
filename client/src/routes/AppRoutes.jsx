@@ -14,6 +14,7 @@ import MyProfile from '../components/profile/MyProfile';
 import SettingsPage from '../pages/SettingsPage';
 import EditProfile from '../components/profile/EditProfile';
 import ChangePassword from '../components/profile/ChangePassword';
+import WishlistPage from "../pages/WishlistPage";
 
 export default function AppRoutes() {
   return (
@@ -23,6 +24,8 @@ export default function AppRoutes() {
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/courses/:slug" element={<CourseDetail />} />
+
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -30,7 +33,6 @@ export default function AppRoutes() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
           <Route path="/set-password" element={<SetPassword />} />
-          <Route path="/courses/:slug" element={<CourseDetail />} />
           <Route path="/profile" element={<ProfileLayout />}>
             
             {/* 1. Trang My Profile (Ảnh 1) */}
@@ -45,6 +47,7 @@ export default function AppRoutes() {
               {/* Khi vào /profile/settings, tự động nhảy sang /edit */}
               <Route index element={<Navigate to="edit" replace />} />
             </Route>
+            <Route path="wishlist" element={<WishlistPage />} />
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />

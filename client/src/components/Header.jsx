@@ -170,7 +170,7 @@ const Header = () => {
                         </li>
                         <li>
                           <Link
-                            to="/settings"
+                            to="/profile/settings/edit"
                             className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
                           >
                             <Settings className="h-4 w-4 text-rose-500" />

@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import courseService from './courseService';
+import { courseApi } from '../../api/courseApi';
 
 const initialState = {
+  items: [],
   course: null,
   reviews: [],
   reviewCount: 0,
@@ -9,6 +11,20 @@ const initialState = {
   isError: false,
   message: '',
 };
+
+export const getAllCourses = createAsyncThunk(
+  'courses/getAll',
+  async (params, thunkAPI) => {
+    try {
+      // Gọi route GET /courses mà ta vừa tạo ở backend
+      const response = await courseApi.getAllCourses(params);
+      // Backend trả về { success: true, data: [...] }
+      return response.data.data; 
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message || 'Error fetching courses');
+    }
+  }
+);
 
 // Async Thunk: Lấy chi tiết khóa học
 export const getCourseDetails = createAsyncThunk(
@@ -58,6 +74,18 @@ export const courseSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
         state.course = null;
+      })
+      .addCase(getAllCourses.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAllCourses.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
+      .addCase(getAllCourses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });
