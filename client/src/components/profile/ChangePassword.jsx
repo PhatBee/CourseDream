@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePassword, reset } from '../../features/auth/authSlice';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 
 const ChangePassword = () => {
   const dispatch = useDispatch();
@@ -19,14 +19,12 @@ const ChangePassword = () => {
   // Xử lý khi có lỗi hoặc thành công từ Redux
   useEffect(() => {
     if (isError && message) {
-      toast.error(message);
-      alert('Lỗi: ' + message);
+      toast.error('Lỗi: ' + message);
     }
-    
+
     // 'Cập nhật mật khẩu thành công.'
     if (!isLoading && !isError && message.includes('Cập nhật mật khẩu')) {
       toast.success(message);
-      alert(message);
       setFormData({ oldPassword: '', newPassword: '', confirmPassword: '' });
     }
     dispatch(reset()); // Reset state
@@ -45,10 +43,9 @@ const ChangePassword = () => {
     // Kiểm tra mật khẩu nhập lại
     if (newPassword !== confirmPassword) {
       toast.error('Mật khẩu nhập lại không khớp!');
-      alert('Mật khẩu nhập lại không khớp!');
       return;
     }
-    
+
     dispatch(changePassword({ oldPassword, newPassword }));
   };
 
@@ -56,7 +53,7 @@ const ChangePassword = () => {
     <div className="bg-white p-5 rounded-lg shadow-md text-left">
       <h5 className="text-xl font-bold mb-4">Security</h5>
       <form onSubmit={onSubmit} className="space-y-4 max-w-lg">
-        
+
         {/* Mật khẩu cũ */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -101,11 +98,11 @@ const ChangePassword = () => {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
-        
+
         {/* Nút Submit */}
         <div>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isLoading}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
           >
