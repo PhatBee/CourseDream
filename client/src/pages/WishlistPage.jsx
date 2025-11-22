@@ -7,7 +7,7 @@ import RemoveModal from '../components/common/RemoveModal';
 import { Trash2, HeartOff } from 'lucide-react';
 import Spinner from '../components/common/Spinner';
 
-const ITEMS_PER_PAGE = 1;
+const ITEMS_PER_PAGE = 6;
 
 const WishlistPage = () => {
     const dispatch = useDispatch();

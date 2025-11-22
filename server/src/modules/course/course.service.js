@@ -58,3 +58,20 @@ export const getCourseDetailsBySlug = async (slug) => {
     reviewCount,
   };
 };
+
+export const getAllCourses = async (query) => {
+  const filter = { status: 'published' };
+
+  if (query.category) {
+  }
+
+  const courses = await Course.find(filter)
+    .select('title slug thumbnail price priceDiscount level rating reviewCount instructor categories')
+    .populate('instructor', 'name avatar')
+    .populate('categories', 'name slug')
+    .sort({ createdAt: -1 })
+    .limit(12)
+    .lean();
+
+  return courses;
+};

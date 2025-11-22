@@ -10,6 +10,20 @@ const initialState = {
   message: '',
 };
 
+export const getAllCourses = createAsyncThunk(
+  'courses/getAll',
+  async (_, thunkAPI) => {
+    try {
+      // Gọi route GET /courses mà ta vừa tạo ở backend
+      const response = await axiosClient.get('/courses');
+      // Backend trả về { success: true, data: [...] }
+      return response.data.data; 
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message || 'Error fetching courses');
+    }
+  }
+);
+
 // Async Thunk: Lấy chi tiết khóa học
 export const getCourseDetails = createAsyncThunk(
   'course/getDetails',
@@ -58,6 +72,18 @@ export const courseSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
         state.course = null;
+      })
+      .addCase(getAllCourses.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAllCourses.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
+      .addCase(getAllCourses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });
