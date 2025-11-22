@@ -1,11 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosClient from '../../api/axiosClient';
+// Thay đổi import từ axiosClient sang categoryApi
+import { categoryApi } from '../../api/categoryApi'; 
 
 export const getCategories = createAsyncThunk(
   'categories/getAll',
   async (_, thunkAPI) => {
     try {
-      const response = await axiosClient.get('/categories');
+      // Gọi qua API chuẩn
+      const response = await categoryApi.getAllCategories();
       return response.data.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);

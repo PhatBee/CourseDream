@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import courseService from './courseService';
+import { courseApi } from '../../api/courseApi';
 
 const initialState = {
+  items: [],
   course: null,
   reviews: [],
   reviewCount: 0,
@@ -12,10 +14,10 @@ const initialState = {
 
 export const getAllCourses = createAsyncThunk(
   'courses/getAll',
-  async (_, thunkAPI) => {
+  async (params, thunkAPI) => {
     try {
       // Gọi route GET /courses mà ta vừa tạo ở backend
-      const response = await axiosClient.get('/courses');
+      const response = await courseApi.getAllCourses(params);
       // Backend trả về { success: true, data: [...] }
       return response.data.data; 
     } catch (error) {
