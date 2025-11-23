@@ -12,56 +12,26 @@ const ITEMS_PER_PAGE = 6;
 const WishlistPage = () => {
     const dispatch = useDispatch();
     const { items: reduxItems, isLoading } = useSelector((state) => state.wishlist);
-
     const [displayItems, setDisplayItems] = useState([]);
-
     const [currentPage, setCurrentPage] = useState(1);
     const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => {
-        dispatch(getWishlist());
-    }, [dispatch]);
+    useEffect(() => { dispatch(getWishlist()); }, [dispatch]);
 
     useEffect(() => {
         setDisplayItems(prev => {
-            if (prev.length === 0 && reduxItems.length > 0) {
-                return reduxItems;
-            }
-
+            if (prev.length === 0 && reduxItems.length > 0) return reduxItems;
             const existingIds = new Set(prev.map(item => item._id));
             const newItems = reduxItems.filter(item => !existingIds.has(item._id));
-
-            if (newItems.length > 0) {
-                return [...prev, ...newItems];
-            }
-
-            return prev;
+            return newItems.length > 0 ? [...prev, ...newItems] : prev;
         });
     }, [reduxItems]);
 
-    // --- Logic Phân trang ---
-    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
-    const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-    const currentItems = displayItems.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(displayItems.length / ITEMS_PER_PAGE);
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    // Handlers cho Modal
-    const handleOpenClearModal = () => setIsRemoveModalOpen(true);
-    const handleCloseModal = () => setIsRemoveModalOpen(false);
-
     const handleToggleItem = (courseId) => {
         const isCurrentlyInWishlist = reduxItems.some(item => item._id === courseId);
-        if (isCurrentlyInWishlist) {
-            dispatch(removeFromWishlist(courseId));
-        }else {
-            dispatch(addToWishlist(courseId));
-        }
+        if (isCurrentlyInWishlist) dispatch(removeFromWishlist(courseId));
+        else dispatch(addToWishlist(courseId));
     };
 
     const handleConfirmClear = async () => {
@@ -71,33 +41,29 @@ const WishlistPage = () => {
             setIsRemoveModalOpen(false);
             setDisplayItems([]);
             setCurrentPage(1);
-        } catch (error) {
-            console.error("Failed to clear wishlist:", error);
-        } finally {
-            setIsDeleting(false);
-        }
+        } catch (error) { console.error("Failed:", error); } 
+        finally { setIsDeleting(false); }
     };
 
-    if (isLoading && displayItems.length === 0) {
-        return <div className="flex justify-center items-center h-64"><Spinner /></div>;
-    }
+    // Loading State
+    if (isLoading && displayItems.length === 0) return <div className="flex justify-center h-64"><Spinner /></div>;
 
     return (
-        <div className="space-y-6">
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 md:p-8 min-h-[500px]">
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-                <h2 className="text-2xl font-bold text-gray-800">
-                    Wishlist <span className="text-gray-500 text-lg font-normal">({reduxItems.length})</span>
-                </h2>
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800 text-left">Wishlist</h2>
+                    <p className="text-sm text-gray-500 mt-1">Courses you have saved for later</p>
+                </div>
 
-                {/* Nút Remove All chỉ hiện khi còn item thực trong Redux */}
                 {reduxItems.length > 0 && (
                     <button
-                        onClick={handleOpenClearModal}
-                        className="flex items-center text-rose-500 hover:text-rose-700 text-sm font-medium transition-colors px-3 py-2 rounded-lg hover:bg-rose-50"
+                        onClick={() => setIsRemoveModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
                     >
-                        <Trash2 size={16} className="mr-1.5" />
-                        Remove All
+                        <Trash2 size={18} />
+                        Clear All
                     </button>
                 )}
             </div>
@@ -105,10 +71,9 @@ const WishlistPage = () => {
             {/* Content */}
             {displayItems.length > 0 ? (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-fadeIn">
-                        {currentItems.map((course) => {
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+                        {displayItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((course) => {
                             const isLiked = reduxItems.some(item => item._id === course._id);
-                            
                             return (
                                 <CourseCard
                                     key={course._id}
@@ -121,34 +86,35 @@ const WishlistPage = () => {
                         })}
                     </div>
 
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                    />
+                    {/* Pagination */}
+                    <div className="mt-8">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={Math.ceil(displayItems.length / ITEMS_PER_PAGE)}
+                            onPageChange={(page) => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        />
+                    </div>
                 </>
             ) : (
                 // Empty State
-                <div className="text-center py-16 bg-white rounded-lg border border-dashed border-gray-300 animate-fadeIn">
-                    <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-gray-50 rounded-full">
-                            <HeartOff size={40} className="text-gray-400" />
-                        </div>
+                <div className="text-center py-20">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <HeartOff size={40} className="text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">Your wishlist is empty</h3>
-                    <p className="text-gray-500 mt-1 mb-6">Explore courses and add them to your wishlist.</p>
-                    <a href="/courses" className="px-6 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-medium inline-block">
-                        Explore Coursess
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Your wishlist is empty</h3>
+                    <p className="text-gray-500 mb-8 max-w-md mx-auto">Looks like you haven't added any courses yet. Browse our catalog to find something you like!</p>
+                    <a href="/courses" className="inline-flex px-6 py-3 bg-rose-500 text-white rounded-full font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-200">
+                        Explore Courses
                     </a>
                 </div>
             )}
 
             <RemoveModal
                 isOpen={isRemoveModalOpen}
-                onClose={handleCloseModal}
+                onClose={() => setIsRemoveModalOpen(false)}
                 onConfirm={handleConfirmClear}
                 title="Clear Wishlist"
-                message="Are you sure you want to remove all courses from your wishlist? This action cannot be undone."
+                message="Are you sure you want to remove all items?"
                 confirmLabel="Yes, Clear All"
                 isDeleting={isDeleting}
             />
