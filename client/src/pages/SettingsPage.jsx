@@ -31,9 +31,9 @@ const SettingsPage = () => {
         <ul className="flex flex-wrap -mb-px">
           <SettingsTab to="/profile/settings/edit" label="Edit Profile" />
           <SettingsTab to="/profile/settings/security" label="Security" />
-          <SettingsTab to="/profile/settings/social" label="Social Profiles" />
+          {/* <SettingsTab to="/profile/settings/social" label="Social Profiles" />
           <SettingsTab to="/profile/settings/linked" label="Linked Accounts" />
-          <SettingsTab to="/profile/settings/notifications" label="Notifications" />
+          <SettingsTab to="/profile/settings/notifications" label="Notifications" /> */}
         </ul>
       </div>
 
