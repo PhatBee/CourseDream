@@ -15,6 +15,7 @@ import SettingsPage from '../pages/SettingsPage';
 import EditProfile from '../components/profile/EditProfile';
 import ChangePassword from '../components/profile/ChangePassword';
 import WishlistPage from "../pages/WishlistPage";
+import CoursePage from "../pages/CoursePage"
 
 export default function AppRoutes() {
   return (
@@ -24,6 +25,7 @@ export default function AppRoutes() {
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/courses" element={<CoursePage />} />
             <Route path="/courses/:slug" element={<CourseDetail />} />
 
           </Route>
