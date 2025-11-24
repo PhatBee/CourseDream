@@ -9,6 +9,7 @@ import adminRoutes from "./modules/admin/admin.routes.js";
 import categoryRoutes from "./modules/category/category.routes.js";
 import courseRoutes from "./modules/course/course.routes.js";
 import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
+import cartRoutes from "./modules/cart/cart.routes.js";
 import { verifyToken } from "./middlewares/auth.middleware.js"
 import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
 import paymentRoutes from "./modules/payment/payment.routes.js";
@@ -47,6 +48,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/wishlist", verifyToken, wishlistRoutes);
+app.use("/api/cart", verifyToken, cartRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/progress", progressRoutes);
