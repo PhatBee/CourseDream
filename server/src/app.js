@@ -10,6 +10,7 @@ import paymentRoutes from "./modules/payment/payment.routes.js";
 import progressRoutes from "./modules/progress/progress.routes.js";
 import reviewRoutes from "./modules/review/review.routes.js";
 import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
+import instructorRoutes from "./modules/instructor/instructor.routes.js";
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/instructor", instructorRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
