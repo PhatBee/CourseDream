@@ -3,33 +3,41 @@ import cors from "cors";
 import morgan from "morgan";
 
 import authRoutes from "./modules/auth/auth.routes.js";
-// import categoryRoutes from "./modules/category/category.routes.js";
-// import courseRoutes from "./modules/course/course.routes.js";
-// import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
-// import paymentRoutes from "./modules/payment/payment.routes.js";
-// import progressRoutes from "./modules/progress/progress.routes.js";
-// import reviewRoutes from "./modules/review/review.routes.js";
-// import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
-
+import categoryRoutes from "./modules/category/category.routes.js";
+import courseRoutes from "./modules/course/course.routes.js";
+import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
+import paymentRoutes from "./modules/payment/payment.routes.js";
+import progressRoutes from "./modules/progress/progress.routes.js";
+import reviewRoutes from "./modules/review/review.routes.js";
+import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
 
 const app = express();
 
+const allowedOrigins = ["http://localhost:5173"];
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET","HEAD","PUT","PATCH","POST","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization","X-Requested-With"],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:5173', // Specify the allowed origin
-  credentials: true, // Allow credentials
-}));
 app.use(morgan("dev"));
 
-
+// routes
 app.use("/api/auth", authRoutes);
-// app.use("/api/categories", categoryRoutes);
-// app.use("/api/courses", courseRoutes);
-// app.use("/api/enrollments", enrollmentRoutes);
-// app.use("/api/payments", paymentRoutes);
-// app.use("/api/progress", progressRoutes);
-// app.use("/api/reviews", reviewRoutes);
-// app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/progress", progressRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
