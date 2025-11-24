@@ -1,9 +1,9 @@
 import express from "express";
-import { createOrUpdateReview } from "./review.controller.js";
+import { getInstructorStats } from "./instructor.controller.js";
 import { verifyToken } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/:courseId", verifyToken, createOrUpdateReview);
+router.get("/stats", verifyToken, getInstructorStats);
 
 export default router;

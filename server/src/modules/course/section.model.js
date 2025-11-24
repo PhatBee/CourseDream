@@ -6,6 +6,6 @@ const SectionSchema = new mongoose.Schema({
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
   lectures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lecture" }],
   order: Number
-});
+}, { timestamps: true });
 
 export default mongoose.model('Section', SectionSchema);
