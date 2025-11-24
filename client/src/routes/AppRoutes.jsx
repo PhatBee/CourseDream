@@ -15,7 +15,9 @@ import SettingsPage from '../pages/SettingsPage';
 import EditProfile from '../components/profile/EditProfile';
 import ChangePassword from '../components/profile/ChangePassword';
 import WishlistPage from "../pages/WishlistPage";
-import CoursePage from "../pages/CoursePage"
+import CoursePage from "../pages/CoursePage";
+import LearningPage from "../pages/LearningPage";
+import OverviewPage from "../pages/OverviewPage";
 
 export default function AppRoutes() {
   return (
@@ -36,10 +38,10 @@ export default function AppRoutes() {
           <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/profile" element={<ProfileLayout />}>
-            
+
             {/* 1. Trang My Profile (Ảnh 1) */}
             <Route path="my-profile" element={<MyProfile />} />
-            
+
             {/* 2. Trang Settings (Ảnh 2, chứa 2 tab) */}
             <Route path="settings" element={<SettingsPage />}>
               {/* 2a. Tab Edit */}
@@ -54,6 +56,8 @@ export default function AppRoutes() {
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
           </Route>
+          <Route path="/courses/:slug/overview" element={<OverviewPage />} />
+          <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
         </Routes>
       </main>
     </BrowserRouter>
