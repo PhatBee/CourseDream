@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { getCart } from "../features/cart/cartSlice";
+import { getCart, removeFromCart, clearCart } from "../features/cart/cartSlice";
 import cartService from "../features/cart/cartService";
 import { toast } from "react-hot-toast";
 import { Trash2, ShoppingBag, ArrowLeft, Star } from "lucide-react";
@@ -20,28 +20,30 @@ export default function Cart() {
 
     useEffect(() => {
         if (user) {
+            // Chỉ load lần đầu hoặc khi chưa có items (tùy logic, ở đây load lại để đảm bảo giá đúng)
             dispatch(getCart());
         }
     }, [user, dispatch]);
 
-    const handleRemove = async (courseId) => {
+    // 2. Cập nhật hàm xóa 1 item
+    const handleRemove = (courseId) => {
         try {
-            await cartService.removeFromCart(courseId);
-            dispatch(getCart()); // Refresh cart
-            toast.success("Đã xóa khóa học khỏi giỏ hàng");
+            // Gọi Redux action, UI sẽ tự cập nhật khi action fulfilled
+            // Không set isLoading toàn trang nên không bị nháy
+            dispatch(removeFromCart(courseId));
         } catch (error) {
-            toast.error("Lỗi khi xóa khóa học");
+            toast.error("Xóa khóa học thất bại");
         }
     };
 
-    const clearCart = async () => {
+    // 3. Cập nhật hàm xóa toàn bộ
+    const handleClearCart = () => {
         try {
-            await cartService.clearCart();
-            dispatch(getCart()); // Refresh cart
-            toast.success("Đã xóa toàn bộ giỏ hàng");
+            dispatch(clearCart());
         } catch (error) {
-            toast.error("Lỗi khi xóa giỏ hàng");
+            toast.error("Xóa giỏ hàng thất bại");
         }
+
     };
 
     const handleCheckout = () => {
@@ -75,7 +77,9 @@ export default function Cart() {
         );
     }
 
-    if (isLoading) {
+    // Chỉ hiện spinner khi load trang lần đầu (getCart)
+    // Các thao tác xóa/thêm sẽ không kích hoạt isLoading này nếu ta không cấu hình trong slice
+    if (isLoading && items.length === 0) {
         return (
             <div className="w-full min-h-screen flex items-center justify-center">
                 <Spinner />
@@ -83,7 +87,7 @@ export default function Cart() {
         );
     }
 
-    if (items.length === 0) {
+    if (!isLoading && items.length === 0) {
         return (
             <div className="w-full min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
@@ -132,7 +136,7 @@ export default function Cart() {
                                 </h2>
                                 {items.length > 0 && (
                                     <button
-                                        onClick={clearCart}
+                                        onClick={handleClearCart}
                                         className="px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
                                     >
                                         <Trash2 size={16} />
