@@ -111,11 +111,11 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-lg font-bold text-rose-600">
-              {price === 0 ? 'Free' : formatPrice(price)}
+              {priceDiscount === 0 ? 'Free' : formatPrice(priceDiscount)}
             </span>
-            {priceDiscount && (
+            {price && (
               <span className="text-xs text-gray-400 line-through">
-                {formatPrice(priceDiscount)}
+                {formatPrice(price)}
               </span>
             )}
           </div>

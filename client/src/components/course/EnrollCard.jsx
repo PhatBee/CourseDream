@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Share2, ShoppingCart } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import ShareModal from '../common/ShareModal';
+import { toast } from 'react-hot-toast';
 
 const formatPrice = (price) => {
   if (price === 0) return 'FREE';
@@ -17,6 +18,8 @@ const countPercentage = (originalPrice, discountedPrice) => {
 
 const EnrollCard = ({ course }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -34,6 +37,29 @@ const EnrollCard = ({ course }) => {
       // Nếu chưa có -> Thêm
       dispatch(addToWishlist(_id));
     }
+  };
+
+  const handleAddToCart = () => {
+    if (!user) {
+      toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      // navigate('/login'); // Có thể redirect nếu muốn
+      return;
+    }
+    dispatch(addToCart(_id));
+  };
+
+  const handleEnrollNow = () => {
+    if (!user) {
+      toast.info("Vui lòng đăng nhập");
+      return;
+    }
+    // Để tạm thời, sẽ điều chỉnh sau
+    // Logic Enroll Now: Thêm vào giỏ hàng -> Chuyển hướng ngay tới trang giỏ hàng
+    dispatch(addToCart(_id)).then((result) => {
+      if (!result.error) {
+        navigate('/cart');
+      }
+    });
   };
 
   const shareUrl = window.location.origin + '/courses/' + slug;
@@ -76,10 +102,22 @@ const EnrollCard = ({ course }) => {
             </button>
           </div>
 
-          <Link
-            to="/cart"
-            className="btn-primary"> Enroll Now
-          </Link>
+          {/* Add to Cart Button - Primary CTA */}
+          <button
+            onClick={handleAddToCart}
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group"
+          >
+            <ShoppingCart size={20} className="group-hover:scale-110 transition-transform" />
+            Add to Cart
+          </button>
+
+          {/* Enroll Now Button - Secondary CTA */}
+          <button
+            onClick={handleEnrollNow}
+            className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
+          >
+            Enroll Now
+          </button>
         </div>
       </div>
 
