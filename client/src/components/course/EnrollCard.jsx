@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Heart, Share2, ShoppingCart } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import { addToCart } from '../../features/cart/cartSlice'; // Import addToCart
 import ShareModal from '../common/ShareModal';
+import { toast } from 'react-hot-toast';
 
 const formatPrice = (price) => {
   if (price === 0) return 'FREE';
@@ -18,6 +19,7 @@ const countPercentage = (originalPrice, discountedPrice) => {
 
 const EnrollCard = ({ course }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
@@ -44,8 +46,7 @@ const EnrollCard = ({ course }) => {
       // navigate('/login'); // Có thể redirect nếu muốn
       return;
     }
-    // Gọi action addToCart với _id của khóa học
-    dispatch(addToCart(course._id));
+    dispatch(addToCart(_id));
   };
 
   const handleEnrollNow = () => {
@@ -55,7 +56,7 @@ const EnrollCard = ({ course }) => {
     }
     // Để tạm thời, sẽ điều chỉnh sau
     // Logic Enroll Now: Thêm vào giỏ hàng -> Chuyển hướng ngay tới trang giỏ hàng
-    dispatch(addToCart(course._id)).then((result) => {
+    dispatch(addToCart(_id)).then((result) => {
       if (!result.error) {
         navigate('/cart');
       }
@@ -116,7 +117,7 @@ const EnrollCard = ({ course }) => {
           {/* Enroll Now Button - Secondary CTA */}
           <button
             onClick={handleEnrollNow}
-            className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200 block text-center"
+            className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
           >
             Enroll Now
           </button>
