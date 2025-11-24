@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
   name: String,
-  email: { 
-    type: String, 
+  email: {
+    type: String,
     required: true, // Nên thêm required
     unique: true,
     lowercase: true, // Nên thêm để đảm bảo tính duy nhất
@@ -18,15 +18,22 @@ const UserSchema = new mongoose.Schema({
     enum: ['local', 'google', 'facebook'],
     default: 'local',
   },
+  linkedAccounts: [
+    {
+      provider: { type: String, enum: ["google", "facebook"] },
+      providerId: String, // Google user id, Facebook user id
+      email: String,
+    }
+  ],
   phone: {
     type: String,
     default: null,
-    unique: true,
+    sparse: true, // Cho phép nhiều giá trị null
   },
-  role: { 
-    type: String, 
-    enum: ["student", "instructor", "admin"], 
-    default: "student" 
+  role: {
+    type: String,
+    enum: ["student", "instructor", "admin"],
+    default: "student"
   },
   isVerified: {
     type: Boolean,
@@ -43,6 +50,22 @@ const UserSchema = new mongoose.Schema({
   avatar: String,
   bio: String,
   expertise: [String], // dành cho instructor
+
+  instructorApplication: {
+    status: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none'
+    },
+    reason: String, // Lý do/kinh nghiệm họ nhập vào form
+    submittedAt: Date,
+    reviewedAt: Date,
+    adminNotes: String // Admin ghi chú khi duyệt
+  },
+  refreshToken: {
+    type: String,
+    default: null,
+  }
 }, { timestamps: true });
 
 /**
@@ -53,12 +76,16 @@ const UserSchema = new mongoose.Schema({
  * NHƯNG CHỈ KHI `isVerified` vẫn là `false`.
  */
 UserSchema.index(
-  { otpExpires: 1 }, 
-  { 
-    expireAfterSeconds: 0, 
-    partialFilterExpression: { isVerified: false } 
+  { otpExpires: 1 },
+  {
+    expireAfterSeconds: 0,
+    partialFilterExpression: { isVerified: false }
   }
 );
+
+// Tạo sparse index cho phone để cho phép nhiều giá trị null
+// nhưng vẫn đảm bảo unique cho các giá trị không null
+UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model('User', UserSchema);
 export default User;

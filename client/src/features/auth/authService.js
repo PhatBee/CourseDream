@@ -1,5 +1,6 @@
-
 import { authApi } from "../../api/authApi";
+import { userApi } from "../../api/userApi";
+
 /**
  * Gọi API đăng nhập
  * @param {object} userData - { email, password }
@@ -8,10 +9,9 @@ import { authApi } from "../../api/authApi";
 const login = async (userData) => {
   const response = await authApi.login(userData);
 
-  // Nếu đăng nhập thành công, lưu token và user vào localStorage
+  // Nếu đăng nhập thành công, lưu user vào localStorage (không lưu token)
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data.user));
-    localStorage.setItem('token', JSON.stringify(response.data.token));
   }
 
   return response.data;
@@ -20,9 +20,13 @@ const login = async (userData) => {
 /**
  * Đăng xuất
  */
-const logout = () => {
+const logout = async () => {
+  try {
+    await authApi.logout(); // Gọi API logout để xóa cookie
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
   localStorage.removeItem('user');
-  localStorage.removeItem('token');
 };
 
 /**
@@ -54,10 +58,9 @@ const verifyOTP = async (otpData) => {
 const googleLogin = async (credential) => {
   const response = await authApi.googleLogin(credential);
 
-  // Nếu đăng nhập thành công, lưu token và user vào localStorage
+  // Nếu đăng nhập thành công, lưu user vào localStorage
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data.user));
-    localStorage.setItem('token', JSON.stringify(response.data.token));
   }
 
   return response.data;
@@ -71,10 +74,9 @@ const googleLogin = async (credential) => {
 const facebookLogin = async (accessToken) => {
   const response = await authApi.facebookLogin(accessToken);
 
-  // Nếu đăng nhập thành công, lưu token và user vào localStorage
+  // Nếu đăng nhập thành công, lưu user vào localStorage
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data.user));
-    localStorage.setItem('token', JSON.stringify(response.data.token));
   }
 
   return response.data;
@@ -95,11 +97,40 @@ const verifyResetOTP = async (otpData) => {
   const response = await authApi.verifyResetOTP(otpData);
   return response.data; // Sẽ chứa resetToken
 };
+
 /**
  * Gọi API Đặt mật khẩu mới
  */
 const setPassword = async (passwordData) => {
   const response = await authApi.setPassword(passwordData);
+  return response.data;
+};
+
+/**
+ * Lấy thông tin profile hiện tại từ server
+ */
+const getProfile = async () => {
+  const response = await userApi.getProfile();
+  if (response.data.data) {
+    updateUserInStorage(response.data.data);
+  }
+  return response.data;
+};
+
+const updateUserInStorage = (userData) => {
+  localStorage.setItem('user', JSON.stringify(userData));
+};
+
+const updateProfile = async (profileData) => {
+  const response = await userApi.updateProfile(profileData);
+  if (response.data.data) {
+    updateUserInStorage(response.data.data);
+  }
+  return response.data;
+};
+
+const changePassword = async (passwordData) => {
+  const response = await userApi.changePassword(passwordData);
   return response.data;
 };
 
@@ -113,6 +144,10 @@ const authService = {
   forgotPassword,
   verifyResetOTP,
   setPassword,
+  getProfile,
+  updateProfile,
+  changePassword,
+  updateUserInStorage,
 };
 
 export default authService;

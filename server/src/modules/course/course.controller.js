@@ -1,7 +1,40 @@
+// Thay đổi 'require' thành 'import'
+import * as courseService from './course.service.js';
 import Course from "./course.model.js";
 import Lecture from "./lecture.model.js";
 import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
+
+
+/**
+ * @desc    Lấy chi tiết khóa học
+ * @route   GET /api/v1/courses/:slug
+ */
+export const getCourseDetailsBySlug = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const data = await courseService.getCourseDetailsBySlug(slug);
+
+    res.status(200).json({
+      success: true,
+      data: data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCourses = async (req, res, next) => {
+  try {
+    const courses = await courseService.getAllCourses(req.query);
+    res.status(200).json({
+      success: true,
+      data: courses
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const searchCourses = async (req, res, next) => {
   try {
@@ -10,10 +43,12 @@ export const searchCourses = async (req, res, next) => {
     const limit = parseInt(req.query.limit || "12", 10);
     const skip = (page - 1) * limit;
 
-    const filter = q ? { $or: [
-      { title: { $regex: q, $options: "i" } },
-      { description: { $regex: q, $options: "i" } }
-    ]} : {};
+    const filter = q ? {
+      $or: [
+        { title: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } }
+      ]
+    } : {};
 
     const [total, courses] = await Promise.all([
       Course.countDocuments(filter),

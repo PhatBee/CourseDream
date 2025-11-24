@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const ReviewSchema = new mongoose.Schema({
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
@@ -7,4 +7,4 @@ const ReviewSchema = new mongoose.Schema({
   comment: String
 }, { timestamps: true });
 
-export default mongoose.model("Review", ReviewSchema);
+export default mongoose.model('Review', ReviewSchema);

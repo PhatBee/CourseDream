@@ -1,15 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from './authService';
 
-// Lấy thông tin user và token từ localStorage (nếu có) khi tải lại trang
+// Lấy thông tin user từ localStorage (nếu có) khi tải lại trang
 const user = JSON.parse(localStorage.getItem('user'));
-const token = JSON.parse(localStorage.getItem('token'));
 
 const initialState = {
   user: user ? user : null,
-  token: token ? token : null,
   isError: false,
-  // isSuccess: false,
+  isSuccess: false,
   isLoading: false,
   message: '',
   isRegisterSuccess: false, // Cho trang Register
@@ -168,6 +166,57 @@ export const setNewPassword = createAsyncThunk(
   }
 );
 
+export const updateProfile = createAsyncThunk(
+  'user/updateProfile',
+  async (profileData, thunkAPI) => {
+    try {
+      // 'profileData' là { name, avatar, bio }
+      return await authService.updateProfile(profileData);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  }
+);
+
+export const changePassword = createAsyncThunk(
+  'user/changePassword',
+  async (passwordData, thunkAPI) => {
+    try {
+      return await authService.changePassword(passwordData);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  }
+);
+
+// === GET PROFILE ===
+export const getProfile = createAsyncThunk(
+  "auth/getProfile",
+  async (_, thunkAPI) => {
+    try {
+      return await authService.getProfile(); // Trả về { success, data }
+    } catch (error) {
+      const message =
+        (error.response && error.response.data && error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -215,7 +264,6 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user; // Lấy user từ payload
-        state.token = action.payload.token; // Lấy token từ payload
       })
       // Xử lý khi 'login' thất bại (rejected)
       .addCase(login.rejected, (state, action) => {
@@ -223,12 +271,13 @@ export const authSlice = createSlice({
         state.isError = true;
         state.message = action.payload; // Lấy thông báo lỗi từ payload
         state.user = null;
-        state.token = null;
       })
       // Xử lý khi 'logout'
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
-        state.token = null;
+        state.isSuccess = false;
+        state.isError = false;
+        state.message = '';
       })
       // === REGISTER CASES ===
       .addCase(register.pending, (state) => {
@@ -246,7 +295,6 @@ export const authSlice = createSlice({
         state.isError = true;
         state.message = action.payload; // Lấy lỗi từ payload
         state.user = null;
-        state.token = null;
       })
       // === VERIFY OTP CASES ===
       .addCase(verifyOTP.pending, (state) => {
@@ -271,14 +319,12 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user;
-        state.token = action.payload.token;
       })
       .addCase(googleLogin.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
         state.user = null;
-        state.token = null;
       })
       // === FACEBOOK LOGIN CASES (Giống hệt login) ===
       .addCase(facebookLogin.pending, (state) => {
@@ -288,14 +334,12 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user;
-        state.token = action.payload.token;
       })
       .addCase(facebookLogin.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
         state.user = null;
-        state.token = null;
       })
       // === FORGOT PASSWORD CASES ===
       .addCase(forgotPassword.pending, (state) => {
@@ -342,7 +386,51 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+      })
+
+      // === UPDATE PROFILE ===
+      .addCase(updateProfile.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data;
+        state.message = action.payload.message;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+
+      // === CHANGE PASSWORD ===
+      .addCase(changePassword.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.message = action.payload.message;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+
+      // === GET PROFILE ===
+      .addCase(getProfile.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data; // Cập nhật vào Redux
+      })
+      .addCase(getProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       });
+
   },
 });
 

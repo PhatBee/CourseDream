@@ -22,6 +22,10 @@ const Login = () => {
     );
 
     useEffect(() => {
+        dispatch(reset());
+    }, [dispatch]);
+
+    useEffect(() => {
         if (isError) {
             toast.error(message || "Đăng nhập thất bại");
             dispatch(reset());
