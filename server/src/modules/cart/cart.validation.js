@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 export const addToCartValidation = [
     body('courseId')
         .notEmpty()
-        .withMessage('Course ID is required')
+        .withMessage('Yêu cầu nhập ID khóa học')
         .custom((value) => {
             if (!mongoose.Types.ObjectId.isValid(value)) {
                 throw new Error('Invalid course ID format');
@@ -16,7 +16,7 @@ export const addToCartValidation = [
 export const removeFromCartValidation = [
     param('courseId')
         .notEmpty()
-        .withMessage('Course ID is required')
+        .withMessage('Yêu cầu nhập ID khóa học')
         .custom((value) => {
             if (!mongoose.Types.ObjectId.isValid(value)) {
                 throw new Error('Invalid course ID format');
