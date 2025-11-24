@@ -43,6 +43,38 @@ export const addToCart = createAsyncThunk(
     }
 );
 
+// === THÊM MỚI: Thunk Xóa khóa học ===
+export const removeFromCart = createAsyncThunk(
+    "cart/removeFromCart",
+    async (courseId, thunkAPI) => {
+        try {
+            return await cartService.removeFromCart(courseId);
+        } catch (error) {
+            const message =
+                (error.response && error.response.data && error.response.data.message) ||
+                error.message ||
+                error.toString();
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+
+// === THÊM MỚI: Thunk Xóa toàn bộ giỏ ===
+export const clearCart = createAsyncThunk(
+    "cart/clearCart",
+    async (_, thunkAPI) => {
+        try {
+            return await cartService.clearCart();
+        } catch (error) {
+            const message =
+                (error.response && error.response.data && error.response.data.message) ||
+                error.message ||
+                error.toString();
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+
 const cartSlice = createSlice({
     name: "cart",
     initialState,
@@ -95,6 +127,31 @@ const cartSlice = createSlice({
                 state.isError = true;
                 state.message = action.payload;
                 toast.error(action.payload); // Hiển thị lỗi (ví dụ: Course already in cart)
+            })
+            // === REMOVE FROM CART (MỚI) ===
+            // Không xử lý .pending để tránh hiện Spinner toàn trang, tạo cảm giác mượt mà
+            .addCase(removeFromCart.fulfilled, (state, action) => {
+                const cartData = action.payload.data;
+                // Cập nhật trực tiếp state từ dữ liệu backend trả về
+                state.items = cartData.items;
+                state.totalItems = cartData.totalItems;
+                state.totalPrice = cartData.total;
+                toast.success("Đã xóa khóa học");
+            })
+            .addCase(removeFromCart.rejected, (state, action) => {
+                toast.error(action.payload || "Lỗi khi xóa khóa học");
+            })
+
+            // === CLEAR CART (MỚI) ===
+            .addCase(clearCart.fulfilled, (state, action) => {
+                const cartData = action.payload.data;
+                state.items = cartData.items;
+                state.totalItems = cartData.totalItems;
+                state.totalPrice = cartData.total;
+                toast.success("Đã xóa toàn bộ giỏ hàng");
+            })
+            .addCase(clearCart.rejected, (state, action) => {
+                toast.error(action.payload || "Lỗi khi xóa giỏ hàng");
             });
     },
 });

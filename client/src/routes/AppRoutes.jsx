@@ -15,6 +15,7 @@ import SettingsPage from '../pages/SettingsPage';
 import EditProfile from '../components/profile/EditProfile';
 import ChangePassword from '../components/profile/ChangePassword';
 import WishlistPage from "../pages/WishlistPage";
+import Cart from "../pages/Cart";
 
 export default function AppRoutes() {
   return (
@@ -25,7 +26,7 @@ export default function AppRoutes() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses/:slug" element={<CourseDetail />} />
-
+            <Route path="/cart" element={<Cart />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -34,10 +35,11 @@ export default function AppRoutes() {
           <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/profile" element={<ProfileLayout />}>
-            
+
+
             {/* 1. Trang My Profile (Ảnh 1) */}
             <Route path="my-profile" element={<MyProfile />} />
-            
+
             {/* 2. Trang Settings (Ảnh 2, chứa 2 tab) */}
             <Route path="settings" element={<SettingsPage />}>
               {/* 2a. Tab Edit */}
