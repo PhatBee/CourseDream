@@ -13,9 +13,9 @@ const EditProfile = () => {
     const [bio, setBio] = useState('');
     const [phone, setPhone] = useState('');
 
-    const [avatarFile, setAvatarFile] = useState(null); 
-    const [preview, setPreview] = useState('');         
-    const [deleteAvatar, setDeleteAvatar] = useState(false); 
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [preview, setPreview] = useState('');
+    const [deleteAvatar, setDeleteAvatar] = useState(false);
 
     useEffect(() => { dispatch(getProfile()); }, [dispatch]);
 
@@ -56,10 +56,24 @@ const EditProfile = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+
+            // Kiểm tra dung lượng (ví dụ 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error("Ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.");
+                return;
+            }
+
             setAvatarFile(file);
             setDeleteAvatar(false);
             setPreview(URL.createObjectURL(file));
         }
+    };
+
+    // Xử lý nút "Xóa ảnh"
+    const handleDeleteAvatar = () => {
+        setAvatarFile(null);
+        setDeleteAvatar(true);
+        setPreview('https://via.placeholder.com/150'); // Về ảnh mặc định
     };
 
     const onSubmit = (e) => {
@@ -75,21 +89,21 @@ const EditProfile = () => {
 
     return (
         <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 md:p-8 text-left">
-            
+
             {/* Avatar Section */}
             <div className="flex items-center gap-6 mb-8">
                 <img src={preview} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
                 <div>
                     <h5 className="font-bold text-gray-800 text-lg">Profile Photo</h5>
-                    <p className="text-sm text-gray-500 mb-3">PNG or JPG no bigger than 800px width and height</p>
+                    <p className="text-sm text-gray-500 mb-3">Allowed JPG, GIF or PNG. Max size of 2MB</p>
                     <div className="flex gap-3">
                         <label className="px-4 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 cursor-pointer transition">
                             Upload
-                            <input type="file" className="hidden" onChange={handleFileChange} accept="image/*"/>
+                            <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
                         </label>
-                        <button 
-                            type="button" 
-                            onClick={() => { setDeleteAvatar(true); setAvatarFile(null); setPreview('https://via.placeholder.com/150'); }}
+                        <button
+                            type="button"
+                            onClick={handleDeleteAvatar}
                             className="px-4 py-1.5 bg-rose-50 text-rose-500 rounded text-sm font-medium hover:bg-rose-100 transition"
                         >
                             Delete

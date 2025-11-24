@@ -17,7 +17,6 @@ import cartRoutes from "./modules/cart/cart.routes.js";
 import { verifyToken } from "./middlewares/auth.middleware.js"
 import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
 import paymentRoutes from "./modules/payment/payment.routes.js";
-import progressRoutes from "./modules/progress/progress.routes.js";
 import reviewRoutes from "./modules/review/review.routes.js";
 import instructorRoutes from "./modules/instructor/instructor.routes.js";
 
@@ -59,7 +58,6 @@ app.use("/api/wishlist", verifyToken, wishlistRoutes);
 app.use("/api/cart", verifyToken, cartRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/payments", paymentRoutes);
-app.use("/api/progress", progressRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/instructor", instructorRoutes);
 
