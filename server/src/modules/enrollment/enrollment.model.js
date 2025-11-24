@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const EnrollmentSchema = new mongoose.Schema({
   student: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -6,4 +6,4 @@ const EnrollmentSchema = new mongoose.Schema({
   enrolledAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-export default mongoose.model("Enrollment", EnrollmentSchema);
+export default mongoose.model('Enrollment', EnrollmentSchema);

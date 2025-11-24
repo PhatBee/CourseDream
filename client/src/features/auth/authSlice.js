@@ -394,12 +394,14 @@ export const authSlice = createSlice({
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isSuccess = true;
         state.user = action.payload.data;
         state.message = action.payload.message;
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
+        state.isSuccess = false;
         state.message = action.payload;
       })
 
@@ -409,6 +411,7 @@ export const authSlice = createSlice({
       })
       .addCase(changePassword.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isSuccess = true;
         state.message = action.payload.message;
       })
       .addCase(changePassword.rejected, (state, action) => {
