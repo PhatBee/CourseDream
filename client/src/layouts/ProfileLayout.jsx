@@ -8,23 +8,23 @@ import ProfileHeader from '../components/user/ProfileHeader';
 const ProfileLayout = () => {
   const { user } = useSelector((state) => state.auth);
 
-  if (!user) return <p>Loading...</p>;
+  if (!user) return <div className="text-center py-20">Loading...</div>;
 
   return (
-    <div className="bg-50 py-12">
+    <div className="bg-gray-50 py-12 min-h-screen">
       <div className="container mx-auto px-4 max-w-7xl">
         
-        {/* Dùng ProfileHeader đã cập nhật */}
         <ProfileHeader />
 
-        <div className="flex flex-wrap lg:flex-nowrap -mx-4">
+        <div className="flex flex-col lg:flex-row gap-6 mt-6">
           
-          {/* Dùng ProfileSidebar đã cập nhật */}
-          <ProfileSidebar />
+          {/* Sidebar bên trái */}
+          <div className="w-full lg:w-1/4">
+             <ProfileSidebar />
+          </div>
 
-          {/* Cột Nội dung (Render các trang con) */}
-          <div className="w-full lg:w-9/12 px-4 mt-6 lg:mt-0">
-            {/* <Outlet> sẽ render MyProfile, Settings, v.v. */}
+          {/* Nội dung bên phải */}
+          <div className="w-full lg:w-3/4">
             <Outlet />
           </div>
         </div>

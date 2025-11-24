@@ -1,35 +1,30 @@
-// src/pages/MyProfile.jsx
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Edit2 } from 'lucide-react';
-import { useDispatch } from 'react-redux';
+import { Edit, Calendar, Mail, Phone, User as UserIcon } from 'lucide-react';
 import { getProfile } from '../../features/auth/authSlice';
-import { useEffect } from 'react';
 
-// Component con để hiển thị thông tin
-const InfoItem = ({ label, value }) => (
-    <div className="mb-4">
-        <h6 className="text-sm font-semibold text-gray-500 uppercase">{label}</h6>
-        <span className="text-gray-800">{value || 'N/A'}</span>
-    </div>
-);
-
+// Helper format date
 const formatDate = (ts) => {
     if (!ts) return 'N/A';
-
     const date = new Date(ts);
-    if (isNaN(date.getTime())) return "N/A";
-
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-
-    const hour = String(date.getHours()).padStart(2, "0");
-    const minute = String(date.getMinutes()).padStart(2, "0");
-
-    return `${day}/${month}/${year} - ${hour}:${minute}`;
+    return date.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit'
+    });
 };
+
+const InfoCard = ({ icon, label, value }) => (
+    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300 group">
+        <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-white rounded-lg text-gray-400 group-hover:text-rose-500 shadow-sm transition-colors">
+                {icon}
+            </div>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">{label}</span>
+        </div>
+        <p className="text-gray-800 font-semibold pl-1">{value || 'Not provided'}</p>
+    </div>
+);
 
 const MyProfile = () => {
     const dispatch = useDispatch();
@@ -42,34 +37,52 @@ const MyProfile = () => {
     if (!user) return null;
 
     return (
-        <div className="bg-white p-5 rounded-lg shadow-md text-left">
-            {/* Header (My Profile + Nút Edit) */}
-            <div className="flex justify-between items-center mb-6">
-                <h5 className="text-xl font-bold text-gray-800">My Profile</h5>
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 md:p-8 text-left">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-8 border-b border-gray-100 pb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
+                    <p className="text-sm text-gray-500 mt-1">Manage your personal information</p>
+                </div>
                 <Link
-                    to="/profile/settings/edit" // <-- Link tới trang Edit
-                    className="text-gray-500 hover:text-blue-600"
+                    to="/profile/settings/edit"
+                    className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                    title="Edit Profile"
                 >
-                    <Edit2 size={18} />
+                    <Edit size={20} />
                 </Link>
             </div>
 
-            {/* Basic Information */}
-            <div>
-                <h6 className="text-lg font-semibold text-gray-700 mb-4">Basic Information</h6>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <InfoItem label="Full Name" value={user.name} />
-                    {/* (Các trường First/Last Name đã bị bỏ) */}
-                    <InfoItem
-                        label="Registration Date"
-                        value={formatDate(user.createdAt)} // <-- Dùng hàm của bà
-                    />
-                    <InfoItem label="Email" value={user.email} />
-                    <InfoItem label="Phone Number" value={user.phone} />
-                </div>
-                <div className="mt-4">
-                    <InfoItem label="Bio" value={user.bio} />
-                </div>
+            {/* Thông tin chi tiết */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <InfoCard 
+                    icon={<UserIcon size={18} />} 
+                    label="Full Name" 
+                    value={user.name} 
+                />
+                <InfoCard 
+                    icon={<Calendar size={18} />} 
+                    label="Registration Date" 
+                    value={formatDate(user.createdAt)} 
+                />
+                <InfoCard 
+                    icon={<Mail size={18} />} 
+                    label="Email Address" 
+                    value={user.email} 
+                />
+                <InfoCard 
+                    icon={<Phone size={18} />} 
+                    label="Phone Number" 
+                    value={user.phone} 
+                />
+            </div>
+
+            {/* Bio Section */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <h6 className="text-sm font-bold text-gray-800 mb-3">Bio</h6>
+                <p className="text-gray-600 leading-relaxed text-sm">
+                    {user.bio || "No bio information provided yet. Click edit to introduce yourself!"}
+                </p>
             </div>
         </div>
     );

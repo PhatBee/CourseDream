@@ -8,12 +8,15 @@ import userRoutes from "./modules/user/user.routes.js"
 import adminRoutes from "./modules/admin/admin.routes.js";
 import categoryRoutes from "./modules/category/category.routes.js";
 import courseRoutes from "./modules/course/course.routes.js";
+// import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
+// import paymentRoutes from "./modules/payment/payment.routes.js";
+import progressRoutes from "./modules/progress/progress.routes.js";
+// import reviewRoutes from "./modules/review/review.routes.js";
 import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
 import cartRoutes from "./modules/cart/cart.routes.js";
 import { verifyToken } from "./middlewares/auth.middleware.js"
 import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
 import paymentRoutes from "./modules/payment/payment.routes.js";
-import progressRoutes from "./modules/progress/progress.routes.js";
 import reviewRoutes from "./modules/review/review.routes.js";
 import instructorRoutes from "./modules/instructor/instructor.routes.js";
 
@@ -47,11 +50,14 @@ app.use("/api/users", verifyToken, userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/courses", courseRoutes);
+// app.use("/api/enrollments", enrollmentRoutes);
+// app.use("/api/payments", paymentRoutes);
+app.use("/api/progress", progressRoutes);
+// app.use("/api/reviews", reviewRoutes);
 app.use("/api/wishlist", verifyToken, wishlistRoutes);
 app.use("/api/cart", verifyToken, cartRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/payments", paymentRoutes);
-app.use("/api/progress", progressRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/instructor", instructorRoutes);
 

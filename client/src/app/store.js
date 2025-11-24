@@ -3,6 +3,7 @@ import authReducer from '../features/auth/authSlice';
 import courseReducer from '../features/course/courseSlice';
 import wishlistReducer from '../features/wishlist/wishlistSlice';
 import categoryReducer from '../features/categories/categorySlice';
+import learningReducer from "../features/learning/learningSlice";
 import cartReducer from '../features/cart/cartSlice';
 
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     auth: authReducer,
     categories: categoryReducer,
     course: courseReducer,
+    learning: learningReducer,
     wishlist: wishlistReducer,
     cart: cartReducer,
   }

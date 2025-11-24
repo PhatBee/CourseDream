@@ -1,11 +1,21 @@
-import express from "express";
-// import { getProgress, updateProgress } from "./progress.controller.js";
-// import { verifyToken } from "../../middlewares/auth.middleware.js";
+import express from 'express';
+import * as progressController from './progress.controller.js';
+import { verifyToken } from '../../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-// Ví dụ routes (bỏ comment khi controller tồn tại)
-// router.get("/me/:courseId", verifyToken, getProgress);
-// router.post("/me/:courseId", verifyToken, updateProgress);
+router.use(verifyToken);
+
+/**
+ * @route   GET /api/progress/:courseSlug
+ * @desc    Lấy thông tin tiến độ bằng SLUG
+ */
+router.get('/:courseSlug', progressController.getProgress);
+
+/**
+ * @route   POST /api/progress/toggle
+ * @desc    Đánh dấu hoàn thành (nhận slug trong body)
+ */
+router.post('/toggle', progressController.toggleLectureCompletion);
 
 export default router;
