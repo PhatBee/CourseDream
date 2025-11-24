@@ -36,12 +36,18 @@ const EnrollCard = ({ course }) => {
     }
   };
 
+  const handleAddToCart = () => {
+    // TODO: Add cart logic here
+    console.log('Add to cart:', _id);
+  };
+
   const shareUrl = window.location.origin + '/courses/' + slug;
 
   return (
     <>
       <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <div className="p-5">
+          {/* Price Section */}
           <div className="flex justify-between items-center mb-4">
             <h2 className={`text-3xl font-bold ${price === 0 ? 'text-green-600' : 'text-gray-800'}`}>
               {formatPrice(priceDiscount)}
@@ -54,13 +60,14 @@ const EnrollCard = ({ course }) => {
             )}
           </div>
 
-          <div className="flex justify-between gap-3 mb-3">
+          {/* Wishlist and Share Buttons */}
+          <div className="flex justify-between gap-3 mb-4">
             <button
               onClick={handleWishlistClick}
               className={`btn-wishlist flex items-center justify-center gap-2 transition-colors duration-200
               ${isInWishlist
-                  ? 'bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100' // Style khi đã thích
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' // Style mặc định
+                  ? 'bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
               {/* Icon tim: filled nếu đã thích, outline nếu chưa */}
@@ -76,9 +83,21 @@ const EnrollCard = ({ course }) => {
             </button>
           </div>
 
+          {/* Add to Cart Button - Primary CTA */}
+          <button
+            onClick={handleAddToCart}
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group"
+          >
+            <ShoppingCart size={20} className="group-hover:scale-110 transition-transform" />
+            Add to Cart
+          </button>
+
+          {/* Enroll Now Button - Secondary CTA */}
           <Link
             to="/cart"
-            className="btn-primary"> Enroll Now
+            className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200 block text-center"
+          >
+            Enroll Now
           </Link>
         </div>
       </div>

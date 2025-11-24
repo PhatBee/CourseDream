@@ -25,13 +25,13 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
 
   const categoryName = categories[0]?.name || 'General';
   const instructorName = instructor?.name || 'Instructor';
-  
+
   const formatPrice = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
-  const isHeartFilled = isWishlistPage 
-    ? isLiked 
+  const isHeartFilled = isWishlistPage
+    ? isLiked
     : wishlistItems?.some(item => item._id === _id);
 
   const handleHeartClick = (e) => {
@@ -56,22 +56,22 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
 
   return (
     <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden">
-      
+
       {/* Thumbnail Area */}
       <div className="relative overflow-hidden">
         <Link to={`/courses/${slug}`}>
-          <img 
-            src={thumbnail || 'https://via.placeholder.com/300x200'} 
-            alt={title} 
+          <img
+            src={thumbnail || 'https://via.placeholder.com/300x200'}
+            alt={title}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
           />
         </Link>
-        
+
         {/* Nút Wishlist (Heart) */}
-        <button 
+        <button
           onClick={handleHeartClick}
           className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors 
-            ${isHeartFilled 
+            ${isHeartFilled
               ? 'bg-rose-50 text-rose-500 hover:bg-rose-100' // Tim đỏ
               : 'bg-white/80 text-gray-400 hover:text-rose-500 hover:bg-white' // Tim rỗng
             }`}
@@ -121,14 +121,14 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
           </div>
 
           <div className="flex items-center gap-2">
-            <button 
-              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" 
+            <button
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
             >
               <ShoppingCart size={20} />
             </button>
-            
-            <Link 
-              to={`/cart`} 
+
+            <Link
+              to={`/cart`}
               className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
             >
               Enroll
