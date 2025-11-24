@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Share2, ShoppingCart } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
+import { addToCart } from '../../features/cart/cartSlice'; // Import addToCart
 import ShareModal from '../common/ShareModal';
 
 const formatPrice = (price) => {
@@ -17,6 +18,7 @@ const countPercentage = (originalPrice, discountedPrice) => {
 
 const EnrollCard = ({ course }) => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -37,8 +39,27 @@ const EnrollCard = ({ course }) => {
   };
 
   const handleAddToCart = () => {
-    // TODO: Add cart logic here
-    console.log('Add to cart:', _id);
+    if (!user) {
+      toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      // navigate('/login'); // Có thể redirect nếu muốn
+      return;
+    }
+    // Gọi action addToCart với _id của khóa học
+    dispatch(addToCart(course._id));
+  };
+
+  const handleEnrollNow = () => {
+    if (!user) {
+      toast.info("Vui lòng đăng nhập");
+      return;
+    }
+    // Để tạm thời, sẽ điều chỉnh sau
+    // Logic Enroll Now: Thêm vào giỏ hàng -> Chuyển hướng ngay tới trang giỏ hàng
+    dispatch(addToCart(course._id)).then((result) => {
+      if (!result.error) {
+        navigate('/cart');
+      }
+    });
   };
 
   const shareUrl = window.location.origin + '/courses/' + slug;
@@ -93,12 +114,12 @@ const EnrollCard = ({ course }) => {
           </button>
 
           {/* Enroll Now Button - Secondary CTA */}
-          <Link
-            to="/cart"
+          <button
+            onClick={handleEnrollNow}
             className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200 block text-center"
           >
             Enroll Now
-          </Link>
+          </button>
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Star, ShoppingCart, User } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
+import { addToCart } from '../../features/cart/cartSlice';
 import { toast } from 'react-toastify';
 
 const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist }) => {
@@ -33,6 +34,19 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
   const isHeartFilled = isWishlistPage
     ? isLiked
     : wishlistItems?.some(item => item._id === _id);
+
+  // Hàm xử lý thêm vào giỏ hàng
+  const handleAddToCart = (e) => {
+    e.preventDefault(); // Ngăn chặn chuyển trang nếu nút nằm trong thẻ Link
+
+    if (!user) {
+      toast.info("Vui lòng đăng nhập để mua khóa học");
+      return;
+    }
+
+    // Dispatch action thêm vào giỏ
+    dispatch(addToCart(_id));
+  };
 
   const handleHeartClick = (e) => {
     e.preventDefault();
@@ -121,14 +135,19 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Nút Add to Cart */}
             <button
+              onClick={handleAddToCart}
               className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+              title="Add to Cart"
             >
               <ShoppingCart size={20} />
             </button>
 
+            {/* Nút Enroll: Bạn có thể để nó link sang trang chi tiết, 
+               hoặc nếu là 'Buy Now' thì gọi addToCart rồi redirect sang checkout */}
             <Link
-              to={`/cart`}
+              to={`/courses/${slug}`} // Enroll thường dẫn vào trang chi tiết để xem trước khi mua
               className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
             >
               Enroll
