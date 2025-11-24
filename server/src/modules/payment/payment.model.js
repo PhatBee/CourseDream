@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const PaymentSchema = new mongoose.Schema({
   student: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
@@ -7,4 +9,4 @@ const PaymentSchema = new mongoose.Schema({
   transactionId: String
 }, { timestamps: true });
 
-module.export = moongose.model('Payment', PaymentSchema);
+export default mongoose.model("Payment", PaymentSchema);

@@ -7,6 +7,6 @@ const LectureSchema = new mongoose.Schema({
   section: { type: mongoose.Schema.Types.ObjectId, ref: "Section" },
   order: Number,
   isPreviewFree: { type: Boolean, default: false }
-});
+}, { timestamps: true });
 
 export default mongoose.model('Lecture', LectureSchema);
