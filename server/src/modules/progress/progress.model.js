@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const ProgressSchema = new mongoose.Schema({
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
@@ -7,4 +7,4 @@ const ProgressSchema = new mongoose.Schema({
   percentage: { type: Number, default: 0 }
 }, { timestamps: true });
 
-export default mongoose.model("Progress", ProgressSchema);
+export default mongoose.model('Progress', ProgressSchema);

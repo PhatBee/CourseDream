@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -26,6 +26,7 @@ cd client
 npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google
 npm install react-facebook-login -S --force
 npm i lucide-react --force
+npm install react-icons --force
 ```
 
 ### Cấu hình môi trường
@@ -44,6 +45,10 @@ GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
 
 FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID
 FACEBOOK_APP_SECRET=YOUR_FACEBOOK_APP_SECRET
+
+CLOUDINARY_API_KEY=YOUR_CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET=YOUR_CLOUDINARY_API_SECRET
+CLOUDINARY_NAME=YOUR_CLOUDINARY_NAME
 
 # env trong client
 VITE_API_URL="http://localhost:5000/api"

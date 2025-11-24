@@ -9,7 +9,7 @@ import {
   MessageSquare,
   Settings,
   FileText,
-} from "lucide-react"; // 🆕 icon hiện đại
+} from "lucide-react";
 import logo from "../assets/img/auth/logo.svg";
 import avatarDefault from "../assets/img/auth/logo.svg";
 
@@ -20,8 +20,8 @@ const Header = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logout());
     navigate("/login");
   };
 
@@ -39,8 +39,7 @@ const Header = () => {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `hover:text-rose-600 ${
-                  isActive ? "text-rose-600" : "text-gray-700"
+                `hover:text-rose-600 ${isActive ? "text-rose-600" : "text-gray-700"
                 }`
               }
             >
@@ -49,8 +48,7 @@ const Header = () => {
             <NavLink
               to="/courses"
               className={({ isActive }) =>
-                `hover:text-rose-600 ${
-                  isActive ? "text-rose-600" : "text-gray-700"
+                `hover:text-rose-600 ${isActive ? "text-rose-600" : "text-gray-700"
                 }`
               }
             >
@@ -59,8 +57,7 @@ const Header = () => {
             <NavLink
               to="/blog"
               className={({ isActive }) =>
-                `hover:text-rose-600 ${
-                  isActive ? "text-rose-600" : "text-gray-700"
+                `hover:text-rose-600 ${isActive ? "text-rose-600" : "text-gray-700"
                 }`
               }
             >
@@ -173,7 +170,7 @@ const Header = () => {
                         </li>
                         <li>
                           <Link
-                            to="/settings"
+                            to="/profile/settings/edit"
                             className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
                           >
                             <Settings className="h-4 w-4 text-rose-500" />

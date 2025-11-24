@@ -1,26 +1,45 @@
-import Wishlist from "./wishlist.model.js";
+import * as wishlistService from './wishlist.service.js';
 
 /**
- * POST /api/wishlist/:courseId
+ * GET /api/wishlist
+ */
+export const getWishlist = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const courses = await wishlistService.getWishlist(userId);
+
+    res.status(200).json({
+      success: true,
+      data: courses,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/wishlist
+ * Body: { courseId }
  */
 export const addToWishlist = async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Vui lòng đăng nhập" });
+    const userId = req.user.id;
+    const { courseId } = req.body;
 
-    const courseId = req.params.courseId;
-    let wishlist = await Wishlist.findOne({ student: user._id });
-    if (!wishlist) {
-      wishlist = await Wishlist.create({ student: user._id, courses: [courseId] });
-    } else {
-      if (!wishlist.courses.map(String).includes(String(courseId))) {
-        wishlist.courses.push(courseId);
-        await wishlist.save();
-      }
+    if (!courseId) {
+      const error = new Error('');
+      error.statusCode = 400;
+      throw error;
     }
-    return res.json({ message: "Đã thêm vào wishlist", wishlist });
-  } catch (err) {
-    next(err);
+
+    const result = await wishlistService.addToWishlist(userId, courseId);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -29,57 +48,33 @@ export const addToWishlist = async (req, res, next) => {
  */
 export const removeFromWishlist = async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Vui lòng đăng nhập" });
+    const userId = req.user.id;
+    const { courseId } = req.params;
 
-    const courseId = req.params.courseId;
-    const wishlist = await Wishlist.findOneAndUpdate(
-      { student: user._id },
-      { $pull: { courses: courseId } },
-      { new: true }
-    );
-    return res.json({ message: "Đã xoá khỏi wishlist", wishlist });
-  } catch (err) {
-    next(err);
+    const result = await wishlistService.removeFromWishlist(userId, courseId);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
 /**
- * GET /api/wishlist
+ * DELETE /api/wishlist
  */
-export const getWishlist = async (req, res, next) => {
+export const clearWishlist = async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Vui lòng đăng nhập" });
+    const userId = req.user.id;
+    const result = await wishlistService.clearWishlist(userId);
 
-    const wishlist = await Wishlist.findOne({ student: user._id }).populate("courses");
-    return res.json({ wishlist: wishlist || { courses: [] } });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const createOrUpdateReview = async (req, res, next) => {
-  try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Vui lòng đăng nhập" });
-
-    const { courseId } = req.params;
-    const { rating, comment } = req.body;
-
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ message: "rating phải từ 1 đến 5" });
-    }
-
-    const review = await addOrUpdateReview({
-      userId: user._id,
-      courseId,
-      rating,
-      comment
+    res.status(200).json({
+      success: true,
+      message: result.message,
     });
-
-    return res.json({ message: "Đánh giá đã lưu", review });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };

@@ -4,17 +4,27 @@ import { verifyToken as verifyJWT } from "../utils/jwt.utils.js";
 
 export const verifyToken = async (req, res, next) => {
   try {
-    // 1 Lấy token từ header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Access denied, no token provided" });
+    // 1 Lấy token từ cookie hoặc header
+    let token = req.cookies.accessToken;
+
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+      }
     }
 
-    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "Access denied, no token provided" });
+    }
+    console.log("🔑 Token nhận được:", token);
+
 
     // Xác minh token
     const decoded = verifyJWT(token);
-    
+    console.log("📌 decoded token:", decoded);
+
+
     // Tìm user trong DB
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
