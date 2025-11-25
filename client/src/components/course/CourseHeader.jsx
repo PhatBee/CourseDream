@@ -100,8 +100,10 @@ const CourseHeader = ({ course }) => {
             <div className="flex items-center mb-2 sm:mb-0">
               <img
                 className="w-10 h-10 rounded-full object-cover"
-                src={instructor.avatar || 'default-avatar.jpg'}
+                src={instructor.avatar || '/default-avatar.svg'}
                 alt={instructor.name || 'Instructor'}
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
               />
               <div className="ml-3">
                 <h5 className="text-base font-semibold text-gray-800">{instructor.name || '...'}</h5>

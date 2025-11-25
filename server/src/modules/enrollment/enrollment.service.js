@@ -1,5 +1,5 @@
 import Enrollment from './enrollment.model.js';
-
+import Course from '../course/course.model.js';
 class EnrollmentService {
     async enrollStudent(studentId, courseIds) {
         // Duyệt qua từng khóa học để tạo enrollment
@@ -24,6 +24,9 @@ class EnrollmentService {
                     },
                     { upsert: true, new: true }
                 );
+
+                // Tăng studentsCount trong Course
+                await Course.findByIdAndUpdate(courseId, { $inc: { studentsCount: 1 } });
             }
         } catch (error) {
             console.error("Enrollment error:", error);
