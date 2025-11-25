@@ -19,6 +19,7 @@ import CoursePage from "../pages/CoursePage";
 import LearningPage from "../pages/LearningPage";
 import OverviewPage from "../pages/OverviewPage";
 import Cart from "../pages/Cart";
+import Checkout from "../pages/Checkout";
 
 export default function AppRoutes() {
   return (
@@ -31,6 +32,7 @@ export default function AppRoutes() {
             <Route path="/courses" element={<CoursePage />} />
             <Route path="/courses/:slug" element={<CourseDetail />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

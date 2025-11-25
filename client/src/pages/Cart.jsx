@@ -51,8 +51,7 @@ export default function Cart() {
             toast.error("Giỏ hàng trống");
             return;
         }
-        // TODO: Navigate to checkout page
-        toast.info("Chức năng thanh toán đang được phát triển");
+        navigate("/checkout");
     };
 
     if (!user) {
