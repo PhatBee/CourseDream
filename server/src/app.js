@@ -50,7 +50,7 @@ app.use("/api/users", verifyToken, userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/courses", courseRoutes);
-// app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api/enrollments", enrollmentRoutes);
 // app.use("/api/payments", paymentRoutes);
 app.use("/api/progress", progressRoutes);
 // app.use("/api/reviews", reviewRoutes);

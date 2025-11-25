@@ -10,6 +10,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
+  const { enrolledCourseIds } = useSelector((state) => state.enrollment);
 
   const {
     _id,
@@ -26,7 +27,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
 
   const categoryName = categories[0]?.name || 'General';
   const instructorName = instructor?.name || 'Instructor';
-
+  const isEnrolled = enrolledCourseIds?.includes(_id);
   const formatPrice = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
@@ -101,7 +102,6 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
 
       {/* Content Area */}
       <div className="p-4 flex flex-col flex-grow">
-        {/* ... (Phần này giữ nguyên như cũ) ... */}
         <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
           <div className="flex items-center gap-1">
             <User size={14} />
@@ -124,10 +124,10 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
 
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-rose-600">
-              {priceDiscount === 0 ? 'Free' : formatPrice(priceDiscount)}
+            <span className={`text-lg font-bold ${isEnrolled ? 'text-green-600' : 'text-rose-600'}`}>
+              {isEnrolled ? '' : (priceDiscount === 0 ? 'Free' : formatPrice(priceDiscount))}
             </span>
-            {price && (
+            {!isEnrolled && price > 0 && (
               <span className="text-xs text-gray-400 line-through">
                 {formatPrice(price)}
               </span>
@@ -135,23 +135,31 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Nút Add to Cart */}
-            <button
-              onClick={handleAddToCart}
-              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-              title="Add to Cart"
-            >
-              <ShoppingCart size={20} />
-            </button>
+            {isEnrolled ? (
+              <Link
+                to={`/courses/${slug}/overview`}
+                className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
+              >
+                Go to Course
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={handleAddToCart}
+                  className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                  title="Add to Cart"
+                >
+                  <ShoppingCart size={20} />
+                </button>
 
-            {/* Nút Enroll: Bạn có thể để nó link sang trang chi tiết, 
-               hoặc nếu là 'Buy Now' thì gọi addToCart rồi redirect sang checkout */}
-            <Link
-              to={`/courses/${slug}`} // Enroll thường dẫn vào trang chi tiết để xem trước khi mua
-              className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
-            >
-              Enroll
-            </Link>
+                <Link
+                  to={`/courses/${slug}`}
+                  className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                >
+                  Enroll
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
