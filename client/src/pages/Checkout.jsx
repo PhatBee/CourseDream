@@ -4,6 +4,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { getCart } from "../features/cart/cartSlice";
 import cartService from "../features/cart/cartService";
+import paymentService from "../features/payment/paymentService";
 import { ShoppingBag, ArrowLeft, Trash2, CreditCard, Wallet } from "lucide-react";
 import Spinner from "../components/common/Spinner";
 
@@ -62,24 +63,47 @@ export default function Checkout() {
         }
     };
 
-    const handlePayment = () => {
+    const handlePayment = async () => {
         if (items.length === 0) {
             toast.error("Giỏ hàng trống");
             return;
         }
 
-        toast(`Đang chuyển hướng đến thanh toán ${selectedMethod.toUpperCase()}...`);
+        if (selectedMethod !== 'vnpay') {
+            toast("Hiện tại chỉ hỗ trợ thanh toán qua VNPAY");
+            return;
+        }
 
-        // TODO: TÍCH HỢP API THANH TOÁN
-        // axios.post(`/api/payment/${selectedMethod}`, { 
-        //   amount: totalPrice,
-        //   courses: items.map(item => item.course._id)
-        // })
-        // .then(res => window.location.href = res.data.paymentUrl)
+        try {
+            toast.loading("Đang tạo liên kết thanh toán...");
 
-        setTimeout(() => {
-            toast.success("Chức năng thanh toán đang được phát triển!");
-        }, 1200);
+            // Calculate final amount with tax
+            const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+            const discount = subtotal - totalPrice;
+            const tax = Math.round(totalPrice * 0.1);
+            const finalTotal = totalPrice + tax;
+
+            // Prepare order info
+            const courseNames = items.map(item => item.course.title).join(', ');
+            const orderInfo = `Thanh toan khoa hoc: ${courseNames.substring(0, 100)}`;
+
+            // Call API to create payment URL using paymentService
+            const paymentData = await paymentService.createVNPayPayment({
+                amount: finalTotal,
+                orderInfo: orderInfo,
+                courseIds: items.map(item => item.course._id)
+            });
+
+            if (paymentData.paymentUrl) {
+                // Redirect to VNPAY
+                window.location.href = paymentData.paymentUrl;
+            } else {
+                toast.error("Lỗi khi tạo liên kết thanh toán");
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            toast.error(error.response?.data?.message || "Lỗi khi xử lý thanh toán");
+        }
     };
 
     if (!user) {
