@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier node-cron
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -49,6 +49,12 @@ FACEBOOK_APP_SECRET=YOUR_FACEBOOK_APP_SECRET
 CLOUDINARY_API_KEY=YOUR_CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET=YOUR_CLOUDINARY_API_SECRET
 CLOUDINARY_NAME=YOUR_CLOUDINARY_NAME
+
+VNPAY_TMNCODE=YOUR_VNPAY_TMNCODE
+VNPAY_HASHSECRET=YOUR_VNPAY_HASHSECRET
+VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+VNPAY_API=https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+VNPAY_RETURN_URL=http://localhost:5173/payment/return
 
 # env trong client
 VITE_API_URL="http://localhost:5000/api"

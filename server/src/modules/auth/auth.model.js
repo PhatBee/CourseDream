@@ -29,6 +29,8 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null,
     sparse: true, // Cho phép nhiều giá trị null
+    unique: true,
+    index: true,
   },
   role: {
     type: String,
@@ -82,10 +84,5 @@ UserSchema.index(
     partialFilterExpression: { isVerified: false }
   }
 );
-
-// Tạo sparse index cho phone để cho phép nhiều giá trị null
-// nhưng vẫn đảm bảo unique cho các giá trị không null
-UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
-
 const User = mongoose.model('User', UserSchema);
 export default User;

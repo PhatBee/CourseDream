@@ -32,7 +32,7 @@ const CourseHeader = ({ course }) => {
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden">
+    <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden text-left">
       <div className="p-4 sm:p-6 lg:flex items-center">
 
         {/* Cột trái: Thumbnail Video */}
@@ -54,8 +54,9 @@ const CourseHeader = ({ course }) => {
             <div className="relative aspect-video">
               <img
                 className="w-full h-auto object-cover rounded-md aspect-video"
-                src={thumbnail}
+                src={thumbnail || '/default-course.svg'}
                 alt={title}
+                onError={(e) => { e.target.src = '/default-course.svg'; }}
               />
 
               {/* 5c. Nếu có link (embedUrl) -> Hiển thị nút Play */}
@@ -100,8 +101,10 @@ const CourseHeader = ({ course }) => {
             <div className="flex items-center mb-2 sm:mb-0">
               <img
                 className="w-10 h-10 rounded-full object-cover"
-                src={instructor.avatar || 'default-avatar.jpg'}
+                src={instructor.avatar || '/default-avatar.svg'}
                 alt={instructor.name || 'Instructor'}
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
               />
               <div className="ml-3">
                 <h5 className="text-base font-semibold text-gray-800">{instructor.name || '...'}</h5>

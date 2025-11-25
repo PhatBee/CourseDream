@@ -51,8 +51,7 @@ export default function Cart() {
             toast.error("Giỏ hàng trống");
             return;
         }
-        // TODO: Navigate to checkout page
-        toast.info("Chức năng thanh toán đang được phát triển");
+        navigate("/checkout");
     };
 
     if (!user) {
@@ -113,17 +112,6 @@ export default function Cart() {
     return (
         <div className="w-full py-12 bg-gray-50 min-h-screen">
             <div className="max-w-6xl mx-auto px-4">
-                {/* Breadcrumb */}
-                <div className="mb-6">
-                    <Link
-                        to="/"
-                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                        <ArrowLeft size={18} />
-                        Tiếp tục mua sắm
-                    </Link>
-                </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column - Cart Items */}
                     <div className="lg:col-span-2">
@@ -160,9 +148,11 @@ export default function Cart() {
                                             <div className="md:w-48 flex-shrink-0">
                                                 <Link to={`/courses/${course.slug}`}>
                                                     <img
-                                                        src={course.thumbnail || 'https://via.placeholder.com/300x200'}
+                                                        src={course.thumbnail || '/default-avatar.svg'}
                                                         className="rounded-lg w-full h-32 object-cover hover:opacity-90 transition-opacity"
                                                         alt={course.title}
+                                                        crossOrigin="anonymous"
+                                                        referrerPolicy="no-referrer"
                                                     />
                                                 </Link>
                                             </div>

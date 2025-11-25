@@ -63,8 +63,11 @@ export const getCourseDetailsBySlug = async (slug) => {
 };
 
 export const getAllCourses = async (query) => {
-  const filter = { status: 'published' };
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 9;
+  const skip = (page - 1) * limit;
 
+  const filter = { status: 'published' }; 
   if (query.category) {
   }
 
@@ -73,10 +76,22 @@ export const getAllCourses = async (query) => {
     .populate('instructor', 'name avatar')
     .populate('categories', 'name slug')
     .sort({ createdAt: -1 })
-    .limit(12)
+    .skip(skip)
+    .limit(limit)
     .lean();
 
-  return courses;
+  const totalCourses = await Course.countDocuments(filter);
+  const totalPages = Math.ceil(totalCourses / limit);
+
+  return {
+    courses,
+    pagination: {
+      total: totalCourses,
+      page,
+      limit,
+      totalPages
+    }
+  };
 };
 
 export const getLearningDetails = async (slug, userId) => {
