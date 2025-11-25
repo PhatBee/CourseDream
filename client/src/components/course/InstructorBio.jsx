@@ -13,7 +13,7 @@ const InstructorBio = ({ instructor = {} }) => {
   } = instructor;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 text-left">
       <h5 className="text-xl font-semibold text-gray-800">About the instructor</h5>
       
       <div className="flex items-center justify-between flex-wrap gap-4">
