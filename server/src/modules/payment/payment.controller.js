@@ -82,7 +82,8 @@ export const vnpayReturn = async (req, res) => {
 
             // 4. === XÓA GIỎ HÀNG ===
             // (Chỉ xóa những course đã thanh toán khỏi giỏ hàng)
-            await cartService.removeCoursesFromCart(payment.student, payment.courses);
+            const paidCourseIds = payment.courses.map(c => c._id.toString());
+            await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
 
             res.status(200).json({
                 success: true,

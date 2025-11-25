@@ -69,7 +69,7 @@ const PaymentReturn = () => {
 
                             <div className="space-y-3 w-full">
                                 <Link
-                                    to="/my-courses" // Giả sử bạn có trang khóa học của tôi
+                                    to="/enrolled-courses" // Giả sử bạn có trang khóa học của tôi
                                     className="w-full flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                                 >
                                     <BookOpen className="w-4 h-4 mr-2" />

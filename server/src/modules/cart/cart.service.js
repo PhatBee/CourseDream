@@ -171,6 +171,9 @@ class CartService {
         // Chuyển courseIdsArray về dạng string để so sánh
         const paidCourseIds = courseIdsArray.map(id => id.toString());
 
+        console.log("payment.courses:", courseIdsArray);
+        console.log("cart.items:", cart.items);
+
         // Lọc giữ lại những item KHÔNG nằm trong danh sách đã mua
         cart.items = cart.items.filter(
             item => !paidCourseIds.includes(item.course.toString())
