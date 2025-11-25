@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../features/auth/authSlice";
+import { getCart, resetCart } from "../features/cart/cartSlice";
 import {
   ShoppingCart,
   User,
@@ -18,7 +19,19 @@ const Header = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
+  // Lấy totalItems từ cart slice
+  const { totalItems } = useSelector((state) => state.cart);
+
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Load giỏ hàng khi user đăng nhập
+  useEffect(() => {
+    if (user) {
+      dispatch(getCart());
+    } else {
+      dispatch(resetCart()); // Xóa state cart nếu logout/chưa login
+    }
+  }, [user, dispatch]);
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -92,9 +105,12 @@ const Header = () => {
                   className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50"
                 >
                   <ShoppingCart className="h-5 w-5 text-gray-700" />
-                  <span className="absolute -right-1 -top-1 rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">
-                    1
-                  </span>
+                  {/* Hiển thị số lượng dynamic */}
+                  {totalItems > 0 && (
+                    <span className="absolute -right-1 -top-1 rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">
+                      {totalItems}
+                    </span>
+                  )}
                 </Link>
 
                 {/* 👤 User Dropdown */}

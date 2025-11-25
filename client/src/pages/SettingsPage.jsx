@@ -1,21 +1,19 @@
 // src/pages/SettingsPage.jsx
 import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 
-// Component con cho Tab Link
 const SettingsTab = ({ to, label }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-  
   return (
-    <li>
+    <li className="mr-2">
       <NavLink
         to={to}
-        className={`px-4 py-3 text-sm font-medium border-b-2
+        className={({ isActive }) => `
+          inline-block px-4 py-3 text-sm font-medium border-b-2 transition-colors
           ${isActive 
-            ? 'text-red-500 border-red-500' // Màu active
-            : 'text-gray-600 border-transparent hover:text-gray-800'
-          }`}
+            ? 'text-rose-500 border-rose-500' // Màu active đỏ hồng
+            : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+          }
+        `}
       >
         {label}
       </NavLink>
@@ -26,21 +24,25 @@ const SettingsTab = ({ to, label }) => {
 const SettingsPage = () => {
   return (
     <div className="space-y-6">
-      <h5 className="text-xl font-bold text-gray-800 text-left">Settings</h5>
+      <h5 className="text-2xl font-bold text-gray-800 text-left">Settings</h5>
       
-      {/* Thanh Nav Tab (từ HTML/ảnh) */}
-      <div className="border-b bg-white rounded-lg shadow-sm">
-        <ul className="flex items-center flex-wrap">
+      {/* Thanh Tab */}
+      <div className="border-b border-gray-200 mb-6">
+        <ul className="flex flex-wrap -mb-px">
           <SettingsTab to="/profile/settings/edit" label="Edit Profile" />
           <SettingsTab to="/profile/settings/security" label="Security" />
-          {/* (Thêm các tab khác từ HTML nếu bạn muốn) */}
+          {/* <SettingsTab to="/profile/settings/social" label="Social Profiles" />
+          <SettingsTab to="/profile/settings/linked" label="Linked Accounts" />
+          <SettingsTab to="/profile/settings/notifications" label="Notifications" /> */}
         </ul>
       </div>
 
-      {/* Nội dung Tab (Form) */}
-      {/* <Outlet> sẽ render EditProfile.jsx hoặc ChangePassword.jsx */}
+      {/* Nội dung Form */}
+      <div className="bg-white rounded-xl p-0 md:p-0"> 
+        {/* Lưu ý: Padding = 0 vì component con (EditProfile) thường đã có padding hoặc border riêng */}
         <Outlet />
       </div>
+    </div>
   );
 };
 

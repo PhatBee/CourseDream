@@ -12,8 +12,22 @@ const CourseSchema = new mongoose.Schema({
   includes: [String],
   audience: [String],
   description: String,
-  price: Number,
-  priceDiscount: Number,
+  price: {
+    type: Number,
+    default: 0
+  },
+  priceDiscount: {
+    type: Number,
+    default: function () {
+      return this.price;
+    },
+    validate: {
+      validator: function (val) {
+        return val <= this.price;
+      },
+      message: "Discount price cannot be higher than original price!"
+    }
+  },
   level: { type: String, enum: ["beginner", "intermediate", "advanced", "alllevels"] },
   language: String,
   requirements: [String],

@@ -1,9 +1,9 @@
 import Course from './course.model.js';
 import Review from '../review/review.model.js';
+import Progress from '../progress/progress.model.js';
 import Lecture from "./lecture.model.js";
 import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
-
 /**
  * Service: Lấy chi tiết khóa học
  * @param {string} slug - Slug của khóa học
@@ -79,6 +79,44 @@ export const getAllCourses = async (query) => {
   return courses;
 };
 
+export const getLearningDetails = async (slug, userId) => {
+  const course = await Course.findOne({ slug })
+    .select('title slug sections totalLectures')
+    .populate({
+      path: 'sections',
+      select: 'title order',
+      options: { sort: { order: 1 } },
+      populate: {
+        path: 'lectures',
+        model: 'Lecture',
+        select: 'title videoUrl duration isPreviewFree order resources', 
+        options: { sort: { order: 1 } },
+      },
+    })
+    .lean();
+
+  if (!course) {
+    const error = new Error('Không tìm thấy khóa học.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  let progress = await Progress.findOne({ student: userId, course: course._id });
+  
+  if (!progress) {
+    progress = {
+      student: userId,
+      course: course._id,
+      completedLectures: [],
+      percentage: 0
+    };
+  }
+
+  return {
+    course,
+    progress
+  };
+};
 export const searchCourses = async (query) => {
   const q = (query.q || "").trim();
   const page = parseInt(query.page || "1", 10);

@@ -1,7 +1,9 @@
 import express from 'express';
-import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses } from './course.controller.js';
+import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
+import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
+
 
 const router = express.Router();
 
@@ -12,6 +14,12 @@ router.get('/', getCourses);
  * @access  Public
  */
 router.get('/:slug', getCourseDetailsBySlug);
+router.get(
+  '/:slug/learn',
+  verifyToken,
+  checkEnrollment,
+  getLearningContent
+);
 
 // router.post('/', 
 //     verifyToken, 
