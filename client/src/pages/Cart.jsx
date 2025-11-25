@@ -148,11 +148,11 @@ export default function Cart() {
                                             <div className="md:w-48 flex-shrink-0">
                                                 <Link to={`/courses/${course.slug}`}>
                                                     <img
-                                                        src={course.thumbnail || '/default-avatar.svg'}
+                                                        src={course.thumbnail || '/default-course.svg'}
                                                         className="rounded-lg w-full h-32 object-cover hover:opacity-90 transition-opacity"
                                                         alt={course.title}
-                                                        crossOrigin="anonymous"
-                                                        referrerPolicy="no-referrer"
+                                                        onError={(e) => { e.target.src = '/default-course.svg'; }}
+
                                                     />
                                                 </Link>
                                             </div>
@@ -164,9 +164,11 @@ export default function Cart() {
                                                     {course.instructor && (
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <img
-                                                                src={course.instructor.avatar || 'https://via.placeholder.com/40'}
+                                                                src={course.instructor.avatar || '/default-avatar.svg'}
                                                                 className="w-8 h-8 rounded-full object-cover"
                                                                 alt={course.instructor.name}
+                                                                crossOrigin="anonymous"
+                                                                referrerPolicy="no-referrer"
                                                             />
                                                             <p className="text-sm text-gray-600">
                                                                 {course.instructor.name}
