@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Share2, ShoppingCart } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
-import { addToCart } from '../../features/cart/cartSlice'; // Import addToCart
+import { addToCart } from '../../features/cart/cartSlice';
 import ShareModal from '../common/ShareModal';
 import { toast } from 'react-hot-toast';
 
@@ -32,10 +32,8 @@ const EnrollCard = ({ course }) => {
 
   const handleWishlistClick = () => {
     if (isInWishlist) {
-      // Nếu đã có -> Xóa
       dispatch(removeFromWishlist(_id));
     } else {
-      // Nếu chưa có -> Thêm
       dispatch(addToWishlist(_id));
     }
   };
@@ -43,7 +41,6 @@ const EnrollCard = ({ course }) => {
   const handleAddToCart = () => {
     if (!user) {
       toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      // navigate('/login'); // Có thể redirect nếu muốn
       return;
     }
     dispatch(addToCart(_id));
@@ -54,11 +51,11 @@ const EnrollCard = ({ course }) => {
       toast.info("Vui lòng đăng nhập");
       return;
     }
-    // Để tạm thời, sẽ điều chỉnh sau
-    // Logic Enroll Now: Thêm vào giỏ hàng -> Chuyển hướng ngay tới trang giỏ hàng
-    dispatch(addToCart(_id)).then((result) => {
-      if (!result.error) {
-        navigate('/cart');
+    // Navigate directly to checkout with this course
+    navigate('/checkout', {
+      state: {
+        directCheckout: true,
+        course: course
       }
     });
   };
@@ -92,7 +89,6 @@ const EnrollCard = ({ course }) => {
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
-              {/* Icon tim: filled nếu đã thích, outline nếu chưa */}
               <Heart size={18} className={isInWishlist ? "fill-current" : ""} />
               {isInWishlist ? 'Wishlisted' : 'Add to Wishlist'}
             </button>
@@ -105,19 +101,19 @@ const EnrollCard = ({ course }) => {
             </button>
           </div>
 
-          {/* Add to Cart Button - Primary CTA */}
+          {/* Add to Cart Button - Secondary CTA */}
           <button
             onClick={handleAddToCart}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group"
+            className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 mb-3"
           >
-            <ShoppingCart size={20} className="group-hover:scale-110 transition-transform" />
+            <ShoppingCart size={20} />
             Add to Cart
           </button>
 
-          {/* Enroll Now Button - Secondary CTA */}
+          {/* Enroll Now Button - Primary CTA */}
           <button
             onClick={handleEnrollNow}
-            className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg"
           >
             Enroll Now
           </button>

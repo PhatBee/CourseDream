@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { getCart } from "../features/cart/cartSlice";
 import cartService from "../features/cart/cartService";
 import { ShoppingBag, ArrowLeft, Trash2, CreditCard, Wallet } from "lucide-react";
 import Spinner from "../components/common/Spinner";
-import MOMO from "../../public/MOMO.svg"
-import ZALO from "../../public/ZaloPay.svg"
-import VNPay from "../../public/VNPay.svg"
 
 const formatPrice = (price) => {
     if (price === 0) return 'FREE';
@@ -18,24 +15,42 @@ const formatPrice = (price) => {
 export default function Checkout() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useSelector((state) => state.auth);
-    const { items, totalItems, totalPrice, isLoading } = useSelector((state) => state.cart);
+    const { items: cartItems, totalItems: cartTotalItems, totalPrice: cartTotalPrice, isLoading } = useSelector((state) => state.cart);
 
     const [selectedMethod, setSelectedMethod] = useState("vnpay");
 
+    // Check if this is a direct checkout from course detail
+    const isDirectCheckout = location.state?.directCheckout;
+    const directCourse = location.state?.course;
+
+    // Determine which data to use
+    const items = isDirectCheckout && directCourse
+        ? [{
+            course: directCourse,
+            price: directCourse.price,
+            priceDiscount: directCourse.priceDiscount,
+            _id: directCourse._id
+        }]
+        : cartItems;
+
+    const totalItems = isDirectCheckout ? 1 : cartTotalItems;
+    const totalPrice = isDirectCheckout ? directCourse?.priceDiscount || 0 : cartTotalPrice;
+
     useEffect(() => {
-        if (user) {
+        if (user && !isDirectCheckout) {
             dispatch(getCart());
         }
-    }, [user, dispatch]);
+    }, [user, dispatch, isDirectCheckout]);
 
-    // Redirect if cart is empty
+    // Redirect if no items (only for cart mode)
     useEffect(() => {
-        if (!isLoading && items.length === 0) {
+        if (!isDirectCheckout && !isLoading && items.length === 0) {
             toast.error("Giỏ hàng trống");
             navigate("/cart");
         }
-    }, [items, isLoading, navigate]);
+    }, [items, isLoading, navigate, isDirectCheckout]);
 
     const handleRemoveItem = async (courseId) => {
         try {
@@ -107,19 +122,19 @@ export default function Checkout() {
         {
             id: "vnpay",
             label: "VNPAY",
-            icon: VNPay,
+            icon: "./VNPAY.svg",
             description: "Thanh toán qua VNPAY"
         },
         {
             id: "momo",
             label: "MoMo",
-            icon: MOMO,
+            icon: "./MOMO.svg",
             description: "Ví điện tử MoMo"
         },
         {
             id: "zalopay",
             label: "ZaloPay",
-            icon: ZALO,
+            icon: "./ZaloPay.svg",
             description: "Ví điện tử ZaloPay"
         },
     ];
@@ -129,13 +144,23 @@ export default function Checkout() {
             <div className="max-w-7xl mx-auto px-4">
                 {/* Breadcrumb */}
                 <div className="mb-6">
-                    <Link
-                        to="/cart"
-                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                        <ArrowLeft size={18} />
-                        Quay lại giỏ hàng
-                    </Link>
+                    {isDirectCheckout && directCourse ? (
+                        <Link
+                            to={`/courses/${directCourse.slug}`}
+                            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+                        >
+                            <ArrowLeft size={18} />
+                            Quay lại trang khóa học
+                        </Link>
+                    ) : (
+                        <Link
+                            to="/cart"
+                            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+                        >
+                            <ArrowLeft size={18} />
+                            Quay lại giỏ hàng
+                        </Link>
+                    )}
                 </div>
 
                 {/* Page Title */}
@@ -253,13 +278,16 @@ export default function Checkout() {
                                                 )}
                                             </div>
 
-                                            <button
-                                                onClick={() => handleRemoveItem(course._id)}
-                                                className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                title="Xóa"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {/* Only show remove button in cart mode */}
+                                            {!isDirectCheckout && (
+                                                <button
+                                                    onClick={() => handleRemoveItem(course._id)}
+                                                    className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Xóa"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })}
