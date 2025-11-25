@@ -91,9 +91,10 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
       <div className="relative overflow-hidden">
         <Link to={`/courses/${slug}`}>
           <img
-            src={thumbnail || 'https://via.placeholder.com/300x200'}
+            src={thumbnail || '/default-course.svg'}
             alt={title}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => { e.target.src = '/default-course.svg'; }}
           />
         </Link>
 
@@ -168,11 +169,11 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
                 </button>
 
                 <button
-              onClick={handleEnrollNow}
-              className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
-            >
-              Enroll
-            </button>
+                  onClick={handleEnrollNow}
+                  className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                >
+                  Enroll
+                </button>
               </>
             )}
           </div>

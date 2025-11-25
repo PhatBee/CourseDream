@@ -54,8 +54,9 @@ const CourseHeader = ({ course }) => {
             <div className="relative aspect-video">
               <img
                 className="w-full h-auto object-cover rounded-md aspect-video"
-                src={thumbnail}
+                src={thumbnail || '/default-course.svg'}
                 alt={title}
+                onError={(e) => { e.target.src = '/default-course.svg'; }}
               />
 
               {/* 5c. Nếu có link (embedUrl) -> Hiển thị nút Play */}
