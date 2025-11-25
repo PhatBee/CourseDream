@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Star, ShoppingCart, User } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
@@ -10,6 +10,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
+  const navigate = useNavigate();
 
   const {
     _id,
@@ -66,6 +67,20 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
     } else {
       dispatch(addToWishlist(_id));
     }
+  };
+
+  const handleEnrollNow = () => {
+    if (!user) {
+      toast("Vui lòng đăng nhập");
+      return;
+    }
+    // Navigate directly to checkout with this course
+    navigate('/checkout', {
+      state: {
+        directCheckout: true,
+        course: course
+      }
+    });
   };
 
   return (
@@ -146,12 +161,13 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist 
 
             {/* Nút Enroll: Bạn có thể để nó link sang trang chi tiết, 
                hoặc nếu là 'Buy Now' thì gọi addToCart rồi redirect sang checkout */}
-            <Link
-              to={`/courses/${slug}`} // Enroll thường dẫn vào trang chi tiết để xem trước khi mua
+            <button
+              onClick={handleEnrollNow}
               className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
             >
               Enroll
-            </Link>
+            </button>
+
           </div>
         </div>
       </div>
