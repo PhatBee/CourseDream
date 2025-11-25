@@ -22,6 +22,7 @@ import instructorRoutes from "./modules/instructor/instructor.routes.js";
 
 const app = express();
 
+// CORS CONFIG
 const allowedOrigins = ["http://localhost:5173"];
 const corsOptions = {
   origin: (origin, callback) => {
@@ -35,14 +36,12 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// MIDDLEWARES
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
-  origin: 'http://localhost:5173', // Specify the allowed origin
-  credentials: true, // Allow credentials
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
 app.use(morgan("dev"));
+
 
 // routes
 app.use("/api/auth", authRoutes);

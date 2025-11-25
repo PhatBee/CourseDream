@@ -55,9 +55,6 @@ CartSchema.methods.calculateTotals = function () {
     return this;
 };
 
-// Index để tìm cart theo student nhanh hơn
-CartSchema.index({ student: 1 });
-
 // Index để tìm course trong cart
 CartSchema.index({ 'items.course': 1 });
 
