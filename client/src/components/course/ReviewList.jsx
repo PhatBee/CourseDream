@@ -8,7 +8,7 @@ const ReviewList = ({ reviews }) => {
   }
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
        <h5 className="text-xl font-semibold text-gray-800">Student Feedback</h5>
       {reviews.map((review) => (
         <div key={review._id} className="flex gap-4">

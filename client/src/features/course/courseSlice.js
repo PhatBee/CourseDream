@@ -4,9 +4,12 @@ import { courseApi } from '../../api/courseApi';
 
 const initialState = {
   items: [],
-  course: null,
-  reviews: [],
-  reviewCount: 0,
+  pagination: {
+    page: 1,
+    limit: 9,
+    totalPages: 1,
+    total: 0
+  },
   isLoading: false,
   isError: false,
   message: '',
@@ -16,12 +19,11 @@ export const getAllCourses = createAsyncThunk(
   'courses/getAll',
   async (params, thunkAPI) => {
     try {
-      // Gọi route GET /courses mà ta vừa tạo ở backend
       const response = await courseApi.getAllCourses(params);
-      // Backend trả về { success: true, data: [...] }
-      return response.data.data; 
+      return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || 'Error fetching courses');
+      const message = error.response?.data?.message || 'Error fetching courses';
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
@@ -77,15 +79,18 @@ export const courseSlice = createSlice({
       })
       .addCase(getAllCourses.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
       })
       .addCase(getAllCourses.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = action.payload;
+        // Cập nhật items và pagination từ payload backend
+        state.items = action.payload.data || [];
+        state.pagination = action.payload.pagination || initialState.pagination;
       })
       .addCase(getAllCourses.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.isError = true;
+        state.message = action.payload;
+        state.items = [];
       });
   },
 });

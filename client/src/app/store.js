@@ -5,6 +5,7 @@ import wishlistReducer from '../features/wishlist/wishlistSlice';
 import categoryReducer from '../features/categories/categorySlice';
 import learningReducer from "../features/learning/learningSlice";
 import cartReducer from '../features/cart/cartSlice';
+import enrollmentReducer from "../features/enrollment/enrollmentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -15,5 +16,6 @@ export const store = configureStore({
     learning: learningReducer,
     wishlist: wishlistReducer,
     cart: cartReducer,
+    enrollment: enrollmentReducer,
   }
 });

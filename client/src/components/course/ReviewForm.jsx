@@ -9,18 +9,18 @@ const ReviewForm = () => {
 
   return (
     <div>
-      <h5 className="text-xl font-semibold text-gray-800 mb-4">Post A Comment</h5>
+      <h5 className="text-xl font-semibold text-gray-800 mb-4 text-left">Post A Comment</h5>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 text-left">Name</label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 text-left">Email</label>
             <input 
               type="email" 
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
@@ -28,14 +28,14 @@ const ReviewForm = () => {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1 text-left">Subject</label>
           <input 
             type="text" 
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Comments</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1 text-left">Comments</label>
           <textarea 
             rows="4"
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"

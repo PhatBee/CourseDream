@@ -32,7 +32,7 @@ const CourseHeader = ({ course }) => {
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden">
+    <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden text-left">
       <div className="p-4 sm:p-6 lg:flex items-center">
 
         {/* Cột trái: Thumbnail Video */}
