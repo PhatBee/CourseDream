@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux'; 
 import { getWishlist, clearWishlistState } from '../features/wishlist/wishlistSlice';
 import Header from "../components/Header";
+import { fetchMyEnrollments, resetEnrollment } from '../features/enrollment/enrollmentSlice';
 
 export default function MainLayout() {
   const dispatch = useDispatch();
@@ -11,9 +12,10 @@ export default function MainLayout() {
   useEffect(() => {
     if (user) {
       dispatch(getWishlist());
+      dispatch(fetchMyEnrollments());
     } else {
-
       dispatch(clearWishlistState());
+      dispatch(resetEnrollment());
     }
   }, [user, dispatch]);
 

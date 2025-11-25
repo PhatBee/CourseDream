@@ -26,10 +26,12 @@ export const getCourseDetailsBySlug = async (req, res, next) => {
 
 export const getCourses = async (req, res, next) => {
   try {
-    const courses = await courseService.getAllCourses(req.query);
+    const result = await courseService.getAllCourses(req.query);
+    
     res.status(200).json({
       success: true,
-      data: courses
+      data: result.courses,
+      pagination: result.pagination
     });
   } catch (error) {
     next(error);

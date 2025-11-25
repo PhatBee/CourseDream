@@ -112,17 +112,6 @@ export default function Cart() {
     return (
         <div className="w-full py-12 bg-gray-50 min-h-screen">
             <div className="max-w-6xl mx-auto px-4">
-                {/* Breadcrumb */}
-                <div className="mb-6">
-                    <Link
-                        to="/"
-                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                        <ArrowLeft size={18} />
-                        Tiếp tục mua sắm
-                    </Link>
-                </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column - Cart Items */}
                     <div className="lg:col-span-2">
