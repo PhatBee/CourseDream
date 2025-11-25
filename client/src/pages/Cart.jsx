@@ -148,9 +148,11 @@ export default function Cart() {
                                             <div className="md:w-48 flex-shrink-0">
                                                 <Link to={`/courses/${course.slug}`}>
                                                     <img
-                                                        src={course.thumbnail || 'https://via.placeholder.com/300x200'}
+                                                        src={course.thumbnail || '/default-avatar.svg'}
                                                         className="rounded-lg w-full h-32 object-cover hover:opacity-90 transition-opacity"
                                                         alt={course.title}
+                                                        crossOrigin="anonymous"
+                                                        referrerPolicy="no-referrer"
                                                     />
                                                 </Link>
                                             </div>
