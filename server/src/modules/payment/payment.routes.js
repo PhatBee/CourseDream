@@ -1,11 +1,14 @@
-import express from "express";
-// import { createPayment, verifyPayment } from "./payment.controller.js";
-// import { verifyToken } from "../../middlewares/auth.middleware.js";
+import express from 'express';
+import * as paymentController from './payment.controller.js';
+import { verifyToken } from '../../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-// Ví dụ routes (bỏ comment khi controller tồn tại)
-// router.post("/create", verifyToken, createPayment);
-// router.post("/verify", verifyToken, verifyPayment);
+// Tạo URL thanh toán (Yêu cầu đăng nhập)
+router.post('/create_payment_url', verifyToken, paymentController.createPaymentUrl);
+
+// Xử lý kết quả trả về từ VNPAY
+// Lưu ý: Route này Frontend gọi sau khi VNPAY redirect về
+router.get('/vnpay_return', paymentController.vnpayReturn);
 
 export default router;

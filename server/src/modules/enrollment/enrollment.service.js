@@ -1,0 +1,34 @@
+import Enrollment from './enrollment.model.js';
+
+class EnrollmentService {
+    async enrollStudent(studentId, courseIds) {
+        // Duyệt qua từng khóa học để tạo enrollment
+        const enrollments = courseIds.map(courseId => ({
+            student: studentId,
+            course: courseId,
+            enrolledAt: new Date(),
+            progress: 0,
+            isCompleted: false
+        }));
+
+        // Dùng insertMany để lưu hàng loạt, option ordered: false để nếu trùng 1 cái thì các cái khác vẫn chạy
+        try {
+            // Kiểm tra xem đã enroll chưa để tránh trùng lặp (tùy chọn, vì insertMany có thể lỗi duplicate key)
+            for (const courseId of courseIds) {
+                await Enrollment.findOneAndUpdate(
+                    { student: studentId, course: courseId },
+                    {
+                        student: studentId,
+                        course: courseId,
+                        enrolledAt: new Date()
+                    },
+                    { upsert: true, new: true }
+                );
+            }
+        } catch (error) {
+            console.error("Enrollment error:", error);
+        }
+    }
+}
+
+export default new EnrollmentService();

@@ -159,6 +159,31 @@ class CartService {
                 ]
             });
     }
+    /**
+     * Xóa danh sách các khóa học đã thanh toán khỏi giỏ hàng
+     * @param {string} studentId 
+     * @param {Array} courseIdsArray - Mảng các ID khóa học đã mua
+     */
+    async removeCoursesFromCart(studentId, courseIdsArray) {
+        const cart = await Cart.findOne({ student: studentId });
+        if (!cart) return;
+
+        // Chuyển courseIdsArray về dạng string để so sánh
+        const paidCourseIds = courseIdsArray.map(id => id.toString());
+
+        console.log("payment.courses:", courseIdsArray);
+        console.log("cart.items:", cart.items);
+
+        // Lọc giữ lại những item KHÔNG nằm trong danh sách đã mua
+        cart.items = cart.items.filter(
+            item => !paidCourseIds.includes(item.course.toString())
+        );
+
+        cart.calculateTotals();
+        await cart.save();
+        return cart;
+    }
+
 }
 
 export default new CartService();

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Share2, ShoppingCart, PlayCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
-import { addToCart } from '../../features/cart/cartSlice'; // Import addToCart
+import { addToCart } from '../../features/cart/cartSlice';
 import ShareModal from '../common/ShareModal';
 import { toast } from 'react-hot-toast';
 
@@ -33,10 +33,8 @@ const EnrollCard = ({ course }) => {
 
   const handleWishlistClick = () => {
     if (isInWishlist) {
-      // Nếu đã có -> Xóa
       dispatch(removeFromWishlist(_id));
     } else {
-      // Nếu chưa có -> Thêm
       dispatch(addToWishlist(_id));
     }
   };
@@ -44,7 +42,6 @@ const EnrollCard = ({ course }) => {
   const handleAddToCart = () => {
     if (!user) {
       toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      // navigate('/login'); // Có thể redirect nếu muốn
       return;
     }
     dispatch(addToCart(_id));
@@ -55,11 +52,11 @@ const EnrollCard = ({ course }) => {
       toast.info("Vui lòng đăng nhập");
       return;
     }
-    // Để tạm thời, sẽ điều chỉnh sau
-    // Logic Enroll Now: Thêm vào giỏ hàng -> Chuyển hướng ngay tới trang giỏ hàng
-    dispatch(addToCart(_id)).then((result) => {
-      if (!result.error) {
-        navigate('/cart');
+    // Navigate directly to checkout with this course
+    navigate('/checkout', {
+      state: {
+        directCheckout: true,
+        course: course
       }
     });
   };
@@ -102,7 +99,6 @@ const EnrollCard = ({ course }) => {
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
-              {/* Icon tim: filled nếu đã thích, outline nếu chưa */}
               <Heart size={18} className={isInWishlist ? "fill-current" : ""} />
               {isInWishlist ? 'Wishlisted' : 'Add to Wishlist'}
             </button>
