@@ -11,4 +11,7 @@ router.post('/create_payment_url', verifyToken, paymentController.createPaymentU
 // Lưu ý: Route này Frontend gọi sau khi VNPAY redirect về
 router.get('/vnpay_return', paymentController.vnpayReturn);
 
+router.post('/create_momo_url', verifyToken, paymentController.createMomoPaymentUrl);
+router.get('/momo_return', paymentController.momoReturn);
+
 export default router;
