@@ -75,8 +75,6 @@ export default function Checkout() {
         // }
 
         try {
-            toast.loading("Đang tạo liên kết thanh toán...");
-
             // Calculate final amount with tax
             const subtotal = items.reduce((sum, item) => sum + item.price, 0);
             const discount = subtotal - totalPrice;
@@ -106,7 +104,7 @@ export default function Checkout() {
                     courseIds: courseIds
                 });
             } else {
-                toast.info("Phương thức thanh toán này đang bảo trì");
+                toast("Phương thức thanh toán này đang bảo trì");
                 return;
             }
 
