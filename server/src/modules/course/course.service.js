@@ -1,7 +1,9 @@
 import Course from './course.model.js';
 import Review from '../review/review.model.js';
 import Progress from '../progress/progress.model.js';
-
+import Lecture from "./lecture.model.js";
+import Section from "./section.model.js";
+import Enrollment from "../enrollment/enrollment.model.js";
 /**
  * Service: Lấy chi tiết khóa học
  * @param {string} slug - Slug của khóa học
@@ -130,4 +132,47 @@ export const getLearningDetails = async (slug, userId) => {
     course,
     progress
   };
+};
+export const searchCourses = async (query) => {
+  const q = (query.q || "").trim();
+  const page = parseInt(query.page || "1", 10);
+  const limit = parseInt(query.limit || "12", 10);
+  const skip = (page - 1) * limit;
+
+  const filter = q ? {
+    $or: [
+      { title: { $regex: q, $options: "i" } },
+      { description: { $regex: q, $options: "i" } }
+    ]
+  } : {};
+
+  const [total, courses] = await Promise.all([
+    Course.countDocuments(filter),
+    Course.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .select("title slug thumbnail price rating studentsCount")
+      .sort({ rating: -1, createdAt: -1 })
+  ]);
+
+  return { total, page, limit, courses };
+};
+
+export const getLecture = async ({ courseId, lectureId, user }) => {
+  const lecture = await Lecture.findById(lectureId).populate("section");
+  if (!lecture) return { error: { status: 404, message: "Bài giảng không tồn tại" } };
+
+  const section = lecture.section ? lecture.section : await Section.findById(lecture.section);
+  if (!section || section.course.toString() !== courseId.toString()) {
+    return { error: { status: 400, message: "Lecture không thuộc khóa học này" } };
+  }
+
+  if (lecture.isPreviewFree) return { lecture };
+
+  if (!user) return { error: { status: 401, message: "Vui lòng đăng nhập để xem bài giảng" } };
+
+  const enrolled = await Enrollment.findOne({ student: user._id, course: courseId });
+  if (!enrolled) return { error: { status: 403, message: "Bạn chưa mua khóa học này" } };
+
+  return { lecture };
 };

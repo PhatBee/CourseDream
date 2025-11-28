@@ -19,6 +19,9 @@ import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
 import paymentRoutes from "./modules/payment/payment.routes.js";
 import reviewRoutes from "./modules/review/review.routes.js";
 import instructorRoutes from "./modules/instructor/instructor.routes.js";
+import reportRoutes from "./modules/report/report.routes.js";
+import notificationRoutes from "./modules/notification/notification.routes.js";
+import discussionRoutes from "./modules/discussion/discussion.routes.js";
 
 const app = express();
 
@@ -59,6 +62,10 @@ app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/instructor", instructorRoutes);
+
+app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/discussions", discussionRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
