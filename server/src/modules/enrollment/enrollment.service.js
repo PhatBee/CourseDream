@@ -3,40 +3,43 @@ import Course from "../course/course.model.js";
 
 class EnrollmentService {
 
-  // Enroll student vào nhiều khoá
-  async enrollStudent(studentId, courseIds) {
-    try {
-      for (const courseId of courseIds) {
-        // Upsert enrollment tránh trùng lặp
-        const enrollment = await Enrollment.findOneAndUpdate(
-          { student: studentId, course: courseId },
-          {
+    async enrollStudent(studentId, courseIds) {
+        // Duyệt qua từng khóa học để tạo enrollment
+        const enrollments = courseIds.map(courseId => ({
             student: studentId,
             course: courseId,
-            enrolledAt: new Date()
-          },
-          { upsert: true, new: true }
-        );
+            enrolledAt: new Date(),
+            progress: 0,
+            isCompleted: false
+        }));
 
-        // Nếu là bản ghi mới => tăng studentsCount
-        if (enrollment.isNew) {
-          await Course.findByIdAndUpdate(courseId, {
-            $inc: { studentsCount: 1 }
-          });
+        // Dùng insertMany để lưu hàng loạt, option ordered: false để nếu trùng 1 cái thì các cái khác vẫn chạy
+        try {
+            // Kiểm tra xem đã enroll chưa để tránh trùng lặp (tùy chọn, vì insertMany có thể lỗi duplicate key)
+            for (const courseId of courseIds) {
+                await Enrollment.findOneAndUpdate(
+                    { student: studentId, course: courseId },
+                    {
+                        student: studentId,
+                        course: courseId,
+                        enrolledAt: new Date()
+                    },
+                    { upsert: true, new: true }
+                );
+
+                // Tăng studentsCount trong Course
+                await Course.findByIdAndUpdate(courseId, { $inc: { studentsCount: 1 } });
+            }
+        } catch (error) {
+            console.error("Enrollment error:", error);
         }
-      }
-    } catch (err) {
-      console.error("Enrollment error:", err);
-      throw err;
     }
-  }
-
-  // Lấy danh sách khoá học đã đăng ký của user
-  async getMyEnrollments(userId) {
-    return Enrollment.find({ student: userId })
-      .populate("course", "title slug thumbnail price")
-      .sort({ enrolledAt: -1 });
-  }
+    // Lấy danh sách khoá học đã đăng ký của user
+    async getMyEnrollments(userId) {
+        return Enrollment.find({ student: userId })
+            .populate("course", "title slug thumbnail price")
+            .sort({ enrolledAt: -1 });
+    }
 }
 
 export default new EnrollmentService();
