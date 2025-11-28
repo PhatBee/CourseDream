@@ -65,7 +65,7 @@ export const getAllCourses = async (query) => {
   const limit = parseInt(query.limit) || 9;
   const skip = (page - 1) * limit;
 
-  const filter = { status: 'published' }; 
+  const filter = { status: 'published' };
   if (query.category) {
   }
 
@@ -94,7 +94,7 @@ export const getAllCourses = async (query) => {
 
 export const getLearningDetails = async (slug, userId) => {
   const course = await Course.findOne({ slug })
-    .select('title slug sections totalLectures')
+    .select('title slug sections totalLectures thumbnail instructor')
     .populate({
       path: 'sections',
       select: 'title order',
@@ -102,10 +102,11 @@ export const getLearningDetails = async (slug, userId) => {
       populate: {
         path: 'lectures',
         model: 'Lecture',
-        select: 'title videoUrl duration isPreviewFree order resources', 
+        select: 'title videoUrl duration isPreviewFree order resources',
         options: { sort: { order: 1 } },
       },
     })
+    .populate('instructor', 'name avatar')
     .lean();
 
   if (!course) {
@@ -115,7 +116,7 @@ export const getLearningDetails = async (slug, userId) => {
   }
 
   let progress = await Progress.findOne({ student: userId, course: course._id });
-  
+
   if (!progress) {
     progress = {
       student: userId,

@@ -56,6 +56,12 @@ VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 VNPAY_API=https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
 VNPAY_RETURN_URL=http://localhost:5173/payment/return
 
+MOMO_PARTNER_CODE=YOUR_MOMO_PARTNER_CODE
+MOMO_ACCESS_KEY=YOUR_MOMO_ACCESS_KEY
+MOMO_SECRET_KEY=YOUR_MOMO_SECRET_KEY
+MOMO_ENDPOINT=https://test-payment.momo.vn/v2/gateway/api/create
+MOMO_RETURN_URL=http://localhost:5173/payment/return
+
 # env trong client
 VITE_API_URL="http://localhost:5000/api"
 VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
