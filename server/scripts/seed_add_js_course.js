@@ -1,4 +1,4 @@
-// scripts/seed_add_docker_expert.js
+// scripts/seed_add_notion_launch_kit.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -33,111 +33,67 @@ function slugify(text) {
     // ====== INPUT DATA ======
     const instructorId = '6913f6f74ef370e87cb6d779';
 
-    const title = 'Docker: From Beginner to Expert';
-    const shortDescription = 'Animations-based, hands-on, fun and engaging Docker course from a Senior Software Engineer with a PhD';
+    const title = 'The Ultimate Notion Course Launch Kit';
+    const shortDescription = 'Launch Your Course with Notion: Design Sales Pages, Dashboards, and Slide Decks for a Seamless Course Experience.';
 
     const description = `
-This will be one of the most interesting and fun courses that you will take on Docker.
+Launching a course can be overwhelming — especially when you're juggling multiple tools and platforms.
 
-With an animations and hands-on first approach, this course has been designed to be super friendly for absolute beginners. Complex Docker concepts are brought to life with engaging animations, real-world examples, and plenty of practice labs.
+With **The Ultimate Notion Course Launch Kit**, you can design, organize, and launch your entire course — all inside Notion.
 
-What you’ll master:
-• Understand Docker architecture fundamentals
-• Build & optimise custom Docker images (including multi-stage builds)
-• Master container management (detached, interactive, lifecycle)
-• Docker networking – bridge, custom networks
-• Orchestrate everything elegantly with Docker Compose
-• Containerise real-world applications from scratch
+In this course you’ll learn how to:
+• Build beautiful, high-converting sales pages directly in Notion
+• Create polished course dashboards for a seamless student experience
+• Design stunning, customizable slide decks (perfect for video lessons)
+• Use Notion as your all-in-one launch hub (no more messy tools!)
 
-The course contains dozens of hands-on labs, downloadable resources, and animated explanations that make learning Docker both effective and enjoyable!
+Includes ready-to-use templates + step-by-step video training.
 
-By the end, you’ll confidently deploy, manage, and scale containerised applications in any environment.
+No design skills? No problem! Everything is beginner-friendly and fully customizable to match your brand.
+
+Stop switching between apps. Launch faster, cleaner, and with total confidence — all from one place: Notion.
 `.trim();
 
-    const topics = ['Docker', 'Công cụ phát triển phần mềm', 'Phát triển'];
+    const topics = ['Notion Workspace', 'Marketing'];
     const includes = [
-      '3 giờ video theo yêu cầu',
-      '10 tài nguyên có thể tải xuống',
+      '2 giờ video theo yêu cầu',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'Absolute beginners',
-      'System Administrators',
-      'Cloud Infrastructure Engineers',
-      'Developers',
+      'Course creators who want to launch faster using Notion',
+      'Coaches, educators, and creators tired of juggling multiple tools',
+      'Beginners who want a simple, beautiful, all-in-one launch system',
     ];
-    const requirements = ['No prior programming or system administration experience required'];
+    const requirements = [
+      'Basic familiarity with Notion is helpful but not required',
+      'No advanced tech skills or special software needed — everything is done within Notion',
+      'Beginners are welcome — this course is designed to be user-friendly for all experience levels',
+    ];
     const learnOutcomes = [
-      'Hiểu sâu kiến trúc Docker và cách hoạt động của container',
-      'Xây dựng và tối ưu Docker images (bao gồm multi-stage builds)',
-      'Quản lý container chuyên nghiệp: detached, interactive, logs, exec...',
-      'Làm chủ Docker Networking và tạo custom networks',
-      'Sử dụng Docker Compose để orchestrate nhiều container một cách dễ dàng',
-      'Containerise các ứng dụng thực tế từ A-Z',
+      'Thiết kế sales page chuyên nghiệp hoàn toàn trong Notion',
+      'Tạo dashboard khóa học đẹp mắt và dễ sử dụng cho học viên',
+      'Xây dựng slide deck đẹp như Canva nhưng linh hoạt hơn với Notion',
+      'Tổ chức và launch khóa học chỉ với một công cụ duy nhất: Notion',
+      'Tự tin launch khóa học mà không cần biết code hay dùng nhiều app',
     ];
 
-    // ====== SECTIONS & LECTURES ======
+    // ====== SECTIONS & LECTURES (chỉ 1 phần) ======
     const sectionsData = [
       {
-        title: 'Introduction',
+        title: 'The Ultimate Notion Course Launch Kit',
         lectures: [
-          { title: 'Introduction', preview: true, duration: '02:34', url: 'https://dai.ly/x9uaxtu' },
-          { title: 'Docker CheatSheet and Udemy Review', preview: false, duration: '01:59', url: 'https://dai.ly/x9uaxu4' },
-          { title: 'The Evolution of Docker', preview: false, duration: '12:35', url: 'https://dai.ly/x9uaxty' },
-          { title: 'High Level Docker Architecture', preview: false, duration: '08:07', url: 'https://dai.ly/x9uaxu2' },
-          { title: 'Docker Installation: MacOS Instructions', preview: false, duration: '02:38', url: 'https://dai.ly/x9uaxtw' },
-          { title: 'Docker Installation: Windows Instructions', preview: false, duration: '05:34', url: 'https://dai.ly/x9uaxu0' },
-          { title: 'Dockerfile, Images and Containers', preview: true, duration: '06:51', url: 'https://dai.ly/x9uaxu8' },
-        ]
-      },
-      {
-        title: 'Building Docker Images',
-        lectures: [
-          { title: 'Docker Images: Types and Layers', preview: false, duration: '07:34', url: 'https://dai.ly/x9uay9g' },
-          { title: 'Building Custom Docker Images', preview: false, duration: '07:44', url: 'https://dai.ly/x9uay9o' },
-          { title: 'Lab: Building Docker Images', preview: false, duration: '01:28', url: 'https://dai.ly/x9uay9k' },
-          { title: 'Lab Solution: Building Docker Images', preview: false, duration: '03:17', url: 'https://dai.ly/x9uay9i' },
-          { title: 'Docker Images: Optimisation Techniques', preview: true, duration: '15:42', url: 'https://dai.ly/x9uay9m' },
-        ]
-      },
-      {
-        title: 'Container Management',
-        lectures: [
-          { title: 'Docker Container Management: Basic Concepts', preview: false, duration: '08:18', url: 'https://dai.ly/x9udk5g' },
-          { title: 'Docker Container Management: Detached vs Interactive Mode', preview: true, duration: '04:47', url: 'https://dai.ly/x9udk5i' },
-          { title: 'Demo: Nginx Server in Detached Mode', preview: false, duration: '01:25', url: 'https://dai.ly/x9udk5m' },
-          { title: 'Lab: Container Management', preview: false, duration: '02:17', url: 'https://dai.ly/x9udk5o' },
-          { title: 'Lab Solution: Container Management', preview: false, duration: '03:39', url: 'https://dai.ly/x9udk5k' },
-          { title: 'Best Practices for Container Management', preview: false, duration: '03:19', url: 'https://dai.ly/x9udk5q' },
-          { title: 'Interactive Mode: Deep Dive', preview: false, duration: '05:15', url: 'https://dai.ly/x9udk5s' },
-          { title: 'Lab: Modifying Containers at Runtime', preview: false, duration: '03:36', url: 'https://dai.ly/x9udk5u' },
-          { title: 'Lab Solution: Modifying Containers at Runtime', preview: false, duration: '03:48', url: 'https://dai.ly/x9udk5w' },
-        ]
-      },
-      {
-        title: 'Containerising Real-World Applications',
-        lectures: [
-          { title: 'Containerising a real-world application', preview: true, duration: '09:09', url: 'https://dai.ly/x9udk5y' },
-          { title: 'Multistage Builds: Basic Concepts', preview: false, duration: '05:18', url: 'https://dai.ly/x9udlne' },
-          { title: 'Multistage Build In Action', preview: false, duration: '09:05', url: 'https://dai.ly/x9udlpq' },
-        ]
-      },
-      {
-        title: 'Docker Networking and Docker Compose',
-        lectures: [
-          { title: 'Docker Networking: Introduction', preview: false, duration: '09:44', url: 'https://dai.ly/x9udlsw' },
-          { title: 'Container Isolation in Docker Networking', preview: false, duration: '05:43', url: 'https://dai.ly/x9udlyg' },
-          { title: 'Custom Docker Networks', preview: false, duration: '05:21', url: 'https://dai.ly/x9ugr3c' },
-          { title: 'Docker Compose in Action', preview: false, duration: '08:33', url: 'https://dai.ly/x9ugr3a' },
-          { title: 'Lab: Docker Compose', preview: false, duration: '03:23', url: 'https://dai.ly/x9ugr36' },
-          { title: 'Lab Solution: Docker Compose', preview: false, duration: '05:58', url: 'https://dai.ly/x9ugr3e' },
-        ]
-      },
-      {
-        title: 'Conclusion',
-        lectures: [
-          { title: 'Conclusion and Next Steps', preview: false, duration: '02:39', url: 'https://dai.ly/x9ugr38' },
+          { title: 'Welcome on board!', preview: true, duration: '05:09', url: 'https://dai.ly/x9ugt4k' },
+          { title: 'Creating Notion Slides', preview: false, duration: '19:41', url: 'https://dai.ly/x9ugt4i' },
+          { title: 'The Foundation of Clarity', preview: false, duration: '10:18', url: 'https://dai.ly/x9ugt4e' },
+          { title: 'Editing Your Course with Loom', preview: true, duration: '04:59', url: 'https://dai.ly/x9ugt4c' },
+          { title: 'Editing Your Course with CapCut', preview: false, duration: '20:08', url: 'https://dai.ly/x9ugt4g' },
+          { title: 'Sales Page in Notion - Part 1', preview: false, duration: '24:35', url: 'https://dai.ly/x9ugujy' },
+          { title: 'Sales Page in Notion - Part 2', preview: false, duration: '17:16', url: 'https://dai.ly/x9ugv9y' },
+          { title: 'Notion Course Dashboard', preview: false, duration: '09:57', url: 'https://dai.ly/x9ugwji' },
+          { title: 'Flodesk Checkout', preview: false, duration: '09:13', url: 'https://dai.ly/x9ujv1o' },
+          { title: 'Stripe Checkout Alternative', preview: true, duration: '05:10', url: 'https://dai.ly/x9ujuz0' },
+          { title: 'Conclusion', preview: true, duration: '01:33', url: 'https://dai.ly/x9ujuz2' },
         ]
       }
     ];
@@ -153,7 +109,7 @@ By the end, you’ll confidently deploy, manage, and scale containerised applica
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Docker', 'Công cụ phát triển phần mềm', 'Phát triển'];
+    const categoryNames = ['Notion Workspace', 'Marketing'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -178,13 +134,13 @@ By the end, you’ll confidently deploy, manage, and scale containerised applica
 
     course.title = title;
     course.slug = slug;
-    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6448337_c9ac.jpg'; // có thể thay link thật sau
+    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6181677_24a6.jpg'; // thay link thật sau nếu cần
     course.previewUrl = '';
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 399000;
+    course.price = 499000;
     course.priceDiscount = 199000;
-    course.level = 'beginner'; // Điều chỉnh theo khóa học thêm vào
+    course.level = 'beginner';
     course.language = 'en';
     course.requirements = requirements;
     course.learnOutcomes = learnOutcomes;
@@ -215,16 +171,12 @@ By the end, you’ll confidently deploy, manage, and scale containerised applica
           lectures: [],
         });
         console.log(`Created section: ${secData.title}`);
-      } else {
-        console.log(`Section exists: ${secData.title}`);
       }
 
       const lectureIds = [];
       let lecOrder = 1;
 
       for (const L of secData.lectures) {
-        if (!L.url) continue;
-
         const duration = toSeconds(L.duration);
         totalSeconds += duration;
         totalLectures++;
@@ -263,7 +215,7 @@ By the end, you’ll confidently deploy, manage, and scale containerised applica
     course.sections = sectionIds;
     course.totalLectures = totalLectures;
     course.totalDurationSeconds = totalSeconds;
-    course.totalHours = Number((totalSeconds / 3600).toFixed(2));
+    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~2.12 giờ
 
     await course.save();
 
