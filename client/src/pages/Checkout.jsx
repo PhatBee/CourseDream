@@ -69,10 +69,10 @@ export default function Checkout() {
             return;
         }
 
-        if (selectedMethod !== 'vnpay') {
-            toast("Hiện tại chỉ hỗ trợ thanh toán qua VNPAY");
-            return;
-        }
+        // if (selectedMethod !== 'vnpay') {
+        //     toast("Hiện tại chỉ hỗ trợ thanh toán qua VNPAY");
+        //     return;
+        // }
 
         try {
             toast.loading("Đang tạo liên kết thanh toán...");
@@ -86,18 +86,35 @@ export default function Checkout() {
             // Prepare order info
             const courseNames = items.map(item => item.course.title).join(', ');
             const orderInfo = `Thanh toan khoa hoc: ${courseNames.substring(0, 100)}`;
+            const courseIds = items.map(item => item.course._id);
 
-            // Call API to create payment URL using paymentService
-            const paymentData = await paymentService.createVNPayPayment({
-                amount: finalTotal,
-                orderInfo: orderInfo,
-                courseIds: items.map(item => item.course._id)
-            });
+            let paymentData;
 
-            if (paymentData.paymentUrl) {
-                // Redirect to VNPAY
+            if (selectedMethod === 'vnpay') {
+                toast.loading("Đang chuyển hướng đến VNPAY...");
+                paymentData = await paymentService.createVNPayPayment({
+                    amount: finalTotal,
+                    orderInfo: orderInfo,
+                    courseIds: courseIds
+                });
+            } else if (selectedMethod === 'momo') {
+                // === LOGIC MOMO ===
+                toast.loading("Đang chuyển hướng đến MoMo...");
+                paymentData = await paymentService.createMomoPayment({
+                    amount: finalTotal,
+                    orderInfo: orderInfo, // Lưu ý không dấu tiếng Việt càng tốt
+                    courseIds: courseIds
+                });
+            } else {
+                toast.info("Phương thức thanh toán này đang bảo trì");
+                return;
+            }
+
+            if (paymentData && paymentData.paymentUrl) {
+                // Redirect
                 window.location.href = paymentData.paymentUrl;
             } else {
+                toast.dismiss();
                 toast.error("Lỗi khi tạo liên kết thanh toán");
             }
         } catch (error) {

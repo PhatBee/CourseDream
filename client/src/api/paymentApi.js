@@ -12,6 +12,13 @@ const paymentApi = {
     vnpayReturn: (params) => {
         // params là query string từ URL (VD: ?vnp_Amount=...&vnp_ResponseCode=...)
         return axiosClient.get(`${path}/vnpay_return${params}`);
+    },
+
+    createMomoPayment: (data) => {
+        return axiosClient.post(`${path}/create_momo_url`, data);
+    },
+    momoReturn: (params) => {
+        return axiosClient.get(`${path}/momo_return${params}`);
     }
 };
 
