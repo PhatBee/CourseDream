@@ -1,4 +1,4 @@
-// scripts/seed_add_python_datascience.js
+// scripts/seed_add_docker_expert.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -33,109 +33,111 @@ function slugify(text) {
     // ====== INPUT DATA ======
     const instructorId = '6913f6f74ef370e87cb6d779';
 
-    const title = 'Python for Data Science Pro: The Complete Mastery Course';
-    const shortDescription = 'Become a Data Science Pro: Master Data Analysis, Visualization, and Machine Learning with Python';
+    const title = 'Docker: From Beginner to Expert';
+    const shortDescription = 'Animations-based, hands-on, fun and engaging Docker course from a Senior Software Engineer with a PhD';
 
     const description = `
-Starting with the fundamentals of Python, you’ll quickly progress to advanced topics, including data manipulation with Pandas, statistical analysis, and machine learning with scikit-learn. You’ll also explore powerful data visualization tools like Matplotlib and Seaborn, enabling you to present data insights clearly and effectively. The course is packed with hands-on projects and real-world datasets, providing you with practical experience that mirrors the demands of the data science field.
+This will be one of the most interesting and fun courses that you will take on Docker.
 
-By the end of this course, you’ll have the expertise to analyze, visualize, and model data using Python, making you a highly sought-after data science professional.
+With an animations and hands-on first approach, this course has been designed to be super friendly for absolute beginners. Complex Docker concepts are brought to life with engaging animations, real-world examples, and plenty of practice labs.
 
-What You'll Learn:
-• Python Basics for Data Science
-• Data Manipulation with Pandas
-• Statistical Analysis
-• Machine Learning with scikit-learn
-• Data Visualization with Matplotlib & Seaborn
-• Best Practices for clean, reproducible code
+What you’ll master:
+• Understand Docker architecture fundamentals
+• Build & optimise custom Docker images (including multi-stage builds)
+• Master container management (detached, interactive, lifecycle)
+• Docker networking – bridge, custom networks
+• Orchestrate everything elegantly with Docker Compose
+• Containerise real-world applications from scratch
 
-Who This Course is For:
-• Aspiring data scientists
-• Python developers wanting to specialize in data analysis & ML
-• Data analysts upgrading their skills
-• Professionals who want to leverage data for decision-making
+The course contains dozens of hands-on labs, downloadable resources, and animated explanations that make learning Docker both effective and enjoyable!
 
-Enroll today and start your journey to becoming a proficient data scientist!
+By the end, you’ll confidently deploy, manage, and scale containerised applications in any environment.
 `.trim();
 
-    const topics = ['Python', 'Khoa học dữ liệu', 'Phát triển'];
+    const topics = ['Docker', 'Công cụ phát triển phần mềm', 'Phát triển'];
     const includes = [
-      '4 giờ video theo yêu cầu',
+      '3 giờ video theo yêu cầu',
+      '10 tài nguyên có thể tải xuống',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'Anyone who want to learn master Python for data science.',
-      'Python developers looking to specialize in data analysis and machine learning.',
+      'Absolute beginners',
+      'System Administrators',
+      'Cloud Infrastructure Engineers',
+      'Developers',
     ];
-    const requirements = ['No prior knowledge is required!'];
+    const requirements = ['No prior programming or system administration experience required'];
     const learnOutcomes = [
-      'Thành thạo Python cho Data Science từ cơ bản đến nâng cao',
-      'Làm sạch, xử lý và phân tích dữ liệu với Pandas',
-      'Trực quan hóa dữ liệu chuyên nghiệp bằng Matplotlib & Seaborn',
-      'Xây dựng và đánh giá mô hình Machine Learning',
-      'Hiểu sâu về thống kê và các phân phối quan trọng',
-      'Thực hiện dự án thực tế từ đầu đến cuối',
+      'Hiểu sâu kiến trúc Docker và cách hoạt động của container',
+      'Xây dựng và tối ưu Docker images (bao gồm multi-stage builds)',
+      'Quản lý container chuyên nghiệp: detached, interactive, logs, exec...',
+      'Làm chủ Docker Networking và tạo custom networks',
+      'Sử dụng Docker Compose để orchestrate nhiều container một cách dễ dàng',
+      'Containerise các ứng dụng thực tế từ A-Z',
     ];
 
-    // ====== SECTIONS & LECTURES (6 modules) ======
+    // ====== SECTIONS & LECTURES ======
     const sectionsData = [
       {
-        title: 'Module 1: Introduction to Python and Data Science',
+        title: 'Introduction',
         lectures: [
-          { title: 'Variables, data types, and operators', preview: true, duration: '09:20', url: 'https://dai.ly/x9u2rj0' },
-          { title: 'Control Flow: Conditionals and Loops', preview: true, duration: '06:14', url: 'https://dai.ly/x9u2riy' },
-          { title: 'Functions and Modules', preview: false, duration: '07:08', url: 'https://dai.ly/x9u2riw' },
-          { title: 'Functions with Inputs', preview: false, duration: '08:10', url: 'https://dai.ly/x9u577i' },
+          { title: 'Introduction', preview: true, duration: '02:34', url: 'https://dai.ly/x9uaxtu' },
+          { title: 'Docker CheatSheet and Udemy Review', preview: false, duration: '01:59', url: 'https://dai.ly/x9uaxu4' },
+          { title: 'The Evolution of Docker', preview: false, duration: '12:35', url: 'https://dai.ly/x9uaxty' },
+          { title: 'High Level Docker Architecture', preview: false, duration: '08:07', url: 'https://dai.ly/x9uaxu2' },
+          { title: 'Docker Installation: MacOS Instructions', preview: false, duration: '02:38', url: 'https://dai.ly/x9uaxtw' },
+          { title: 'Docker Installation: Windows Instructions', preview: false, duration: '05:34', url: 'https://dai.ly/x9uaxu0' },
+          { title: 'Dockerfile, Images and Containers', preview: true, duration: '06:51', url: 'https://dai.ly/x9uaxu8' },
         ]
       },
       {
-        title: 'Module 2: Data Manipulation with Python',
+        title: 'Building Docker Images',
         lectures: [
-          { title: 'Understanding Arrays and Matrices', preview: false, duration: '07:40', url: 'https://dai.ly/x9u577e' },
-          { title: 'Array Operations', preview: false, duration: '08:06', url: 'https://dai.ly/x9u577c' },
-          { title: 'DataFrames and Series', preview: false, duration: '06:53', url: 'https://dai.ly/x9u577g' },
-          { title: 'Data Cleaning and Preparation', preview: false, duration: '08:23', url: 'https://dai.ly/x9u577s' },
-          { title: 'Handling Missing Data', preview: false, duration: '06:47', url: 'https://dai.ly/x9u577a' },
-          { title: 'Merging and Joining Data', preview: false, duration: '09:09', url: 'https://dai.ly/x9u577k' },
-          { title: 'Sorting and Filtering Data', preview: false, duration: '10:41', url: 'https://dai.ly/x9u577q' },
-          { title: 'Grouping and Aggregation', preview: false, duration: '09:36', url: 'https://dai.ly/x9u577m' },
+          { title: 'Docker Images: Types and Layers', preview: false, duration: '07:34', url: 'https://dai.ly/x9uay9g' },
+          { title: 'Building Custom Docker Images', preview: false, duration: '07:44', url: 'https://dai.ly/x9uay9o' },
+          { title: 'Lab: Building Docker Images', preview: false, duration: '01:28', url: 'https://dai.ly/x9uay9k' },
+          { title: 'Lab Solution: Building Docker Images', preview: false, duration: '03:17', url: 'https://dai.ly/x9uay9i' },
+          { title: 'Docker Images: Optimisation Techniques', preview: true, duration: '15:42', url: 'https://dai.ly/x9uay9m' },
         ]
       },
       {
-        title: 'Module 3: Data Visualization',
+        title: 'Container Management',
         lectures: [
-          { title: 'Basic Plots: Line, Bar, Scatter', preview: false, duration: '11:52', url: 'https://dai.ly/x9u577o' },
-          { title: 'Customizing Plots', preview: false, duration: '10:59', url: 'https://dai.ly/x9u57dg' },
-          { title: 'Subplots and Figures', preview: false, duration: '06:18', url: 'https://dai.ly/x9u57dk' },
-          { title: 'Creating Interactive Charts', preview: false, duration: '09:26', url: 'https://dai.ly/x9u57di' },
+          { title: 'Docker Container Management: Basic Concepts', preview: false, duration: '08:18', url: 'https://dai.ly/x9udk5g' },
+          { title: 'Docker Container Management: Detached vs Interactive Mode', preview: true, duration: '04:47', url: 'https://dai.ly/x9udk5i' },
+          { title: 'Demo: Nginx Server in Detached Mode', preview: false, duration: '01:25', url: 'https://dai.ly/x9udk5m' },
+          { title: 'Lab: Container Management', preview: false, duration: '02:17', url: 'https://dai.ly/x9udk5o' },
+          { title: 'Lab Solution: Container Management', preview: false, duration: '03:39', url: 'https://dai.ly/x9udk5k' },
+          { title: 'Best Practices for Container Management', preview: false, duration: '03:19', url: 'https://dai.ly/x9udk5q' },
+          { title: 'Interactive Mode: Deep Dive', preview: false, duration: '05:15', url: 'https://dai.ly/x9udk5s' },
+          { title: 'Lab: Modifying Containers at Runtime', preview: false, duration: '03:36', url: 'https://dai.ly/x9udk5u' },
+          { title: 'Lab Solution: Modifying Containers at Runtime', preview: false, duration: '03:48', url: 'https://dai.ly/x9udk5w' },
         ]
       },
       {
-        title: 'Module 4: Statistical Analysis',
+        title: 'Containerising Real-World Applications',
         lectures: [
-          { title: 'Measures of Central Tendency', preview: false, duration: '08:25', url: 'https://dai.ly/x9u57nk' },
-          { title: 'Measures of Variability', preview: false, duration: '07:29', url: 'https://dai.ly/x9u9ad6' },
-          { title: 'Normal, Binomial, and Other Distributions', preview: false, duration: '12:29', url: 'https://dai.ly/x9u9ad4' },
-          { title: 'Null and Alternative Hypotheses', preview: false, duration: '09:06', url: 'https://dai.ly/x9u9ad8' },
+          { title: 'Containerising a real-world application', preview: true, duration: '09:09', url: 'https://dai.ly/x9udk5y' },
+          { title: 'Multistage Builds: Basic Concepts', preview: false, duration: '05:18', url: 'https://dai.ly/x9udlne' },
+          { title: 'Multistage Build In Action', preview: false, duration: '09:05', url: 'https://dai.ly/x9udlpq' },
         ]
       },
       {
-        title: 'Module 5: Introduction to Machine Learning',
+        title: 'Docker Networking and Docker Compose',
         lectures: [
-          { title: 'Feature Scaling and Normalization', preview: false, duration: '08:03', url: 'https://dai.ly/x9u9hws' },
-          { title: 'Encoding Categorical Variables', preview: false, duration: '11:59', url: 'https://dai.ly/x9u9hwy' },
-          { title: 'Handling Imbalanced Data', preview: false, duration: '09:25', url: 'https://dai.ly/x9u9hwu' },
-          { title: 'Linear and Logistic Regression', preview: false, duration: '11:23', url: 'https://dai.ly/x9u9hww' },
+          { title: 'Docker Networking: Introduction', preview: false, duration: '09:44', url: 'https://dai.ly/x9udlsw' },
+          { title: 'Container Isolation in Docker Networking', preview: false, duration: '05:43', url: 'https://dai.ly/x9udlyg' },
+          { title: 'Custom Docker Networks', preview: false, duration: '05:21', url: 'https://dai.ly/x9ugr3c' },
+          { title: 'Docker Compose in Action', preview: false, duration: '08:33', url: 'https://dai.ly/x9ugr3a' },
+          { title: 'Lab: Docker Compose', preview: false, duration: '03:23', url: 'https://dai.ly/x9ugr36' },
+          { title: 'Lab Solution: Docker Compose', preview: false, duration: '05:58', url: 'https://dai.ly/x9ugr3e' },
         ]
       },
       {
-        title: 'Module 6: Advanced Topics in Data Science',
+        title: 'Conclusion',
         lectures: [
-          { title: 'Introduction to Time Series Data', preview: false, duration: '07:02', url: 'https://dai.ly/x9u9hzu' },
-          { title: 'Decomposition, ARIMA Models', preview: false, duration: '10:57', url: 'https://dai.ly/x9u9hzw' },
-          { title: 'Text Preprocessing', preview: false, duration: '08:09', url: 'https://dai.ly/x9u9hzs' },
-          { title: 'Sentiment Analysis', preview: false, duration: '05:53', url: 'https://dai.ly/x9u9hzy' },
+          { title: 'Conclusion and Next Steps', preview: false, duration: '02:39', url: 'https://dai.ly/x9ugr38' },
         ]
       }
     ];
@@ -151,7 +153,7 @@ Enroll today and start your journey to becoming a proficient data scientist!
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Python', 'Khoa học dữ liệu', 'Phát triển'];
+    const categoryNames = ['Docker', 'Công cụ phát triển phần mềm', 'Phát triển'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -176,13 +178,13 @@ Enroll today and start your journey to becoming a proficient data scientist!
 
     course.title = title;
     course.slug = slug;
-    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6137323_e6a1_3.jpg';
+    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6448337_c9ac.jpg'; // có thể thay link thật sau
     course.previewUrl = '';
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 399000;               // bạn có thể đổi thành giá thực: ví dụ 799000
+    course.price = 399000;
     course.priceDiscount = 199000;
-    course.level = 'alllevels';    // hoặc 'beginner' / 'intermediate'
+    course.level = 'beginner'; // Điều chỉnh theo khóa học thêm vào
     course.language = 'en';
     course.requirements = requirements;
     course.learnOutcomes = learnOutcomes;
@@ -213,12 +215,16 @@ Enroll today and start your journey to becoming a proficient data scientist!
           lectures: [],
         });
         console.log(`Created section: ${secData.title}`);
+      } else {
+        console.log(`Section exists: ${secData.title}`);
       }
 
       const lectureIds = [];
       let lecOrder = 1;
 
       for (const L of secData.lectures) {
+        if (!L.url) continue;
+
         const duration = toSeconds(L.duration);
         totalSeconds += duration;
         totalLectures++;
@@ -234,7 +240,7 @@ Enroll today and start your journey to becoming a proficient data scientist!
             order: lecOrder,
             isPreviewFree: !!L.preview,
           });
-          console.log(`   Created lecture: ${L.title} (${L.duration})`);
+          console.log(`   Created lecture: ${L.title} (${L.duration})${L.preview ? ' [PREVIEW]' : ''}`);
         } else {
           lec.videoUrl = L.url;
           lec.duration = duration;
