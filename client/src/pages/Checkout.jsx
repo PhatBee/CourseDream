@@ -9,6 +9,8 @@ import { ShoppingBag, ArrowLeft, Trash2, CreditCard, Wallet, Gift, CheckCircle }
 import Spinner from "../components/common/Spinner";
 
 const formatPrice = (price) => {
+    // Ép kiểu về số để đảm bảo so sánh đúng
+    const amount = Number(price);
     if (price === 0) return 'FREE';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
@@ -31,14 +33,20 @@ export default function Checkout() {
     const items = isDirectCheckout && directCourse
         ? [{
             course: directCourse,
-            price: directCourse.price,
-            priceDiscount: directCourse.priceDiscount,
-            _id: directCourse._id
+            price: Number(directCourse.price || 0),
+            priceDiscount: Number(directCourse.priceDiscount ?? directCourse.price ?? 0), // Ưu tiên priceDiscount, nếu null/undefined thì lấy price            _id: directCourse._id
         }]
         : cartItems;
 
     const totalItems = isDirectCheckout ? 1 : cartTotalItems;
-    const totalPrice = isDirectCheckout ? directCourse?.priceDiscount || 0 : cartTotalPrice;
+
+    let totalPrice
+    if (isDirectCheckout && directCourse) {
+        // Nếu có priceDiscount thì dùng, nếu không dùng price, ép về Number
+        totalPrice = Number(directCourse.priceDiscount ?? directCourse.price ?? 0);
+    } else {
+        totalPrice = Number(cartTotalPrice);
+    }
 
     // --- LOGIC TÍNH TOÁN GIÁ ---
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
@@ -89,7 +97,7 @@ export default function Checkout() {
             if (!isDirectCheckout) dispatch(getCart());
 
             // Chuyển hướng
-            navigate("/my-courses"); // Hoặc trang PaymentReturn tuỳ bạn
+            navigate("/enrolled-courses"); // Hoặc trang PaymentReturn tuỳ bạn
         } catch (error) {
             console.error('Free enrollment error:', error);
             toast.error(error.response?.data?.message || "Lỗi khi ghi danh");
@@ -99,6 +107,7 @@ export default function Checkout() {
     };
 
     const handleRemoveItem = async (courseId) => {
+        if (isDirectCheckout) return;
         try {
             await cartService.removeFromCart(courseId);
             dispatch(getCart());
@@ -194,7 +203,7 @@ export default function Checkout() {
         );
     }
 
-    if (isLoading) {
+    if (isLoading && !isDirectCheckout) {
         return (
             <div className="w-full min-h-screen flex items-center justify-center">
                 <Spinner />
@@ -404,11 +413,7 @@ export default function Checkout() {
 
                                             {/* Only show remove button in cart mode */}
                                             {!isDirectCheckout && (
-                                                <button
-                                                    onClick={() => handleRemoveItem(course._id)}
-                                                    className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    title="Xóa"
-                                                >
+                                                <button onClick={() => handleRemoveItem(course._id)} className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Trash2 size={16} />
                                                 </button>
                                             )}
