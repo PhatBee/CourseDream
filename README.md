@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier node-cron
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier node-cron socket.io
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -55,6 +55,12 @@ VNPAY_HASHSECRET=YOUR_VNPAY_HASHSECRET
 VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 VNPAY_API=https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
 VNPAY_RETURN_URL=http://localhost:5173/payment/return
+
+MOMO_PARTNER_CODE=YOUR_MOMO_PARTNER_CODE
+MOMO_ACCESS_KEY=YOUR_MOMO_ACCESS_KEY
+MOMO_SECRET_KEY=YOUR_MOMO_SECRET_KEY
+MOMO_ENDPOINT=https://test-payment.momo.vn/v2/gateway/api/create
+MOMO_RETURN_URL=http://localhost:5173/payment/return
 
 # env trong client
 VITE_API_URL="http://localhost:5000/api"

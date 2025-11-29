@@ -3,7 +3,7 @@ import Course from "../course/course.model.js";
 
 class EnrollmentService {
 
-  async enrollStudent(studentId, courseIds) {
+    async enrollStudent(studentId, courseIds) {
         // Duyệt qua từng khóa học để tạo enrollment
         const enrollments = courseIds.map(courseId => ({
             student: studentId,
@@ -34,12 +34,12 @@ class EnrollmentService {
             console.error("Enrollment error:", error);
         }
     }
-  // Lấy danh sách khoá học đã đăng ký của user
-  async getMyEnrollments(userId) {
-    return Enrollment.find({ student: userId })
-      .populate("course", "title slug thumbnail price")
-      .sort({ enrolledAt: -1 });
-  }
+    // Lấy danh sách khoá học đã đăng ký của user
+    async getMyEnrollments(userId) {
+        return Enrollment.find({ student: userId })
+            .populate("course", "title slug thumbnail price")
+            .sort({ enrolledAt: -1 });
+    }
 }
 
 export default new EnrollmentService();

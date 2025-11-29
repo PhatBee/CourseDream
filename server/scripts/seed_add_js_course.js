@@ -1,4 +1,4 @@
-// scripts/seed_add_python_datascience.js
+// scripts/seed_add_notion_launch_kit.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -33,109 +33,67 @@ function slugify(text) {
     // ====== INPUT DATA ======
     const instructorId = '6913f6f74ef370e87cb6d779';
 
-    const title = 'Python for Data Science Pro: The Complete Mastery Course';
-    const shortDescription = 'Become a Data Science Pro: Master Data Analysis, Visualization, and Machine Learning with Python';
+    const title = 'The Ultimate Notion Course Launch Kit';
+    const shortDescription = 'Launch Your Course with Notion: Design Sales Pages, Dashboards, and Slide Decks for a Seamless Course Experience.';
 
     const description = `
-Starting with the fundamentals of Python, you’ll quickly progress to advanced topics, including data manipulation with Pandas, statistical analysis, and machine learning with scikit-learn. You’ll also explore powerful data visualization tools like Matplotlib and Seaborn, enabling you to present data insights clearly and effectively. The course is packed with hands-on projects and real-world datasets, providing you with practical experience that mirrors the demands of the data science field.
+Launching a course can be overwhelming — especially when you're juggling multiple tools and platforms.
 
-By the end of this course, you’ll have the expertise to analyze, visualize, and model data using Python, making you a highly sought-after data science professional.
+With **The Ultimate Notion Course Launch Kit**, you can design, organize, and launch your entire course — all inside Notion.
 
-What You'll Learn:
-• Python Basics for Data Science
-• Data Manipulation with Pandas
-• Statistical Analysis
-• Machine Learning with scikit-learn
-• Data Visualization with Matplotlib & Seaborn
-• Best Practices for clean, reproducible code
+In this course you’ll learn how to:
+• Build beautiful, high-converting sales pages directly in Notion
+• Create polished course dashboards for a seamless student experience
+• Design stunning, customizable slide decks (perfect for video lessons)
+• Use Notion as your all-in-one launch hub (no more messy tools!)
 
-Who This Course is For:
-• Aspiring data scientists
-• Python developers wanting to specialize in data analysis & ML
-• Data analysts upgrading their skills
-• Professionals who want to leverage data for decision-making
+Includes ready-to-use templates + step-by-step video training.
 
-Enroll today and start your journey to becoming a proficient data scientist!
+No design skills? No problem! Everything is beginner-friendly and fully customizable to match your brand.
+
+Stop switching between apps. Launch faster, cleaner, and with total confidence — all from one place: Notion.
 `.trim();
 
-    const topics = ['Python', 'Khoa học dữ liệu', 'Phát triển'];
+    const topics = ['Notion Workspace', 'Marketing'];
     const includes = [
-      '4 giờ video theo yêu cầu',
+      '2 giờ video theo yêu cầu',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'Anyone who want to learn master Python for data science.',
-      'Python developers looking to specialize in data analysis and machine learning.',
+      'Course creators who want to launch faster using Notion',
+      'Coaches, educators, and creators tired of juggling multiple tools',
+      'Beginners who want a simple, beautiful, all-in-one launch system',
     ];
-    const requirements = ['No prior knowledge is required!'];
+    const requirements = [
+      'Basic familiarity with Notion is helpful but not required',
+      'No advanced tech skills or special software needed — everything is done within Notion',
+      'Beginners are welcome — this course is designed to be user-friendly for all experience levels',
+    ];
     const learnOutcomes = [
-      'Thành thạo Python cho Data Science từ cơ bản đến nâng cao',
-      'Làm sạch, xử lý và phân tích dữ liệu với Pandas',
-      'Trực quan hóa dữ liệu chuyên nghiệp bằng Matplotlib & Seaborn',
-      'Xây dựng và đánh giá mô hình Machine Learning',
-      'Hiểu sâu về thống kê và các phân phối quan trọng',
-      'Thực hiện dự án thực tế từ đầu đến cuối',
+      'Thiết kế sales page chuyên nghiệp hoàn toàn trong Notion',
+      'Tạo dashboard khóa học đẹp mắt và dễ sử dụng cho học viên',
+      'Xây dựng slide deck đẹp như Canva nhưng linh hoạt hơn với Notion',
+      'Tổ chức và launch khóa học chỉ với một công cụ duy nhất: Notion',
+      'Tự tin launch khóa học mà không cần biết code hay dùng nhiều app',
     ];
 
-    // ====== SECTIONS & LECTURES (6 modules) ======
+    // ====== SECTIONS & LECTURES (chỉ 1 phần) ======
     const sectionsData = [
       {
-        title: 'Module 1: Introduction to Python and Data Science',
+        title: 'The Ultimate Notion Course Launch Kit',
         lectures: [
-          { title: 'Variables, data types, and operators', preview: true, duration: '09:20', url: 'https://dai.ly/x9u2rj0' },
-          { title: 'Control Flow: Conditionals and Loops', preview: true, duration: '06:14', url: 'https://dai.ly/x9u2riy' },
-          { title: 'Functions and Modules', preview: false, duration: '07:08', url: 'https://dai.ly/x9u2riw' },
-          { title: 'Functions with Inputs', preview: false, duration: '08:10', url: 'https://dai.ly/x9u577i' },
-        ]
-      },
-      {
-        title: 'Module 2: Data Manipulation with Python',
-        lectures: [
-          { title: 'Understanding Arrays and Matrices', preview: false, duration: '07:40', url: 'https://dai.ly/x9u577e' },
-          { title: 'Array Operations', preview: false, duration: '08:06', url: 'https://dai.ly/x9u577c' },
-          { title: 'DataFrames and Series', preview: false, duration: '06:53', url: 'https://dai.ly/x9u577g' },
-          { title: 'Data Cleaning and Preparation', preview: false, duration: '08:23', url: 'https://dai.ly/x9u577s' },
-          { title: 'Handling Missing Data', preview: false, duration: '06:47', url: 'https://dai.ly/x9u577a' },
-          { title: 'Merging and Joining Data', preview: false, duration: '09:09', url: 'https://dai.ly/x9u577k' },
-          { title: 'Sorting and Filtering Data', preview: false, duration: '10:41', url: 'https://dai.ly/x9u577q' },
-          { title: 'Grouping and Aggregation', preview: false, duration: '09:36', url: 'https://dai.ly/x9u577m' },
-        ]
-      },
-      {
-        title: 'Module 3: Data Visualization',
-        lectures: [
-          { title: 'Basic Plots: Line, Bar, Scatter', preview: false, duration: '11:52', url: 'https://dai.ly/x9u577o' },
-          { title: 'Customizing Plots', preview: false, duration: '10:59', url: 'https://dai.ly/x9u57dg' },
-          { title: 'Subplots and Figures', preview: false, duration: '06:18', url: 'https://dai.ly/x9u57dk' },
-          { title: 'Creating Interactive Charts', preview: false, duration: '09:26', url: 'https://dai.ly/x9u57di' },
-        ]
-      },
-      {
-        title: 'Module 4: Statistical Analysis',
-        lectures: [
-          { title: 'Measures of Central Tendency', preview: false, duration: '08:25', url: 'https://dai.ly/x9u57nk' },
-          { title: 'Measures of Variability', preview: false, duration: '07:29', url: 'https://dai.ly/x9u9ad6' },
-          { title: 'Normal, Binomial, and Other Distributions', preview: false, duration: '12:29', url: 'https://dai.ly/x9u9ad4' },
-          { title: 'Null and Alternative Hypotheses', preview: false, duration: '09:06', url: 'https://dai.ly/x9u9ad8' },
-        ]
-      },
-      {
-        title: 'Module 5: Introduction to Machine Learning',
-        lectures: [
-          { title: 'Feature Scaling and Normalization', preview: false, duration: '08:03', url: 'https://dai.ly/x9u9hws' },
-          { title: 'Encoding Categorical Variables', preview: false, duration: '11:59', url: 'https://dai.ly/x9u9hwy' },
-          { title: 'Handling Imbalanced Data', preview: false, duration: '09:25', url: 'https://dai.ly/x9u9hwu' },
-          { title: 'Linear and Logistic Regression', preview: false, duration: '11:23', url: 'https://dai.ly/x9u9hww' },
-        ]
-      },
-      {
-        title: 'Module 6: Advanced Topics in Data Science',
-        lectures: [
-          { title: 'Introduction to Time Series Data', preview: false, duration: '07:02', url: 'https://dai.ly/x9u9hzu' },
-          { title: 'Decomposition, ARIMA Models', preview: false, duration: '10:57', url: 'https://dai.ly/x9u9hzw' },
-          { title: 'Text Preprocessing', preview: false, duration: '08:09', url: 'https://dai.ly/x9u9hzs' },
-          { title: 'Sentiment Analysis', preview: false, duration: '05:53', url: 'https://dai.ly/x9u9hzy' },
+          { title: 'Welcome on board!', preview: true, duration: '05:09', url: 'https://dai.ly/x9ugt4k' },
+          { title: 'Creating Notion Slides', preview: false, duration: '19:41', url: 'https://dai.ly/x9ugt4i' },
+          { title: 'The Foundation of Clarity', preview: false, duration: '10:18', url: 'https://dai.ly/x9ugt4e' },
+          { title: 'Editing Your Course with Loom', preview: true, duration: '04:59', url: 'https://dai.ly/x9ugt4c' },
+          { title: 'Editing Your Course with CapCut', preview: false, duration: '20:08', url: 'https://dai.ly/x9ugt4g' },
+          { title: 'Sales Page in Notion - Part 1', preview: false, duration: '24:35', url: 'https://dai.ly/x9ugujy' },
+          { title: 'Sales Page in Notion - Part 2', preview: false, duration: '17:16', url: 'https://dai.ly/x9ugv9y' },
+          { title: 'Notion Course Dashboard', preview: false, duration: '09:57', url: 'https://dai.ly/x9ugwji' },
+          { title: 'Flodesk Checkout', preview: false, duration: '09:13', url: 'https://dai.ly/x9ujv1o' },
+          { title: 'Stripe Checkout Alternative', preview: true, duration: '05:10', url: 'https://dai.ly/x9ujuz0' },
+          { title: 'Conclusion', preview: true, duration: '01:33', url: 'https://dai.ly/x9ujuz2' },
         ]
       }
     ];
@@ -151,7 +109,7 @@ Enroll today and start your journey to becoming a proficient data scientist!
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Python', 'Khoa học dữ liệu', 'Phát triển'];
+    const categoryNames = ['Notion Workspace', 'Marketing'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -176,13 +134,13 @@ Enroll today and start your journey to becoming a proficient data scientist!
 
     course.title = title;
     course.slug = slug;
-    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6137323_e6a1_3.jpg';
+    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6181677_24a6.jpg'; // thay link thật sau nếu cần
     course.previewUrl = '';
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 399000;               // bạn có thể đổi thành giá thực: ví dụ 799000
+    course.price = 499000;
     course.priceDiscount = 199000;
-    course.level = 'alllevels';    // hoặc 'beginner' / 'intermediate'
+    course.level = 'beginner';
     course.language = 'en';
     course.requirements = requirements;
     course.learnOutcomes = learnOutcomes;
@@ -234,7 +192,7 @@ Enroll today and start your journey to becoming a proficient data scientist!
             order: lecOrder,
             isPreviewFree: !!L.preview,
           });
-          console.log(`   Created lecture: ${L.title} (${L.duration})`);
+          console.log(`   Created lecture: ${L.title} (${L.duration})${L.preview ? ' [PREVIEW]' : ''}`);
         } else {
           lec.videoUrl = L.url;
           lec.duration = duration;
@@ -257,7 +215,7 @@ Enroll today and start your journey to becoming a proficient data scientist!
     course.sections = sectionIds;
     course.totalLectures = totalLectures;
     course.totalDurationSeconds = totalSeconds;
-    course.totalHours = Number((totalSeconds / 3600).toFixed(2));
+    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~2.12 giờ
 
     await course.save();
 
