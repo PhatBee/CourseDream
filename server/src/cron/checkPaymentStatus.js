@@ -3,7 +3,7 @@ import Payment from "../modules/payment/payment.model.js";
 
 export default function checkPaymentStatus() {
     cron.schedule("*/5 * * * *", async () => {
-        console.log("[Cron] Checking pending VNPAY payments...");
+        console.log("[Cron] Checking pending VNPAY, MOMO payments...");
 
         // Thời gian quá hạn: 15 phút
         const expiredTime = new Date(Date.now() - 15 * 60 * 1000);
