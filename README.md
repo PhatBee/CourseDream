@@ -27,6 +27,10 @@ npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-
 npm install react-facebook-login -S --force
 npm i lucide-react --force
 npm install react-icons --force
+
+# app
+cd course-app
+npm install
 ```
 
 ### Cấu hình môi trường
