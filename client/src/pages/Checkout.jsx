@@ -103,6 +103,14 @@ export default function Checkout() {
                     orderInfo: orderInfo, // Lưu ý không dấu tiếng Việt càng tốt
                     courseIds: courseIds
                 });
+            } else if (selectedMethod === 'zalopay') {
+                // === LOGIC ZALOPAY ===
+                toast.loading("Đang chuyển hướng đến ZaloPay...");
+                paymentData = await paymentService.createZaloPayPayment({
+                    amount: finalTotal,
+                    orderInfo: orderInfo,
+                    courseIds: courseIds
+                });
             } else {
                 toast("Phương thức thanh toán này đang bảo trì");
                 return;

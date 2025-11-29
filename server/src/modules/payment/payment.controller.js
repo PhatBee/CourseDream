@@ -2,6 +2,7 @@ import * as paymentService from './payment.service.js';
 import * as vnpayService from './vnpay.service.js';
 import cartService from '../cart/cart.service.js';
 import * as momoService from './momo.service.js';
+import * as zalopayService from './zalopay.service.js';
 // Giả sử bạn đã có enrollment service, nếu chưa hãy xem phần dưới
 import enrollmentService from '../enrollment/enrollment.service.js';
 import moment from 'moment';
@@ -211,5 +212,113 @@ export const momoReturn = async (req, res) => {
     } catch (error) {
         console.error('MoMo return error:', error);
         res.status(500).json({ success: false, message: 'Lỗi xử lý MoMo return', error: error.message });
+    }
+};
+
+/**
+ * Tạo URL thanh toán ZaloPay
+ */
+export const createZaloPayPaymentUrl = async (req, res) => {
+    try {
+        const { amount, courseIds } = req.body;
+        const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        // Tạo mã giao dịch theo format ZaloPay yêu cầu: YYMMDD_xxxx
+        const transID = Math.floor(Math.random() * 1000000);
+        const date = new Date();
+        const yy = date.getFullYear().toString().slice(-2);
+        const mm = (`0${date.getMonth() + 1}`).slice(-2);
+        const dd = (`0${date.getDate()}`).slice(-2);
+        const app_trans_id = `${yy}${mm}${dd}_${transID}`;
+
+        const orderInfo = `Thanh toan khoa hoc DreamsLMS #${transID}`;
+
+        // 1. Tạo bản ghi Payment (Lưu app_trans_id vào orderId)
+        await paymentService.createPayment({
+            student: req.user._id,
+            courses: courseIds,
+            orderId: app_trans_id, // Lưu mã này để query
+            amount,
+            orderInfo,
+            ipAddr,
+            method: 'zalopay',
+            status: 'pending'
+        });
+
+        // 2. Gọi ZaloPay
+        const result = await zalopayService.createPaymentUrl({
+            app_trans_id,
+            amount,
+            orderInfo,
+            items: [] // Có thể truyền danh sách course nếu muốn
+        });
+
+        if (result.return_code === 1) {
+            res.status(200).json({ paymentUrl: result.order_url });
+        } else {
+            res.status(400).json({ message: 'Tạo giao dịch ZaloPay thất bại', detail: result });
+        }
+
+    } catch (error) {
+        console.error('Create ZaloPay error:', error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
+/**
+ * Xử lý Return từ ZaloPay
+ * Frontend sẽ gọi API này kèm theo app_trans_id
+ */
+export const zalopayReturn = async (req, res) => {
+    try {
+        const { app_trans_id } = req.query;
+
+        // 1. Query trực tiếp sang ZaloPay để kiểm tra trạng thái
+        const queryResult = await zalopayService.queryOrderStatus(app_trans_id);
+
+        // Tìm đơn hàng trong DB
+        const payment = await paymentService.getPaymentByOrderId(app_trans_id);
+        if (!payment) {
+            return res.status(404).json({ success: false, message: 'Payment not found' });
+        }
+
+        if (queryResult.isSuccess) {
+            if (payment.status === 'success') {
+                return res.status(200).json({ success: true, message: 'Payment already processed' });
+            }
+
+            // 2. Update DB -> Success
+            await paymentService.updatePaymentStatus(app_trans_id, 'success', {
+                transactionStatus: queryResult.message,
+                payDate: new Date()
+            });
+
+            // 3. Enroll Course
+            await enrollmentService.enrollStudent(payment.student, payment.courses);
+
+            // 4. Clear Cart
+            const paidCourseIds = payment.courses.map(c => c._id.toString());
+            await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
+
+            res.status(200).json({
+                success: true,
+                message: 'Thanh toán ZaloPay thành công'
+            });
+        } else {
+            // Thanh toán thất bại hoặc đang xử lý
+            await paymentService.updatePaymentStatus(app_trans_id, 'failed', {
+                transactionStatus: queryResult.message
+            });
+
+            res.status(400).json({
+                success: false,
+                message: 'Thanh toán thất bại hoặc chưa hoàn tất',
+                detail: queryResult.message
+            });
+        }
+
+    } catch (error) {
+        console.error('ZaloPay return error:', error);
+        res.status(500).json({ success: false, message: 'Lỗi xử lý ZaloPay return', error: error.message });
     }
 };

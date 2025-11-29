@@ -5,7 +5,7 @@ const PaymentSchema = new mongoose.Schema({
   courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }], // Hỗ trợ nhiều khóa học
   orderId: { type: String, required: true, unique: true, index: true }, // vnp_TxnRef - Mã đơn hàng
   amount: { type: Number, required: true }, // Số tiền thanh toán
-  method: { type: String, enum: ["vnpay", "momo", "stripe"], default: "vnpay" },
+  method: { type: String, enum: ["vnpay", "momo", "zalopay"], default: "vnpay" },
   status: {
     type: String,
     enum: ["pending", "success", "failed"],

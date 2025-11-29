@@ -18,6 +18,10 @@ const verifyPayment = async (searchParams) => {
     } else if (params.has('signature')) {
         const response = await paymentApi.momoReturn(searchParams); // Gọi hàm mới
         return response.data;
+    } else if (params.has('app_trans_id')) {
+        // ZaloPay return link do ta cấu hình là: .../return?app_trans_id=...
+        const response = await paymentApi.zalopayReturn(searchParams);
+        return response.data;
     } else {
         throw new Error("Cổng thanh toán không xác định");
     }
@@ -28,9 +32,15 @@ const createMomoPayment = async (data) => {
     return response.data;
 };
 
+const createZaloPayPayment = async (data) => {
+    const response = await paymentApi.createZaloPayPayment(data);
+    return response.data;
+};
+
 const paymentService = {
     createVNPayPayment,
     createMomoPayment,
+    createZaloPayPayment,
     verifyPayment
 };
 

@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier node-cron socket.io
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier node-cron socket.io crypto-js
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -33,13 +33,13 @@ npm install react-icons --force
 ```bash
 # env trong server
 PORT=5000
-MONGO_URI=
-JWT_SECRET=
+MONGO_URI=YOUR_MONGO_URI
+JWT_SECRET=YOUR_JWT_SECRET
 
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=YOUR_EMAIL@gmail.com
-EMAIL_PASS=
+EMAIL_PASS=YOUR_EMAIL_PASS
 
 GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
 
@@ -61,6 +61,13 @@ MOMO_ACCESS_KEY=YOUR_MOMO_ACCESS_KEY
 MOMO_SECRET_KEY=YOUR_MOMO_SECRET_KEY
 MOMO_ENDPOINT=https://test-payment.momo.vn/v2/gateway/api/create
 MOMO_RETURN_URL=http://localhost:5173/payment/return
+
+ZALOPAY_APP_ID=YOUR_ZALOPAY_APP_ID
+ZALOPAY_KEY1=YOUR_ZALOPAY_KEY1
+ZALOPAY_KEY2=YOUR_ZALOPAY_KEY2
+ZALOPAY_ENDPOINT=https://sb-openapi.zalopay.vn/v2/create
+ZALOPAY_QUERY_ENDPOINT=https://sb-openapi.zalopay.vn/v2/query
+ZALOPAY_RETURN=http://localhost:5173/payment/return
 
 # env trong client
 VITE_API_URL="http://localhost:5000/api"
