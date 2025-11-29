@@ -26,6 +26,10 @@ const paymentApi = {
     zalopayReturn: (params) => {
         // params ở đây sẽ chứa ?app_trans_id=...
         return axiosClient.get(`${path}/zalopay_return${params}`);
+    },
+    // Hàm mới cho 0 đồng
+    createFreeEnrollment: (data) => {
+        return axiosClient.post(`${path}/create_free_enrollment`, data);
     }
 };
 

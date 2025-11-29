@@ -322,3 +322,52 @@ export const zalopayReturn = async (req, res) => {
         res.status(500).json({ success: false, message: 'Lỗi xử lý ZaloPay return', error: error.message });
     }
 };
+
+/**
+ * Xử lý đơn hàng 0 đồng (Miễn phí)
+ */
+export const createFreeEnrollment = async (req, res) => {
+    try {
+        const { amount, courseIds } = req.body;
+        const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        // 1. Validate: Chắc chắn amount là 0 (Backend cần check lại giá gốc DB nếu cần bảo mật cao hơn)
+        if (amount !== 0) {
+            return res.status(400).json({ message: "Đơn hàng không hợp lệ cho phương thức này" });
+        }
+
+        const date = new Date();
+        const orderId = 'FREE' + moment(date).format('HHmmss') + Math.floor(Math.random() * 1000);
+        const orderInfo = `Ghi danh mien phi ${orderId}`;
+
+        // 2. Tạo bản ghi Payment (Status: success ngay lập tức)
+        const payment = await paymentService.createPayment({
+            student: req.user._id,
+            courses: courseIds,
+            orderId,
+            amount: 0,
+            orderInfo,
+            ipAddr,
+            method: 'free', // Method mới
+            status: 'success', // Thành công luôn
+            payDate: new Date()
+        });
+
+        // 3. Enroll Khóa học
+        await enrollmentService.enrollStudent(req.user._id, courseIds);
+
+        // 4. Xóa Giỏ hàng
+        const paidCourseIds = courseIds.map(id => id.toString());
+        await cartService.removeCoursesFromCart(req.user._id, paidCourseIds);
+
+        res.status(200).json({
+            success: true,
+            message: 'Ghi danh thành công',
+            data: payment
+        });
+
+    } catch (error) {
+        console.error('Free enrollment error:', error);
+        res.status(500).json({ message: 'Lỗi xử lý ghi danh miễn phí', error: error.message });
+    }
+};

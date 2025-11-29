@@ -37,10 +37,16 @@ const createZaloPayPayment = async (data) => {
     return response.data;
 };
 
+const createFreeEnrollment = async (data) => {
+    const response = await paymentApi.createFreeEnrollment(data);
+    return response.data;
+};
+
 const paymentService = {
     createVNPayPayment,
     createMomoPayment,
     createZaloPayPayment,
+    createFreeEnrollment,
     verifyPayment
 };
 
