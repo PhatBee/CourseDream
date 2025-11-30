@@ -19,6 +19,17 @@ const paymentApi = {
     },
     momoReturn: (params) => {
         return axiosClient.get(`${path}/momo_return${params}`);
+    },
+    createZaloPayPayment: (data) => {
+        return axiosClient.post(`${path}/create_zalopay_url`, data);
+    },
+    zalopayReturn: (params) => {
+        // params ở đây sẽ chứa ?app_trans_id=...
+        return axiosClient.get(`${path}/zalopay_return${params}`);
+    },
+    // Hàm mới cho 0 đồng
+    createFreeEnrollment: (data) => {
+        return axiosClient.post(`${path}/create_free_enrollment`, data);
     }
 };
 

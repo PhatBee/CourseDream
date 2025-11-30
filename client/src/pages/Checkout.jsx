@@ -5,10 +5,12 @@ import { toast } from "react-hot-toast";
 import { getCart } from "../features/cart/cartSlice";
 import cartService from "../features/cart/cartService";
 import paymentService from "../features/payment/paymentService";
-import { ShoppingBag, ArrowLeft, Trash2, CreditCard, Wallet } from "lucide-react";
+import { ShoppingBag, ArrowLeft, Trash2, CreditCard, Wallet, Gift, CheckCircle } from "lucide-react";
 import Spinner from "../components/common/Spinner";
 
 const formatPrice = (price) => {
+    // Ép kiểu về số để đảm bảo so sánh đúng
+    const amount = Number(price);
     if (price === 0) return 'FREE';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
@@ -21,6 +23,7 @@ export default function Checkout() {
     const { items: cartItems, totalItems: cartTotalItems, totalPrice: cartTotalPrice, isLoading } = useSelector((state) => state.cart);
 
     const [selectedMethod, setSelectedMethod] = useState("vnpay");
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // Check if this is a direct checkout from course detail
     const isDirectCheckout = location.state?.directCheckout;
@@ -30,20 +33,45 @@ export default function Checkout() {
     const items = isDirectCheckout && directCourse
         ? [{
             course: directCourse,
-            price: directCourse.price,
-            priceDiscount: directCourse.priceDiscount,
-            _id: directCourse._id
+            price: Number(directCourse.price || 0),
+            priceDiscount: Number(directCourse.priceDiscount ?? directCourse.price ?? 0), // Ưu tiên priceDiscount, nếu null/undefined thì lấy price            _id: directCourse._id
         }]
         : cartItems;
 
     const totalItems = isDirectCheckout ? 1 : cartTotalItems;
-    const totalPrice = isDirectCheckout ? directCourse?.priceDiscount || 0 : cartTotalPrice;
+
+    let totalPrice
+    if (isDirectCheckout && directCourse) {
+        // Nếu có priceDiscount thì dùng, nếu không dùng price, ép về Number
+        totalPrice = Number(directCourse.priceDiscount ?? directCourse.price ?? 0);
+    } else {
+        totalPrice = Number(cartTotalPrice);
+    }
+
+    // --- LOGIC TÍNH TOÁN GIÁ ---
+    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    const discount = subtotal - totalPrice;
+    // Nếu totalPrice = 0 thì tax = 0, ngược lại tính 10%
+    const tax = totalPrice > 0 ? Math.round(totalPrice * 0.1) : 0;
+    const finalTotal = totalPrice + tax;
+
+    // --- LOGIC 1 & 2: Xử lý hiển thị phương thức thanh toán ---
+
+    const isFreeOrder = finalTotal === 0;
+    const isSmallAmount = finalTotal > 0 && finalTotal < 5000;
 
     useEffect(() => {
         if (user && !isDirectCheckout) {
             dispatch(getCart());
         }
     }, [user, dispatch, isDirectCheckout]);
+
+    // Tự động chuyển sang MoMo nếu số tiền nhỏ
+    useEffect(() => {
+        if (isSmallAmount) {
+            setSelectedMethod("momo");
+        }
+    }, [isSmallAmount]);
 
     // Redirect if no items (only for cart mode)
     useEffect(() => {
@@ -53,7 +81,33 @@ export default function Checkout() {
         }
     }, [items, isLoading, navigate, isDirectCheckout]);
 
+    // Xử lý Ghi danh miễn phí
+    const handleFreeEnrollment = async () => {
+        setIsProcessing(true);
+        try {
+            const courseIds = items.map(item => item.course._id);
+
+            await paymentService.createFreeEnrollment({
+                amount: 0,
+                courseIds: courseIds
+            });
+
+            toast.success("Ghi danh thành công!");
+            // Cập nhật lại giỏ hàng (về 0)
+            if (!isDirectCheckout) dispatch(getCart());
+
+            // Chuyển hướng
+            navigate("/enrolled-courses"); // Hoặc trang PaymentReturn tuỳ bạn
+        } catch (error) {
+            console.error('Free enrollment error:', error);
+            toast.error(error.response?.data?.message || "Lỗi khi ghi danh");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     const handleRemoveItem = async (courseId) => {
+        if (isDirectCheckout) return;
         try {
             await cartService.removeFromCart(courseId);
             dispatch(getCart());
@@ -69,18 +123,9 @@ export default function Checkout() {
             return;
         }
 
-        // if (selectedMethod !== 'vnpay') {
-        //     toast("Hiện tại chỉ hỗ trợ thanh toán qua VNPAY");
-        //     return;
-        // }
+        setIsProcessing(true);
 
         try {
-            // Calculate final amount with tax
-            const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-            const discount = subtotal - totalPrice;
-            const tax = Math.round(totalPrice * 0.1);
-            const finalTotal = totalPrice + tax;
-
             // Prepare order info
             const courseNames = items.map(item => item.course.title).join(', ');
             const orderInfo = `Thanh toan khoa hoc: ${courseNames.substring(0, 100)}`;
@@ -89,6 +134,11 @@ export default function Checkout() {
             let paymentData;
 
             if (selectedMethod === 'vnpay') {
+                if (isSmallAmount) {
+                    toast.error("VNPAY yêu cầu thanh toán tối thiểu 5.000 VND");
+                    setIsProcessing(false);
+                    return;
+                }
                 toast.loading("Đang chuyển hướng đến VNPAY...");
                 paymentData = await paymentService.createVNPayPayment({
                     amount: finalTotal,
@@ -103,6 +153,14 @@ export default function Checkout() {
                     orderInfo: orderInfo, // Lưu ý không dấu tiếng Việt càng tốt
                     courseIds: courseIds
                 });
+            } else if (selectedMethod === 'zalopay') {
+                // === LOGIC ZALOPAY ===
+                toast.loading("Đang chuyển hướng đến ZaloPay...");
+                paymentData = await paymentService.createZaloPayPayment({
+                    amount: finalTotal,
+                    orderInfo: orderInfo,
+                    courseIds: courseIds
+                });
             } else {
                 toast("Phương thức thanh toán này đang bảo trì");
                 return;
@@ -114,10 +172,12 @@ export default function Checkout() {
             } else {
                 toast.dismiss();
                 toast.error("Lỗi khi tạo liên kết thanh toán");
+                setIsProcessing(false);
             }
         } catch (error) {
             console.error('Payment error:', error);
             toast.error(error.response?.data?.message || "Lỗi khi xử lý thanh toán");
+            setIsProcessing(false);
         }
     };
 
@@ -143,7 +203,7 @@ export default function Checkout() {
         );
     }
 
-    if (isLoading) {
+    if (isLoading && !isDirectCheckout) {
         return (
             <div className="w-full min-h-screen flex items-center justify-center">
                 <Spinner />
@@ -151,30 +211,27 @@ export default function Checkout() {
         );
     }
 
-    // Calculate subtotal and tax
-    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-    const discount = subtotal - totalPrice;
-    const tax = Math.round(totalPrice * 0.1); // 10% VAT
-    const finalTotal = totalPrice + tax;
-
     const paymentMethods = [
         {
             id: "vnpay",
             label: "VNPAY",
             icon: "./VNPAY.svg",
-            description: "Thanh toán qua VNPAY"
+            description: "Thanh toán qua VNPAY",
+            disabled: isSmallAmount
         },
         {
             id: "momo",
             label: "MoMo",
             icon: "./MOMO.svg",
-            description: "Ví điện tử MoMo"
+            description: "Ví điện tử MoMo",
+            disabled: false
         },
         {
             id: "zalopay",
             label: "ZaloPay",
             icon: "./ZaloPay.svg",
-            description: "Ví điện tử ZaloPay"
+            description: "Ví điện tử ZaloPay",
+            disabled: false
         },
     ];
 
@@ -212,52 +269,89 @@ export default function Checkout() {
                     {/* LEFT CONTENT - Payment Method */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Payment Method Selection */}
-                        <div className="bg-white p-6 rounded-xl shadow-md border">
-                            <div className="flex items-center gap-2 mb-6">
-                                <Wallet className="w-6 h-6 text-blue-600" />
-                                <h2 className="text-xl font-semibold text-gray-800">
-                                    Phương thức thanh toán
+                        {/* LOGIC HIỂN THỊ UI DỰA TRÊN GIÁ TRỊ ĐƠN HÀNG */}
+                        {isFreeOrder ? (
+                            /* UI CHO ĐƠN HÀNG 0Đ */
+                            <div className="bg-white p-8 rounded-xl shadow-md border border-green-100 text-center">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                                    <Gift className="w-8 h-8 text-green-600" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                                    Tin vui! Không cần thanh toán.
                                 </h2>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                {paymentMethods.map((method) => (
-                                    <button
-                                        key={method.id}
-                                        onClick={() => setSelectedMethod(method.id)}
-                                        className={`p-4 border-2 rounded-xl transition-all duration-200 hover:shadow-md
-                      ${selectedMethod === method.id
-                                                ? "border-blue-500 bg-blue-50 shadow-md"
-                                                : "border-gray-200 hover:border-blue-300"
-                                            }
-                    `}
-                                    >
-                                        <div className="text-center">
-                                            <img src={method.icon} alt={method.label} className="w-8 h-8 mb-2 mx-auto block" />
-                                            <p className="font-semibold text-gray-800 mb-1">{method.label}</p>
-                                            <p className="text-xs text-gray-500">{method.description}</p>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Payment Info */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                                <p className="text-sm text-blue-800">
-                                    <strong>🔒 Bảo mật:</strong> Thông tin thanh toán của bạn được mã hóa và bảo mật tuyệt đối.
+                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                    Chiết khấu hoặc ưu đãi CourseDream của bạn sẽ chi trả toàn bộ cho giao dịch mua này.
+                                    Ghi danh ngay để bắt đầu học.
                                 </p>
+                                <button
+                                    onClick={handleFreeEnrollment}
+                                    disabled={isProcessing}
+                                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-2 mx-auto disabled:opacity-70"
+                                >
+                                    {isProcessing ? <Spinner size="sm" color="white" /> : <CheckCircle size={20} />}
+                                    Ghi danh ngay
+                                </button>
                             </div>
+                        ) : (
+                            /* UI CHO ĐƠN HÀNG CÓ PHÍ */
+                            <div className="bg-white p-6 rounded-xl shadow-md border">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <Wallet className="w-6 h-6 text-blue-600" />
+                                    <h2 className="text-xl font-semibold text-gray-800">
+                                        Phương thức thanh toán
+                                    </h2>
+                                </div>
 
-                            {/* Payment Button */}
-                            <button
-                                onClick={handlePayment}
-                                disabled={items.length === 0}
-                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                <CreditCard size={20} />
-                                Thanh toán {formatPrice(finalTotal)}
-                            </button>
-                        </div>
+                                {isSmallAmount && (
+                                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                                        Do tổng thanh toán dưới 5.000đ, chỉ hỗ trợ thanh toán qua <strong>Ví MoMo hoặc ZaloPay</strong>.
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    {paymentMethods.map((method) => (
+                                        <button
+                                            key={method.id}
+                                            onClick={() => !method.disabled && setSelectedMethod(method.id)}
+                                            disabled={method.disabled}
+                                            className={`p-4 border-2 rounded-xl transition-all duration-200 relative
+                                                ${selectedMethod === method.id
+                                                    ? "border-blue-500 bg-blue-50 shadow-md"
+                                                    : "border-gray-200"
+                                                }
+                                                ${method.disabled
+                                                    ? "opacity-50 cursor-not-allowed bg-gray-50 grayscale"
+                                                    : "hover:border-blue-300 cursor-pointer"
+                                                }
+                                            `}
+                                        >
+                                            <div className="text-center">
+                                                <img src={method.icon} alt={method.label} className="w-8 h-8 mb-2 mx-auto block" />
+                                                <p className="font-semibold text-gray-800 mb-1">{method.label}</p>
+                                                <p className="text-xs text-gray-500">{method.description}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Payment Info */}
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>🔒 Bảo mật:</strong> Thông tin thanh toán của bạn được mã hóa và bảo mật tuyệt đối.
+                                    </p>
+                                </div>
+
+                                {/* Payment Button */}
+                                <button
+                                    onClick={handlePayment}
+                                    disabled={items.length === 0}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {isProcessing ? <Spinner size="sm" color="white" /> : <CreditCard size={20} />}
+                                    Thanh toán {formatPrice(finalTotal)}
+                                </button>
+                            </div>
+                        )}
 
                         {/* User Info */}
                         <div className="bg-white p-6 rounded-xl shadow-md border">
@@ -319,11 +413,7 @@ export default function Checkout() {
 
                                             {/* Only show remove button in cart mode */}
                                             {!isDirectCheckout && (
-                                                <button
-                                                    onClick={() => handleRemoveItem(course._id)}
-                                                    className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    title="Xóa"
-                                                >
+                                                <button onClick={() => handleRemoveItem(course._id)} className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Trash2 size={16} />
                                                 </button>
                                             )}

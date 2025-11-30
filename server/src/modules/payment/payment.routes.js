@@ -14,4 +14,10 @@ router.get('/vnpay_return', paymentController.vnpayReturn);
 router.post('/create_momo_url', verifyToken, paymentController.createMomoPaymentUrl);
 router.get('/momo_return', paymentController.momoReturn);
 
+router.post('/create_zalopay_url', verifyToken, paymentController.createZaloPayPaymentUrl);
+router.get('/zalopay_return', paymentController.zalopayReturn);
+
+// Route mới cho đơn hàng 0 đồng
+router.post('/create_free_enrollment', verifyToken, paymentController.createFreeEnrollment);
+
 export default router;
