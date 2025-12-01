@@ -1,13 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CourseOverview from './CourseOverview';
 import CourseAccordion from './CourseAccordion';
 import InstructorBio from './InstructorBio';
-import CourseReviews from './CourseReviews';
 import ReviewList from './ReviewList';
 import ReviewForm from './ReviewForm';
+import { getReviews } from '../../api/reviewApi';
 
-const CourseContent = ({ course, reviews }) => {
-  const [activeTab, setActiveTab] = useState('Overview');
+const CourseContent = ({ course }) => {
+  const [reviews, setReviews] = useState([]);
+
+  // Lấy review khi course thay đổi
+  useEffect(() => {
+    if (course?._id) {
+      getReviews(course._id).then(res => setReviews(res.data || res));
+    }
+  }, [course?._id]);
+
+  // Callback reload review sau khi gửi đánh giá
+  const reloadReviews = () => {
+    if (course?._id) {
+      getReviews(course._id).then(res => setReviews(res.data || res));
+    }
+  };
 
   return (
     <div className="space-y-6"> 
@@ -43,7 +57,7 @@ const CourseContent = ({ course, reviews }) => {
       {/* Card 5: Post Review (Form) */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <div className="p-5">
-          <ReviewForm />
+          <ReviewForm courseId={course._id} onReviewSuccess={reloadReviews} />
         </div>
       </div>
 
