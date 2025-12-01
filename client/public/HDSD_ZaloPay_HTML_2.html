@@ -1,0 +1,1645 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="apple-touch-icon" sizes="60x60" href="../../../images/favicon/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../../../images/favicon/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="../../../images/favicon/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../../../images/favicon/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="../../../images/favicon/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="../../../images/favicon/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="../../../images/favicon/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../../images/favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="../../../images/favicon/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../../images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="../../../images/favicon/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../../images/favicon/favicon-16x16.png">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="../../../images/favicon/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+  <meta charset="utf-8">
+  <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:url" content="https://docs.zalopay.vn/" />
+  <meta property="og:title" content="ZaloPay Developer" />
+  <meta property="og:image" content="https://docs.zalopay.vn/images/logo-zalopay.png" />
+  <meta property="og:description" content="Trang tài liệu hướng dẫn tích hợp ZaloPay" />
+
+    <meta data-env name="grecaptcha_site_key" content="6LdiA5cUAAAAAO19uw3VP3y8R_THYZiqpn2GeVGq">
+    <meta data-env name="mwebtoapp_api" content="https://zalopay.com.vn/openapp/pay.html">
+    <meta data-env name="docs_ver" content="v1">
+    <meta data-env name="env" content="pro">
+    <meta data-env name="demo_api_host" content="https://zlpdev-mi-zlpdemo.zalopay.vn/zlp-demo/api">
+    <meta data-env name="demo_api_v2_host" content="https://zlpdev-mi-zlpdemo.zalopay.vn/zlp-demo/v2/api">
+    <meta data-env name="demo_ws_v2" content="wss://mep.zpapps.vn/v2/zlp-demo/subscribe">
+    <meta data-env name="demo_ws" content="wss://mep.zpapps.vn/zlp-demo/subscribe">
+
+  <link rel="stylesheet" href="../../../font-awesome/css/font-awesome.min.css">
+
+  <title>Thông tin mã trạng thái - ZaloPay Developer</title>
+  <style>
+    .highlight table td { padding: 5px; }
+.highlight table pre { margin: 0; }
+.highlight .c, .highlight .cd {
+  color: #5e5d83;
+  font-style: italic;
+}
+.highlight .cm {
+  color: #5e5d83;
+  font-style: italic;
+}
+.highlight .c1 {
+  color: #5e5d83;
+  font-style: italic;
+}
+.highlight .cp {
+  color: #465457;
+  font-weight: bold;
+}
+.highlight .cs {
+  color: #465457;
+  font-weight: bold;
+  font-style: italic;
+}
+.highlight .err {
+  color: #f8f8f2;
+  background-color: #403d3d;
+}
+.highlight .gi {
+  color: #a6e22e;
+}
+.highlight .gd {
+  color: #f92672;
+}
+.highlight .ge {
+  color: #1b1d1e;
+  font-style: italic;
+}
+.highlight .gr {
+  color: #f92672;
+}
+.highlight .gt {
+  color: #f92672;
+}
+.highlight .gh {
+  color: #403d3d;
+}
+.highlight .go {
+  color: #403d3d;
+}
+.highlight .gp {
+  color: #66d9ef;
+}
+.highlight .gs {
+  font-weight: bold;
+}
+.highlight .gu {
+  color: #465457;
+}
+.highlight .k, .highlight .kv {
+  color: #66d9ef;
+  font-weight: bold;
+}
+.highlight .kc {
+  color: #66d9ef;
+  font-weight: bold;
+}
+.highlight .kd {
+  color: #66d9ef;
+  font-weight: bold;
+}
+.highlight .kp {
+  color: #66d9ef;
+  font-weight: bold;
+}
+.highlight .kr {
+  color: #66d9ef;
+  font-weight: bold;
+}
+.highlight .kt {
+  color: #66d9ef;
+  font-weight: bold;
+}
+.highlight .kn {
+  color: #f92672;
+  font-weight: bold;
+}
+.highlight .ow {
+  color: #f92672;
+  font-weight: bold;
+}
+.highlight .o {
+  color: #f92672;
+  font-weight: bold;
+}
+.highlight .mf {
+  color: #af87ff;
+}
+.highlight .mh {
+  color: #af87ff;
+}
+.highlight .il {
+  color: #af87ff;
+}
+.highlight .mi {
+  color: #af87ff;
+}
+.highlight .mo {
+  color: #af87ff;
+}
+.highlight .m, .highlight .mb, .highlight .mx {
+  color: #af87ff;
+}
+.highlight .se {
+  color: #af87ff;
+}
+.highlight .sb {
+  color: #d7d787;
+}
+.highlight .sc {
+  color: #d7d787;
+}
+.highlight .sd {
+  color: #d7d787;
+}
+.highlight .s2 {
+  color: #d7d787;
+}
+.highlight .sh {
+  color: #d7d787;
+}
+.highlight .si {
+  color: #d7d787;
+}
+.highlight .sx {
+  color: #d7d787;
+}
+.highlight .sr {
+  color: #d7d787;
+}
+.highlight .s1 {
+  color: #d7d787;
+}
+.highlight .ss {
+  color: #d7d787;
+}
+.highlight .s {
+  color: #d7d787;
+}
+.highlight .na {
+  color: #a6e22e;
+}
+.highlight .nc {
+  color: #a6e22e;
+  font-weight: bold;
+}
+.highlight .nd {
+  color: #a6e22e;
+  font-weight: bold;
+}
+.highlight .ne {
+  color: #a6e22e;
+  font-weight: bold;
+}
+.highlight .nf {
+  color: #a6e22e;
+  font-weight: bold;
+}
+.highlight .no {
+  color: #66d9ef;
+}
+.highlight .bp {
+  color: #f8f8f2;
+}
+.highlight .nb {
+  color: #f8f8f2;
+}
+.highlight .ni {
+  color: #f8f8f2;
+}
+.highlight .nn {
+  color: #f8f8f2;
+}
+.highlight .vc {
+  color: #f8f8f2;
+}
+.highlight .vg {
+  color: #f8f8f2;
+}
+.highlight .vi {
+  color: #f8f8f2;
+}
+.highlight .nv {
+  color: #f8f8f2;
+}
+.highlight .w {
+  color: #f8f8f2;
+}
+.highlight .nl {
+  color: #f8f8f2;
+  font-weight: bold;
+}
+.highlight .nt {
+  color: #f92672;
+}
+.highlight {
+  color: #f8f8f2;
+  background-color: #1b1d1e;
+}
+  </style>
+
+  <link href="../../../stylesheets/material-kit.css" rel="stylesheet" />
+  <link href="../../../stylesheets/screen.css" rel="stylesheet" media="screen" />
+  <link href="../../../stylesheets/print.css" rel="stylesheet" media="print" />
+  <link href="../../../stylesheets/zlp-styles.css" rel="stylesheet" />
+
+</head>
+<body class="v2 v2_reference v2_reference_errors v2_reference_errors_overview">
+  <nav class="navbar navbar-show fixed-top navbar-expand-xl p-0" id="header">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand p-0 mr-0" href="/"><img src="../../../images/logo-zalopay.png" alt="Logo zalopay" /></a>
+      <label for="search" class="text-dark mr-3 mr-sm-auto search rounded border py-2 ml-3 ml-sm-4 my-0">
+        <i class="fa fa-search mr-2"></i>
+        <input id="search" class="border-0 text-main" placeholder="Tìm kiếm ..."
+          onfocus="$('.search').addClass('focus')"
+          onblur="$('.search').removeClass('focus')" maxlength="32" />
+      </label>
+      <button class="navbar-toggler" type="button">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="navbar-toggler-icon"></span>
+        <span class="navbar-toggler-icon"></span>
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" style="flex-grow: 0;">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link " href="/start/">
+              BẮT ĐẦU
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " href="/general/overview.html">
+              Danh sách API
+            </a>
+          </li>
+          <li class="dropdown nav-item" >
+            <a href="javascript:void(0);" class="dropdown-toggle nav-link ">
+            GIẢI PHÁP THANH TOÁN
+            </a>
+            <div class="dropdown-menu dropdown-with-icons p-0 m-0">
+                <a href="/payments/vietqr/overview.html" class="dropdown-item ">Thanh toán ZaloPay QR đa năng</a>
+                <a href="/payments/applepay/overview.html" class="dropdown-item ">Thanh toán Apple Pay</a>
+                <a href="/payments/gateway/overview.html" class="dropdown-item ">Cổng ZaloPay</a>
+                <a href="/payments/qrcode/overview.html" class="dropdown-item ">Thanh toán QR động</a>
+                <a href="/payments/staticqr/overview.html" class="dropdown-item ">Thanh toán QR tĩnh</a>
+                <a href="/payments/quickpay/overview.html" class="dropdown-item ">Thanh toán Quickpay</a>
+                <a href="/payments/agreement/overview.html" class="dropdown-item ">Thanh toán tự động</a>
+                <a href="/payments/payonship/overview.html" class="dropdown-item ">Thanh toán khi nhận hàng</a>
+                <a href="/payments/disbursement/overview.html" class="dropdown-item ">Chi hộ</a>
+            </div>
+          </li>
+          <li class="dropdown nav-item" >
+            <a href="javascript:void(0);" class="dropdown-toggle nav-link ">
+            MÔ HÌNH TÍCH HỢP
+            </a>
+            <div class="dropdown-menu dropdown-with-icons p-0 m-0">
+                <a href="/docs/vietqr/overview.html" class="dropdown-item ">Thanh toán ZaloPay QR đa năng</a>
+                <a href="/docs/applepay/overview.html" class="dropdown-item ">Thanh toán Apple Pay</a>
+                <a href="/docs/shopify/overview.html" class="dropdown-item ">Tích hợp thanh toán trên Shopify</a>
+                <a href="/docs/gateway/overview.html" class="dropdown-item ">Website - Cổng</a>
+                <a href="/docs/webtoapp/overview.html" class="dropdown-item ">Website - Web to App</a>
+                <a href="/docs/apptoapp/overview.html" class="dropdown-item ">Mobile - App to App</a>
+                <a href="/docs/mobilewebtoapp/overview.html" class="dropdown-item ">Mobile - Mobile Web to App</a>
+                <a href="/docs/qrcode/overview.html" class="dropdown-item ">POS - QR động</a>
+                <a href="/docs/quickpay/overview.html" class="dropdown-item ">POS - QuickPay</a>
+                <a href="/docs/webinapp/overview.html" class="dropdown-item ">Web in App</a>
+                <a href="/docs/staticqr/overview.html" class="dropdown-item ">QR tĩnh tại quầy</a>
+            </div>
+          </li>
+          <li class="dropdown nav-item">
+            <a href="javascript:void(0);" class="dropdown-toggle nav-link active">
+              REFERENCE
+            </a>
+            <div class="dropdown-menu dropdown-with-icons p-0 m-0">
+                <a href="/reference/errors/overview.html" class="dropdown-item active">Thông tin mã trạng thái</a>
+                <a href="/reference/common/overview.html" class="dropdown-item ">Các lỗi thường gặp</a>
+                <a href="/downloads/" class="dropdown-item ">DOWNLOAD</a>
+                <a href="/reference/faq/overview.html" class="dropdown-item ">F.A.Q</a>
+                <a href="/#support" class="dropdown-item ">LIÊN HỆ</a>
+            </div>
+          </li>
+          <li class="nav-item">|</li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="javascript:void(0);" id="versionCurr" >
+              Version
+            </a>
+            <div class="dropdown-menu dropdown-with-icons p-0 m-0">
+              <a id="version1Id" class="dropdown-item" href="javascript:void(0);">Version 1</a>
+              <a id="version2Id" class="dropdown-item" href="javascript:void(0);">Version 2</a>
+              <a id="versionBeta" class="dropdown-item" href="https://beta-docs.zalopay.vn/docs/guides/intro" target="_blank">Beta Version</a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="javascript:void(0);" id="languageCurr" >
+              Tiếng việt
+            </a>
+            <div class="dropdown-menu dropdown-with-icons dropdown-menu-right p-0 m-0">
+              <a id="viId" class="dropdown-item" href="javascript:void(0);">Tiếng Việt</a>
+              <a id="enId" class="dropdown-item" href="javascript:void(0);">English</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+    <a href="#" class="text-white" id="nav-button" style="transform: translateY(74px)">
+    <span class="text-white" style="background-color: #1e88e5">
+      NAV
+    </span>
+  </a>
+  <div class="toc-wrapper">
+    <ul class="toc-nav">
+      <li class="toc-nav__link">
+        <a href="#" class=" arrow active">Thông tin mã trạng thái</a>
+        <ul>
+          <ul id="toc">
+            <li>
+              <a href="#api-tao-don-hang" class="toc-h1 toc-link " title="API tạo đơn hàng">
+                  API tạo đơn hàng
+              </a>
+            </li>
+            <li>
+              <a href="#api-truy-van-trang-thai-thanh-toan-cua-don-hang" class="toc-h1 toc-link " title="API Truy vấn trạng thái thanh toán của đơn hàng">
+                  API Truy vấn trạng thái thanh toán của đơn hàng
+              </a>
+            </li>
+            <li>
+              <a href="#api-hoan-tien-giao-dich" class="toc-h1 toc-link " title="API hoàn tiền giao dịch">
+                  API hoàn tiền giao dịch
+              </a>
+            </li>
+            <li>
+              <a href="#api-truy-van-trang-thai-hoan-tien" class="toc-h1 toc-link " title="API truy vấn trạng thái hoàn tiền">
+                  API truy vấn trạng thái hoàn tiền
+              </a>
+            </li>
+          </ul>
+          </li>
+        </ul>
+    </ul>
+  </div>
+  <div class="page-wrapper doc">
+    <h1 class="content__title text-zlp">
+      Thông tin mã trạng thái
+    </h1>
+    <div class="content single-col">
+      <h3 class='anchor-head' id='ma-trang-thai-truong-codereturn_codecode'>Mã trạng thái trường <code>return_code</code></h3>
+<table><thead>
+<tr>
+<th>Mã trạng thái</th>
+<th>Mô tả ngắn</th>
+<th>Ý nghĩa</th>
+<th>Loại</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>1</code></td>
+<td>SUCCESS</td>
+<td>Thành công</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>FAIL</td>
+<td>Thất bại</td>
+<td>Error</td>
+</tr>
+<tr>
+<td><code>3</code></td>
+<td>PROCESSING</td>
+<td>Đơn hàng chưa thanh toán hoặc giao dịch đang xử lý</td>
+<td>Pending</td>
+</tr>
+</tbody></table>
+<h3 class='anchor-head' id='ma-trang-thai-truong-codesub_return_codecode'>Mã trạng thái trường <code>sub_return_code</code></h3><h1 class='anchor-head' id='api-tao-don-hang'>API tạo đơn hàng</h1>
+<table><thead>
+<tr>
+<th>No</th>
+<th>Status code</th>
+<th>Short description</th>
+<th>Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>1</td>
+<td><code>-2</code></td>
+<td>APPID_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>-53</code></td>
+<td>HMAC_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>-68</code></td>
+<td>DUPLICATE_APPS_TRANS_ID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>-401</code></td>
+<td>ILLEGAL_DATA_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>-402</code></td>
+<td>ILLEGAL_APP_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>-403</code></td>
+<td>ILLEGAL_SIGNATURE_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>-405</code></td>
+<td>ILLEGAL_CLIENT_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>-429</code></td>
+<td>LIMIT_REQUEST_REACH</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>-500</code></td>
+<td>SYSTEM_ERROR</td>
+<td>System error</td>
+</tr>
+</tbody></table>
+<h1 class='anchor-head' id='api-truy-van-trang-thai-thanh-toan-cua-don-hang'>API Truy vấn trạng thái thanh toán của đơn hàng</h1>
+<table><thead>
+<tr>
+<th>No</th>
+<th>Status code</th>
+<th>Short description</th>
+<th>Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>1</td>
+<td><code>-53</code></td>
+<td>HMAC_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>-54</code></td>
+<td>TIME_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>-63</code></td>
+<td>ZPW_BALANCE_NOT_ENOUGH</td>
+<td>User error</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>-92</code></td>
+<td>APPTRANSID_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>-101</code></td>
+<td>ORDER_NOT_EXIST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>-401</code></td>
+<td>ILLEGAL_DATA_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>-402</code></td>
+<td>ILLEGAL_APP_REQUEST Merchant error</td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>-403</code></td>
+<td>ILLEGAL_SIGNATURE_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>-500</code></td>
+<td>SYSTEM_ERROR</td>
+<td>System error</td>
+</tr>
+</tbody></table>
+<h1 class='anchor-head' id='api-hoan-tien-giao-dich'>API hoàn tiền giao dịch</h1>
+<table><thead>
+<tr>
+<th>No</th>
+<th>Status code</th>
+<th>Short description</th>
+<th>Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>1</td>
+<td><code>-3</code></td>
+<td>MAC_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>-10</code></td>
+<td>APPID_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>-13</code></td>
+<td>REFUND_EXPIRE_TIME</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>-24</code></td>
+<td>INVALID_MERCHANT_REFUNDID_FORMAT</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>-25</code></td>
+<td>INVALID_MERCHANT_REFUNDID_DATE</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>-26</code></td>
+<td>INVALID_MERCHANT_REFUNDID_APPID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>-101</code></td>
+<td>ORDER_NOT_FOUND</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>-401</code></td>
+<td>ILLEGAL_DATA_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>-402</code></td>
+<td>ILLEGAL_APP_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>-403</code></td>
+<td>ILLEGAL_SIGNATURE_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>-500</code></td>
+<td>SYSTEM_ERROR</td>
+<td>System error</td>
+</tr>
+</tbody></table>
+<h1 class='anchor-head' id='api-truy-van-trang-thai-hoan-tien'>API truy vấn trạng thái hoàn tiền</h1>
+<table><thead>
+<tr>
+<th>No</th>
+<th>Status code</th>
+<th>Short description</th>
+<th>Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>1</td>
+<td><code>-1</code></td>
+<td>REFUND_PENDING</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>-2</code></td>
+<td>REFUND_TYPE_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>-3</code></td>
+<td>MAC_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>-4</code></td>
+<td>PMC_NOT_SUPPORT_REFUND</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>-5</code></td>
+<td>TRANS_NOT_COMPLELE</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>-6</code></td>
+<td>TRANS_FAIL</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>-7</code></td>
+<td>TIME_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>-8</code></td>
+<td>TRANS_NOT_FOUND</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>-9</code></td>
+<td>TRANSTYPE_NOT_SUPPORT_REFUND</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>-10</code></td>
+<td>APPID_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>-11</code></td>
+<td>TRANS_ALREADY_SUCCESS</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>-12</code></td>
+<td>REQUEST_FORMAT_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>-13</code></td>
+<td>REFUND_EXPIRE_TIME</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>-14</code></td>
+<td>REFUND_AMOUNT_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>-15</code></td>
+<td>INSERT_REFUND_PARTIAL_HISTORY_FAIL</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>-16</code></td>
+<td>INSERT_REFUND_LOG_AR_FAIL</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>-17</code></td>
+<td>UPDATE_REFUND_LOG_AR_FAIL</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>-18</code></td>
+<td>TRANS_STATUS_NOT_SUPPORT_REFUND</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>-19</code></td>
+<td>INSERT_REFUND_TRANSLOG_FAIL</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>-20</code></td>
+<td>UPDATE_TOTAL_REFUND_AMOUNT_FAIL</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>21</td>
+<td><code>-21</code></td>
+<td>REFUND_NOT_FOUND</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>22</td>
+<td><code>-22</code></td>
+<td>REFUND_STATUS_NOT_SUPPORT_REFUND</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>23</td>
+<td><code>-23</code></td>
+<td>DUPLICATE_REFUND</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>24</td>
+<td><code>-24</code></td>
+<td>INVALID_MERCHANT_REFUNDID_FORMAT</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>25</td>
+<td><code>-25</code></td>
+<td>INVALID_MERCHANT_REFUNDID_DATE</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>26</td>
+<td><code>-26</code></td>
+<td>INVALID_MERCHANT_REFUNDID_APPID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>27</td>
+<td><code>-27</code></td>
+<td>CLIENTID_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>28</td>
+<td><code>-28</code></td>
+<td>TRANS_INVALID</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>29</td>
+<td><code>-29</code></td>
+<td>NOT_FOUND_BANKSYSTEM</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>30</td>
+<td><code>-30</code></td>
+<td>REFUND_CACHE_AND_DB_INCONSISTENT</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>31</td>
+<td><code>-31</code></td>
+<td>REFUND_OVER_TIME</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>32</td>
+<td><code>-402</code></td>
+<td>ILLEGAL_APP_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>33</td>
+<td><code>-403</code></td>
+<td>ILLEGAL_SIGNATURE_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>34</td>
+<td><code>-405</code></td>
+<td>ILLEGAL_CLIENT_REQUEST</td>
+<td>Merchant error</td>
+</tr>
+<tr>
+<td>35</td>
+<td><code>-429</code></td>
+<td>LIMIT_REQUEST_REACH</td>
+<td>System error</td>
+</tr>
+<tr>
+<td>36</td>
+<td><code>-500</code></td>
+<td>SYSTEM_ERROR</td>
+<td>System error</td>
+</tr>
+</tbody></table>
+
+<!--
+### Mã trạng thái trường `sub_return_code`
+
+Mã trạng thái | Mô tả ngắn | Ý nghĩa | Loại
+-------|------------|---------|-----
+`48`|ZPMAPACCOUNT_WAIT_FOR_QUERY_ORDER|Đang đợi kết quả|Pending
+`47`|ZPMAPACCOUNT_WAIT_FOR_PROCESS|Đang đợi xử lý|Pending
+`46`|ZPMAPACCOUNT_INQUEUE|Đang xử lý|Pending
+`36`|UM_REGISTER_PHONE_RETRY_OTP|Mã xác thực không hợp lệ|Pending
+`35`|UM_REQUIRE_PHONE_NUMBER|Yêu cầu cập nhập số điện thoại|Pending
+`29`|MAPCARD_INQUEUE|Giao dịch vẫn đang được xử lý.|Pending
+`28`|MAPCARD_PAY123_SUCCESSFUL|Giao dịch vẫn đang được xử lý.|Pending
+`27`|MAPCARD_WAIT_FOR_QUERY_ORDER|Giao dịch vẫn đang được xử lý.|Pending
+`26`|MAPCARD_WAIT_FOR_PROCESS|Giao dịch vẫn đang được xử lý.|Pending
+`24`|NEED_CODE_TEST|Nhập code để tiếp tục.|Pending
+`23`|RETRY_PIN|Sai mật khẩu thanh toán. Vui lòng nhập lại.|Pending
+`19`|ZPW_PURCHASE_SUCCESSFUL|Giao dịch vẫn đang được xử lý|Pending
+`18`|ATM_CHARGE_SUCCESSFUL|Giao dịch vẫn đang được xử lý|Pending
+`17`|ATM_RETRY_OTP|Sai OTP. Vui lòng nhập lại.|Pending
+`16`|ATM_RETRY_CAPTCHA|Sai Mã xác nhận. Vui lòng nhập lại|Pending
+`15`|IN_GET_STATUS_ATM_QUEUE|Giao dịch vẫn đang được xử lý|Pending
+`14`|ATM_AUTHEN_PAYER_SUCCESS|Giao dịch vẫn đang được xử lý|Pending
+`13`|ATM_VERIFY_OTP_SUCCESS|Giao dịch vẫn đang được xử lý|Pending
+`12`|ATM_VERIFY_CARD_SUCCESSFUL|Giao dịch vẫn đang được xử lý|Pending
+`10`|INIT|Giao dịch vẫn đang được xử lý|Pending
+`9`|ATM_WAIT_FOR_CHARGE|Giao dịch vẫn đang được xử lý|Pending
+`5`|PROCESSING|Giao dịch vẫn đang được xử lý|Pending
+`4`|IN_NOTIFY_QUEUE|Giao dịch vẫn đang được xử lý|Pending
+`3`|CREATE_ORDER_SUCCESSFUL|Giao dịch vẫn đang được xử lý|Pending
+`2`|DUPLICATE|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|Pending
+`1`|SUCCESSFUL|Giao dịch thành công|Successful
+`0`|EXCEPTION|Hệ thống đang có lỗi, vui lòng quay lại sau.|Pending
+`-1`|ZK_NODE_EXIST_EXCEPTION|Hệ thống đang có lỗi, vui lòng quay lại sau.|User error
+`-2`|APPID_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|Merchant error
+`-3`|APP_NOT_AVAILABLE|Hệ thống đang có lỗi, vui lòng quay lại sau.|Merchant error
+`-4`|APP_TIME_INVALID|Ứng dụng tạm thời không thể thanh toán, vui lòng quay lại sau.|Merchant error
+`-5`|AMOUNT_INVALID|Số tiền không hợp lệ.|Merchant error
+`-6`|PLATFORM_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-7`|PLATFORM_NOT_AVAILABLE|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-8`|DSCREEN_TYPE_INVALID|Thiết bị chưa được hỗ trợ, giao dịch thất bại.|System error
+`-9`|PMCID_INVALID|Kênh thanh toán không hỗ trợ hoặc đang bảo trì, vui lòng chọn kênh khác.|System error
+`-10`|PMC_INACTIVE|Kênh thanh toán không hỗ trợ hoặc đang bảo trì, vui lòng chọn kênh khác.|System error
+`-13`|GET_TRANSID_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-14`|SET_CACHE_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-15`|GET_CACHE_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-16`|UPDATE_RESULT_FAIL|Nhà cung cấp chưa trả kết quả, giao dịch đang chờ được xử lý. Vui lòng liên hệ với nhà cung cấp bạn đang sử dụng để được hỗ trợ ngay.|Merchant error
+`-17`|EXCEED_MAX_NOTIFY|Nhà cung cấp chưa trả kết quả, giao dịch đang chờ được xử lý. Vui lòng liên hệ với nhà cung cấp bạn đang sử dụng để được hỗ trợ ngay.|Merchant error
+`-18`|DEVICEID_NOT_MATCH|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-19`|APPID_NOT_MATCH|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-20`|PLATFORM_NOT_MATCH|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-21`|PMC_FACTORY_NOT_FOUND|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-26`|SDK_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-29`|ATM_CREATE_ORDER_DBG_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-31`|CARD_INVALID|Thông tin thẻ không chính xác, vui lòng thực hiện lại.|User error
+`-32`|APP_INACTIVE|Hệ thống đang có lỗi, vui lòng quay lại sau.|Unknown
+`-33`|APP_MAINTENANCE|Ứng dụng đang bảo trì, vui lòng quay lại sau.|Unknown
+`-34`|PMC_MAINTENANCE|Kênh thanh toán đang bảo trì, vui lòng chọn kênh khác.|Unknown
+`-35`|PMC_NOT_AVAILABLE|Kênh thanh toán không hỗ trợ hoặc đang bảo trì, vui lòng chọn kênh khác.|Unknown
+`-36`|OVER_LIMIT|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|User error
+`-39`|NOT_FOUND_SMS_SERVICE_PHONE|Kênh thanh toán không hỗ trợ hoặc đang bảo trì, vui lòng chọn kênh khác.|System error
+`-40`|MAX_RETRY_GET_DBG_STATUS|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-41`|ATM_CREATE_ORDER_FAIL|Ngân hàng chưa hỗ trợ hoặc đang bảo trì, vui lòng chọn ngân hàng khác.|User and system error
+`-42`|ATM_BANK_INVALID|Chưa hỗ trợ ngân hàng đã chọn, vui lòng chọn ngân hàng khác.|System error
+`-43`|ATM_BANK_MAINTENANCE|Ngân hàng đang bảo trì, vui lòng chọn ngân hàng khác.|Unknown
+`-44`|ATM_VERIFY_CARD_FAIL|Thông tin thẻ không chính xác, vui lòng thực hiện lại.|User and system error
+`-45`|ATM_MAX_RETRY_OTP_FAIL|Sai OTP, vui lòng thực hiện lại.|User error
+`-46`|ATM_QUERY_ORDER_FAIL|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|User and system error
+`-47`|ATM_BANK_SRC_INVALID|Ngân hàng chưa hỗ trợ hoặc đang bảo trì, vui lòng chọn ngân hàng khác.|System error
+`-48`|ATM_CHARGE_FAIL|Giao dịch thất bại. Vui lòng liên hệ Hotline 1900545436 để được hỗ trợ.|User and system error
+`-49`|TRANS_INFO_NOT_FOUND|Giao dịch chưa được thực hiện. Vui lòng thực hiện lại.|User error
+`-50`|ATM_CAPTCHA_INVALID|Nhập sai Mã xác nhận quá số lần quy định.|User error
+`-51`|ATM_COST_RATE_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-52`|ITEMS_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|Merchant error
+`-53`|HMAC_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|Merchant error
+`-54`|TIME_INVALID|Giao dịch hết hạn thanh toán, quý khách vui lòng thử lại.|Merchant error
+`-55`|CAL_NET_CHARGE_AMT_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-56`|ATM_VERIFY_OTP_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|User and system error
+`-57`|APP_USER_INVALID|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|Merchant error
+`-58`|ZPW_GETTRANSID_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|User and system error
+`-59`|ZPW_PURCHASE_FAIL|Giao dịch thất bại. Vui lòng liên hệ Hotline 1900545436 để được hỗ trợ.|User and system error
+`-60`|ZPW_ACCOUNT_NAME_INVALID|Thông tin tài khoản không chính xác. Vui lòng liên hệ Hotline 1900545436 để được hỗ trợ.|User error
+`-61`|ZPW_ACCOUNT_SUSPENDED|Tài khoản tạm thời bị khóa.|User error
+`-62`|ZPW_ACCOUNT_NOT_EXIST|Tài khoản chưa được phép sử dụng thanh toán cho loại giao dịch này.|User error
+`-63`|ZPW_BALANCE_NOT_ENOUGH|Tài khoản không đủ tiền để thanh toán.|User error
+`-64`|ZPW_GET_BALANCE_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-65`|ZPW_WRONG_PASSWORD|Sai mật khẩu.|User error
+`-66`|USER_INVALID|Sai thông tin tài khoản.|User error
+`-67`|DESERIALIZE_TRANS_FAIL|Đăng nhập thất bại.|System error
+`-68`|DUPLICATE_APPTRANSID|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|User error
+`-69`|DUPLICATE_ZPTRANSID|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|User error
+`-70`|APPTRANSID_EXIST|Giao dịch đã tồn tại, vui lòng thực hiện lại giao dịch khác.|User error
+`-71`|ZALO_LOGIN_FAIL|Đăng nhập thất bại.|System error
+`-72`|ZALO_LOGIN_EXPIRE|Phiên đăng nhập hết hạn vui lòng đăng nhập lại.|System error
+`-73`|TOKEN_INVALID|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|System error
+`-74`|CARDINFO_INVALID|Thông tin thẻ không chính xác.|User error
+`-75`|CARDINFO_EXIST|Thông tin thẻ đã tồn tại.|User error
+`-76`|CARDINFO_NOT_FOUND|Thông tin thẻ không tồn tại.|User error
+`-77`|UM_TOKEN_NOT_FOUND|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|System error
+`-78`|UM_TOKEN_EXPIRE|Phiên đăng nhập hết hạn Vui lòng đăng nhập lại.|User error
+`-79`|REQUEST_FORMAT_INVALID|Nhập thông tin sai định dạng, vui lòng nhập lại.|System error
+`-80`|TRANS_NOT_FINISH|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|System error
+`-81`|USER_NOT_MATCH|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|User error
+`-82`|CARD_NOT_MATCH|Thông tin thẻ không đúng.|User error
+`-83`|TRANSID_FORMAT_INVALID|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|Merchant error
+`-84`|CARD_TOKEN_INVALID|Thông tin thẻ không chính xác.|System error
+`-85`|CARD_TOKEN_EXPIRE|Thông tin thẻ đã lưu hết hạn, vui lòng Hủy thẻ và thực hiện Lưu thẻ lại.|System error
+`-86`|TRANSTYPE_INVALID|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|System error
+`-87`|TRANSTYPE_INACTIVE|Hiện tại, ZaloPay chưa hỗ trợ dịch vụ này.|System error
+`-88`|TRANSTYPE_MAINTENANCE|Chức năng này đang bảo trì, vui lòng quay lại sau.|Unknown
+`-89`|MAP_APPID_APPTRANSID_FAIL|Giao dịch đã tồn tại, vui lòng thực hiện lại giao dịch khác.|System error
+`-90`|EXCEED_MAX_NOTIFY_WALLET_FEE|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|System error
+`-91`|UPDATE_RESULT_FAIL_WALLET_FEE|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|System error
+`-92`|APPTRANSID_INVALID|Mã giao dịch Merchant không hợp lệ.|Merchant error
+`-93`|APPTRANSID_GEN_ERROR|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-94`|TRANSTYPE_AMOUNT_INVALID|Số tiền thanh toán không hợp lệ.|Merchant error
+`-95`|CARD_ALREADY_MAP|Thẻ đã được lưu trước đó.|User error
+`-96`|CHECK_MAP_CARD_EXCEPTION|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-97`|GEN_USER_ID_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-98`|LOGIN_SYSTEM_NOT_FOUND|Đăng nhập thất bại.|System error
+`-99`|CLIENT_ID_NOT_FOUND|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-100`|SIG_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|Merchant error
+`-101`|REFUND_SUCCESS|Hoàn tiền thành công. Chủ thẻ ATM, Thẻ VISA/Master/JCB sẽ được hoàn tiền trong 3-5 ngày làm việc.|Unknown
+`-102`|REFUND_FAIL|Hoàn tiền thất bại.|System error
+`-103`|MUID_INVALID|Thông tin tài khoản không hợp lệ.|Merchant error
+`-104`|MACCESSTOKEN_INVALID|Thông tin đăng nhập không hợp lệ.|Merchant error
+`-105`|USER_LOGOUT|Khách hàng đã thoát khỏi hệ thống.|User error
+`-106`|APP_NOT_PRIVILEGE|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-107`|USER_CHANGE_SESSION|Phiên làm việc hết hạn hoặc tài khoản đã đăng nhập thiết bị khác.|User error
+`-108`|ATM_AUTHEN_PAYER_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|User and system error
+`-109`|TRANS_NOT_REFUND|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|Merchant error
+`-110`|PHONE_NUMBER_INVALID|Số điện thoại không đúng định dạng.|System error
+`-111`|PIN_INVALID|Mật khẩu thanh toán không hợp lệ.|User error
+`-112`|OTP_PROFILE_INVALID|OTP không đúng.|User error
+`-113`|OTP_PROFILE_EXPIRE|OTP hết hạn.|User error
+`-114`|OTP_PROFILE_NOT_MATCH|OTP không chính xác.|User error
+`-115`|OTP_PROFILE_MAX_RETRY|Nhập OTP sai vượt quá số lần quy định.|User error
+`-116`|USER_NOT_EXIST|Giao dịch thất bại, tài khoản chưa bị trừ tiền, vui lòng thực hiện lại.|User error
+`-117`|PIN_NOT_MATCH|Mật khẩu thanh toán không đúng|User error
+`-118`|PROFILE_LEVEL_PERMISSION_NOT_FOUND|Hệ thống đang có lỗi, vui lòng quay lại sau.|User error
+`-119`|PROFILE_LEVEL_PERMISSION_NOT_ALLOW|Bạn cần cập nhật thông tin để sử dụng tính năng này.|User error
+`-120`|PROFILE_LEVEL_PERMISSION_PIN_REQUIRE|Thông tin mật khẩu thanh toán không hợp lệ, giao dịch thất bại.|User error
+`-121`|PROFILE_LEVEL_PERMISSION_VERIFY_PIN_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|User error
+`-122`|PROFILE_LEVEL_PERMISSION_WRONG_PIN|Sai mật khẩu thanh toán.|User error
+`-123`|SEND_SMS_FAIL|Gửi OTP thất bại, vui lòng kiểm tra lại số điện thoại|System error
+`-124`|USER_IS_LOCKED|Tài khoản đang bị khóa.|User error
+`-125`|WRONG_PIN_OVERLIMIT|Nhập sai mật khẩu thanh toán vượt quá số lần quy định, vui lòng thử lại sau 15 phút .|User error
+`-126`|PIN_SIZE_INVALID|Mật khẩu thanh toán không hợp lệ.|User error
+`-127`|RECOVERY_INFO_INVALID|Hệ thống đang có lỗi, vui lòng quay lại sau.|User error
+`-128`|RECEIVER_NOT_EXIST|Tài khoản nhận tiền không tồn tại, vui lòng chọn tài khoản khác.|User error
+`-129`|TRANSFER_SAME_USERID|Không được phép chuyển tiền cùng tài khoản.|User error
+`-130`|SYSTEM_LOGIN_INVAID|Không được phép đăng nhập.|System error
+`-131`|RECEIVER_IS_LOCKED|Tài khoản nhận tiền bị khóa.|User error
+`-132`|REFUND_TYPE_INVALID|Hoàn tiền không hợp lệ.|Merchant error
+`-133`|EXCEED_MAX_BALANCE_PER_DAY|Vượt quá số tiền cho phép sử dụng trong ngày. Vui lòng quay lại sau. Cập nhật Email, CMND để tăng hạn mức sử dụng trong ngày.|User error
+`-134`|EXCEED_MAX_MAPCARD_PER_DAY|Vượt quá số lần cho phép lưu thẻ trong ngày.|User error
+`-135`|SYSTEM_AUTO_MAINTENANCE|Hệ thống đang bảo trì, vui lòng quay lại sau.|Unknown
+`-136`|MAP_CARD_FAIL|Lưu thẻ không thành công, vui lòng thực hiện lại.|User and system error
+`-137`|UM_API_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-138`|CREATE_PATH_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-139`|FILE_SIZE_INVALID|Kích thước file không hợp lệ, vui lòng chọn file khác.|System error
+`-140`|EMAIL_FORMAT_INAVLID|Email không hợp lệ.|System error
+`-141`|CODE_LOGINUID_INAVLID_USED|Thông tin tài khoản đăng nhập không hợp lệ.|System error
+`-142`|CODE_TEST_INVALID|Mã kích hoạt ko hợp lệ.|System error
+`-143`|CODE_TEST_USED|Mã kích hoạt đã được sử dụng.|System error
+`-144`|SEND_QUEUE_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-145`|IDENTITYNUMBER_INVALID|Số chứng minh thư không hợp lệ.|System error
+`-146`|CHARGE_INFO_INVALID|Thông tin thanh toán không hợp lệ.|System error
+`-147`|RPE_CHARGE_FAIL|Hệ thống đang có lỗi, vui lòng quay lại sau.|User and system error
+`-148`|UM_EXCEPTION|Hệ thống đang có lỗi, vui lòng quay lại sau.|System error
+`-149`|ZALOPAYNAME_INVALID|Tên tài khoản không hợp lệ.|User error
+`-150`|ZALOPAYNAME_EXIST|Tên tài khoản đã tồn tại.|User error
+`-151`|ZALOPAYNAME_DENY|Tên tài khoản không cho phép.|User error
+`-152`|ZALOPAYNAME_FOR_BUZ|Tên tài khoản không cho phép.|User error
+`-153`|ZALOPAYNAME_NOT_EXIST|Tài khoản không tồn tại.|User error
+`-154`|USER_HAD_ZALOPAYNAME|Bạn đã có tên tài khoản.|User error
+`-155`|INQUIRECARD_FAIL|Ngân hàng không cho phép rút tiền tại thời điểm này, vui lòng quay lại sau.|User and system error
+`-156`|WITHDRAW_MONEY_FAIL|Ngân hàng không cho phép rút tiền tại thời điểm này, vui lòng quay lại sau.|User and system error
+`-157`|OLD_PIN_NOT_MATCH|Mật khẩu thanh toán cũ không chính xác.|User error
+`-158`|FUNCTION_CLOSED|Chức năng đang tạm đóng.|User error
+`-159`|SENDER_USERID_INVALID|Tài khoản gửi không hợp lệ.|User error
+`-160`|RECEIVER_USERID_INVALID|Tài khoản nhận không hợp lệ.|User error
+`-161`|EXCEED_PIN_NOT_MATCH|Sai mật khẩu thanh toán quá số lần quy định. Vui lòng thử lại sau 15 phút hoặc chọn Quên mật khẩu để được hỗ trợ.|User error
+`-162`|PROFILE_LEVEL_PERMISSION_OVER|Thông tin tài khoản đã được cập nhật.|User error
+`-163`|WITHDRAW_MONEY_QUERYORDER_FAIL|Ngân hàng không cho phép rút tiền tại thời điểm này, vui lòng quay lại sau.|User and system error
+`-164`|CARD_USERD_ANOTHER_USER|Thông tin thẻ đã được liên kết cho tài khoản khác.|User error
+`-165`|EXCEED_TOTAL_TRANS_PER_DAY|Bạn đã thực hiện vượt quá số lần giao dịch trong ngày.|User error
+`-166`|EXCEED_TOTAL_AMT_PER_DAY|Bạn đã thực hiện vượt quá số tiền trong ngày.|User error
+`-167`|APPVERSION_NOT_FOUND|App version không đúng|System error
+`-168`|INPUT_DB_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-169`|PROFILE_UPDATING|Yêu cầu của bạn đang xử lý, vui lòng đợi kết quả.|User error
+`-170`|GIVE_MONEY_REJECT_BY_TIME|Quá thời gian tặng tiền.|User error
+`-171`|GIVE_MONEY_REJECT_BY_COUNT|Quá số lượng tặng tiền.|User error
+`-172`|TPE_API_EXCEPTION|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-173`|PAY123_EXCEPTION|Lỗi kết nối đến ngân hàng, vui lòng thử lại sau ít phút.|System error
+`-174`|CIM_MID_INVALID|MID không hợp lệ.|Merchant error
+`-175`|CIM_REQUESTDATE_INVALID|Thông tin reqdate không hợp lệ.|Merchant error
+`-176`|CIM_ZALOPAYID_INVALID|Giá trị zalopayid không hợp lệ.|Merchant error
+`-177`|CIM_MID_NOT_EXIST|Không tồn tại mid này.|Merchant error
+`-178`|CIM_MAC_NOT_MATCH|Sai thông tin mac|Merchant error
+`-179`|CIM_NOT_CONTAINS_ZALOPAYID|Merchant chưa cấu hình zalopayid.|Merchant error
+`-180`|CIM_NOT_CONTAINS_IP|Merchant chưa cấu hình ip.|Merchant error
+`-181`|CIM_TIME_EXPIRED|Thời gian hết hạn.|Merchant error
+`-182`|CIM_TPE_EXCEPTION|Lỗi giao tiếp hệ thống core.|Merchant error
+`-183`|CIM_WALLET_EXCEPTION|Lỗi giao tiếp hệ thống ví.|Merchant error
+`-184`|CIM_MTRANSID_INVALID|Thông tin mtransid không đúng định dạng.|Merchant error
+`-185`|CIM_MTRANSID_NOT_HAS_MID|Thông tin mtransid không đúng định dạng (chưa có thông tin mid trong mtransid).|Merchant error
+`-186`|COM_INFOTYPE_INVALID|Thông tin infotype không chính xác.|Merchant error
+`-187`|APP_USER_TYPE_INVALID|Thông tin type của appUser không chính xác.|User error
+`-188`|UPLOAD_FILE_NOT_ENOUGH|Vui lòng cung cấp đủ file.|System error
+`-189`|VERIFYCARD_FOR_MAPPING_FAIL|Thông tin thẻ không chính xác.|User and system error
+`-190`|AUTHCARD_FOR_MAPPING_FAIL|Thông tin liên kết thẻ không chính xác.|User and system error
+`-191`|QUERYSTATUS_FOR_MAPPING_FAIL|Lấy trạng thái từ ngân hàng thất bại|User and system error
+`-192`|MAP_CARD_INFO_INVALID|Thông tin thẻ không chính xác.|User error
+`-193`|LINK_BANK_OTP_INVALID|Thông tin otp không chính xác.|User error
+`-194`|0|Hệ thống có lỗi, vui lòng quay lại sau.|User error
+`-195`|CIM_DESC_LENGHT_OVER|Thông tin mô tả quá chiều dài cho phép.|Merchant error
+`-196`|PAY123_REMOVE_CARD_FAIL|Hủy liên kết thẻ đến ngân hàng thất bại.|System error
+`-197`|UM_PHONE_USED|Số điện thoại đã được đăng ký. LH 1900 545436 để được hỗ trợ.|User error
+`-198`|UM_PROFILE_LEVEL_LESS_THAN|Profile level nhỏ hơn yêu cầu|User error
+`-199`|UM_PROFILE_LEVEL_INVALID|Profile level không hợp lệ|User error
+`-200`|ATM_WRONG_OTP_END_TRANSACTION|Sai OTP, vui lòng thực hiện lại giao dich.|User error
+`-201`|MAPCARD_123PAY_FAIL|Liên kết thẻ không thành công.|User and system error
+`-202`|MESSAGE_EMPTY|Thông tin message rỗng|System error
+`-203`|NOTIFY_ALL_USER_FAIL|Thông báo tất cả user thất bại|System error
+`-204`|UM_REQDATE_EXPIRE|Thời gian request hết hạn|System error
+`-205`|CIM_UM_EXCEPTION|Hệ thống cashin merchant đang có lỗi|System error
+`-206`|REMOVE_MAPPED_CARD_PAY123|Remove thẻ 123 thất bại|System error
+`-207`|USERID_INVALID|Thông tin userid invalid|User error
+`-208`|RPE_EXCEPTION|Hệ thống lì xì đang có lỗi|System error
+`-209`|PHONE_NOT_FOUND|Không tìm thấy số điện thoại|User error
+`-210`|UM_BANK_ACCOUNT_INFO_INVALID|Thông tin bank account không hợp lệ|System error
+`-211`|UM_BANK_ACCOUNT_EXIST|Bank account đã tồn tại|User error
+`-212`|UM_BANK_ACCOUNT_USERD_ANOTHER_USER|Bank account đã liên kết cho user khác|System error
+`-213`|UM_BANK_ACCOUNT_NOT_FOUND|Bank account không tồn tại|System error
+`-214`|UM_BANK_ACCOUNT_DUP_FIRST_LAST|Trùng thông tin first last|System error
+`-215`|UM_CARD_DUP_FIRST_LAST|Trùng thẻ đã lưu|System error
+`-216`|BANKACCOUNT_TOKEN_EXPIRE|Liên kết ngân hàng hết hạn|User error
+`-217`|ZPBANK_CHARGE_FAIL|Thanh toán thất bại|User and system error
+`-218`|ZPBANK_QUERY_ORDER_FAIL|Thanh toán thất bại|User and system error
+`-219`|ZPBANK_CASHIN_FAIL|Thanh toán thất bại|User and system error
+`-220`|ZPBANK_MERCHANT_ID_INVALID|Merchant id không hợp lệ|User and system error
+`-221`|ZPBANK_DATA_INVALID|Thông tin không chính xác|System error
+`-222`|NOTIFY_MAP_ACCOUNT_SAVE_UM_FAIL|Map tài khoản ngân hàng thất bại|System error
+`-223`|NOTIFY_MAP_ACCOUNT_REMOVE_UM_FAIL|Huỷ liên kết tài khoản ngân hàng thất bại|System error
+`-224`|BANK_ACCOUNT_INVALID|Tài khoản ngân hàng không hợp lệ|User error
+`-225`|ZPBANK_EXCEPTION|Hệ thống đang có lỗi|System error
+`-226`|CAMPAIGN_ID_INVALID|CampaignID không hợp lệ|Merchant error
+`-227`|CAMPAIGN_INACTIVE|Campaign chưa active.|Merchant error
+`-228`|CAMPAIGN_MAINTAIN|Campaign bảo trì|Merchant error
+`-229`|CAMPAIGN_NOT_EXIST|Campaign không tồn tại|Merchant error
+`-230`|CAMPAIGN_EXPIRE|Campaign hết hạn|Merchant error
+`-231`|CAMPAIGN_CTRANSID_INVALID|CTransID không hợp lệ|Merchant error
+`-232`|CAMPAIGN_CTRANSID_NOT_HAS_CID|CTransID phải chưa CampaignID|Merchant error
+`-233`|UM_MERCHANT_EXCEPTION|Hệ thống đang có lỗi|System error
+`-234`|CAMPAIGN_TOTAL_INVALID|Campaign đã đóng|Merchant error
+`-235`|CAMPAIGN_TOTAL_NOT_ENOUGHT_COUNT|Campaign đạt giới hạn giao dịch|Merchant error
+`-236`|CAMPAIGN_TOTAL_NOT_ENOUGHT_AMOUNT|Campaign đạt giới hạn số tiền|Merchant error
+`-237`|CAMPAIGN_TOTAL_ERROR|Campaign đã đóng|Merchant error
+`-238`|ZALOPAYID_INVALID|Số TK ZaloPay không hợp lệ|System error
+`-239`|HMAC_NOT_MATCH|HMac không chính xác|Merchant error
+`-240`|CAMPAIGN_NOT_CONTAINS_ZALOPAYID|Campaign không có tài khoản này|Merchant error
+`-241`|CAMPAIGN_NOT_CONTAINS_IP|Campaign không allow ip này|Merchant error
+`-242`|TIME_EXPIRE|Thời gian request hết hạn|User error
+`-243`|CAMPAIGN_AMOUNT_PER_TRANS_NOT_MATCH|Số tiền trên mỗi giao dịch không đúng|Merchant error
+`-244`|IS_FRAUD_TRANSACTION|Giao dịch bị từ chối|User error
+`-245`|CAMPAIGN_RECEIVER_TYPE_INVALID|Thông tin người nhận không chính xác|Merchant error
+`-246`|CAMPAIGN_RECEIVER_TYPE_NOT_SUPPORT|Thông tin người nhận không hợp lệ|Merchant error
+`-247`|CAMPAIGN_UPDATE_DB_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-248`|CAMPAIGN_CALL_TPE_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-249`|CAMPAIGN_CALL_ANTI_REVERT_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-250`|CHARGED_SUCCESSFULLY_AFTER_QUERY|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-251`|USER_HAD_BANK_ACCOUNT|User đang tồn tại liên kết tài khoản.|User error
+`-252`|REQDATE_EXPIRE|Thời gian yêu cầu hết hạn!|User error
+`-253`|CAMPAIGN_AMOUNT_INVALID|Số tiền không hợp lệ|Merchant error
+`-254`|CAMPAIGN_CALC_AMOUNT_INVALID|Số tiền không hợp lệ|Merchant error
+`-255`|CAMPAIGN_ANTIREVERT_INSERT_CASHBACK_FAIL|Giao dịch đã xử lý|System error
+`-256`|CAMPAIGN_ANTIREVERT_UPDATE_QUOTA_FAIL|Giao dịch đã xử lý|System error
+`-257`|CAMPAIGN_ANTIREVERT_EXCEPTION|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-258`|CAMPAIGN_ZALOPAY_TRANSID_INVALID|Mã giao dịch ZaloPay không hợp lệ|System error
+`-259`|CAMPAIGN_SUBMIT_TPE_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-260`|CAMPAIGN_TRY_LOCK_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-261`|CAMPAIGN_INSERT_TRANS_FAIL|Giao dịch đã xử lý|System error
+`-262`|CAMPAIGN_UPDATE_QUOTA_FAIL|Giao dịch đã xử lý|System error
+`-263`|WITHDRAW_MONEY_ZPBANKGW_FAIL|Rút tiền thất bại|User and system error
+`-264`|CAMPAIGN_SENDER_INVALID|Người gửi ko hợp lệ|User error
+`-265`|CAMPAIGN_TRANS_REFUNED|Giao dịch đã refund|User error
+`-266`|CAMPAIGN_API_EXCEPTION|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-267`|PMC_CHARGE_FAIL|Thanh toán thất bại|User and system error
+`-268`|CAMPAIGN_EVOUCHER_VERIFY_SIG_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-269`|CAMPAIGN_EVOUCHER_EXCEPTION|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-270`|ZPBANK_VERIFYCARD_FOR_MAPPING_FAIL|Kiểm tra map card thất bại|User and system error
+`-271`|ZPBANK_AUTH_FOR_MAPPING_FAIL|Authen thất bại|User and system error
+`-272`|ZPBANK_QUERYSTATUS_FOR_MAPPING_FAIL|Map card thất bại|User and system error
+`-273`|ZPBANK_AUTHCARD_FOR_PAYING_FAIL|Authen thất bại|User and system error
+`-274`|ZPBANK_REMOVE_CARD_FAIL|Huỷ liên kết thẻ thất bại|User and system error
+`-275`|ZPBANK_MAPCARD_FAIL|Liên kết thẻ thất bại|User and system error
+`-276`|SYN_SAVETOKEN_123PAY_FAIL|Lưu token 123P thất bại|System error
+`-277`|SYN_GETBANKTOKEN_123PAY_FAIL|Lấy thông tin bank token 123P thất bại|System error
+`-278`|BANK_SYSTEM_INVALID|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-279`|REGISTER_OP_AND_FAIL|Đăng ký thanh toán trực tuyến thất bại|User error
+`-280`|UM_BANKTOKEN_INVALID|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-281`|UM_BANKTOKEN_EXIST|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-282`|UM_CLIENT_NOT_ALLOW|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-283`|P123_SYNC_EXCEPTION|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-284`|NEED_REGISTER_ONLINE_PAYMENT|Thẻ chưa đăng ký dịch vụ thanh toán trực tuyến với ngân hàng. Vui lòng liên hệ ngân hàng để đăng ký dịch vụ thanh toán trực tuyến.|User error
+`-285`|UM_GET_CARDINFO_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-286`|UM_PHONE_WITH_OTHER_PREFIX_USED|Số điện thoại %s tương ứng %s đã từng được sử dụng để đăng ký ZaloPay. Để đăng ký thành công vui lòng sử dụng số điện thoại khác.|Unknown
+`-289`|QRPAY_CONFIG_NOT_SUPPORT|Không hỗ trợ kênh thanh toán này, vui lòng chọn kênh thanh toán khác|Merchant error
+`-290`|DUPLICATE_PAYMENTCODE|Trùng Payment Code, giao dịch thất bại, tài khoản chưa bị trừ tiền. Vui lòng thực hiện lại.|User error
+`-291`|AMOUNT_NOT_SUPPORT|Loại giao dịch không hỗ trợ thanh toán với số tiền này|User error
+`-292`|PAYMENT_CODE_INVALID|Payment code không hợp lệ|User error
+`-293`|TRANS_NOT_MATCH|Thông tin thanh toán không hợp lệ|User error
+`-295`|REVERT_VOUCHER_FAILED|Revert voucher thất bại|System error
+`-296`|USER_NOT_SUBMIT_PIN|Giao dịch thất bại, tài khoản chưa bị trừ tiền|User error
+`-301`|ZPBANK_CREATEORDER_FAIL|Hệ thống đang có lỗi. Vui lòng thử lại sau.|Unknown
+`-302`|CIM_DAILY_QUOTA_EXCEEDED|Hệ thống đang có lỗi. Vui lòng thử lại sau.|Merchant error
+`-303`|CIM_MONTHLY_QUOTA_EXCEEDED|Hệ thống đang có lỗi. Vui lòng thử lại sau.|Merchant error
+`-308`|EXCEED_MAX_CHARGE_AMOUNT|Số tiền thanh toán vượt quá hạn mức tối đa của giao dịch.|User error
+`-309`|BELOW_MIN_CHARGE_AMOUNT|Số tiền thanh toán nhỏ hơn hạn mức tối thiểu của giao dịch.|User error
+`-310`|ZPBANK_VERIFY_ACCOUNT_FOR_MAPPING_FAIL|Kiểm tra liên kết tài khoản thất bại|User and system error
+`-311`|ZPBANK_REMOVE_ACCOUNT_FAIL|Xóa tài khoản liên kết thất bại|User and system error
+`-312`|ZPBANK_MAP_ACCOUNT_FAIL|Liên kết tài khoản thất bại|User and system error
+`-313`|ZPMAPACCOUNT_INFO_INVALID|Sai thông tin tài khoản|System error
+`-314`|ZPMAPACCOUNT_FAIL|Liên kết tài khoản không thành công|User and system error
+`-315`|MTE_CHARGE_FAIL|Nhận tiền chuyển từ Zalo thất bại|System error
+`-316`|ZPBANK_CALL_BANK_TIMEOUT_NO_REFUND|Ngân hàng không phản hồi. Xin vui lòng thử lại giao dịch khác|Bank error
+`-317`|ZPBANK_CALL_BANK_EXCEPTION_NO_REFUND|Lỗi không xác định từ phía ngân hàng. Vui lòng thử lại giao dịch khác|Bank error
+`-318`|ZPBANK_BANK_RETURN_TIMEOUT_CODE_NO_REFUND|Hết thời gian xử lý giao dịch của ngân hàng. Vui lòng thử lại giao dịch khác|Bank error
+`-319`|ZPBANK_BANK_UNKNOWN_STATUS_NO_REFUND|Lỗi không xác định từ phía ngân hàng. Vui lòng thử lại giao dịch khác|Bank error
+`-320`|UNLINK_OTP_INCORRECT|Quá số lần nhập sai OTP. Vui lòng thử lại sau|Unknown
+`-321`|UNLINK_OTP_COUNT_OVER_LIMIT|Bạn đã yêu cầu nhận mã OTP quá số lần quy định|Unknown
+`-322`|PAYMENT_CODE_EXPIRED|Payment Code hết hạn, giao dịch thất bại, tài khoản chưa bị trừ tiền. Vui lòng thực hiện lại.|Unknown
+`-323`|BANK_BIDV_MUST_CHANGE_PASS_BIDV_ONLINE|Bạn cần thay đổi mật khẩu BIDV Online để tiếp tục giao dịch. Liên hệ hotline 1900545436 để được hỗ trợ.|Unknown
+`-324`|ZPBANK_AMOUNT_INVALID|Số tiền thanh toán bên ngân hàng không hợp lệ|Bank error
+`-325`|NAPAS3_BANK_CARD_DIRECT|Số thẻ bạn nhập khác với ngân hàng bạn đã chọn. Vui lòng kiểm tra lại hoặc liên hệ 1900 54 54 36 để được hỗ trợ.|User error
+`-326`|NAPAS3_BANK_CARD_ALREADY_LINKED|Thẻ của bạn đã được liên kết trong tài khoản. Vui lòng kiểm tra lại hoặc liên hệ 1900 54 54 36 để được hỗ trợ.|User error
+`-327`|NAPAS3_BANK_CARD_NOT_CONFIGED|Số thẻ bạn nhập khác với ngân hàng bạn đã chọn. Vui lòng kiểm tra lại hoặc liên hệ 1900 54 54 36 để được hỗ trợ.|User error
+`-329`|USER_CANCEL_TRANS||Unknown
+`-332`|RMS_USER_NEED_KYC|Giao dịch tạm thời bị giới hạn. Để tiếp tục giao dịch, vui lòng định danh tài khoản bằng thông tin cá nhân nhằm xác nhận quyền sở hữu tài khoản|User error
+`-333`| RMS_LOCK_PROMOTION_ABUSE|Giao dịch tạm thời bị giới hạn. Quý khách vui lòng thực hiện lại sau hoặc thử lại giao dịch mà không dùng khuyến mãi.|
+`-401`|ILLEGAL_DATA_REQUEST||Unknown
+`-402`|ILLEGAL_APP_REQUEST||Unknown
+`-403`|ILLEGAL_SIGNATURE_REQUEST||Unknown
+`-405`|ILLEGAL_CLIENT_REQUEST||Unknown
+`-406`|ILLEGAL_STATUS||Unknown
+`-429`|LIMIT_REQUEST_REACH||Unknown
+`-500`|SYSTEM_ERROR||System error
+`-999`|SYSTEM_MAINTAIN|Hệ thống đang bảo trì, vui lòng quay lại sau.|System error
+`-1000`|RANDCAMPAIGN_TRYLOCKFAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1001`|RANDCAMPAIGN_PARVALUE_NOTFOUND|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1002`|RANDCAMPAIGN_TOTAL_CAPACITY_NOT_FOUND|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1003`|RANDCAMPAIGN_TOTAL_CAPACITY_NOT_ENOUGHT|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1004`|RANDCAMPAIGN_DAILY_CAPACITY_NOT_FOUND|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1005`|RANDCAMPAIGN_DAILY_CAPACITY_NOT_ENOUGHT|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1006`|RANDCAMPAIGN_INFO_INVALID|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1007`|RANDCAMPAIGN_NOT_ACTIVE|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1008`|RANDCAMPAIGN_EXPIRE|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-1009`|RANDCAMPAIGN_RULE_NOT_PASS|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User error
+`-1330`|EXCEED_MAX_FUND_OUT_PER_DAY|Bạn cần nâng cấp tài khoản để tiếp tục giao dịch.|
+`-1331`|EXCEED_MAX_FUND_OUT_PER_DAY|Bạn cần nâng cấp tài khoản để tiếp tục giao dịch.|
+`-1332`|EXCEED_MAX_FUND_OUT_PER_DAY|Tài khoản của bạn vượt hạn mức chi tiêu tối đa 20 triệu đồng/ ngày. Vui lòng cập nhật phiên bản mới nhất|
+`-1333`|EXCEED_MAX_FUND_OUT_PER_DAY|Tài khoản của bạn vượt hạn mức chi tiêu tối đa 50 triệu đồng/ngày|
+`-1340`|EXCEED_MAX_FUND_OUT_PER_MONTH|Bạn cần nâng cấp tài khoản để tiếp tục giao dịch.|
+`-1341`|EXCEED_MAX_FUND_OUT_PER_MONTH|Bạn cần nâng cấp tài khoản để tiếp tục giao dịch.|
+`-1342`|EXCEED_MAX_FUND_OUT_PER_MONTH|Tài khoản của bạn vượt hạn mức chi tiêu tối đa 20 triệu đồng/tháng. Vui lòng cập nhật phiên bản mới nhất|
+`-1343`|EXCEED_MAX_FUND_OUT_PER_MONTH|Tài khoản của bạn vượt hạn mức chi tiêu tối đa 100 triệu đồng/tháng|
+`-2001`|UM_REGISTER_PHONE_EXPIRE|Hết thời gian đăng ký|User error
+`-2002`|UM_REGISTER_PHONE_OTP_MAX_RETRY|Sai otp quá số lần cho phép|User error
+`-2003`|UM_ZALO_EXIST|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User error
+`-2004`|UM_PROFILE_LEVEL_GREATE_THAN|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User error
+`-2005`|UM_PHONE_NOT_SUPPORT|Số điện thoại không hợp lệ|User error
+`-2006`|UM_TRY_LOCK_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2007`|UM_USER_NOT_FOUND|Tài khoản không tồn tại|User error
+`-2008`|UM_PHONE_NUMBER_INVALID|Số điện thoại không hợp lệ|User error
+`-2009`|UM_JSON_DATA_INVALID|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2010`|UM_ZALO_OA_TEMP_NOT_EXIST|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2011`|UM_DATA_INVALID|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2012`|UM_RECEIVER_NOT_EXIST|Người nhận không tồn tại|User error
+`-2013`|UM_RECEIVER_LOCKED|Tài khoản nhận tiền bị khóa.|User error
+`-2014`|UM_FRONTENDID_INVALID|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2015`|UM_FRONTENDID_NOT_SUPPORT|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2016`|UM_SESSION_LOGIN_NOT_FOUND|Hết thời gian login, vui lòng liên hệ bộ phận CSKH để được hỗ trợ 1900545436|User error
+`-2017`|UM_SAVE_CACHE_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2018`|UM_NEED_LOGIN_BY_PHONE|Hết thời gian login, vui lòng liên hệ bộ phận CSKH để được hỗ trợ 1900545436|User error
+`-2019`|UM_OTP_NOT_MATCH|Mã xác thực không hợp lệ|User error
+`-2020`|UM_EXCEED_OTP_NOT_MATCH|Sai mã xác thực quá số lần quy định, vui lòng thử lại sau 15 phút Hoặc liên hệ bộ phận CSKH để được hỗ trợ 1900545436|User error
+`-2021`|UM_FRONTENDID_NOT_ALLOW|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-2022`|UM_NEED_REGISTER_LOGIN_BY_PHONE|Hết thời gian login, vui lòng liên hệ bộ phận CSKH để được hỗ trợ 1900545436|User error
+`-2023`|UM_OTP_EXPIRE|Mã xác thực hết hạn|User error
+`-2024`|UM_REGISTER_LOGIN_BY_PHONE_EXPIRE|Hết thời gian thanh lý, vui lòng liên hệ bộ phận CSKH để được hỗ trợ 1900545436|User error
+`-2029`|UM_VERSION_NOT_SUPPORT|Phiên bản này đã quá cũ và không còn được hỗ trợ. Vui lòng cập nhật lên phiên bản mới nhất để tiếp tục sử dụng. Cảm ơn!|System error
+`-2042`|Tên đầy đủ không được dài hơn 50 ký tự|Tên đầy đủ không được dài hơn 50 ký tự|User error
+`-2043`|Giới tính không hợp lệ|Giới tính không hợp lệ|User error
+`-2044`|Loại thẻ định danh không hợp lệ|Loại thẻ định danh không hợp lệ|User error
+`-2045`|Chiều dài của mã định danh không được dài hơn 12 ký tự|Chiều dài của mã định danh không được dài hơn 12 ký tự|User error
+`-2046`|Chưa nhập mã xác thực số điện thoại|Chưa nhập mã xác thực số điện thoại|User error
+`-2047`|Số điện thoại đăng ký không phải của tài khoản đăng nhập Zalo|Số điện thoại đăng ký không phải của tài khoản đăng nhập Zalo|User error
+`-2048`|Số điện thoại chưa đăng ký Zalo|Số điện thoại chưa đăng ký Zalo|User error
+`-2063`|RMS_USER_LOCKED|Tài khoản của bạn đang tạm khóa. Vui lòng thử lại sau
+`-6000`|ZPGW_ORDER_INVALID|Thông tin đơn hàng không hợp lệ|Merchant error
+`-6001`|ZPGW_BANKCODE_INVALID|Mã ngân hàng không hợp lệ|Merchant error
+`-6002`|ZPGW_BANK_NOT_SUPPORT|Ngân hàng chưa hỗ trợ thanh toán hoặc đang bảo trì|Merchant error
+`-6003`|ZPGW_CREATE_ORDER_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User and system error
+`-6004`|ZPGW_ORDER_NOT_FOUND|Thông tin đơn hàng không tồn tại|Merchant error
+`-6005`|ZPGW_ORDER_ID_INVALID|Thông tin đơn hàng không hợp lệ|Merchant error
+`-6007`|ZPGW_ORDER_IS_PROCCESSING_NOT_ALLOW_SUBMIT|unknown
+`-6010`|ZPGW_CARD_NUMBER_INVALID|Thông tin thẻ không hợp lệ, vui lòng nhập lại|User error
+`-6011`|ZPGW_BIN_NOT_SUPPORT|Số thẻ ngân hàng không hỗ trợ thanh toán, vui lòng nhập lại|User error
+`-6012`|ZPGW_CANCELED_TRANSACTION|Giao dịch đã bị hủy bởi người dùng|User error
+`-6013`|ZPGW_SUBMIT_BANK_FAILED|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User and system error
+`-6014`|ZPGW_SUBMIT_TRANS_FAILED|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User and system error
+`-6015`|ZPGW_AUTHEN_CARD_FAILED|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User and system error
+`-6016`|ZPGW_ATM_FINISH_FAILED|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|User error
+`-6017`|ZPGW_STEP_INVALID|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-6018`|ZPGW_REQUEST_NOT_AUTHEN|Giao dịch không được xác thực|Merchant error
+`-6019`|ZPGW_CARD_HOLDERNAME_INVALID|Tên chủ thẻ không hợp lệ|User error
+`-6020`|ZPGW_CARD_ISSUED_DATE_INVALID|Ngày phát hành thẻ không hợp lệ|User error
+`-6021`|ZPGW_CARD_EXPIRED_DATE_INVALID|Ngày hết hạn thẻ không hợp lệ|User error
+`-6022`|ZPGW_CARD_NOT_SUPPORTED|Thẻ không hỗ trợ thanh toán|User error
+`-6023`|ZPGW_CLIENT_IP_NOT_ALLOWED|Không hỗ trợ cập nhật config|Merchant error
+`-6025`|ZPGW_GET_PROMOTION_INFO_FAILED|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-6026`|ZPGW_REGISTER_PROMOTION_FAILED|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-6027`|ZPGW_BIN_NOT_SUPPORT_PROMTION|Đầu thẻ không hỗ trợ thanh toán có ưu đãi|Merchant error
+`-6028`|ZPGW_PAY_WITHOUT_BIN_NOT_SUPPORT_PROMTION|Thẻ không được hưởng ưu đãi|Merchant error
+`-6029`|ZPGW_AMOUNT_NOT_SUPPORT_PROMTION|Số tiền không hỗ trợ thanh toán có ưu đãi|Merchant error
+`-6030`|ZPGW_PAY_WITHOUT_PROMTION|Tiếp tục thanh toán mà không hưởng ưu đãi|Merchant error
+`-6031`|ZPGW_NOT_SUPPORT_PROMTION|Giao dịch không hỗ trợ thanh toán có ưu đãi|Merchant error
+`-6032`|ZPGW_PROMTION_INVALID|Thông tin ưu đãi không hợp lệ|Merchant error
+`-6033`|ZPGW_ORDER_EXPIRED|Đơn hàng hết hạn thanh toán, vui lòng thử lại|Merchant error
+`-6034`|ZPGW_GET_ORDER_FAIL|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+`-6035`|ZPGW_GET_TRANS_STATUS_FAILED|Hệ thống đang có lỗi, vui lòng thử lại sau ít phút.|System error
+
+# Mã trạng thái ngân hàng
+
+Mã trạng thái | Mô tả ngắn | Ý nghĩa | Loại
+-------|------------|---------|-----
+`9`||Giao dịch dang xử lý|Successful
+`8`||Giao dịch đã được hoàn tiền|Successful
+`7`||Đã thực hiện giao dịch đảo ngược (hoàn tiền)!|Successful
+`6`|PROCESSING|Dữ liệu đang xử lý!|Pending
+`5`||Đang đợi xác thực OTP!|Pending
+`4`||Dữ liệu đang trong hàng đợi xử lý!|Pending
+`3`||Hệ thống đang khởi tạo giao dịch!|Pending
+`2`||Xác thực tham số thành công!|Pending
+`1`||Giao dịch thành công!|Successful
+`0`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-1`||Dữ liệu không hợp lệ!|User error
+`-2`||Dữ liệu định danh giao dịch của bank đã tồn tại!|Bank error
+`-3`||Dữ liệu định danh giao dịch của merchant đã tồn tại!|System error
+`-4`||Thông tin khách hàng không hợp lệ!|User error
+`-5`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-6`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-7`||Không thể kết nối tới ngân hàng!|Bank error
+`-8`||Trạng thái giao dịch không hợp lệ!|System error
+`-9`|BANK_UNKNOWN_ERROR|Ngân hàng có lỗi, vui lòng thử lại sau!|Bank error
+`-11`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-12`||Giao dịch không hợp lệ!|User error
+`-13`||Giao dịch đã tồn tại!|User error
+`-14`||Dữ liệu không hợp lệ!|User error
+`-15`||Dữ liệu xác thực không hợp lệ!|System error
+`-16`||Thời gian xử lý không hợp lệ!|User error
+`-17`||Định danh hệ thống không hợp lệ!|User error
+`-18`||Mã hóa thất bại, vui lòng thử lại sau!|System error
+`-19`||Giải mã thất bại, vui lòng thử lại sau!|System error
+`-20`||Số tiền không hợp lệ!|User error
+`-21`||Mã định danh ZaloPay không hợp lệ!|User error
+`-22`||Dữ liệu định danh giao dịch của merchant không hợp lệ!|User error
+`-23`||Mã ngân hàng không hợp lệ!|User error
+`-24`||Tài khoản chưa được liên kết!|User error
+`-25`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-26`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-27`||Dữ liệu định danh giao dịch không hợp lệ!|User error
+`-28`||Ngân hàng đang bảo trì, vui lòng thử lại sau!|System error
+`-29`||Mã kênh thanh toán không hợp lệ|User error
+`-30`|AMOUNT_LESS_THAN_MIN_VALUE|Số tiền nhỏ hơn hạn mức tối thiểu|User error
+`-31`|AMOUNT_GREAT_THAN_MAX_VALUE|Số tiền lớn hơn hạn mức tối đa|User error
+`-32`|EXCEED_MAX_AMOUNT_PER_DAY|Vượt hạn mức giao dịch trên ngày|User error
+`-33`||Vượt hạn mức số lượng giao dịch trên ngày|User error
+`-34`||Taì khoản không tồn tại! |User error
+`-35`||Giao dịch này đã được hủy trước đó|User error
+`-36`||Không thể hủy giao dịch loại này|User error
+`-37`||Không thể notify giao dịch loại này|User error
+`-38`||Bank token không đúng!|User error
+`-39`||Tài khoản không được phép giao dịch trên môi trường này!|User error
+`-67`||Số tiền hoàn trả vượt quá số tiền gốc|User error
+`-68`||Không hỗ trợ hoàn tiền cho loại giao dịch này|User error
+`-69`||Giao dịch gốc chưa thành công|User error
+`-101`|BANK_SYSTEM_MAINTENANCE|Ngân hàng đang bảo trì, vui lòng thử lại sau!|Bank error
+`-102`||Dữ liệu xác thực truy cập của ngân hàng không hợp lệ!|Bank error
+`-103`|BANK_SYSTEM_ERROR|Lỗi hệ thống của ngân hàng!|Bank error
+`-104`||Tham số dữ liệu ngân hàng không hợp lệ!|Bank error
+`-105`||Giao dịch bên ngân hàng thất bại!|Bank error
+`-106`||Dữ liệu người dùng phía ngân hàng không hợp lệ!|Bank error
+`-107`||Vượt quá giới hạn số tiền mỗi giao dịch của ngân hàng!|User error
+`-109`||Dữ liệu người dùng trong giao dich phía ngân hàng không hợp lệ!|Bank error
+`-110`||Lỗi chưa xác định của ngân hàng!|Bank error
+`-111`||Lỗi hệ thống của ngân hàng!|Bank error
+`-112`||Vượt quá thời gian xử lý giao dịch của ngân hàng!|Bank error
+`-113`||Kiểm tra tài khoản của ngân hàng thất bại!|Bank error
+`-114`||Hủy liên kết tài khoản phía ngân hàng thất bại!|Bank error
+`-115`||Liên kết tài khoản phía ngân hàng thất bại!|Bank error
+`-117`||Dữ liệu người dùng phía ngân hàng không hợp lệ!|User error
+`-118`||Dữ liệu xác thực của ngân hàng không hợp lệ!|Bank error
+`-119`||Tài khoản đã đăng ký trước đó|User error
+`-120`||Giao dịch tăng số dư phía ngân hàng thất bại!|Bank error
+`-121`||Vượt quá thời gian xử lý giao dịch tăng số dư của ngân hàng!|Bank error
+`-122`|BANK_NOT_EXIST|Ngân hàng không tồn tại!|User error
+`-124`||Tài khoản đang bị khóa|User error
+`-125`|BANK_CASH_BALANCE_EXCEEDED|Tài khoản khách hàng không đủ số dư|User error
+`-900`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-901`|CALL_BANK_EXCEPTION|Vượt quá thời gian xử lý giao dịch nạp/rút của ngân hàng!|Bank error
+`-999`|SYSTEM_MAINTAIN|Hệ thống đang bảo trì, vui lòng thử lại sau!|System error
+`-1001`||Dữ liệu không hợp lệ!|User error
+`-1002`||Trạng thái giao dịch không hợp lệ!|System error
+`-1003`||Dữ liệu không hợp lệ!|User error
+`-1004`||Dữ liệu xác thực không hợp lệ!|System error
+`-1005`||Thời gian xử lý không hợp lệ!|User error
+`-1006`||Định danh hệ thống không hợp lệ!|User error
+`-1007`||Số tiền không hợp lệ!|User error
+`-1008`||Mã định danh ZaloPay không hợp lệ!|User error
+`-1009`||Dữ liệu định danh giao dịch của merchant không hợp lệ!|User error
+`-1010`|INVALID_BANKCODE|Mã ngân hàng không hợp lệ!|User error
+`-1011`||Dữ liệu định danh giao dịch không hợp lệ!|User error
+`-1012`||Mã kênh thanh toán không hợp lệ!|User error
+`-1013`||Chuỗi token không đúng!|User error
+`-1014`|INVALID_PAYMENT_INFO|Thông tin thanh toán không hợp lệ!|User error
+`-1015`|INVALID_CARD_OR_ACCOUNT_NO|Thông tin tài khoản không hợp lệ.|User error
+`-1016`||Mã giao dịch tham chiếu không hợp lệ!|User error
+`-1017`|INVALID_OTP_VALUE|OTP không đúng, vui lòng nhập lại!|User error
+`-1018`||Hệ thống có lỗi, vui lòng thử lại sau!|User error
+`-1019`||Hệ thống có lỗi, vui lòng thử lại sau!|User error
+`-1020`||Thông tin bổ sung không hợp lệ!|User error
+`-1021`||Loại giao dịch không hợp lê!|User error
+`-1022`||Mã giao dịch phía ngân hàng không hợp lệ!|User error
+`-1023`||Chữ ký số không hợp lệ!|User error
+`-1024`|INVALID_PHONE_NO|Số điện thoại không đúng!|User error
+`-1025`||Mã giao dịch phía ngân hàng không hợp lệ!|User error
+`-1026`|INVALID_USER_INFO|Thông tin khách hàng không hợp lê!|User error
+`-1027`||Ref bank trans id không hợp lệ|System error
+`-1028`||Thời gian yêu cầu không hợp lệ |System error
+`-1029`||Thông tin OTP không hợp lệ|System error
+`-2001`||Mã hóa thất bại, vui lòng thử lại sau!|System error
+`-2202`||Giải mã thất bại, vui lòng thử lại sau!|System error
+`-3001`|AMOUNT_LESS_THAN_MIN_VALUE|Số tiền nhỏ hơn hạn mức tối thiểu|User error
+`-3002`|AMOUNT_GREATER_THAN_MAX_VALUE|Số tiền lớn hơn hạn mức tối đa|User error
+`-3003`|EXCEED_MAX_AMOUNT_PER_DAY|Vượt hạn mức giao dịch trên ngày|User error
+`-3004`|EXCEED_MAX_NO_TRANS_PER_DAY|Vượt hạn mức số lượng giao dịch trên ngày|User error
+`-3020`||Dữ liệu định danh giao dịch của bank đã tồn tại!|Bank error
+`-3021`||Dữ liệu định danh giao dịch của merchant đã tồn tại!|System error
+`-3022`|USER_NOT_EXIST|Thông tin khách hàng không hợp lệ!|User error
+`-3023`|TRANS_NOT_EXISTS|Giao dịch không hợp lệ!|System error
+`-3024`||Giao dịch đã tồn tại!|User error
+`-3025`||Tài khoản chưa được liên kết!|User error
+`-3026`|ACCOUNT_NOT_EXIST|Taì khoản không tồn tại!|User error
+`-3027`|TRANS_HAS_BEEN_REVERTED|Giao dịch này đã được hủy trước đó|User error
+`-3028`||Không thể hủy giao dịch loại này|User error
+`-3029`|ACCOUNT_NOT_ALLOW_IN_THIS_ENV|Tài khoản không được phép giao dịch trên môi trường này!|User error
+`-3030`||Số tiền hoàn trả vượt quá số tiền gốc|User error
+`-3031`||Không hỗ trợ hoàn tiền cho loại giao dịch này!|User error
+`-3032`||Giao dịch gốc chưa thành công!|User error
+`-3033`||Giao dịch gốc đã thực được thực hiện thành công!|User error
+`-3034`||Mã giao dịch gốc không tồn tại!|User error
+`-3035`||Loại giao dịch này không hỗ trợ OTP!|User error
+`-3036`||Giao dịch gốc đã thất bại.|System error
+`-3055`|NO_RECEIVE_VERIFY_OTP_REQ|BC không nhận được request verify_otp từ TPE trong 15p|User error
+`-3155`|NO_RECEIVE_BANK_IPN_CALLBACK|BC không nhận được request IPN (callback) từ Bank trong 15p|User error
+`-4001`||Gửi thông báo thất bại!|System error
+`-4002`||Gửi thông báo trả về kết qủa thất bại!|System error
+`-4003`||Không thể notify giao dịch loại này|User error
+`-5000`||Giao dịch không thực hiện được vào lúc này. Vui lòng thực hiện lại sau.|System error
+`-5001`|BANK_NOT_CONNECTED|Không thể kết nối tới ngân hàng!|Bank error
+`-5002`|BANK_UNKNOWN_ERROR|Ngân hàng có lỗi, vui lòng thử lại sau!|Bank error
+`-5003`|BANK_IN_MAINTERNANCE_MODE|Ngân hàng đang bảo trì, vui lòng thử lại sau!|System error
+`-5004`||Dữ liệu xác thực của ngân hàng không hợp lệ!|Bank error
+`-5005`|BANK_SYSTEM_MAINTENANCE|Ngân hàng đang bảo trì, vui lòng thử lại sau!|Bank error
+`-5006`||Dữ liệu xác thực truy cập của ngân hàng không hợp lệ!|Bank error
+`-5007`|BANK_SYSTEM_ERROR|Lỗi hệ thống của ngân hàng!|Bank error
+`-5008`||Tham số dữ liệu ngân hàng không hợp lệ!|Bank error
+`-5009`|BANK_CASH_FAIL|Giao dịch bên ngân hàng thất bại!|Bank error
+`-5010`|BANK_CASH_USER_NOT_FOUND|Dữ liệu người dùng phía ngân hàng không hợp lệ!|Bank error
+`-5011`|BANK_CASH_EXCEEDED_AMOUNT_PER_TRAN|Vượt quá giới hạn số tiền mỗi giao dịch của ngân hàng!|User error
+`-5012`|BANK_CASH_EXCEEDED_AMOUNT_PER_DAY|Vượt quá giới hạn số tiền giao dịch mỗi ngày của ngân hàng!|User error
+`-5013`|BANK_CASH_ACCOUNT_INVALID|Dữ liệu người dùng trong giao dich phía ngân hàng không hợp lệ!|Bank error
+`-5014`|BANK_CASH_EXCEPTION|Lỗi hệ thống của ngân hàng!|Bank error
+`-5015`|BANK_CASH_TIMEOUT|Vượt quá thời gian xử lý giao dịch của ngân hàng!|Bank error
+`-5016`|BANK_QUERY_ACCOUNT_FAIL|Kiểm tra tài khoản của ngân hàng thất bại!|Bank error
+`-5017`||Hủy liên kết tài khoản phía ngân hàng thất bại!|Bank error
+`-5018`||Liên kết tài khoản phía ngân hàng thất bại!|Bank error
+`-5019`|BANK_ACCOUNT_INVALID|Dữ liệu người dùng phía ngân hàng không hợp lệ!|User error
+`-5020`||Dữ liệu xác thực của ngân hàng không hợp lệ!|Bank error
+`-5021`||Tài khoản đã đăng ký trước đó|User error
+`-5022`||Giao dịch tăng số dư phía ngân hàng thất bại!|Bank error
+`-5023`||Vượt quá thời gian xử lý giao dịch tăng số dư của ngân hàng!|Bank error
+`-5024`||Ngân hàng không tồn tại!|User error
+`-5025`|BANK_CASH_BALANCE_EXCEEDED|Tài khoản khách hàng không đủ số dư!|User error
+`-5026`|BANK_CASH_LESS_THAN_MIN_AMOUNT_PER_TRAN|Số tiền nhỏ hơn bạn mức tối thiểu cho phép trên mỗi giao dịch!|User error
+`-5027`|BANK_CONNECTOR_SELECTOR_NOT_FOUND|Không kết nối được với ngân hàng (Bank Connector)!|System error
+`-5028`||Ngân hàng không hỗ trợ API này!|User error
+`-5029`|BANK_CARD_NOT_REGISTERED_ONLINE_PAYMENT|Thẻ hoặc tài khoản chưa đăng ký dịch vụ thanh toán trực tuyến. Vui lòng đăng ký dịch vụ thanh toán trực tuyến với ngân hàng trước khi sử dụng dịch vụ này!|User error
+`-5030`|BANK_CASH_UNKNOWN_ERROR|Giao dịch thất bại phía ngân hàng. Vui lòng thử lại!|Bank error
+`-5031`|BANK_EXPIRED_CARD|Thẻ hết hạn sử dụng. Vui lòng liên hệ với ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-5032`|BANK_STOLEN_OR_LOST_CARD|Thẻ không hiệu lực do mất cắp, thu hồi thẻ. Vui lòng liên hệ với ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-5033`|BANK_INACTIVE_CARD|Thẻ không hoạt động. Vui lòng liên hệ với ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-5034`|BANK_CARD_REACHED_CREDIT_LIMIT|Giao dịch vượt quá hạn mức tín dụng cho phép.|User error
+`-5035`|BANK_INVALID_CVV|Số CVV không đúng. Vui lòng thử lại!|User error
+`-5036`|BANK_CARD_TYPE_NOT_ACCEPTED|Loại thẻ đang giao dịch không hỗ trợ. Vui lòng liên hệ ngân hàng phát hành thẻ để được tư vấn.|User error
+`-5037`||Thông tin người dùng không đúng|User error
+`-5038`|BANK_INVALID_CARD_INFO|Sai thông tin thẻ (Số thẻ hoặc tên chủ thẻ hoặc ngày phát hành thẻ không đúng). Vui lòng thực hiện lại.|User error
+`-5039`|BANK_ACCOUNT_OR_CARD_NOT_FOUND|Không tìm thấy thông tin thẻ hoặc tài khoản|User error
+`-5040`||Tài khoản của quý khách đã được liên kết trước đó.|User error
+`-5041`|BANK_CARD_INVALID_STATE|Thẻ ở trạng thái không giao dịch được. Vui lòng liên hệ ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-5042`|BANK_ACCOUNT_LOCKED|Tài khoản ngân hàng đã bị khóa. Vui lòng liên hệ ngân hàng để được hỗ trợ.|User error
+`-5043`||Hệ thống đang có lỗi, vui long thử lại!|System error
+`-5044`|BANK_TOKEN_NOT_ACTIVATED|Giao dịch bị lỗi. Vui lòng thực hiện lại hoặc liên hệ bộ phận chăm sóc khách hàng để được hỗ trợ.|System error
+`-5045`||Giao dịch bị lỗi. Vui lòng thực hiện lại hoặc liên hệ bộ phận chăm sóc khách hàng để được hỗ trợ.|System error
+`-5046`||Giao dịch bị lỗi. Vui lòng thực hiện lại hoặc liên hệ bộ phận chăm sóc khách hàng để được hỗ trợ.|System error
+`-5047`|BANK_SOURCE_ACCOUNT_INVALID|Tài khoản ngân hàng không hợp lệ|Bank error
+`-5048`|BANK_AMOUNT_INVALID|Số tiền giao dịch không hợp lệ. Vui lòng thực hiện lại.|Bank error
+`-5050`|BANK_OTP_VERIFY_FAIL|Quý khách đã nhập sai OTP. Vui lòng nhập lại.|User error
+`-5051`|BANK_OTP_VERIFY_TOO_MANY_FAILED_ATTEMPTS|Nhập sai OTP quá số lần cho phép. Vui lòng thử lại giao dịch mới.|System error
+`-5052`||OTP đã hết hạn. Quý khách vui lòng thực hiện lại giao dịch khác.|System error
+`-5053`|BANK_OTP_ORIGINAL_TRANS_VERIFIED|Giao dịch gốc đã được xác thực.|System error
+`-5054`|BANK_OTP_ORIGINAL_TRANS_NOT_EXISTS|Không tìm thấy giao dịch gốc.|System error
+`-5055`|BANK_OTP_HAS_BEEN_EXPIRED|OTP đã hết hạn. Quý khách vui lòng thực hiện lại giao dịch khác.|User error
+`-5056`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-5057`|BANK_DUPLICATE_TRACE_NO|Giao dịch bị lỗi. Vui lòng thử lại!|System error
+`-5058`|BANK_TOKEN_EXPIRED|Giao dịch bị lỗi. Vui lòng thực hiện lại hoặc liên hệ hotline 1900545436 để được hỗ trợ.|Bank error
+`-5059`|BANK_PHONE_NOT_REGISTERED|Số điện thoại đang thực hiện giao dịch chưa được đăng ký tại ngân hàng. Vui lòng liên hệ ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-5060`||CMND/Hộ chiếu không đúng. Vui lòng thực hiện lại.|User error
+`-5061`||Số điện thoại không hợp lệ, vui lòng thử lại|User error
+`-5062`|BANK_SECURITY_ERROR|Giao dịch nghi vấn không an toàn, vui lòng thử lại|Bank error
+`-5063`|BANK_PAYMENT_ACCOUNT_INVALID|Tài khoản ngân hàng không hợp lệ. Vui lòng thử lại.|Bank error
+`-5064`|BANK_SAVING_ACCOUNT_INVALID|Tài khoản ngân hàng không hợp lệ. Vui lòng thử lại.|Bank error
+`-5065`|CREDIT_ACCOUNT_INVALID|Tài khoản ngân hàng không hợp lệ. Vui lòng thử lại hoặc liên hệ với ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-5066`|BANK_EXCEEDED_NO_TRANS_PER_DAY|Quá số giao dịch trên ngày|User error
+`-5067`||Giao dịch đã được hoàn tiền|Bank error
+`-5068`|BANK_TRANS_LOCKED_DUE_TO_MAX_OTP_ATTEMPTS|Khách hàng nhập sai OTP quá số lần quy định.|User error
+`-5069`|BANK_USER_NOT_PROCESS_TRANS|Khách hàng không thực hiện giao dịch.|User error
+`-5070`|BANK_TRANS_NOT_EXISTS|Khách hàng không thực hiện thanh toán|User error
+`-5071`|BANK_TRANS_FAIL|Giao dịch thất bại phía ngân hàng. Vui lòng thử lại!|System error
+`-5072`|BANK_TRANS_ALREADY_REVERTED|Giao dich đã được revert trước đó.|System error
+`-5073`|BANK_TRANS_INVALID_STATUS_FOR_ACTION|Trạng thái của giao dịch ở ngân hàng không hợp lệ.|System error
+`-5074`|BANK_TRANS_HAS_NOT_BEEN_APPROVED|Ngân hàng không chấp nhận giao dịch này.|User error
+`-5075`|BANK_TRANS_HAS_BEEN_REJECTED_BY_CYBERSOURCE|Ngân hàng từ chối giao dịch này. Vui lòng liên hệ ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-5076`|BANK_CUSTOMER_IN_DENIED_PARTIES_LIST|Khách hàng nằm trong danh sách bị từ chối giao dịch.|User error
+`-5077`|BANK_INACTIVE_OR_NOT_AUTHORIZED_CARD|Thẻ không hoạt động hoặc ngân hàng phát hành thẻ từ chối giao dịch. Vui lòng liên hệ với ngân hàng để được hỗ trợ.|User error
+`-5078`|BANK_INVALID_CARD_ISSUED_DATE|Ngày phát hành thẻ không đúng. Vui lòng thực hiện lại.|User error
+`-5079`|BANK_INVALID_CARD_NUMBER_OR_HOLDER_NAME|Quý khách đã điền sai số thẻ hoặc tên chủ thẻ. Vui lòng thực hiện lại.|User error
+`-5080`|BANK_NON_VN_CARD_REJECTED|Giao dịch bị từ chối do Ngân hàng phát hành thẻ không phải ở Việt Nam.|User error
+`-5081`|BANK_API_IN_MAINTERNANCE_MODE|Ngân hàng hiện đang bảo trì chức năng này. Vui long thử lại sau.|System error
+`-5082`|BANK_TRANS_REJECTED_OR_NON_VN_CARD|Thẻ bị Ngân hàng từ chối, hoặc do thẻ không phải phát hành tại Việt Nam. Vui lòng thử thẻ khác.|User error
+`-5083`|BANK_INVALID_CC_CARD_INFO|Thông tin thẻ không chính xác, vui lòng nhập lại.|User error
+`-5084`||Giao dịch chưa xác nhận OTP từ phía ngân hàng. Vui lòng thực hiện lại giao dịch.|User error
+`-5085`|BANK_INVALID_CC_CARD_INFO_AT_PAYMENT|Ngân hàng từ chối giao dịch do thông tin thẻ không chính xác. Vui lòng thực hiện Liên kết lại thẻ để tiếp tục giao dịch.|User error
+`-5086`|BANK_PHONE_NOT_REGISTERED_FOR_OTP_SERVICE|Bạn chưa đăng ký số điện thoại nhận OTP tại Ngân hàng để thanh toán giao dịch trực tuyến.|User error
+`-5087`||Không tồn tại Ngân hàng phát hành thẻ|User error
+`-5091`||Sai thông tin số điện thoại đăng ký với ngân hàng|User error
+`-5092`||Sai thông tin Chứng minh thư đăng ký với ngân hàng|User error
+`-5093`|BANK_USER_CANCEL_TRANS|User huỷ giao dịch|User error
+`-5094`|BANK_PHONE_ALREADY_CHANGED_FORMAT|Khách hàng đã chuyển đổi số điện thoại từ phía ngân hàng. Vui lòng liên hệ với ngân hàng để được hỗ trợ.|User error
+`-5095`||Khách hàng cần thay đổi số điện thẻo theo format của bộ thông tin truyền thông.|User error
+`-5099`|BANK_ACCOUNT_OR_CARD_NOT_ALLOWED|Tài khoản NH hoặc thẻ không được phép giao dịch. Vui lòng liên hệ |User error
+`-5101`||Quý khách đang sử dụng BIDV Smart Banking gói phi tài chính. Quý khách cần đăng ký BIDV Smart Banking gói tài chính để sử dụng dịch vụ.|User error
+`-5102`||Số điện thoại BUNO không trùng số điện thoại BIDV Online|User error
+`-5103`||Mã ví đã liên kết đúng với user BIDV online xác thực|User error
+`-5104`||Số CIF đã sử dụng đăng ký BUNO hoặc đang xử lý tại quầy|User error
+`-5105`||Khách hàng chưa đăng ký dịch vụ tại BIDV hoặc đang không ở trạng thái hoạt động|User error
+`-5106`||Quý khách CHƯA đổi mật khẩu DV BIDV Smart Banking lần đầu. Vui lòng đổi mật khẩu lần đầu tại ứng dụng BIDV Smart Banking|User error
+`-5107`||User hoặc Mật khẩu không đúng|User error
+`-5108`||Quý khách đang sử dụng BIDV Online gói phi tài chính. Quý khách cần đăng ký BIDV Online gói tài chính để sử dụng dịch vụ.|User error
+`-5109`||Bạn cần thay đổi mật khẩu BIDV Online để tiếp tục giao dịch.|User error
+`-5301`||Thẻ không hỗ trợ, yêu cầu thẻ Active Plus. Để biết thông tin chi tiết về thẻ của bạn, liên hệ hotline MBBank 1900545426|User error
+`-5501`||Không truy vấn được thông tin thẻ hoặc tài khoản phía ngân hàng.|User error
+`-6000`|BANK_CARD_NOT_REGISTERED_ONLINE_PAYMENT|Thẻ hoặc tài khoản chưa đăng ký dịch vụ thanh toán trực tuyến. Vui lòng đăng ký dịch vụ thanh toán trực tuyến với ngân hàng trước khi sử dụng dịch vụ này!|User error
+`-6001`|FRAUD_DETECTION_REJECTED_BY_FILTER|Giao dịch của quý khách bị nghi không an toàn. Vui lòng liên hệ với bộ phận chăm sóc khách hàng để được hổ trợ.|User error
+`-6002`|FRAUD_DETECTION_REJECTED_BY_FRAUD_SCORE|Ngân hàng từ chối giao dịch này. Vui lòng liên hệ ngân hàng phát hành thẻ để được hỗ trợ.|User error
+`-6003`|FRAUD_DETECTION_REJECTED_MVEL_R5001|Giao dịch nghi vấn không an toàn. Vui lòng liên hệ hotline 1900545436 để được hỗ trợ.|User error
+`-6004`|FRAUD_DETECTION_REJECTED_MVEL_R5002|Giao dịch nghi vấn không an toàn. Vui lòng liên hệ hotline 1900545436 để được hỗ trợ.|User error
+`-6005`||Giao dịch nghi vấn không an toàn. Vui lòng liên hệ hotline 1900545436 để được hỗ trợ.|User error
+`-6006`||Giao dịch nghi vấn không an toàn. Vui lòng liên hệ hotline 1900545436 để được hỗ trợ.|User error
+`-6007`||Giao dịch nghi vấn không an toàn. Vui lòng liên hệ hotline 1900545436 để được hỗ trợ.|User error
+`-6008`||Giao dịch nghi vấn không an toàn. Vui lòng liên hệ hotline 1900545436 để được hỗ trợ.|User error
+`-6009`||Tài khoản đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6010`||Thẻ đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6011`||Thẻ đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6012`||Thẻ đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6013`||Thẻ đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6014`||Thẻ đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6015`||Thẻ đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6016`||Thẻ đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6017`||Tài khoản đã vượt hạn mức thanh toán trong tháng. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6018`||Tài khoản đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6019`||Thiết bị đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6020`||Thiết bị đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-6021`||Thiết bị đã vượt hạn mức thanh toán trong ngày. Thử thanh toán từ Ví. Liên hệ hotline 1900545436 để biết thêm chi tiết.|User error
+`-7000`|BANK_CARD_NOT_REGISTERED_ONLINE_PAYMENT|Quý khách chưa đăng ký dịch vụ thanh toán qua Internet. Vui lòng liên hệ với ngân hàng của quý khách.|User error
+`-7001`||Loại thẻ không hỗ trợ thanh toán trực tuyến|Bank error
+`-9001`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-9002`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-9101`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-9102`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-9103`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-9104`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-9105`||Hệ thống có lỗi, vui lòng thử lại sau!|System error
+`-9106`||Thông tin không tồn tại.|System error
+`-9201`||Vượt quá thời gian xử lý giao dịch nạp/rút của ngân hàng!|Bank error
+`-9202`||Quá thời gian xử lí khi gọi qua bank|Bank error
+`-9203`||Lỗi xảy ra khi gọi UM!|System error
+`-9204`||Lỗi xảy ra khi gọi TPE!|System error
+`-9205`||Lỗi xảy ra khi gọi OTP!|System error
+`-9990`|SYSTEM_MAINTAIN|Hệ thống đang bảo trì, vui lòng thử lại sau!|System error
+`-9991`||OTP hết hạn|User error
+`-9998`||Hệ thống đang có lỗi. Vui lòng thử lại sau.|System error
+`-9999`|TRANS_FAIL|Dữ liệu xác thực của ngân hàng không hợp lệ!|System error
+`-10000`||Lỗi xảy ra khi gọi UM|System error
+
+-->
+
+    </div>
+  </div>
+
+
+  <footer class="footer">
+    <div class="copyright">
+      &copy;
+      <script>
+        document.write(new Date().getFullYear())
+      </script>, bản quyền của
+      <a href="https://zalopay.vn/" target="_blank">ZaloPay</a>
+    </div>
+	</footer>
+
+  <div id="searchResult">
+    <div data-bind="visible: show" style="display: none">
+      <div class="search-cover position-fixed bg-dark" data-bind="click: $root.close"></div>
+      <div class="search-result position-fixed w-100 px-2" data-bind="click: $root.close">
+        <div id="resultContainer" class="body bg-white rounded mx-auto p-4">
+          <div data-bind="visible: $root.found()">
+            <div data-bind="foreach: result">
+              <a class="item d-block p-3 rounded"
+                data-bind="attr: { href: href, id: 'result-' + $index() }, css: { current: $root.currRow() == $index() }">
+                <p class="text-muted mb-1 font-weight-bold item-route">
+                  <small data-bind="html: route"></small>
+                </p>
+                <p class="text-zlp font-weight-bold mb-1 item-title" data-bind="html: title"></p>
+                <p class="text-muted mb-0 item-body">
+                  <small data-bind="html: body"></small>
+                </p>
+              </a>
+            </div>
+          </div>
+          <div class="p-3" data-bind="visible: !$root.found()" style="font-weight: 400">
+            Không tìm thấy kết quả phù hợp
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+  window._I18n = {
+    locale: 'vi',
+    default: 'vi',
+    langs: ['en'],
+  }
+  </script>
+
+  <script src="../../../javascripts/main.js"></script>
+  <script src="../../../javascripts/search.js"></script>
+
+  <script>
+    $('#languageSelection').val('vi')
+  </script>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-R6X6TMGKD3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-R6X6TMGKD3');
+  </script>
+
+
+    <script src="../../../javascripts/docs.js"></script>
+</body>
+</html>

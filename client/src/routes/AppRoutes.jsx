@@ -21,6 +21,7 @@ import OverviewPage from "../pages/OverviewPage";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import PaymentReturn from "../pages/PaymentReturn";
+import AddCoursePage from "../pages/AddCoursePage";
 
 export default function AppRoutes() {
   return (
@@ -63,6 +64,8 @@ export default function AppRoutes() {
           </Route>
           <Route path="/courses/:slug/overview" element={<OverviewPage />} />
           <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
+          <Route path="/add-course" element={<AddCoursePage />} />
+
         </Routes>
       </main>
     </BrowserRouter>
