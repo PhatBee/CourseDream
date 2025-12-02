@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import {
     Check, ChevronRight, ChevronLeft, Upload,
     Trash2, PlusCircle, X, Image as ImageIcon,
-    PlayCircle, Link as LinkIcon, FileText, LayoutList
+    PlayCircle, Link as LinkIcon, FileText, LayoutList,
+    Edit2, Save
 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux'; // Redux Hook
+import { createNewCourse } from '../features/course/courseSlice';
+import { useNavigate } from 'react-router-dom';
+import { courseApi } from '../api/courseApi'; // Import api để upload video trực tiếp
+import { categoryApi } from '../api/categoryApi';
 
 // --- SUB-COMPONENT: REUSABLE DYNAMIC LIST ---
 // Dùng cho: Requirements, Audience, Learn Outcomes, Includes
@@ -84,6 +90,14 @@ const VideoInputSelector = ({ type, urlValue, onTypeChange, onUrlChange, onFileC
 
 // --- MAIN COMPONENT ---
 const AddCoursePage = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { isLoading } = useSelector(state => state.course); // Lấy loading state từ redux
+
+    // State cho danh mục
+    const [categories, setCategories] = useState([]);
+    const [isCustomCategory, setIsCustomCategory] = useState(false);
+
     const [currentStep, setCurrentStep] = useState(1);
 
     // State khớp với Course Model
@@ -110,7 +124,6 @@ const AddCoursePage = () => {
         requirements: [],  // "Requirements"
         audience: [],      // "Target Audience"
         includes: [],      // "Course Includes"
-        topics: [],        // "Topics/Keywords"
 
         // Curriculum
         sections: [],
@@ -119,9 +132,31 @@ const AddCoursePage = () => {
         messageToReviewer: '',
     });
 
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await categoryApi.getAllCategories();
+                // Giả sử API trả về { success: true, data: [...] } hoặc mảng trực tiếp
+                const list = res.data?.data || res.data || [];
+                setCategories(list);
+            } catch (error) {
+                console.error("Failed to load categories", error);
+            }
+        };
+        fetchCategories();
+    }, []);
+
     // --- Handlers ---
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        // Logic riêng cho select category
+        if (name === 'category' && value === 'custom_new') {
+            setIsCustomCategory(true);
+            setCourseData(prev => ({ ...prev, category: '' }));
+            return;
+        }
+
         setCourseData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -151,6 +186,8 @@ const AddCoursePage = () => {
     // --- Curriculum & Lesson Logic ---
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(null);
+    const [editingSectionIndex, setEditingSectionIndex] = useState(null); // Track section being edited
+    const [editingLectureIndex, setEditingLectureIndex] = useState(null); // Track lecture being edited inside a section
 
     // Temp Lesson State (Matches Lecture Model)
     const [tempLesson, setTempLesson] = useState({
@@ -175,10 +212,11 @@ const AddCoursePage = () => {
         setTempResource({ title: '', url: '' });
     };
 
+    // Section Actions
     const addSection = () => {
         setCourseData(prev => ({
             ...prev,
-            sections: [...prev.sections, { title: '', lectures: [] }]
+            sections: [...prev.sections, { title: 'New Section', lectures: [], isEditing: true }] // Auto edit mode
         }));
     };
 
@@ -188,34 +226,183 @@ const AddCoursePage = () => {
         setCourseData({ ...courseData, sections: newSections });
     };
 
-    const openAddLessonModal = (sectionIndex) => {
-        setCurrentSectionIndex(sectionIndex);
-        setTempLesson({
-            title: '', videoType: 'url', videoUrl: '',
-            videoFile: null, duration: 0, isPreviewFree: false,
-            resources: []
-        });
+    const toggleSectionEdit = (index) => {
+        const newSections = [...courseData.sections];
+        // Nếu đang edit thì save (tắt edit), nếu không thì bật edit
+        newSections[index].isEditing = !newSections[index].isEditing;
+        setCourseData({ ...courseData, sections: newSections });
+    };
+
+    const deleteSection = (index) => {
+        if (window.confirm("Are you sure you want to delete this section?")) {
+            const newSections = [...courseData.sections];
+            newSections.splice(index, 1);
+            setCourseData({ ...courseData, sections: newSections });
+        }
+    };
+
+    // Lecture Actions
+    const openLessonModal = (sectionIndex, lectureIndex = null) => {
+        setEditingSectionIndex(sectionIndex);
+        setEditingLectureIndex(lectureIndex); // Nếu null là thêm mới, có số là sửa
+
+        if (lectureIndex !== null) {
+            // Load existing data to edit
+            const existingLecture = courseData.sections[sectionIndex].lectures[lectureIndex];
+            setTempLesson({ ...existingLecture, videoFile: null }); // Reset file input for safety
+        } else {
+            // Reset for new
+            setTempLesson({
+                title: '', videoType: 'url', videoUrl: '',
+                videoFile: null, duration: 0, isPreviewFree: false, resources: []
+            });
+        }
         setIsLessonModalOpen(true);
+    };
+
+    const deleteLecture = (sectionIndex, lectureIndex) => {
+        if (window.confirm("Delete this lecture?")) {
+            const newSections = [...courseData.sections];
+            newSections[sectionIndex].lectures.splice(lectureIndex, 1);
+            setCourseData({ ...courseData, sections: newSections });
+        }
     };
 
     const saveLesson = () => {
         if (!tempLesson.title) return toast.error("Lesson title is required");
 
         const newSections = [...courseData.sections];
-        newSections[currentSectionIndex].lectures.push({ ...tempLesson });
+
+        if (editingLectureIndex !== null) {
+            // Update existing
+            // Giữ lại videoUrl cũ nếu user không upload/nhập mới, nhưng ở đây tempLesson đã copy rồi
+            newSections[editingSectionIndex].lectures[editingLectureIndex] = { ...tempLesson };
+        } else {
+            // Add new
+            newSections[editingSectionIndex].lectures.push({ ...tempLesson });
+        }
+
         setCourseData({ ...courseData, sections: newSections });
         setIsLessonModalOpen(false);
-        toast.success("Lesson added successfully");
+        toast.success(editingLectureIndex !== null ? "Lesson updated" : "Lesson added");
     };
 
     const nextStep = () => currentStep < 5 && setCurrentStep(curr => curr + 1);
     const prevStep = () => currentStep > 1 && setCurrentStep(curr => curr - 1);
 
-    const handleSubmit = () => {
-        // Console log để check cấu trúc dữ liệu trước khi gửi API
-        console.log("Final Data to Submit:", courseData);
-        toast.success("Course submitted successfully!");
-        // Logic: Post FormData to API
+    const handleSubmit = async () => {
+        if (!courseData.title) return toast.error("Vui lòng nhập tên khóa học");
+        // if (!courseData.thumbnail) return toast.error("Vui lòng chọn ảnh bìa (Thumbnail)");
+
+        const loadingId = toast.loading("Đang xử lý dữ liệu...");
+
+        try {
+            // 1. Clone data
+            const finalCourseData = { ...courseData };
+            const processedSections = [...finalCourseData.sections];
+
+            // ---------------------------------------------------------
+            // BƯỚC A: XỬ LÝ UPLOAD COURSE PREVIEW VIDEO (Nếu có file)
+            // ---------------------------------------------------------
+            if (finalCourseData.previewVideoType === 'upload' && finalCourseData.previewVideoFile) {
+                toast.loading("Đang upload video giới thiệu...", { id: loadingId });
+
+                const previewFormData = new FormData();
+                previewFormData.append('video', finalCourseData.previewVideoFile);
+                previewFormData.append('title', `Preview: ${finalCourseData.title}`);
+
+                const previewRes = await courseApi.uploadVideo(previewFormData);
+
+                if (previewRes.data.success) {
+                    // Gán URL trả về từ Youtube
+                    finalCourseData.previewUrl = previewRes.data.data.videoUrl;
+                } else {
+                    throw new Error("Lỗi upload video giới thiệu");
+                }
+            } else {
+                // Nếu là URL, dùng trực tiếp
+                finalCourseData.previewUrl = finalCourseData.previewVideoUrl;
+            }
+
+            // ---------------------------------------------------------
+            // BƯỚC B: XỬ LÝ UPLOAD VIDEO CHO TỪNG BÀI HỌC
+            // ---------------------------------------------------------
+            for (let i = 0; i < processedSections.length; i++) {
+                const section = processedSections[i];
+                const processedLectures = [...section.lectures];
+
+                for (let j = 0; j < processedLectures.length; j++) {
+                    const lecture = processedLectures[j];
+
+                    if (lecture.videoType === 'upload' && lecture.videoFile) {
+                        toast.loading(`Đang upload bài học: ${lecture.title}...`, { id: loadingId });
+
+                        const videoFormData = new FormData();
+                        videoFormData.append('video', lecture.videoFile);
+                        videoFormData.append('title', lecture.title);
+
+                        const uploadRes = await courseApi.uploadVideo(videoFormData);
+
+                        if (uploadRes.data.success) {
+                            processedLectures[j] = {
+                                ...lecture,
+                                videoUrl: uploadRes.data.data.videoUrl,
+                                videoFile: null // Xóa file object để nhẹ payload
+                            };
+                        }
+                    }
+                }
+                processedSections[i].lectures = processedLectures;
+            }
+
+            // ---------------------------------------------------------
+            // BƯỚC C: ĐÓNG GÓI FORM DATA GỬI VỀ BACKEND
+            // ---------------------------------------------------------
+            const formData = new FormData();
+
+            // Các trường Text cơ bản
+            formData.append('title', finalCourseData.title);
+            formData.append('category', finalCourseData.category);
+            formData.append('level', finalCourseData.level);
+            formData.append('language', finalCourseData.language);
+            formData.append('price', finalCourseData.isFree ? 0 : finalCourseData.price);
+            formData.append('priceDiscount', finalCourseData.isFree ? 0 : finalCourseData.priceDiscount);
+            formData.append('shortDescription', finalCourseData.shortDescription);
+            formData.append('description', finalCourseData.description);
+            formData.append('previewUrl', finalCourseData.previewUrl); // URL video giới thiệu
+
+            // Các mảng String (Append từng item để Multer hiểu là mảng)
+            finalCourseData.learnOutcomes.forEach(item => formData.append('learnOutcomes', item));
+            finalCourseData.requirements.forEach(item => formData.append('requirements', item));
+            finalCourseData.audience.forEach(item => formData.append('audience', item));
+            finalCourseData.includes.forEach(item => formData.append('includes', item));
+
+            // Thumbnail Image
+            if (finalCourseData.thumbnail) {
+                formData.append('thumbnail', finalCourseData.thumbnail);
+            }
+
+            // Sections (JSON string)
+            // Backend sẽ JSON.parse field này
+            formData.append('sections', JSON.stringify(processedSections));
+
+            // ---------------------------------------------------------
+            // BƯỚC D: GỌI API CREATE COURSE
+            // ---------------------------------------------------------
+            toast.loading("Đang tạo khóa học...", { id: loadingId });
+            const resultAction = await dispatch(createNewCourse(formData));
+
+            if (createNewCourse.fulfilled.match(resultAction)) {
+                toast.success("Tạo khóa học thành công!", { id: loadingId });
+                navigate('/instructor/courses');
+            } else {
+                toast.error(resultAction.payload || "Tạo khóa học thất bại", { id: loadingId });
+            }
+
+        } catch (error) {
+            console.error(error);
+            toast.error("Có lỗi xảy ra, vui lòng thử lại.", { id: loadingId });
+        }
     };
 
     // --- RENDER ---
@@ -232,7 +419,7 @@ const AddCoursePage = () => {
                             return (
                                 <li key={idx} className="flex flex-col items-center z-10 w-full">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${step === currentStep ? 'bg-blue-600 text-white shadow-lg scale-110' :
-                                            step < currentStep ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'
+                                        step < currentStep ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'
                                         }`}>
                                         {step < currentStep ? <Check size={20} /> : step}
                                     </div>
@@ -259,14 +446,37 @@ const AddCoursePage = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {/* CATEGORY: Custom Logic */}
                                     <div>
                                         <label className="block text-sm font-bold mb-2">Category</label>
-                                        <select name="category" value={courseData.category} onChange={handleInputChange} className="w-full px-4 py-3 border rounded-lg outline-none bg-white">
-                                            <option value="">Select Category</option>
-                                            <option value="web-dev">Web Development</option>
-                                            <option value="data-science">Data Science</option>
-                                            <option value="design">Design</option>
-                                        </select>
+                                        {!isCustomCategory ? (
+                                            <select name="category" value={courseData.category} onChange={handleInputChange} className="w-full px-4 py-3 border rounded-lg outline-none bg-white">
+                                                <option value="">Select Category</option>
+                                                {categories.map(cat => (
+                                                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                                ))}
+                                                <option value="custom_new" className="font-bold text-blue-600">+ Create New Category</option>
+                                            </select>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    name="category"
+                                                    value={courseData.category}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter new category name..."
+                                                    className="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    onClick={() => setIsCustomCategory(false)}
+                                                    className="px-3 bg-gray-200 rounded-lg hover:bg-gray-300"
+                                                    title="Cancel custom category"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold mb-2">Level</label>
@@ -280,8 +490,8 @@ const AddCoursePage = () => {
                                     <div>
                                         <label className="block text-sm font-bold mb-2">Language</label>
                                         <select name="language" value={courseData.language} onChange={handleInputChange} className="w-full px-4 py-3 border rounded-lg outline-none bg-white">
-                                            <option value="Vietnamese">Vietnamese</option>
-                                            <option value="English">English</option>
+                                            <option value="vn">Vietnamese</option>
+                                            <option value="en">English</option>
                                         </select>
                                     </div>
                                 </div>
@@ -368,17 +578,33 @@ const AddCoursePage = () => {
 
                             {courseData.sections.map((section, sIdx) => (
                                 <div key={sIdx} className="border border-gray-200 rounded-lg overflow-hidden mb-5 shadow-sm bg-white">
-                                    <div className="bg-gray-100 p-4 flex items-center gap-3 border-b">
+                                    <div className="bg-gray-100 p-4 flex items-center gap-3 border-b group">
                                         <LayoutList size={20} className="text-gray-500" />
                                         <span className="font-bold text-gray-700 whitespace-nowrap">Section {sIdx + 1}:</span>
-                                        <input
-                                            type="text"
-                                            value={section.title}
-                                            onChange={(e) => updateSectionTitle(sIdx, e.target.value)}
-                                            className="flex-1 bg-transparent border-b border-transparent focus:border-blue-500 outline-none px-2 font-medium"
-                                            placeholder="Section Title..."
-                                        />
-                                        <button className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
+                                        {/* EDIT SECTION TITLE UI */}
+                                        {section.isEditing ? (
+                                            <div className="flex flex-1 gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={section.title}
+                                                    onChange={(e) => updateSectionTitle(sIdx, e.target.value)}
+                                                    className="flex-1 bg-white border border-blue-300 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-200"
+                                                    placeholder="Section Title..."
+                                                    autoFocus
+                                                />
+                                                <button onClick={() => toggleSectionEdit(sIdx)} className="bg-green-500 text-white p-1 rounded hover:bg-green-600" title="Save Title"><Check size={16} /></button>
+                                            </div>
+                                        ) : (
+                                            <span className="flex-1 font-medium text-gray-800">{section.title || "(Untitled Section)"}</span>
+                                        )}
+
+                                        {/* Section Actions */}
+                                        <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                            {!section.isEditing && (
+                                                <button onClick={() => toggleSectionEdit(sIdx)} className="text-gray-400 hover:text-red-600 p-1" title="Edit Name"><Edit2 size={16} /></button>
+                                            )}
+                                            <button onClick={() => deleteSection(sIdx)} className="text-gray-400 hover:text-red-600 p-1" title="Delete Section"><Trash2 size={16} /></button>
+                                        </div>
                                     </div>
 
                                     <div className="p-4">
@@ -393,9 +619,15 @@ const AddCoursePage = () => {
                                                         </p>
                                                     </div>
                                                 </div>
+
+                                                {/* Lecture Actions */}
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => openLessonModal(sIdx, lIdx)} className="text-gray-400 hover:text-blue-600 p-1" title="Edit Lecture"><Edit2 size={16} /></button>
+                                                    <button onClick={() => deleteLecture(sIdx, lIdx)} className="text-gray-400 hover:text-red-600 p-1" title="Delete Lecture"><Trash2 size={16} /></button>
+                                                </div>
                                             </div>
                                         ))}
-                                        <button onClick={() => openAddLessonModal(sIdx)} className="mt-2 text-sm text-blue-600 font-bold flex items-center gap-1 hover:underline">
+                                        <button onClick={() => openLessonModal(sIdx, null)} className="mt-2 text-sm text-blue-600 font-bold flex items-center gap-1 hover:underline">
                                             <PlusCircle size={16} /> Add Lesson Content
                                         </button>
                                     </div>
@@ -429,33 +661,6 @@ const AddCoursePage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold mb-2">Topics (Tags)</label>
-                                <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-white min-h-[50px]">
-                                    {courseData.topics.map((tag, idx) => (
-                                        <span key={idx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                                            {tag} <X size={14} className="cursor-pointer hover:text-red-500" onClick={() => handleArrayAction('topics', 'remove', idx, null)} />
-                                        </span>
-                                    ))}
-                                    <input
-                                        type="text"
-                                        className="flex-1 min-w-[120px] outline-none bg-transparent"
-                                        placeholder="Type and press Enter..."
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && e.target.value) {
-                                                e.preventDefault();
-                                                handleArrayAction('topics', 'add');
-                                                // Hacky fix since generic handler adds empty string, we need to set the value immediately
-                                                // Better approach: Separate handler for tags. But for brevity:
-                                                const newTopics = [...courseData.topics, e.target.value];
-                                                setCourseData({ ...courseData, topics: newTopics });
-                                                e.target.value = '';
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
                                 <label className="block text-sm font-bold mb-2">Detailed Description</label>
                                 <textarea name="description" value={courseData.description} onChange={handleInputChange} className="w-full px-4 py-3 border rounded-lg h-40 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Full course details..."></textarea>
                             </div>
@@ -475,16 +680,14 @@ const AddCoursePage = () => {
                             {!courseData.isFree && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <label className="block text-sm font-bold mb-2">Regular Price ($)</label>
+                                        <label className="block text-sm font-bold mb-2">Regular Price (VND)</label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-3 text-gray-500">$</span>
                                             <input type="number" name="price" value={courseData.price} onChange={handleInputChange} className="w-full pl-8 pr-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-2">Discounted Price ($)</label>
+                                        <label className="block text-sm font-bold mb-2">Discounted Price (VND)</label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-3 text-gray-500">$</span>
                                             <input type="number" name="priceDiscount" value={courseData.priceDiscount} onChange={handleInputChange} className="w-full pl-8 pr-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
                                         </div>
                                         <p className="text-xs text-gray-500 mt-1">Must be lower than regular price.</p>
@@ -512,8 +715,12 @@ const AddCoursePage = () => {
                                 Next Step <ChevronRight size={18} />
                             </button>
                         ) : (
-                            <button onClick={handleSubmit} className="px-8 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition">
-                                Submit Course <Check size={18} />
+                            <button
+                                onClick={handleSubmit}
+                                disabled={isLoading}
+                                className="px-8 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition disabled:opacity-70"
+                            >
+                                {isLoading ? 'Processing...' : 'Submit Course'} <Check size={18} />
                             </button>
                         )}
                     </div>
@@ -521,23 +728,21 @@ const AddCoursePage = () => {
                 </div>
             </div>
 
-            {/* --- MODAL: ADD LESSON --- */}
+            {/* --- MODAL: ADD/EDIT LESSON --- */}
             {isLessonModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                            <h3 className="text-lg font-bold text-gray-800">Add Lesson Content</h3>
+                            <h3 className="text-lg font-bold text-gray-800">
+                                {editingLectureIndex !== null ? 'Edit Lesson' : 'Add New Lesson'}
+                            </h3>
                             <button onClick={() => setIsLessonModalOpen(false)}><X size={24} className="text-gray-400 hover:text-gray-600" /></button>
                         </div>
-
                         <div className="p-6 overflow-y-auto space-y-5">
-                            {/* Lesson Title */}
                             <div>
                                 <label className="block text-sm font-bold mb-1">Lesson Title <span className="text-red-500">*</span></label>
                                 <input type="text" value={tempLesson.title} onChange={(e) => setTempLesson({ ...tempLesson, title: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-blue-500" />
                             </div>
-
-                            {/* Video Selection */}
                             <div>
                                 <label className="block text-sm font-bold mb-2">Lesson Video</label>
                                 <VideoInputSelector
@@ -548,11 +753,9 @@ const AddCoursePage = () => {
                                     onFileChange={(e) => setTempLesson({ ...tempLesson, videoFile: e.target.files[0] })}
                                 />
                             </div>
-
-                            {/* Duration & Free Preview */}
                             <div className="flex gap-6">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-bold mb-1">Duration (min)</label>
+                                    <label className="block text-sm font-bold mb-1">Duration (seconds)</label>
                                     <input type="number" value={tempLesson.duration} onChange={(e) => setTempLesson({ ...tempLesson, duration: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
                                 </div>
                                 <div className="flex-1 flex items-center pt-6">
@@ -560,40 +763,33 @@ const AddCoursePage = () => {
                                     <label htmlFor="isPreviewFree" className="text-sm font-medium">Free Preview</label>
                                 </div>
                             </div>
-
-                            {/* RESOURCES SECTION (Added based on Lecture Model) */}
+                            {/* Resources Logic Giữ Nguyên */}
                             <div className="border-t pt-4">
-                                <label className="block text-sm font-bold mb-2">Resources (Attachments)</label>
+                                <label className="block text-sm font-bold mb-2">Resources (Beta/Comming Soon)</label>
                                 <div className="bg-gray-50 p-3 rounded-lg border mb-3">
                                     <div className="flex gap-2 mb-2">
-                                        <input type="text" placeholder="Resource Title" className="flex-1 px-3 py-1.5 border rounded text-sm" value={tempResource.title} onChange={(e) => setTempResource({ ...tempResource, title: e.target.value })} />
-                                        <input type="text" placeholder="URL / Link" className="flex-1 px-3 py-1.5 border rounded text-sm" value={tempResource.url} onChange={(e) => setTempResource({ ...tempResource, url: e.target.value })} />
+                                        <input type="text" placeholder="Title" className="flex-1 px-3 py-1.5 border rounded text-sm" value={tempResource.title} onChange={(e) => setTempResource({ ...tempResource, title: e.target.value })} />
+                                        <input type="text" placeholder="URL" className="flex-1 px-3 py-1.5 border rounded text-sm" value={tempResource.url} onChange={(e) => setTempResource({ ...tempResource, url: e.target.value })} />
                                         <button onClick={addResourceToLesson} className="bg-blue-600 text-white px-3 rounded hover:bg-blue-700 text-sm">Add</button>
                                     </div>
                                     <div className="space-y-1">
                                         {tempLesson.resources.map((res, idx) => (
                                             <div key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded border">
-                                                <div className="flex items-center gap-2">
-                                                    <FileText size={14} className="text-gray-500" />
-                                                    <span className="font-medium">{res.title}</span>
-                                                    <span className="text-gray-400 text-xs truncate max-w-[150px]">({res.url})</span>
-                                                </div>
+                                                <span className="font-medium">{res.title}</span>
                                                 <button onClick={() => {
                                                     const newRes = [...tempLesson.resources];
                                                     newRes.splice(idx, 1);
                                                     setTempLesson({ ...tempLesson, resources: newRes });
-                                                }} className="text-red-500 hover:text-red-700"><X size={14} /></button>
+                                                }} className="text-red-500"><X size={14} /></button>
                                             </div>
                                         ))}
-                                        {tempLesson.resources.length === 0 && <p className="text-xs text-gray-400 text-center italic">No resources added.</p>}
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                         <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
                             <button onClick={() => setIsLessonModalOpen(false)} className="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-200 font-medium">Cancel</button>
-                            <button onClick={saveLesson} className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">Save Lesson</button>
+                            <button onClick={saveLesson} className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">Save</button>
                         </div>
                     </div>
                 </div>

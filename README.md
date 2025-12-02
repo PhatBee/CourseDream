@@ -17,7 +17,7 @@ $ cd coursedream
 
 # Server 
 cd server  
-npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier node-cron socket.io crypto-js
+npm install express mongoose dotenv cors jsonwebtoken bcrypt bcryptjs cookie-parser morgan express-validator nodemailer google-auth-library axios cloudinary multer-storage-cloudinary multer streamifier node-cron socket.io crypto-js slugify googleapis
 npm install tailwindcss @tailwindcss/vite
 npm install --save-dev nodemon
 
@@ -46,8 +46,10 @@ EMAIL_USER=YOUR_EMAIL@gmail.com
 EMAIL_PASS=YOUR_EMAIL_PASS
 
 GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+GOOGLE_CLIENT_ID_YOUTUBE=YOUR_GOOGLE_CLIENT_ID_YOUTUBE.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
 GOOGLE_OAUTH_REDIRECT=http://localhost:5000/api/youtube/oauth2callback
+GOOGLE_REFRESH_TOKEN=YOUR_GOOGLE_REFRESH_TOKEN
 
 FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID
 FACEBOOK_APP_SECRET=YOUR_FACEBOOK_APP_SECRET
