@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Grid, User, Settings, LogOut, Heart, BookOpen } from 'lucide-react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 
 const SidebarLink = ({ to, icon, label }) => {
@@ -23,7 +23,7 @@ const SidebarLink = ({ to, icon, label }) => {
         `}
       >
         <span className={isActive ? "text-rose-500" : "text-gray-400"}>
-           {icon}
+          {icon}
         </span>
         <span className="ml-3">{label}</span>
       </NavLink>
@@ -34,6 +34,7 @@ const SidebarLink = ({ to, icon, label }) => {
 const ProfileSidebar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
 
   const handleLogout = async (e) => {
     e.preventDefault();
@@ -43,35 +44,40 @@ const ProfileSidebar = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sticky top-24 text-left">
-        <div className="mb-6">
-          <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">
-            Dashboard
-          </h6>
-          <ul className="space-y-1">
-            <SidebarLink to="/profile/dashboard" icon={<Grid size={20} />} label="Dashboard" />
-            <SidebarLink to="/profile" icon={<User size={20} />} label="My Profile" />
-            <SidebarLink to="/profile/enrolled-courses" icon={<BookOpen size={20} />} label="Enrolled Courses" />
-            <SidebarLink to="/profile/wishlist" icon={<Heart size={20} />} label="Wishlist" />
-          </ul>
-        </div>
+      <div className="mb-6">
+        <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">
+          Dashboard
+        </h6>
+        <ul className="space-y-1">
+          <SidebarLink to="/profile/dashboard" icon={<Grid size={20} />} label="Dashboard" />
+          <SidebarLink to="/profile" icon={<User size={20} />} label="My Profile" />
+          <SidebarLink to="/profile/enrolled-courses" icon={<BookOpen size={20} />} label="Enrolled Courses" />
+          <SidebarLink to="/profile/wishlist" icon={<Heart size={20} />} label="Wishlist" />
 
-        <div>
-          <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">
-            Account Settings
-          </h6>
-          <ul className="space-y-1">
-            <SidebarLink to="/profile/settings/edit" icon={<Settings size={20} />} label="Settings" />
-            <li>
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
-              >
-                <LogOut size={20} className="mr-3" />
-                Logout
-              </button>
-            </li>
-          </ul>
-        </div>
+          {/* Chỉ hiển thị Add Course nếu là Instructor hoặc Admin */}
+          {(user?.role === 'instructor' || user?.role === 'admin') && (
+            <SidebarLink to="/add-course" icon={<BookOpen size={20} />} label="Add Course" />
+          )}
+        </ul>
+      </div>
+
+      <div>
+        <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">
+          Account Settings
+        </h6>
+        <ul className="space-y-1">
+          <SidebarLink to="/profile/settings/edit" icon={<Settings size={20} />} label="Settings" />
+          <li>
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+            >
+              <LogOut size={20} className="mr-3" />
+              Logout
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
   );
 };
