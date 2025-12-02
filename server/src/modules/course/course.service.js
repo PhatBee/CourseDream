@@ -213,21 +213,29 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   const slug = `${baseSlug}-${Date.now()}`;
 
   // 3. Xử lý Category (Chọn có sẵn hoặc Tạo mới)
-  let categoryId = courseData.category;
+  // Lấy mảng input từ FormData (có thể là ID hoặc Tên mới)
+  const rawCategories = parseArrayField(courseData.categories);
+  const finalCategoryIds = [];
 
-  // Kiểm tra xem category gửi lên có phải là ObjectId hợp lệ không
-  if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
-    // Nếu không phải ID, tức là người dùng nhập tên mới -> Tạo Category mới
-    const existingCat = await Category.findOne({ name: categoryId });
-    if (existingCat) {
-      categoryId = existingCat._id;
+  for (const catInput of rawCategories) {
+    // Nếu là ObjectId hợp lệ -> Đã có trong DB -> Push luôn
+    if (mongoose.Types.ObjectId.isValid(catInput)) {
+      finalCategoryIds.push(catInput);
     } else {
-      const newCatSlug = slugify(categoryId, { lower: true, strict: true });
-      const newCategory = await Category.create({
-        name: categoryId,
-        slug: newCatSlug
-      });
-      categoryId = newCategory._id;
+      // Nếu không phải ID -> Là tên Category mới -> Tìm hoặc Tạo
+      let existingCat = await Category.findOne({ name: catInput });
+
+      if (existingCat) {
+        finalCategoryIds.push(existingCat._id);
+      } else {
+        // Tạo mới
+        const newCatSlug = slugify(catInput, { lower: true, strict: true });
+        const newCategory = await Category.create({
+          name: catInput,
+          slug: newCatSlug
+        });
+        finalCategoryIds.push(newCategory._id);
+      }
     }
   }
 
@@ -264,7 +272,7 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
     // Relations
     instructor: instructorId,
     // Lưu ý: courseData.category gửi lên là ID dạng chuỗi
-    categories: courseData.category ? [courseData.category] : [],
+    categories: finalCategoryIds,
 
     sections: [],
     status: 'draft',

@@ -98,12 +98,16 @@ const AddCoursePage = () => {
     const [categories, setCategories] = useState([]);
     const [isCustomCategory, setIsCustomCategory] = useState(false);
 
+    // State riêng để nhập tên category mới
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [isAddingNewCat, setIsAddingNewCat] = useState(false);
+
     const [currentStep, setCurrentStep] = useState(1);
 
     // State khớp với Course Model
     const [courseData, setCourseData] = useState({
         title: '',
-        category: '',
+        categories: [],
         level: 'alllevels',
         language: 'Vietnamese',
         price: 0,
@@ -145,6 +149,54 @@ const AddCoursePage = () => {
         };
         fetchCategories();
     }, []);
+
+    // Chọn từ dropdown có sẵn
+    const handleSelectCategory = (e) => {
+        const selectedId = e.target.value;
+        if (!selectedId) return;
+
+        if (selectedId === 'custom_new') {
+            setIsAddingNewCat(true);
+            return;
+        }
+
+        // Kiểm tra trùng lặp
+        const isExist = courseData.categories.some(cat => cat.value === selectedId);
+        if (!isExist) {
+            // Tìm tên category để hiển thị trên UI
+            const catObj = categories.find(c => c._id === selectedId);
+            if (catObj) {
+                setCourseData(prev => ({
+                    ...prev,
+                    categories: [...prev.categories, { value: selectedId, label: catObj.name, isNew: false }]
+                }));
+            }
+        }
+    };
+
+    // Thêm category mới do user nhập tay
+    const handleAddCustomCategory = () => {
+        if (!newCategoryName.trim()) return;
+
+        // Kiểm tra trùng
+        const isExist = courseData.categories.some(cat => cat.label.toLowerCase() === newCategoryName.toLowerCase());
+        if (!isExist) {
+            setCourseData(prev => ({
+                ...prev,
+                categories: [...prev.categories, { value: newCategoryName, label: newCategoryName, isNew: true }]
+            }));
+        }
+        setNewCategoryName('');
+        setIsAddingNewCat(false);
+    };
+
+    // Xóa category đã chọn
+    const removeCategory = (indexToRemove) => {
+        setCourseData(prev => ({
+            ...prev,
+            categories: prev.categories.filter((_, index) => index !== indexToRemove)
+        }));
+    };
 
     // --- Handlers ---
     const handleInputChange = (e) => {
@@ -188,6 +240,7 @@ const AddCoursePage = () => {
     const [currentSectionIndex, setCurrentSectionIndex] = useState(null);
     const [editingSectionIndex, setEditingSectionIndex] = useState(null); // Track section being edited
     const [editingLectureIndex, setEditingLectureIndex] = useState(null); // Track lecture being edited inside a section
+
 
     // Temp Lesson State (Matches Lecture Model)
     const [tempLesson, setTempLesson] = useState({
@@ -293,6 +346,7 @@ const AddCoursePage = () => {
     const handleSubmit = async () => {
         if (!courseData.title) return toast.error("Vui lòng nhập tên khóa học");
         // if (!courseData.thumbnail) return toast.error("Vui lòng chọn ảnh bìa (Thumbnail)");
+        if (courseData.categories.length === 0) return toast.error("Vui lòng chọn ít nhất 1 danh mục");
 
         const loadingId = toast.loading("Đang xử lý dữ liệu...");
 
@@ -362,7 +416,10 @@ const AddCoursePage = () => {
 
             // Các trường Text cơ bản
             formData.append('title', finalCourseData.title);
-            formData.append('category', finalCourseData.category);
+            // formData.append('category', finalCourseData.category);
+            finalCourseData.categories.forEach(cat => {
+                formData.append('categories', cat.value);
+            });
             formData.append('level', finalCourseData.level);
             formData.append('language', finalCourseData.language);
             formData.append('price', finalCourseData.isFree ? 0 : finalCourseData.price);
@@ -446,37 +503,61 @@ const AddCoursePage = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {/* CATEGORY: Custom Logic */}
-                                    <div>
-                                        <label className="block text-sm font-bold mb-2">Category</label>
-                                        {!isCustomCategory ? (
-                                            <select name="category" value={courseData.category} onChange={handleInputChange} className="w-full px-4 py-3 border rounded-lg outline-none bg-white">
-                                                <option value="">Select Category</option>
+                                    {/* --- CATEGORY MULTI-SELECT UI --- */}
+                                    <div className="md:col-span-3"> {/* Chiếm full dòng nếu nhiều category */}
+                                        <label className="block text-sm font-bold mb-2">Categories <span className="text-red-500">*</span></label>
+
+                                        {/* Khu vực hiển thị Tags đã chọn */}
+                                        <div className="flex flex-wrap gap-2 mb-3 p-3 border rounded-lg bg-gray-50 min-h-[50px]">
+                                            {courseData.categories.length === 0 && <span className="text-gray-400 text-sm py-1">No categories selected</span>}
+
+                                            {courseData.categories.map((cat, idx) => (
+                                                <span key={idx} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 border ${cat.isNew ? 'bg-green-100 text-green-800 border-green-200' : 'bg-blue-100 text-blue-800 border-blue-200'}`}>
+                                                    {cat.label}
+                                                    <X size={14} className="cursor-pointer hover:text-red-600" onClick={() => removeCategory(idx)} />
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        {/* Khu vực chọn/nhập Category */}
+                                        {!isAddingNewCat ? (
+                                            <select
+                                                onChange={handleSelectCategory}
+                                                className="w-full px-4 py-3 border rounded-lg outline-none bg-white focus:ring-2 focus:ring-blue-500"
+                                                value="" // Luôn reset về default để chọn tiếp cái khác
+                                            >
+                                                <option value="" disabled>Select a category to add...</option>
                                                 {categories.map(cat => (
                                                     <option key={cat._id} value={cat._id}>{cat.name}</option>
                                                 ))}
-                                                <option value="custom_new" className="font-bold text-blue-600">+ Create New Category</option>
+                                                <option value="custom_new" className="font-bold text-blue-600 bg-blue-50">+ Create New Category</option>
                                             </select>
                                         ) : (
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 animate-fadeIn">
                                                 <input
                                                     type="text"
-                                                    name="category"
-                                                    value={courseData.category}
-                                                    onChange={handleInputChange}
-                                                    placeholder="Enter new category name..."
-                                                    className="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                                                    value={newCategoryName}
+                                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                                    placeholder="Type new category name..."
+                                                    className="flex-1 px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-green-500 border-green-300"
                                                     autoFocus
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleAddCustomCategory()}
                                                 />
                                                 <button
-                                                    onClick={() => setIsCustomCategory(false)}
-                                                    className="px-3 bg-gray-200 rounded-lg hover:bg-gray-300"
-                                                    title="Cancel custom category"
+                                                    onClick={handleAddCustomCategory}
+                                                    className="px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                                                 >
-                                                    <X size={18} />
+                                                    Add
+                                                </button>
+                                                <button
+                                                    onClick={() => { setIsAddingNewCat(false); setNewCategoryName(''); }}
+                                                    className="px-4 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
+                                                >
+                                                    Cancel
                                                 </button>
                                             </div>
                                         )}
+                                        <p className="text-xs text-gray-500 mt-1">You can select multiple categories or create new ones.</p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold mb-2">Level</label>
