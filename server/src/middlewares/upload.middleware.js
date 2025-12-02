@@ -12,10 +12,23 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({
+// Kiểm tra định dạng file video
+const fileFilterVideo = (req, file, cb) => {
+    if (file.mimetype.startsWith('video')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Chỉ được phép upload file video!'), false);
+    }
+};
+
+export const uploadVideo = multer({
+    storage,
+    fileFilterVideo,
+    limits: { fileSize: 500 * 1024 * 1024 }, // Giới hạn 500MB
+})
+
+export const upload = multer({
     storage,
     fileFilter,
     limits: { fileSize: 2 * 1024 * 1024 }, // Giới hạn 2MB
 });
-
-export default upload;

@@ -4,6 +4,11 @@ import Progress from '../progress/progress.model.js';
 import Lecture from "./lecture.model.js";
 import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
+import Category from '../category/category.model.js';
+import { uploadToYouTube } from '../../config/youtube.js';
+import { uploadToCloudinary } from '../../config/cloudinary.js';
+import slugify from 'slugify';
+import mongoose from 'mongoose';
 /**
  * Service: Lấy chi tiết khóa học
  * @param {string} slug - Slug của khóa học
@@ -175,4 +180,172 @@ export const getLecture = async ({ courseId, lectureId, user }) => {
   if (!enrolled) return { error: { status: 403, message: "Bạn chưa mua khóa học này" } };
 
   return { lecture };
+};
+
+/**
+ * Upload video lên YouTube (Service riêng để gọi từ Controller)
+ */
+export const uploadVideo = async (file, title) => {
+  return await uploadToYouTube(file.buffer, title, "Uploaded via DreamsLMS");
+};
+
+// Hàm helper để chuẩn hóa input mảng từ FormData
+// Vì FormData gửi 1 item sẽ là string, gửi nhiều là array. Chúng ta cần ép về Array.
+const parseArrayField = (fieldData) => {
+  if (!fieldData) return [];
+  if (Array.isArray(fieldData)) return fieldData;
+  return [fieldData];
+};
+
+/**
+ * Tạo khóa học mới (Bao gồm Sections và Lectures)
+ */
+export const createCourse = async (courseData, thumbnailFile, instructorId) => {
+  // 1. Xử lý Thumbnail
+  let thumbnailUrl = '';
+  if (thumbnailFile) {
+    const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
+    thumbnailUrl = uploadResult.secure_url;
+  }
+
+  // 2. Tạo Slug unique
+  const baseSlug = slugify(courseData.title, { lower: true, strict: true });
+  const slug = `${baseSlug}-${Date.now()}`;
+
+  // 3. Xử lý Category (Chọn có sẵn hoặc Tạo mới)
+  let categoryId = courseData.category;
+
+  // Kiểm tra xem category gửi lên có phải là ObjectId hợp lệ không
+  if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
+    // Nếu không phải ID, tức là người dùng nhập tên mới -> Tạo Category mới
+    const existingCat = await Category.findOne({ name: categoryId });
+    if (existingCat) {
+      categoryId = existingCat._id;
+    } else {
+      const newCatSlug = slugify(categoryId, { lower: true, strict: true });
+      const newCategory = await Category.create({
+        name: categoryId,
+        slug: newCatSlug
+      });
+      categoryId = newCategory._id;
+    }
+  }
+
+  // 4. Chuẩn hóa các trường mảng (Do FormData gửi lên có thể nhập nhằng)
+  const learnOutcomes = parseArrayField(courseData.learnOutcomes);
+  const requirements = parseArrayField(courseData.requirements);
+  const audience = parseArrayField(courseData.audience);
+  const includes = parseArrayField(courseData.includes);
+  const resources = parseArrayField(courseData.resources);
+
+  // 5. Tạo Course (Draft trước)
+  const newCourse = new Course({
+    title: courseData.title,
+    slug: slug,
+    thumbnail: thumbnailUrl,
+    previewUrl: courseData.previewUrl || '', // URL Youtube đã upload từ Frontend
+
+    shortDescription: courseData.shortDescription,
+    description: courseData.description,
+
+    price: Number(courseData.price) || 0,
+    priceDiscount: Number(courseData.priceDiscount) || 0,
+
+    level: courseData.level || 'alllevels',
+    language: courseData.language || 'Vietnamese',
+
+    // Mảng String
+    learnOutcomes,
+    requirements,
+    audience,
+    includes,
+    resources,
+
+    // Relations
+    instructor: instructorId,
+    // Lưu ý: courseData.category gửi lên là ID dạng chuỗi
+    categories: courseData.category ? [courseData.category] : [],
+
+    sections: [],
+    status: 'draft',
+
+    // Init stats
+    totalLectures: 0,
+    totalDurationSeconds: 0,
+    totalHours: 0,
+    totalStudents: 0,
+    rating: 0
+  });
+
+  const savedCourse = await newCourse.save();
+
+  // 6. Xử lý Sections và Lectures (Nếu có gửi kèm)
+  // courseData.sections là chuỗi JSON từ formData, cần parse
+  let sectionsData = [];
+  try {
+    // Frontend gửi JSON string cho cấu trúc phức tạp này
+    sectionsData = JSON.parse(courseData.sections || '[]');
+  } catch (e) {
+    console.error("Error parsing sections JSON:", e);
+  }
+
+  const sectionIds = [];
+
+  // Biến để tính toán tổng
+  let calculatedTotalLectures = 0;
+  let calculatedTotalDuration = 0;
+
+  for (const sectionData of sectionsData) {
+    // Tạo Lecture docs
+    const lectureIds = [];
+    if (sectionData.lectures && sectionData.lectures.length > 0) {
+      for (const lecData of sectionData.lectures) {
+        const duration = Number(lecData.duration) || 0;
+
+        const newLecture = await Lecture.create({
+          title: lecData.title,
+          videoUrl: lecData.videoUrl, // URL đã có từ bước upload trước
+          duration: Number(lecData.duration) || 0,
+          isPreviewFree: lecData.isPreviewFree,
+          order: lecData.order || 0,
+        });
+        lectureIds.push(newLecture._id);
+
+        // Cộng dồn thống kê
+        calculatedTotalLectures++;
+        calculatedTotalDuration += duration; // giây
+      }
+    }
+
+    // Tạo Section doc
+    const newSection = await Section.create({
+      title: sectionData.title,
+      course: savedCourse._id,
+      lectures: lectureIds,
+      order: sectionData.order || 0 // Bạn nên handle order ở frontend
+    });
+
+    // Cập nhật section vào lecture (để reference ngược lại nếu cần)
+    await Lecture.updateMany(
+      { _id: { $in: lectureIds } },
+      { $set: { section: newSection._id } }
+    );
+
+    sectionIds.push(newSection._id);
+  }
+
+  // 5. Cập nhật lại Course với danh sách Sections
+  savedCourse.sections = sectionIds;
+  // 6. Tính toán tổng quan (totalLectures, totalDuration...)
+
+  savedCourse.totalStudents = 0;
+  savedCourse.rating = 0;// 7. Cập nhật lại Course với Sections và Thống kê
+  savedCourse.sections = sectionIds;
+  savedCourse.totalLectures = calculatedTotalLectures;
+  savedCourse.totalDurationSeconds = calculatedTotalDuration;
+  savedCourse.totalHours = parseFloat((calculatedTotalDuration / 3600).toFixed(1)); // Đổi ra giờ, lấy 1 số lẻ
+
+  await savedCourse.save();
+
+  return savedCourse;
 };
