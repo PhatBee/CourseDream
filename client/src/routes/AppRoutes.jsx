@@ -21,6 +21,7 @@ import OverviewPage from "../pages/OverviewPage";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import PaymentReturn from "../pages/PaymentReturn";
+import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 
 export default function AppRoutes() {
   return (
@@ -57,6 +58,7 @@ export default function AppRoutes() {
               <Route index element={<Navigate to="edit" replace />} />
             </Route>
             <Route path="wishlist" element={<WishlistPage />} />
+            <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
