@@ -23,7 +23,7 @@ export const getCourseDetailsBySlug = async (req, res, next) => {
 export const getCourses = async (req, res, next) => {
   try {
     const result = await courseService.getAllCourses(req.query);
-    
+
     res.status(200).json({
       success: true,
       data: result.courses,
@@ -75,5 +75,49 @@ export const getLecture = async (req, res, next) => {
     return res.json({ lecture: result.lecture });
   } catch (err) {
     next(err);
+  }
+};
+
+/**
+ * @desc    Upload video lên YouTube
+ * @route   POST /api/v1/courses/upload-video
+ */
+export const uploadCourseVideo = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No video file provided" });
+    }
+    const { title } = req.body;
+    const result = await courseService.uploadVideo(req.file, title || "Course Video");
+
+    res.status(200).json({
+      success: true,
+      data: result // { videoId, videoUrl }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Tạo khóa học mới
+ * @route   POST /api/v1/courses
+ */
+export const createCourse = async (req, res, next) => {
+  try {
+    // req.body chứa các field text, req.file chứa thumbnail
+    const courseData = req.body;
+    const thumbnailFile = req.file;
+    const instructorId = req.user._id;
+
+    const newCourse = await courseService.createCourse(courseData, thumbnailFile, instructorId);
+
+    res.status(201).json({
+      success: true,
+      message: "Course created successfully",
+      data: newCourse
+    });
+  } catch (error) {
+    next(error);
   }
 };

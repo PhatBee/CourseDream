@@ -21,6 +21,8 @@ import OverviewPage from "../pages/OverviewPage";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import PaymentReturn from "../pages/PaymentReturn";
+import AddCoursePage from "../pages/AddCoursePage";
+import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 
 export default function AppRoutes() {
@@ -65,6 +67,10 @@ export default function AppRoutes() {
           </Route>
           <Route path="/courses/:slug/overview" element={<OverviewPage />} />
           <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
+          <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+            <Route path="/add-course" element={<AddCoursePage />} />
+          </Route>
+
         </Routes>
       </main>
     </BrowserRouter>

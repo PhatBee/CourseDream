@@ -46,6 +46,20 @@ export const getCourseDetails = createAsyncThunk(
   }
 );
 
+// Thunk: Create Course
+export const createNewCourse = createAsyncThunk(
+  'course/create',
+  async (formData, thunkAPI) => {
+    try {
+      const response = await courseApi.createCourse(formData);
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error creating course';
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const courseSlice = createSlice({
   name: 'course',
   initialState,
@@ -91,6 +105,21 @@ export const courseSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
         state.items = [];
+      })
+
+      // Create Course Cases
+      .addCase(createNewCourse.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(createNewCourse.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isError = false;
+        state.message = 'Khóa học đã được tạo thành công!';
+      })
+      .addCase(createNewCourse.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       });
   },
 });
