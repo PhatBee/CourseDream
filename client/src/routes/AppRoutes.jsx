@@ -22,6 +22,7 @@ import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import PaymentReturn from "../pages/PaymentReturn";
 import AddCoursePage from "../pages/AddCoursePage";
+import PrivateRoute from "../components/common/PrivateRoute";
 
 export default function AppRoutes() {
   return (
@@ -58,13 +59,16 @@ export default function AppRoutes() {
               <Route index element={<Navigate to="edit" replace />} />
             </Route>
             <Route path="wishlist" element={<WishlistPage />} />
+
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
           </Route>
           <Route path="/courses/:slug/overview" element={<OverviewPage />} />
           <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
-          <Route path="/add-course" element={<AddCoursePage />} />
+          <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+            <Route path="/add-course" element={<AddCoursePage />} />
+          </Route>
 
         </Routes>
       </main>
