@@ -3,7 +3,23 @@ import React from 'react';
 const Step5_Pricing = ({ courseData, handleInputChange }) => {
     return (
         <div className="space-y-6 animate-fadeIn">
-            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Pricing</h2>
+            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Pricing & Settings</h2>
+
+            {/* Status Selection (Mới) */}
+            <div className="mb-6">
+                <label className="block text-sm font-bold mb-2">Course Status (Initial)</label>
+                <select
+                    name="status"
+                    value={courseData.status || 'draft'}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border rounded-lg outline-none bg-white focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="draft">Draft (Only you can see)</option>
+                    <option value="hidden">Hidden (Accessible via direct link only)</option>
+                    {/* Không cho chọn 'published' hay 'pending' trực tiếp ở đây, nút Submit sẽ set 'pending' */}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Draft courses are not visible to students. You can publish it later after review.</p>
+            </div>
 
             <div className="flex items-center gap-3 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <input

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'react-hot-toast';
-import { Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Check, ChevronRight, ChevronLeft, Save, XCircle, AlertTriangle } from 'lucide-react';
 
 // Redux & API
 import { createNewCourse } from '../features/course/courseSlice';
@@ -17,6 +17,7 @@ import Step3_Curriculum from '../components/instructor/Step3_Curriculum';
 import Step4_Details from '../components/instructor/Step4_Details'; // Tách tương tự
 import Step5_Pricing from '../components/instructor/Step5_Pricing'; // Tách tương tự
 import LessonModal from '../components/instructor/LessonModal';
+import CancelModal from '../components/common/CancelModal';
 
 const AddCoursePage = () => {
     const dispatch = useDispatch();
@@ -30,6 +31,9 @@ const AddCoursePage = () => {
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
     const [editingSectionIndex, setEditingSectionIndex] = useState(null);
     const [editingLectureIndex, setEditingLectureIndex] = useState(null);
+
+    // State cho Cancel Modal
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
     // Use Custom Hook
     const form = useAddCourseForm();
@@ -57,13 +61,23 @@ const AddCoursePage = () => {
         throw new Error("Upload failed");
     };
 
-    // Submit Handler
-    const handleSubmit = async () => {
-        const { courseData } = form;
-        if (!courseData.title) return toast.error("Vui lòng nhập tên khóa học");
-        if (courseData.categories.length === 0) return toast.error("Vui lòng chọn danh mục");
+    // Submit Handler (Dùng chung cho Save Draft & Submit)
+    const handleProcessCourse = async (actionType) => {
+        // actionType: 'submit' | 'draft'
 
-        const loadingId = toast.loading("Đang xử lý dữ liệu...");
+        const { courseData } = form;
+        const isDraft = actionType === 'draft';
+
+        // Validation: Submit cần kỹ, Draft thì lỏng
+        if (!isDraft) {
+            if (!courseData.title) return toast.error("Vui lòng nhập tên khóa học");
+            if (courseData.categories.length === 0) return toast.error("Vui lòng chọn danh mục");
+            // Thêm các validation khác nếu cần
+        } else {
+            if (!courseData.title) return toast.error("Vui lòng nhập tên khóa học để lưu nháp");
+        }
+
+        const loadingId = toast.loading(isDraft ? "Đang lưu nháp..." : "Đang tạo khóa học...", { id: loadingId });
 
         try {
             const finalCourseData = { ...courseData };
@@ -109,6 +123,12 @@ const AddCoursePage = () => {
             formData.append('description', finalCourseData.description);
             formData.append('previewUrl', finalCourseData.previewUrl);
 
+            // SET STATUS
+            // Nếu là Submit -> force 'pending' để admin duyệt
+            // Nếu là Draft -> dùng status hiện tại (draft/hidden) hoặc default 'draft'
+            const statusToSend = isDraft ? (finalCourseData.status || 'draft') : 'pending';
+            formData.append('status', statusToSend);
+
             // Arrays
             ['learnOutcomes', 'requirements', 'audience', 'includes'].forEach(field => {
                 finalCourseData[field].forEach(item => formData.append(field, item));
@@ -121,11 +141,11 @@ const AddCoursePage = () => {
             formData.append('sections', JSON.stringify(processedSections));
 
             // 4. Dispatch Redux Action
-            toast.loading("Creating course...", { id: loadingId });
+            toast.loading("Đang tạo khóa học...", { id: loadingId });
             const resultAction = await dispatch(createNewCourse(formData));
 
             if (createNewCourse.fulfilled.match(resultAction)) {
-                toast.success("Thành công!", { id: loadingId });
+                toast.success(isDraft ? "Đã lưu nháp!" : "Đã gửi thông tin khóa học lên chờ duyệt!", { id: loadingId });
                 navigate('/instructor/courses');
             } else {
                 toast.error(resultAction.payload || "Thất bại", { id: loadingId });
@@ -135,6 +155,21 @@ const AddCoursePage = () => {
             console.error(error);
             toast.error("Có lỗi xảy ra.", { id: loadingId });
         }
+    };
+
+    // --- Handlers cho các nút ---
+    const onSaveDraft = () => handleProcessCourse('draft');
+    const onSubmit = () => handleProcessCourse('submit');
+    const onCancel = () => setIsCancelModalOpen(true);
+
+    const handleModalSaveDraft = () => {
+        setIsCancelModalOpen(false);
+        handleProcessCourse('draft');
+    };
+
+    const handleModalExit = () => {
+        setIsCancelModalOpen(false);
+        navigate('/instructor/courses');
     };
 
     // Modal Handlers
@@ -198,6 +233,19 @@ const AddCoursePage = () => {
             <Toaster position="top-right" />
             <div className="max-w-6xl mx-auto">
 
+                {/* Header Controls (New) */}
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold text-gray-800">Create New Course</h1>
+                    <div className="flex gap-3">
+                        <button onClick={onCancel} className="px-4 py-2 text-gray-600 bg-white border rounded-lg hover:bg-gray-50 font-medium flex items-center gap-2">
+                            <XCircle size={18} /> Cancel
+                        </button>
+                        <button onClick={onSaveDraft} className="px-4 py-2 text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 font-medium flex items-center gap-2">
+                            <Save size={18} /> Save Draft
+                        </button>
+                    </div>
+                </div>
+
                 {/* Progress Bar - Bạn có thể tách ra component riêng */}
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                     <ul className="flex justify-between items-center relative">
@@ -228,7 +276,7 @@ const AddCoursePage = () => {
                         {currentStep < 5 ? (
                             <button onClick={nextStep} className="px-6 py-2.5 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-800 flex items-center gap-2 shadow-lg">Next Step <ChevronRight size={18} /></button>
                         ) : (
-                            <button onClick={handleSubmit} disabled={isLoading} className="px-8 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 flex items-center gap-2 shadow-lg disabled:opacity-70">
+                            <button onClick={onSubmit} disabled={isLoading} className="px-8 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 flex items-center gap-2 shadow-lg disabled:opacity-70">
                                 {isLoading ? 'Processing...' : 'Submit Course'} <Check size={18} />
                             </button>
                         )}
@@ -246,6 +294,14 @@ const AddCoursePage = () => {
                     isEditing={editingLectureIndex !== null}
                 />
             )}
+
+            {/* Cancel Warning Modal */}
+            <CancelModal
+                isOpen={isCancelModalOpen}
+                onClose={() => setIsCancelModalOpen(false)}
+                onSaveDraft={handleModalSaveDraft}
+                onExit={handleModalExit}
+            />
         </div>
     );
 };
