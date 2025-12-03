@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Grid, User, Settings, LogOut, Heart, BookOpen } from 'lucide-react';
+import { Grid, User, Settings, LogOut, Heart, BookOpen, Book } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 
@@ -56,7 +56,9 @@ const ProfileSidebar = () => {
 
           {/* Chỉ hiển thị Add Course nếu là Instructor hoặc Admin */}
           {(user?.role === 'instructor' || user?.role === 'admin') && (
-            <SidebarLink to="/add-course" icon={<BookOpen size={20} />} label="Add Course" />
+            <>
+              <SidebarLink to="/profile/instructor/courses" icon={<Book size={20} />} label="Courses" />
+            </>
           )}
         </ul>
       </div>
