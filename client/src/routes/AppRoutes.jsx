@@ -21,7 +21,7 @@ import OverviewPage from "../pages/OverviewPage";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import PaymentReturn from "../pages/PaymentReturn";
-import AddCoursePage from "../pages/AddCoursePage";
+import AddCoursePage from "../pages/AddCourse";
 import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 
