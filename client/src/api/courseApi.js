@@ -24,9 +24,13 @@ const createCourse = (formData) => {
   });
 };
 
+export const searchCourses = (params) => {
+  return axiosClient.get("/courses/search", { params });
+};
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
   uploadVideo,
   createCourse,
+  searchCourses,
 };
