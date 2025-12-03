@@ -201,6 +201,12 @@ const parseArrayField = (fieldData) => {
  * Tạo khóa học mới (Bao gồm Sections và Lectures)
  */
 export const createCourse = async (courseData, thumbnailFile, instructorId) => {
+  // Logic Validation: Nếu KHÔNG phải Draft thì mới bắt buộc validate kỹ
+  const isDraft = courseData.status === 'draft' || courseData.status === 'hidden';
+
+  // Các field khác nếu thiếu khi Submit (Pending) thì Frontend đã chặn rồi.
+  // Backend chỉ cần đảm bảo không crash.
+
   // 1. Xử lý Thumbnail
   let thumbnailUrl = '';
   if (thumbnailFile) {
@@ -275,7 +281,9 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
     categories: finalCategoryIds,
 
     sections: [],
-    status: 'draft',
+    // Nếu user chọn Submit -> status = 'pending'
+    // Nếu user chọn Save Draft -> status = 'draft' hoặc 'hidden' (do frontend gửi lên)
+    status: courseData.status || 'draft',
 
     // Init stats
     totalLectures: 0,
@@ -316,6 +324,7 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
           duration: Number(lecData.duration) || 0,
           isPreviewFree: lecData.isPreviewFree,
           order: lecData.order || 0,
+          // resources...
         });
         lectureIds.push(newLecture._id);
 
@@ -342,13 +351,10 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
     sectionIds.push(newSection._id);
   }
 
-  // 5. Cập nhật lại Course với danh sách Sections
+  // 7. Update Course
   savedCourse.sections = sectionIds;
-  // 6. Tính toán tổng quan (totalLectures, totalDuration...)
-
   savedCourse.totalStudents = 0;
-  savedCourse.rating = 0;// 7. Cập nhật lại Course với Sections và Thống kê
-  savedCourse.sections = sectionIds;
+  savedCourse.rating = 0;
   savedCourse.totalLectures = calculatedTotalLectures;
   savedCourse.totalDurationSeconds = calculatedTotalDuration;
   savedCourse.totalHours = parseFloat((calculatedTotalDuration / 3600).toFixed(1)); // Đổi ra giờ, lấy 1 số lẻ

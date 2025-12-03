@@ -44,7 +44,7 @@ const CourseSchema = new mongoose.Schema({
   totalHours: { type: Number, default: 0 },
   totalDurationSeconds: { type: Number, default: 0 },
 
-  status: { type: String, enum: ["draft", "published"], default: "draft" }
+  status: { type: String, enum: ["draft", "pending", "published", "hidden"], default: "draft" }
 }, { timestamps: true });
 
 export default mongoose.model('Course', CourseSchema);
