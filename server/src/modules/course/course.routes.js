@@ -1,5 +1,5 @@
 import express from 'express';
-import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse } from './course.controller.js';
+import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse, getMyCourses } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
@@ -9,6 +9,14 @@ import { uploadVideo, upload } from '../../middlewares/upload.middleware.js';
 const router = express.Router();
 
 router.get('/', getCourses);
+
+router.get(
+  '/instructor/my-courses',
+  verifyToken,
+  // checkRole('instructor'), // Uncomment nếu muốn chặn student
+  getMyCourses
+);
+
 /**
  * @route   GET /api/v1/courses/:slug
  * @desc    Lấy chi tiết khóa học

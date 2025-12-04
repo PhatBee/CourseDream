@@ -363,3 +363,54 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
 
   return savedCourse;
 };
+
+/**
+ * Lấy danh sách khóa học của Instructor (có phân trang & lọc)
+ */
+export const getInstructorCourses = async (instructorId, query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 9;
+  const skip = (page - 1) * limit;
+  const status = query.status; // 'published', 'pending', 'draft', 'hidden'
+
+  const filter = { instructor: instructorId };
+  if (status && status !== 'all') {
+    filter.status = status;
+  }
+
+  const courses = await Course.find(filter)
+    .select('title slug thumbnail price priceDiscount level rating studentsCount status totalLectures totalHours')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const totalCourses = await Course.countDocuments(filter);
+
+  // Tính thống kê cho Dashboard
+  // (Có thể tách ra API riêng nếu nặng, nhưng làm chung cho tiện)
+  const stats = await Course.aggregate([
+    { $match: { instructor: new mongoose.Types.ObjectId(instructorId) } },
+    { $group: { _id: "$status", count: { $sum: 1 } } }
+  ]);
+
+  // Format stats về dạng object { published: 10, draft: 5... }
+  const statsObj = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0 };
+  stats.forEach(s => {
+    if (statsObj.hasOwnProperty(s._id)) {
+      statsObj[s._id] = s.count;
+    }
+    statsObj.all += s.count;
+  });
+
+  return {
+    courses,
+    stats: statsObj,
+    pagination: {
+      total: totalCourses,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCourses / limit)
+    }
+  };
+};

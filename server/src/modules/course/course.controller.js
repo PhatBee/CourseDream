@@ -121,3 +121,21 @@ export const createCourse = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Lấy khóa học của Instructor hiện tại
+ * @route   GET /api/courses/instructor/my-courses
+ */
+export const getMyCourses = async (req, res, next) => {
+  try {
+    const instructorId = req.user._id;
+    const result = await courseService.getInstructorCourses(instructorId, req.query);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
