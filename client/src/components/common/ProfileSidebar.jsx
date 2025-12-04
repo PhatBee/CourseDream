@@ -57,7 +57,7 @@ const ProfileSidebar = () => {
           {/* Chỉ hiển thị Add Course nếu là Instructor hoặc Admin */}
           {(user?.role === 'instructor' || user?.role === 'admin') && (
             <>
-              <SidebarLink to="/profile/instructor/courses" icon={<Book size={20} />} label="Courses" />
+              <SidebarLink to="/profile/instructor/courses" icon={<Book size={20} />} label=" My Courses" />
             </>
           )}
         </ul>

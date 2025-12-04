@@ -5,19 +5,19 @@ import { toast, Toaster } from 'react-hot-toast';
 import { Check, ChevronRight, ChevronLeft, Save, XCircle, AlertTriangle } from 'lucide-react';
 
 // Redux & API
-import { createNewCourse } from '../features/course/courseSlice';
-import { courseApi } from '../api/courseApi';
-import { categoryApi } from '../api/categoryApi';
+import { createNewCourse } from '../../features/course/courseSlice';
+import { courseApi } from '../../api/courseApi';
+import { categoryApi } from '../../api/categoryApi';
 
 // Hooks & Components
-import { useAddCourseForm } from '../features/course/useAddCourseForm';
-import Step1_CourseInfo from '../components/instructor/Step1_CourseInfo';
-import Step2_Media from '../components/instructor/Step2_Media'; // Tách tương tự Step1
-import Step3_Curriculum from '../components/instructor/Step3_Curriculum';
-import Step4_Details from '../components/instructor/Step4_Details'; // Tách tương tự
-import Step5_Pricing from '../components/instructor/Step5_Pricing'; // Tách tương tự
-import LessonModal from '../components/instructor/LessonModal';
-import CancelModal from '../components/common/CancelModal';
+import { useAddCourseForm } from '../../features/course/useAddCourseForm';
+import Step1_CourseInfo from '../../components/instructor/Step1_CourseInfo';
+import Step2_Media from '../../components/instructor/Step2_Media'; // Tách tương tự Step1
+import Step3_Curriculum from '../../components/instructor/Step3_Curriculum';
+import Step4_Details from '../../components/instructor/Step4_Details'; // Tách tương tự
+import Step5_Pricing from '../../components/instructor/Step5_Pricing'; // Tách tương tự
+import LessonModal from '../../components/instructor/LessonModal';
+import CancelModal from '../../components/common/CancelModal';
 
 const AddCoursePage = () => {
     const dispatch = useDispatch();
