@@ -800,6 +800,20 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     sections: sectionsStruct
   };
 
+  // --- [LOGIC VERSION MỚI] ---
+  let nextVersion = 1; // Mặc định cho trường hợp 1 (Fresh Draft)
+
+  // Trường hợp 2: Update Course đã publish (Có courseId)
+  if (courseData.courseId) {
+    // Tìm course gốc để lấy version hiện tại
+    const liveCourse = await Course.findById(courseData.courseId).select('version');
+    if (liveCourse) {
+      // Version của bản Revision = Version Course gốc + 1
+      // Dù instructor có save bao nhiêu lần thì liveCourse.version vẫn không đổi -> nextVersion vẫn giữ nguyên
+      nextVersion = (liveCourse.version || 1) + 1;
+    }
+  }
+
   // 6. LOGIC SAVE/UPDATE QUAN TRỌNG
   // Check xem có draft nào đang tồn tại không để update đè lên, tránh spam record
   const filter = {
@@ -823,7 +837,7 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
       instructor: instructorId,
       course: courseData.courseId || null, // Nếu null thì là fresh draft
       status: courseData.status || 'draft',
-      version: 1, // Tạm thời để 1, nâng cao sẽ tăng version
+      version: nextVersion, // Version của bản Revision = Version Course gốc + 1
       data: revisionData,
       reviewMessage: courseData.messageToReviewer || ''
     },
