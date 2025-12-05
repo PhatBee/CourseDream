@@ -181,3 +181,24 @@ export const getMyCourses = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Lấy thông tin khóa học để Edit (Instructor Only)
+ * @route   GET /api/courses/instructor/edit/:slug
+ */
+export const getCourseForEdit = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const instructorId = req.user._id;
+
+    // Gọi service
+    const data = await courseService.getCourseForEdit(slug, instructorId);
+
+    res.status(200).json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,5 +1,8 @@
 import express from 'express';
-import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse, getLevels, getCourseStats, createCourseRevision, getMyCourses } from './course.controller.js';
+import {
+  searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
+  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit
+} from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
@@ -49,6 +52,13 @@ router.post(
   // checkRole('instructor', 'admin'),
   upload.single('thumbnail'), // 'thumbnail' là key trong FormData
   createCourseRevision
+);
+
+router.get(
+  '/instructor/edit/:slug', // Route mới
+  verifyToken,
+  // checkRole('instructor'),
+  getCourseForEdit
 );
 
 // router.delete('/:id', 
