@@ -1,5 +1,5 @@
 import express from 'express';
-import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse, getMyCourses } from './course.controller.js';
+import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourseRevision, getMyCourses } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
@@ -39,13 +39,13 @@ router.post(
   uploadCourseVideo
 );
 
-// Route tạo khóa học
+// Route tạo khóa học (bản Revision)
 router.post(
   '/',
   verifyToken,
   // checkRole('instructor', 'admin'),
   upload.single('thumbnail'), // 'thumbnail' là key trong FormData
-  createCourse
+  createCourseRevision
 );
 
 // router.delete('/:id', 

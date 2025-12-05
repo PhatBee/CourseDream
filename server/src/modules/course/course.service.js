@@ -1,4 +1,5 @@
 import Course from './course.model.js';
+import CourseRevision from './courseRevision.model.js';
 import Review from '../review/review.model.js';
 import Progress from '../progress/progress.model.js';
 import Lecture from "./lecture.model.js";
@@ -199,6 +200,8 @@ const parseArrayField = (fieldData) => {
 
 /**
  * Tạo khóa học mới (Bao gồm Sections và Lectures)
+ * Sau khi ADMIN duyệt sẽ tạo
+ * SẼ ĐIỀU CHỈNH LẠI SAU, HIỆN KHÔNG DÙNG
  */
 export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   // Logic Validation: Nếu KHÔNG phải Draft thì mới bắt buộc validate kỹ
@@ -362,6 +365,101 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   await savedCourse.save();
 
   return savedCourse;
+};
+
+/**
+ * Tạo hoặc cập nhật Course Revision
+ */
+export const createOrUpdateRevision = async (courseData, thumbnailFile, instructorId) => {
+  // 1. Xử lý Thumbnail
+  let thumbnailUrl = courseData.thumbnailUrl || ''; // Nếu edit thì có thể có URL cũ
+  if (thumbnailFile) {
+    const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
+    thumbnailUrl = uploadResult.secure_url;
+  }
+
+  // 2. Xử lý Category (Giống bài trước)
+  const rawCategories = parseArrayField(courseData.categories);
+  const finalCategoryIds = [];
+  for (const catInput of rawCategories) {
+    if (mongoose.Types.ObjectId.isValid(catInput)) {
+      finalCategoryIds.push(catInput);
+    } else {
+      let existingCat = await Category.findOne({ name: catInput });
+      if (existingCat) {
+        finalCategoryIds.push(existingCat._id);
+      } else {
+        const newCatSlug = slugify(catInput, { lower: true, strict: true });
+        const newCategory = await Category.create({ name: catInput, slug: newCatSlug });
+        finalCategoryIds.push(newCategory._id);
+      }
+    }
+  }
+
+  // 3. Chuẩn hóa mảng
+  const learnOutcomes = parseArrayField(courseData.learnOutcomes);
+  const requirements = parseArrayField(courseData.requirements);
+  const audience = parseArrayField(courseData.audience);
+  const includes = parseArrayField(courseData.includes);
+
+  // 4. Xử lý Sections (Không tạo doc Section/Lecture thật, chỉ lưu JSON trong Revision)
+  let sectionsData = [];
+  try {
+    sectionsData = JSON.parse(courseData.sections || '[]');
+  } catch (e) {
+    console.error("Error parsing sections JSON:", e);
+  }
+
+  // Chuẩn hóa cấu trúc Section để lưu vào Revision.data
+  const sectionsStruct = sectionsData.map(sec => ({
+    title: sec.title,
+    order: sec.order || 0,
+    lectures: sec.lectures.map(lec => ({
+      title: lec.title,
+      videoUrl: lec.videoUrl,
+      duration: Number(lec.duration) || 0,
+      order: lec.order || 0,
+      isPreviewFree: lec.isPreviewFree || false,
+      resources: lec.resources || []
+    }))
+  }));
+
+  // 5. Chuẩn bị Data Object cho Revision
+  const revisionData = {
+    title: courseData.title,
+    slug: courseData.slug || (slugify(courseData.title || '', { lower: true, strict: true }) + '-' + Date.now()), // Tạo slug tạm nếu chưa có
+    thumbnail: thumbnailUrl,
+    previewUrl: courseData.previewUrl || '',
+    shortDescription: courseData.shortDescription,
+    description: courseData.description,
+    price: Number(courseData.price) || 0,
+    priceDiscount: Number(courseData.priceDiscount) || 0,
+    level: courseData.level || 'alllevels',
+    language: courseData.language || 'Vietnamese',
+
+    learnOutcomes,
+    requirements,
+    audience,
+    includes,
+
+    categories: finalCategoryIds,
+    sections: sectionsStruct
+  };
+
+  // 6. Tạo bản ghi Revision mới
+  // (Logic này luôn tạo mới Revision cho mỗi lần Save/Submit để lưu lịch sử. 
+  //  Nếu muốn override draft cũ, bạn cần gửi kèm revisionId từ frontend)
+
+  const newRevision = await CourseRevision.create({
+    instructor: instructorId,
+    // course: courseData.courseId, // Nếu là update khóa học cũ thì mới cần field này
+    status: courseData.status || 'draft', // 'draft' hoặc 'pending'
+    version: 1, // Logic version có thể phức tạp hơn sau này
+    data: revisionData,
+    reviewMessage: courseData.messageToReviewer || ''
+  });
+
+  return newRevision;
 };
 
 /**

@@ -77,7 +77,9 @@ const AddCoursePage = () => {
             if (!courseData.title) return toast.error("Vui lòng nhập tên khóa học để lưu nháp");
         }
 
-        const loadingId = toast.loading(isDraft ? "Đang lưu nháp..." : "Đang tạo khóa học...", { id: loadingId });
+        let loadingId;
+
+        loadingId = toast.loading(isDraft ? "Đang lưu nháp..." : "Đang tạo khóa học...", { id: loadingId });
 
         try {
             const finalCourseData = { ...courseData };
