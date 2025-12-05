@@ -25,6 +25,8 @@ import AddCoursePage from "../pages/instructor/AddCourse";
 import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
+import AdminLayout from '../layouts/AdminLayout';
+import AdminDashboard from '../pages/admin/AdminDashboard';
 
 export default function AppRoutes() {
   return (
@@ -75,7 +77,16 @@ export default function AppRoutes() {
           <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
             <Route path="instructor/add-course" element={<AddCoursePage />} />
           </Route>
+          
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
 
+            {/* Các trang placeholder cho menu */}
+            <Route path="users" element={<div>Manage Students</div>} />
+            <Route path="courses" element={<div>Manage Courses</div>} />
+            <Route path="blogs" element={<div>Manage Blogs</div>} />
+          </Route>
         </Routes>
       </main>
     </BrowserRouter>
