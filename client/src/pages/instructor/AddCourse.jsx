@@ -6,7 +6,7 @@ import { Check, ChevronRight, ChevronLeft, Save, XCircle, AlertTriangle } from '
 
 // Redux & API
 import { createNewCourse } from '../../features/course/courseSlice';
-import { courseApi } from '../../api/courseApi';
+import courseService from '../../features/course/courseService';
 import { categoryApi } from '../../api/categoryApi';
 
 // Hooks & Components
@@ -56,8 +56,8 @@ const AddCoursePage = () => {
         const formData = new FormData();
         formData.append('video', file);
         formData.append('title', title);
-        const res = await courseApi.uploadVideo(formData);
-        if (res.data.success) return res.data.data.videoUrl;
+        const res = await courseService.uploadVideo(formData);
+        if (res.success) return res.data.videoUrl;
         throw new Error("Upload failed");
     };
 
@@ -66,8 +66,8 @@ const AddCoursePage = () => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('title', title);
-        const res = await courseApi.uploadResource(formData); // Gọi API upload-resource
-        if (res.data.success) return res.data.data.url;
+        const res = await courseService.uploadResource(formData); // Gọi API upload-resource
+        if (res.success) return res.data.url;
         throw new Error("Resource upload failed");
     };
 

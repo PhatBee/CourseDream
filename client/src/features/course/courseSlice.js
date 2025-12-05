@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import courseService from './courseService';
-import { courseApi } from '../../api/courseApi';
+
 
 const initialState = {
   items: [],
@@ -22,8 +22,8 @@ export const getAllCourses = createAsyncThunk(
   'courses/getAll',
   async (params, thunkAPI) => {
     try {
-      const response = await courseApi.getAllCourses(params);
-      return response.data;
+      const response = await courseService.getAllCourses(params);
+      return response;
     } catch (error) {
       const message = error.response?.data?.message || 'Error fetching courses';
       return thunkAPI.rejectWithValue(message);
@@ -54,8 +54,8 @@ export const createNewCourse = createAsyncThunk(
   'course/create',
   async (formData, thunkAPI) => {
     try {
-      const response = await courseApi.createCourse(formData);
-      return response.data;
+      const response = await courseService.createCourse(formData);
+      return response;
     } catch (error) {
       const message = error.response?.data?.message || 'Error creating course';
       return thunkAPI.rejectWithValue(message);
@@ -68,8 +68,8 @@ export const getInstructorCourses = createAsyncThunk(
   'course/getInstructorCourses',
   async (params, thunkAPI) => {
     try {
-      const response = await courseApi.getInstructorCourses(params);
-      return response.data; // { success, data: { courses, stats, pagination } }
+      const response = await courseService.getInstructorCourses(params);
+      return response; // { success, data: { courses, stats, pagination } }
     } catch (error) {
       const message = error.response?.data?.message || 'Error fetching courses';
       return thunkAPI.rejectWithValue(message);

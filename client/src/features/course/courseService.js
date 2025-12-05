@@ -12,8 +12,44 @@ const getDetails = async (slug) => {
   return response.data.data;
 };
 
+const getAllCourses = async (params) => {
+  const response = await courseApi.getAllCourses(params);
+  return response.data;
+};
+
+const createCourse = async (formData) => {
+  const response = await courseApi.createCourse(formData);
+  return response.data;
+};
+
+const uploadVideo = async (formData) => {
+  const response = await courseApi.uploadVideo(formData);
+  return response.data;
+};
+
+const uploadResource = async (formData) => {
+  const response = await courseApi.uploadResource(formData);
+  return response.data;
+};
+
+const getInstructorCourses = async (params) => {
+  const response = await courseApi.getInstructorCourses(params);
+  return response.data;
+};
+
+const getInstructorCourseForEdit = async (slug) => {
+  const response = await courseApi.getInstructorCourseForEdit(slug);
+  return response.data;
+};
+
 const courseService = {
   getDetails,
+  getAllCourses,
+  createCourse,
+  uploadVideo,
+  uploadResource,
+  getInstructorCourses,
+  getInstructorCourseForEdit,
 };
 
 export default courseService;
