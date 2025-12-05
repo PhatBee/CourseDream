@@ -75,3 +75,15 @@ export const getRevenueAnalytics = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getStudents = async (req, res, next) => {
+  try {
+    const result = await adminService.getAllStudents(req.query);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -40,4 +40,10 @@ router.get('/dashboard-stats', adminController.getDashboardStats);
  */
 router.get('/revenue-analytics', adminController.getRevenueAnalytics);
 
+/**
+ * @route   GET /api/admin/users
+ * @desc    Lấy danh sách học viên
+ */
+router.get('/users', adminController.getStudents);
+
 export default router;

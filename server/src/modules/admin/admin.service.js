@@ -219,3 +219,48 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
     period: { type, start, end }
   };
 };
+
+export const getAllStudents = async (query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const search = query.search || '';
+  const skip = (page - 1) * limit;
+
+  const filter = { role: 'student' };
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  // 2. Query DB lấy User
+  const students = await User.find(filter)
+    .select('name email avatar phone createdAt isVerified isBlocked')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const totalStudents = await User.countDocuments(filter);
+
+  const studentsWithStats = await Promise.all(
+    students.map(async (student) => {
+      const enrolledCount = await Enrollment.countDocuments({ student: student._id });
+      return { 
+        ...student, 
+        coursesEnrolled: enrolledCount 
+      };
+    })
+  );
+
+  return {
+    students: studentsWithStats,
+    pagination: {
+      total: totalStudents,
+      page,
+      limit,
+      totalPages: Math.ceil(totalStudents / limit)
+    }
+  };
+};
