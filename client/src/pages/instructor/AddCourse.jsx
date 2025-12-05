@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { Check, ChevronRight, ChevronLeft, Save, XCircle, AlertTriangle } from 'lucide-react';
 
 // Redux & API
@@ -187,15 +187,15 @@ const AddCoursePage = () => {
             const resultAction = await dispatch(createNewCourse(formData));
 
             if (createNewCourse.fulfilled.match(resultAction)) {
-                toast.success(isDraft ? "Đã lưu nháp!" : "Đã gửi thông tin khóa học lên chờ duyệt!", { id: loadingId });
+                toast.success(isDraft ? "Đã lưu nháp!" : "Đã gửi thông tin khóa học lên chờ duyệt!", { id: loadingId, duration: 2000 });
                 navigate('/instructor/courses');
             } else {
-                toast.error(resultAction.payload || "Thất bại", { id: loadingId });
+                toast.error(resultAction.payload || "Thất bại", { id: loadingId, duration: 3000 });
             }
 
         } catch (error) {
             console.error(error);
-            toast.error("Có lỗi xảy ra.", { id: loadingId });
+            toast.error("Có lỗi xảy ra.", { id: loadingId, duration: 3000 });
         }
     };
 
@@ -272,7 +272,6 @@ const AddCoursePage = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 py-10 px-4 font-sans text-gray-800">
-            <Toaster position="top-right" />
             <div className="max-w-6xl mx-auto">
 
                 {/* Header Controls (New) */}
