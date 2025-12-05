@@ -37,7 +37,11 @@ class EnrollmentService {
     // Lấy danh sách khoá học đã đăng ký của user
     async getMyEnrollments(userId) {
         return Enrollment.find({ student: userId })
-            .populate("course", "title slug thumbnail price")
+            .populate({
+                path: "course",
+                select: "title slug thumbnail price instructor",
+                populate: { path: "instructor", select: "name avatar" }
+            })
             .sort({ enrolledAt: -1 });
     }
 }
