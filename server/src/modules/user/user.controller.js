@@ -1,5 +1,5 @@
 import * as userService from './user.service.js';
-
+import User from '../auth/auth.model.js';
 /**
  * @desc    Lấy thông tin profile của user hiện tại
  * @route   GET /api/v1/users/profile
@@ -98,5 +98,16 @@ export const requestInstructorRole = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const getUsers = async (req, res, next) => {
+  try {
+    const role = req.query.role;
+    const filter = role ? { role } : {};
+    const users = await User.find(filter).select('name avatar role');
+    res.json(users);
+  } catch (err) {
+    next(err);
   }
 };

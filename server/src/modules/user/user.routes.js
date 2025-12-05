@@ -36,4 +36,6 @@ router.post(
   userController.requestInstructorRole
 );
 
+router.get('/', userController.getUsers);
+
 export default router;
