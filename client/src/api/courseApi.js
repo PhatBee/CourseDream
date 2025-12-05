@@ -27,10 +27,17 @@ const createCourse = (formData) => {
 export const searchCourses = (params) => {
   return axiosClient.get("/courses/search", { params });
 };
+
+const getLevels = () => axiosClient.get("/courses/levels");
+
+const getCourseStats = () => axiosClient.get("/courses/stats");
+
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
   uploadVideo,
   createCourse,
   searchCourses,
+  getLevels,
+  getCourseStats,
 };

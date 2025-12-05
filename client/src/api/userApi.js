@@ -26,8 +26,12 @@ const changePassword = (passwordData) => {
   return axiosClient.put(`${path}/password`, passwordData);
 };
 
+const getInstructors = () => axiosClient.get(path, { params: { role: "instructor" } });
+
+
 export const userApi = {
   getProfile,
   updateProfile,
   changePassword,
+  getInstructors,
 };
