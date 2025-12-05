@@ -31,10 +31,10 @@ const Login = () => {
             dispatch(reset());
         }
         if (isSuccess || user) {
-            toast.success("Đăng nhập thành công");
+            if (isSuccess) toast.success("Đăng nhập thành công");
 
-            if (user?.role === "instructor") navigate("/instructor/dashboard");
-            else if (user?.role === "student") navigate("/student/dashboard");
+            if (user?.role === "admin") navigate("/admin/dashboard");
+            else if (user?.role === "instructor") navigate("/instructor/dashboard");
             else navigate("/");
         }
     }, [user, isError, isSuccess, message, navigate, dispatch]);
