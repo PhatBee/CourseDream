@@ -1,6 +1,6 @@
 // Thay đổi 'require' thành 'import'
+import Course from './course.model.js';
 import * as courseService from './course.service.js';
-
 
 /**
  * @desc    Lấy chi tiết khóa học
@@ -146,6 +146,22 @@ export const createCourse = async (req, res, next) => {
   }
 };
 
+export const getLevels = async (req, res, next) => {
+  try {
+    const levels = (await Course.distinct('level')).filter(lv => lv);
+    console.log("Levels:", levels);
+    res.json(levels);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getCourseStats = async (req, res, next) => {
+  try {
+    const stats = await courseService.getCourseStats();
+    res.status(200).json(stats);
+  } catch (err) {
+    next(err);
 /**
  * @desc    Lấy khóa học của Instructor hiện tại
  * @route   GET /api/courses/instructor/my-courses

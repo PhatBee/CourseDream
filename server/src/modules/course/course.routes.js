@@ -1,5 +1,5 @@
 import express from 'express';
-import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourseRevision, getMyCourses } from './course.controller.js';
+import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse, getLevels, getCourseStats, createCourseRevision, getMyCourses } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
@@ -9,6 +9,9 @@ import { uploadVideo, upload } from '../../middlewares/upload.middleware.js';
 const router = express.Router();
 
 router.get('/', getCourses);
+router.get('/levels', getLevels);
+router.get('/stats', getCourseStats);
+router.get("/search", searchCourses);
 
 router.get(
   '/instructor/my-courses',
@@ -54,7 +57,6 @@ router.post(
 //     courseController.deleteCourse
 // );
 
-router.get("/search", searchCourses);
 router.get("/:courseId/lectures/:lectureId", verifyToken, getLecture);
 
 export default router;
