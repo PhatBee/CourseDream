@@ -1,9 +1,12 @@
 import express from 'express';
-import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse, getLevels, getCourseStats, createCourseRevision, getMyCourses } from './course.controller.js';
+import {
+  searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
+  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource
+} from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
-import { uploadVideo, upload } from '../../middlewares/upload.middleware.js';
+import { uploadVideo, upload, uploadDocument } from '../../middlewares/upload.middleware.js';
 
 
 const router = express.Router();
@@ -42,6 +45,15 @@ router.post(
   uploadCourseVideo
 );
 
+// Route upload tài liệu (Resource)
+router.post(
+  '/upload-resource',
+  verifyToken,
+  // checkRole('instructor', 'admin'),
+  uploadDocument.single('file'), // Key là 'file'
+  uploadCourseResource
+);
+
 // Route tạo khóa học (bản Revision)
 router.post(
   '/',
@@ -49,6 +61,13 @@ router.post(
   // checkRole('instructor', 'admin'),
   upload.single('thumbnail'), // 'thumbnail' là key trong FormData
   createCourseRevision
+);
+
+router.get(
+  '/instructor/edit/:slug', // Route mới
+  verifyToken,
+  // checkRole('instructor'),
+  getCourseForEdit
 );
 
 // router.delete('/:id', 

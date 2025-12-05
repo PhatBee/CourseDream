@@ -17,6 +17,12 @@ const uploadVideo = (formData) => {
   });
 };
 
+const uploadResource = (formData) => {
+  return axiosClient.post('/courses/upload-resource', formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+};
+
 // API Mới: Tạo khóa học
 const createCourse = (formData) => {
   return axiosClient.post(path, formData, {
@@ -36,13 +42,21 @@ const getInstructorCourses = (params) => {
   return axiosClient.get(`${path}/instructor/my-courses`, { params });
 };
 
+const getInstructorCourseForEdit = (slug) => {
+  return axiosClient.get(`/courses/instructor/edit/${slug}`);
+};
+
+
+
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
   uploadVideo,
+  uploadResource,
   createCourse,
   searchCourses,
   getLevels,
   getCourseStats,
   getInstructorCourses,
+  getInstructorCourseForEdit
 };

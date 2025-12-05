@@ -25,6 +25,7 @@ import AddCoursePage from "../pages/instructor/AddCourse";
 import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
+import EditCoursePage from "../pages/instructor/EditCourse";
 
 export default function AppRoutes() {
   return (
@@ -74,6 +75,7 @@ export default function AppRoutes() {
 
           <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
             <Route path="instructor/add-course" element={<AddCoursePage />} />
+            <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
           </Route>
 
         </Routes>
