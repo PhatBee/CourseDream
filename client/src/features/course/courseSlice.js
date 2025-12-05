@@ -194,10 +194,10 @@ export const courseSlice = createSlice({
           state.instructorStats.draft -= 1; // Giả sử xóa draft
         } else {
           if (deleteAction === 'hidden') {
-            // state.instructorStats.hidden += 1;
+            state.instructorStats.hidden += 1;
             state.instructorStats.published -= 1;
           } else if (deleteAction === 'archived') {
-            // state.instructorStats.archived += 1;
+            state.instructorStats.archived += 1;
             state.instructorStats.published -= 1;
           }
           // Cập nhật status trong list
@@ -217,6 +217,7 @@ export const courseSlice = createSlice({
           c._id === action.payload ? { ...c, status: 'published' } : c
         );
         state.instructorStats.published += 1;
+        state.instructorStats.hidden -= 1;
         toast.success("Khóa học đã được kích hoạt lại!");
       });
   },

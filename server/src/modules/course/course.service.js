@@ -508,7 +508,7 @@ export const getInstructorCourses = async (instructorId, query) => {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 9;
   const skip = (page - 1) * limit;
-  const statusFilter = query.status; // 'published', 'pending', 'draft', 'hidden'
+  const statusFilter = query.status; // 'published', 'pending', 'draft', 'hidden', 
 
   // 1. Lấy tất cả Course "chính thức" (Published, Hidden, Archived)
   // Lưu ý: Không phân trang ở đây, cần lấy hết để merge rồi mới cắt trang
@@ -578,7 +578,7 @@ export const getInstructorCourses = async (instructorId, query) => {
   }
 
   // --- THỐNG KÊ (STATS) ---
-  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0 };
+  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0, archived: 0 };
   mergedList.forEach(c => {
     stats.all++;
     // Logic đếm stats: Ưu tiên trạng thái revision nếu là pending
@@ -590,6 +590,8 @@ export const getInstructorCourses = async (instructorId, query) => {
       stats.published++;
     } else if (c.status === 'hidden') {
       stats.hidden++;
+    } else if (c.status === 'archived') {
+      stats.archived++;
     }
   });
 
