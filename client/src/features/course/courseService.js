@@ -42,6 +42,16 @@ const getInstructorCourseForEdit = async (slug) => {
   return response.data;
 };
 
+const deleteCourse = async (id) => {
+  const response = await courseApi.deleteCourse(id);
+  return response.data;
+};
+
+const activateCourse = async (id) => {
+  const response = await courseApi.activateCourse(id);
+  return response.data;
+};
+
 const courseService = {
   getDetails,
   getAllCourses,
@@ -50,6 +60,8 @@ const courseService = {
   uploadResource,
   getInstructorCourses,
   getInstructorCourseForEdit,
+  deleteCourse,
+  activateCourse
 };
 
 export default courseService;

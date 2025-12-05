@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import courseService from './courseService';
-
+import toast from 'react-hot-toast';
 
 const initialState = {
   items: [],
@@ -73,6 +73,32 @@ export const getInstructorCourses = createAsyncThunk(
     } catch (error) {
       const message = error.response?.data?.message || 'Error fetching courses';
       return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+// Thunk: Delete Course
+export const deleteInstructorCourse = createAsyncThunk(
+  'course/delete',
+  async (id, thunkAPI) => {
+    try {
+      const response = await courseService.deleteCourse(id); // Gọi qua service frontend
+      return { id, ...response }; // Trả về ID để filter khỏi state
+    } catch (error) {
+      const message = error.response?.data?.message || 'Delete failed';
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+export const activateInstructorCourse = createAsyncThunk(
+  'course/activate',
+  async (id, thunkAPI) => {
+    try {
+      await courseService.activateCourse(id);
+      return id;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message);
     }
   }
 );
@@ -154,6 +180,35 @@ export const courseSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+      })
+
+      .addCase(deleteInstructorCourse.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const { id, action: deleteAction } = action.payload; // action trả về từ backend: 'deleted', 'hidden', 'archived'
+
+        // Cập nhật lại list mà không cần fetch lại API
+        if (deleteAction === 'deleted') {
+          // Xóa hẳn khỏi list
+          state.instructorCourses = state.instructorCourses.filter(c => c._id !== id);
+          state.instructorStats.all -= 1;
+          state.instructorStats.draft -= 1; // Giả sử xóa draft
+        } else {
+          // Cập nhật status trong list
+          state.instructorCourses = state.instructorCourses.map(c => {
+            if (c._id === id) {
+              return { ...c, status: deleteAction }; // 'hidden' hoặc 'archived'
+            }
+            return c;
+          });
+          // (Bạn có thể update lại stats object cho chính xác nếu cần)
+        }
+        toast.success(action.payload.message);
+      })
+      .addCase(activateInstructorCourse.fulfilled, (state, action) => {
+        state.instructorCourses = state.instructorCourses.map(c =>
+          c._id === action.payload ? { ...c, status: 'published' } : c
+        );
+        toast.success("Khóa học đã được kích hoạt lại!");
       });
   },
 });

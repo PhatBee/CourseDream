@@ -188,7 +188,7 @@ const AddCoursePage = () => {
 
             if (createNewCourse.fulfilled.match(resultAction)) {
                 toast.success(isDraft ? "Đã lưu nháp!" : "Đã gửi thông tin khóa học lên chờ duyệt!", { id: loadingId, duration: 2000 });
-                navigate('/instructor/courses');
+                navigate('/profile/instructor/courses');
             } else {
                 toast.error(resultAction.payload || "Thất bại", { id: loadingId, duration: 3000 });
             }
