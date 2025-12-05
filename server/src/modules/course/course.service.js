@@ -469,70 +469,108 @@ export const getInstructorCourses = async (instructorId, query) => {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 9;
   const skip = (page - 1) * limit;
-  const status = query.status; // 'published', 'pending', 'draft', 'hidden'
+  const statusFilter = query.status; // 'published', 'pending', 'draft', 'hidden'
 
-  const filter = { instructor: instructorId };
-  // Nếu status là 'published' thì vẫn cần lấy ra để check xem có draft update không
-  // Nên logic lọc status ở đây áp dụng cho trạng thái CHÍNH của khóa học.
-  if (status && status !== 'all') {
-    filter.status = status;
-  }
-
-  // 1. Lấy danh sách Course gốc
-  const courses = await Course.find(filter)
-    .select('title slug thumbnail price priceDiscount level rating studentsCount status totalLectures totalHours')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
+  // 1. Lấy tất cả Course "chính thức" (Published, Hidden, Archived)
+  // Lưu ý: Không phân trang ở đây, cần lấy hết để merge rồi mới cắt trang
+  const courses = await Course.find({ instructor: instructorId })
+    .select('title slug thumbnail price priceDiscount level rating studentsCount status totalLectures totalHours createdAt')
     .lean();
 
-  const totalCourses = await Course.countDocuments(filter);
-
-  // 2. Check Revision: Lấy danh sách ID của các khóa học vừa tìm được
-  const courseIds = courses.map(c => c._id);
-
-  // Tìm các Revision thuộc về các course này mà đang chưa được duyệt (draft hoặc pending)
-  const revisions = await CourseRevision.find({
-    course: { $in: courseIds },
+  // 2. Lấy tất cả Revision của instructor
+  // Ta cần status 'draft' hoặc 'pending' để xác định trạng thái
+  const allRevisions = await CourseRevision.find({
+    instructor: instructorId,
     status: { $in: ['draft', 'pending'] }
-  }).select('course status');
+  }).lean();
 
-  // 3. [MỚI] Merge thông tin Revision vào Course object để Frontend xử lý
-  const coursesWithRevisionInfo = courses.map(course => {
-    // Tìm revision tương ứng với course này
-    const activeRevision = revisions.find(r => r.course.toString() === course._id.toString());
+  // --- XỬ LÝ GỘP DỮ LIỆU ---
 
-    return {
+  const mergedList = [];
+
+  // A. Xử lý các Course chính thức
+  courses.forEach(course => {
+    // Tìm xem course này có bản revision nào đang treo không
+    const activeRevision = allRevisions.find(r => r.course && r.course.toString() === course._id.toString());
+
+    mergedList.push({
       ...course,
-      // Tạo thêm field mới trả về cho FE
-      revisionStatus: activeRevision ? activeRevision.status : null, // 'draft' | 'pending' | null
-    };
+      // Gắn thêm cờ revisionStatus
+      revisionStatus: activeRevision ? activeRevision.status : null,
+      type: 'course' // Đánh dấu đây là course thật
+    });
   });
 
-  // Tính thống kê cho Dashboard
-  // (Có thể tách ra API riêng nếu nặng, nhưng làm chung cho tiện)
-  const stats = await Course.aggregate([
-    { $match: { instructor: new mongoose.Types.ObjectId(instructorId) } },
-    { $group: { _id: "$status", count: { $sum: 1 } } }
-  ]);
+  // B. Xử lý các Revision "độc lập" (Course mới chưa từng publish)
+  // Là các revision mà field 'course' bị null
+  const standaloneRevisions = allRevisions.filter(r => !r.course);
 
-  // Format stats về dạng object { published: 10, draft: 5... }
-  const statsObj = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0 };
-  stats.forEach(s => {
-    if (statsObj.hasOwnProperty(s._id)) {
-      statsObj[s._id] = s.count;
+  standaloneRevisions.forEach(rev => {
+    // Chuẩn hóa data từ revision.data ra ngoài để giống cấu trúc Course
+    // Giúp Frontend hiển thị thống nhất mà không cần sửa nhiều
+    mergedList.push({
+      _id: rev._id, // Dùng ID của revision
+      title: rev.data.title || 'Untitled Course',
+      slug: rev.data.slug,
+      thumbnail: rev.data.thumbnail,
+      price: rev.data.price || 0,
+      priceDiscount: rev.data.priceDiscount,
+      totalLectures: rev.data.sections ? rev.data.sections.reduce((acc, sec) => acc + (sec.lectures?.length || 0), 0) : 0,
+      totalHours: 0, // Tính toán nếu cần
+      status: rev.status, // 'draft' hoặc 'pending'
+      revisionStatus: null, // Không có revision con
+      type: 'revision', // Đánh dấu là revision
+      createdAt: rev.createdAt
+    });
+  });
+
+  // --- LỌC (FILTER) ---
+  let finalCourses = mergedList;
+
+  if (statusFilter && statusFilter !== 'all') {
+    finalCourses = finalCourses.filter(c => {
+      // Logic filter status
+      // Nếu filter = pending -> Lấy course pending HOẶC course published đang có revision pending
+      if (statusFilter === 'pending') {
+        return c.status === 'pending' || c.revisionStatus === 'pending';
+      }
+      return c.status === statusFilter;
+    });
+  }
+
+  // --- THỐNG KÊ (STATS) ---
+  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0 };
+  mergedList.forEach(c => {
+    stats.all++;
+    // Logic đếm stats: Ưu tiên trạng thái revision nếu là pending
+    if (c.status === 'pending' || c.revisionStatus === 'pending') {
+      stats.pending++;
+    } else if (c.status === 'draft') {
+      stats.draft++;
+    } else if (c.status === 'published') {
+      stats.published++;
+    } else if (c.status === 'hidden') {
+      stats.hidden++;
     }
-    statsObj.all += s.count;
   });
+
+  // --- SẮP XẾP (SORT) ---
+  // Mới nhất lên đầu
+  finalCourses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  // --- PHÂN TRANG (PAGINATION) ---
+  const total = finalCourses.length;
+  const totalPages = Math.ceil(total / limit);
+  const paginatedData = finalCourses.slice((page - 1) * limit, page * limit);
 
   return {
-    courses: coursesWithRevisionInfo,
-    stats: statsObj,
+    courses: paginatedData,
+    stats,
     pagination: {
-      total: totalCourses,
+      total,
       page,
       limit,
-      totalPages: Math.ceil(totalCourses / limit)
+      totalPages
     }
   };
 };

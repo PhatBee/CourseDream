@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Clock, Edit2, Trash2, Eye, Lock } from 'lucide-react'; // Thêm icon Lock
+import { BookOpen, Clock, Edit2, Trash2, Eye, Lock } from 'lucide-react';
 
 const InstructorCourseCard = ({ course, onDelete }) => {
     const {
@@ -11,19 +11,20 @@ const InstructorCourseCard = ({ course, onDelete }) => {
         priceDiscount,
         totalLectures,
         totalHours,
-        status, // Trạng thái gốc: 'published', 'draft', 'hidden'
+        status,         // Backend trả về: 'published', 'draft', 'pending', 'hidden'
         slug,
-        revisionStatus // Trạng thái bản sửa đổi: 'draft', 'pending', null (Từ Backend mới trả về)
+        revisionStatus, // Backend trả về: 'draft', 'pending', null
+        type            // Backend trả về: 'course' hoặc 'revision' (để phân biệt nếu cần)
     } = course;
 
     // --- LOGIC XÁC ĐỊNH TRƯỜNG HỢP (CASE) ---
 
-    // Case 4 (Ưu tiên cao nhất): Đang chờ duyệt (Pending)
-    // Xảy ra khi course gốc là pending HOẶC đang có revision là pending
+    // Case 4: Đang chờ duyệt (Pending)
+    // Xảy ra khi: Status chính là pending HOẶC có bản revision đang pending
     const isPendingReview = status === 'pending' || revisionStatus === 'pending';
 
     // Case 1: Course đang nháp hoàn toàn (Chưa từng publish)
-    // Course gốc là draft/hidden VÀ không có revision pending nào
+    // Xảy ra khi: Status là draft (có thể từ course gốc hoặc revision độc lập) VÀ không pending
     const isFreshDraft = (status === 'draft' || status === 'hidden') && !isPendingReview;
 
     // Case 3: Course đã publish NHƯNG đang có bản edit (Draft update)
@@ -60,9 +61,14 @@ const InstructorCourseCard = ({ course, onDelete }) => {
         return null;
     };
 
-    // Helper Logic Button Sửa
+    // Helper Logic Button
     const getEditButton = () => {
-        // Nếu đang pending duyệt -> Disable edit
+        // Link Edit: Luôn dùng slug (Backend đã đảm bảo revision cũng có slug)
+        // Lưu ý: Nếu là revision độc lập chưa có slug đẹp, backend nên trả về ID hoặc slug tạm. 
+        // Logic route frontend: /instructor/courses/:slug/edit
+        const editLink = `/instructor/courses/${slug}/edit`;
+
+        // Nếu đang pending duyệt -> Disable edit hoàn toàn
         if (isPendingReview) {
             return (
                 <button disabled className="flex items-center gap-1 text-sm text-gray-400 cursor-not-allowed">
@@ -71,13 +77,18 @@ const InstructorCourseCard = ({ course, onDelete }) => {
             );
         }
 
-        // Link Edit
-        const editLink = `/instructor/courses/${slug}/edit`;
-
-        if (isFreshDraft || isPublishedWithDraft) {
+        if (isFreshDraft) {
             return (
                 <Link to={editLink} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium">
                     <Edit2 size={16} /> Continue Editing
+                </Link>
+            );
+        }
+
+        if (isPublishedWithDraft) {
+            return (
+                <Link to={editLink} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium">
+                    <Edit2 size={16} /> Edit Draft
                 </Link>
             );
         }
@@ -92,10 +103,10 @@ const InstructorCourseCard = ({ course, onDelete }) => {
 
     return (
         <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden">
-            {/* Thumbnail Logic: Case 1 (Fresh Draft) thì làm mờ ảnh */}
+            {/* Thumbnail Logic */}
             <div className="relative overflow-hidden h-48 bg-gray-100">
-                <div className={isFreshDraft ? "opacity-70 grayscale filter" : ""}>
-                    {/* Nếu đang pending thì không cho click vào ảnh để sửa, ngược lại thì cho */}
+                {/* Case 1: Làm mờ ảnh nếu là Fresh Draft */}
+                <div className={isFreshDraft ? "opacity-60 grayscale filter transition-all group-hover:opacity-90 group-hover:grayscale-0" : ""}>
                     {!isPendingReview ? (
                         <Link to={`/instructor/courses/${slug}/edit`}>
                             <img
@@ -120,7 +131,7 @@ const InstructorCourseCard = ({ course, onDelete }) => {
                     {renderStatusBadge()}
                 </div>
 
-                {/* View Button (Chỉ hiện khi đã published) */}
+                {/* View Button (Chỉ hiện khi đã published thật sự) */}
                 {(status === 'published') && (
                     <div className="absolute top-3 right-3 bg-black/50 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <Link to={`/courses/${slug}`} title="View Live Page"><Eye size={16} /></Link>
@@ -150,17 +161,17 @@ const InstructorCourseCard = ({ course, onDelete }) => {
                 <div className="flex items-center justify-between text-xs text-gray-500 border-b border-gray-100 pb-3 mb-3">
                     <div className="flex items-center gap-1">
                         <BookOpen size={14} />
-                        <span>{totalLectures} Lessons</span>
+                        <span>{totalLectures || 0} Lessons</span>
                     </div>
                     <div className="flex items-center gap-1">
                         <Clock size={14} />
-                        <span>{totalHours} Hours</span>
+                        <span>{totalHours || 0} Hours</span>
                     </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex justify-between items-center mt-auto">
-                    {/* Nút Delete (Chỉ hiện khi không Pending review để an toàn, hoặc tùy logic của bạn) */}
+                    {/* Delete: Không cho xóa khi đang chờ duyệt */}
                     <button
                         onClick={() => !isPendingReview && onDelete(_id)}
                         disabled={isPendingReview}
@@ -169,7 +180,7 @@ const InstructorCourseCard = ({ course, onDelete }) => {
                         <Trash2 size={16} /> Delete
                     </button>
 
-                    {/* Nút Edit Dynamic */}
+                    {/* Edit Button */}
                     {getEditButton()}
                 </div>
             </div>
