@@ -1,37 +1,57 @@
 import React from 'react';
-import { Bell, Search } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Bell } from 'lucide-react';
+import defaultAvatar from '../../assets/img/icons/apple-icon.png';
 
 const AdminHeader = ({ user }) => {
-  return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
-      {/* Search Bar */}
-      <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96">
-        <Search size={18} className="text-gray-400" />
-        <input 
-          type="text" 
-          placeholder="Search courses, students..." 
-          className="bg-transparent border-none outline-none text-sm ml-2 w-full text-gray-600 placeholder-gray-400"
-        />
+    const location = useLocation();
+
+    const getPageTitle = () => {
+        const path = location.pathname;
+        if (path.includes('/dashboard')) return 'Dashboard';
+        if (path.includes('/users')) return 'Manage Students';
+        if (path.includes('/instructors')) return 'Manage Instructors';
+        if (path.includes('/courses')) return 'All Courses';
+        if (path.includes('/blogs')) return 'Blog Posts';
+        return 'Admin Panel';
+    };
+
+    const title = getPageTitle();
+    return (
+    <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm flex-shrink-0 z-10 text-left">
+      
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+        <p className="text-sm text-gray-500 mt-1">Welcome, {user?.name || 'Admin'}!</p>
       </div>
 
-      {/* Right Side */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-5">
+
         {/* Notification */}
-        <button className="relative p-2 rounded-full hover:bg-gray-100 text-gray-500">
+        <button className="relative p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
           <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+          <span className="absolute top-1.5 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
         </button>
 
+        {/* Divider */}
+        <div className="h-8 w-[1px] bg-gray-200 mx-1"></div>
+
         {/* User Profile */}
-        <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+        <div className="flex items-center gap-3 cursor-pointer group">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-gray-800">{user?.name}</p>
-            <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+            <p className="text-sm font-bold text-gray-800 group-hover:text-rose-600 transition-colors">
+              {user?.name || "Admin User"}
+            </p>
+            <p className="text-xs text-gray-500 font-medium capitalize bg-gray-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
+              {user?.role || "Admin"}
+            </p>
           </div>
+          
+          {/* Avatar (Dùng ảnh apple-icon nếu user chưa có avatar) */}
           <img 
-            src={user?.avatar || 'https://via.placeholder.com/40'} 
+            src={user?.avatar || defaultAvatar} 
             alt="Admin Avatar" 
-            className="w-10 h-10 rounded-full border-2 border-rose-100 object-cover"
+            className="w-11 h-11 rounded-full border-2 border-white shadow-sm object-cover ring-2 ring-transparent group-hover:ring-rose-200 transition-all bg-gray-50"
           />
         </div>
       </div>

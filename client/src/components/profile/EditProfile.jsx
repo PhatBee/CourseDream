@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateProfile, reset, getProfile } from '../../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
+import defaultAvatar from '../../assets/img/icons/apple-icon.png';
 
 const EditProfile = () => {
     const dispatch = useDispatch();
@@ -24,7 +25,7 @@ const EditProfile = () => {
             setName(user.name || '');
             setBio(user.bio || '');
             setPhone(user.phone || '');
-            if (!avatarFile) setPreview(user.avatar || 'https://via.placeholder.com/150');
+            if (!avatarFile) setPreview(user.avatar || defaultAvatar);
         }
     }, [user, avatarFile]);
 
@@ -73,7 +74,7 @@ const EditProfile = () => {
     const handleDeleteAvatar = () => {
         setAvatarFile(null);
         setDeleteAvatar(true);
-        setPreview('https://via.placeholder.com/150'); // Về ảnh mặc định
+        setPreview(defaultAvatar); // Về ảnh mặc định
     };
 
     const onSubmit = (e) => {

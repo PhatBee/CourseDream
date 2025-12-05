@@ -1,62 +1,90 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDashboardStats } from '../../features/admin/adminSlice';
 import StatsCard from '../../components/admin/StatsCard';
-import { BookOpen, Users, DollarSign, UserCheck } from 'lucide-react';
+import RevenueChart from '../../components/admin/dashboard/RevenueChart';
+import UserAnalytics from '../../components/admin/dashboard/UserAnalytics';
+import TopCoursesList from '../../components/admin/dashboard/TopCoursesList';
+import { BookOpen, Users, DollarSign, UserCheck, Loader } from 'lucide-react';
 
 const AdminDashboard = () => {
-  // Dữ liệu giả (Sau này sẽ gọi API)
-  const stats = [
-    { title: 'Total Students', value: '4,532', icon: Users, color: 'bg-blue-500', trend: 12 },
-    { title: 'Total Instructors', value: '128', icon: UserCheck, color: 'bg-green-500', trend: 5 },
-    { title: 'Courses Published', value: '67', icon: BookOpen, color: 'bg-orange-500', trend: -2 },
-    { title: 'Total Revenue', value: '$750,000', icon: DollarSign, color: 'bg-rose-500', trend: 10.3 },
+  const dispatch = useDispatch();
+  const { stats, revenueData, isLoading } = useSelector((state) => state.admin);
+
+  useEffect(() => {
+    dispatch(fetchDashboardStats());
+    // (RevenueChart tự gọi API của nó bên trong component)
+  }, [dispatch]);
+
+  if (isLoading && !stats) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader className="animate-spin text-rose-600" size={40} />
+      </div>
+    );
+  }
+
+  const counts = stats?.counts || {};
+  const topCourses = stats?.topCourses || [];
+  const totalRevenue = revenueData?.totalRevenue || 0;
+  
+  // Dữ liệu giả lập cho active students (Bạn cần API backend trả về số này thực tế)
+  const totalStudents = counts.users?.students || 0;
+  const activeStudents = Math.round(totalStudents * 0.65); // Ví dụ: 65% đã mua khóa học
+
+  const statsCards = [
+    { title: 'Total Students', value: totalStudents, icon: Users, color: 'bg-blue-500' },
+    { title: 'Total Instructors', value: counts.users?.instructors || 0, icon: UserCheck, color: 'bg-green-500' },
+    { title: 'Courses Published', value: counts.courses?.published || 0, icon: BookOpen, color: 'bg-orange-500' },
+    { 
+      title: 'Total Revenue', 
+      value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalRevenue), 
+      icon: DollarSign, 
+      color: 'bg-rose-500' 
+    },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Title */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Overview</h2>
-        <button className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors shadow-sm">
-          + Create Report
-        </button>
+    <div className="space-y-6 font-inter pb-10 text-left">
+      
+      {/* 1. Header & Stats Grid */}
+      <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statsCards.map((stat, index) => (
+            <StatsCard key={index} {...stat} />
+          ))}
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <StatsCard key={index} {...stat} />
-        ))}
+      {/* 2. Main Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[400px]">
+        {/* Doanh thu (Chiếm 2/3) */}
+        <div className="lg:col-span-2 h-full">
+          <RevenueChart />
+        </div>
+        
+        {/* Phân tích Học viên (Chiếm 1/3) */}
+        <div className="h-full">
+          <UserAnalytics totalStudents={totalStudents} activeStudents={activeStudents} />
+        </div>
       </div>
 
-      {/* Chart Section (Placeholder) */}
+      {/* 3. Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cột trái (Biểu đồ lớn) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[300px]">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Revenue Analytics</h3>
-          <div className="h-64 flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg border border-dashed">
-            Chart Component Here (Recharts / Chart.js)
+        {/* Top Courses (List nhỏ gọn) */}
+        <div className="lg:col-span-1">
+          <TopCoursesList courses={topCourses} />
+        </div>
+
+        {/* Placeholder cho phần khác (VD: Recent Activity / Category Stats) */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Activities</h3>
+          <div className="text-center text-gray-400 py-10">
+            Coming Soon: Real-time user activity feed
           </div>
         </div>
-
-        {/* Cột phải (Danh sách nhỏ) */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Top Courses</h3>
-          <ul className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <li key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gray-200"></div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">UI/UX Design</p>
-                    <p className="text-xs text-gray-500">485 sales</p>
-                  </div>
-                </div>
-                <span className="text-sm font-bold text-rose-600">$120</span>
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
+
     </div>
   );
 };

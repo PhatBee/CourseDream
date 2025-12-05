@@ -38,3 +38,40 @@ export const reviewApplication = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getDashboardStats = async (req, res, next) => {
+  try {
+    // Chạy song song các service để tối ưu tốc độ
+    const [counts, topCourses, categoryStats] = await Promise.all([
+      adminService.getDashboardCounts(),
+      adminService.getTopCourses(5), // Top 5
+      adminService.getCategoryStats()
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        counts,
+        topCourses,
+        categoryStats
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRevenueAnalytics = async (req, res, next) => {
+  try {
+    const { type = 'year', year, month } = req.query; 
+    
+    const revenueData = await adminService.getRevenueStats(type, year, month);
+
+    res.status(200).json({
+      success: true,
+      data: revenueData
+    });
+  } catch (error) {
+    next(error);
+  }
+};

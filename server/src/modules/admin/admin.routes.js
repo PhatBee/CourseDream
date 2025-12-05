@@ -28,4 +28,16 @@ router.put(
   adminController.reviewApplication
 );
 
+/**
+ * @route   GET /api/admin/dashboard-stats
+ * @desc    Lấy số liệu tổng quan cho Dashboard
+ */
+router.get('/dashboard-stats', adminController.getDashboardStats);
+
+/**
+ * @route   GET /api/admin/revenue-analytics
+ * @desc    Lấy biểu đồ doanh thu
+ */
+router.get('/revenue-analytics', adminController.getRevenueAnalytics);
+
 export default router;
