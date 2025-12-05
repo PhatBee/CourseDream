@@ -27,6 +27,7 @@ import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import EditCoursePage from "../pages/instructor/EditCourse";
 
 export default function AppRoutes() {
   return (
@@ -79,6 +80,11 @@ export default function AppRoutes() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+            <Route path="instructor/add-course" element={<AddCoursePage />} />
+            <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
+          </Route>
 
             {/* Các trang placeholder cho menu */}
             <Route path="users" element={<div>Manage Students</div>} />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, PlusCircle } from 'lucide-react';
+import { X, Link as LinkIcon, Upload, FileText } from 'lucide-react';
 import VideoInputSelector from '../common/VideoInputSelector';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
     const [lesson, setLesson] = useState({
@@ -14,8 +15,10 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
         resources: []
     });
 
-    // State cho Resource input
+    // Resource State
+    const [resourceType, setResourceType] = useState('link'); // 'link' | 'upload'
     const [tempResource, setTempResource] = useState({ title: '', url: '' });
+    const [uploadFile, setUploadFile] = useState(null); // File đang chọn
 
     useEffect(() => {
         if (initialData) {
@@ -33,7 +36,47 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
                 resources: []
             });
         }
+        // Reset inputs
+        setTempResource({ title: '', url: '' });
+        setUploadFile(null);
+        setResourceType('link');
     }, [initialData, isOpen]);
+
+    // --- XỬ LÝ RESOURCE (LOGIC MỚI: CHỈ LƯU LOCAL) ---
+
+    const handleAddResource = () => {
+        if (!tempResource.title) return toast.error("Vui lòng nhập Title Resource");
+
+        let newResource = {
+            title: tempResource.title,
+            type: resourceType
+        };
+
+        // TRƯỜNG HỢP 1: UPLOAD FILE -> Lưu file object, chưa có URL
+        if (resourceType === 'upload') {
+            if (!uploadFile) return toast.error("Vui lòng chọn file để upload");
+
+            newResource.file = uploadFile; // Lưu file gốc
+            newResource.url = ""; // Chưa có URL
+            newResource.type = 'file';
+        }
+        // TRƯỜNG HỢP 2: LINK -> Lưu URL bình thường
+        else {
+            if (!tempResource.url) return toast.error("Vui lòng nhập URL Resource");
+            newResource.url = tempResource.url;
+        }
+
+        // Thêm vào list
+        setLesson(prev => ({
+            ...prev,
+            resources: [...prev.resources, newResource]
+        }));
+
+        // Reset inputs
+        setTempResource({ title: '', url: '' });
+        setUploadFile(null);
+        toast.success("Resource added to queue");
+    };
 
     const handleSave = () => {
         if (!lesson.title.trim()) return toast.error("Lesson title is required");
@@ -124,30 +167,60 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
                     {/* Resources Section */}
                     <div className="border-t pt-4">
                         <label className="block text-sm font-bold mb-2 text-gray-700">Downloadable Resources</label>
-                        <div className="bg-gray-50 p-3 rounded-lg border mb-3">
-                            <div className="flex gap-2 mb-2">
-                                <input type="text" placeholder="Title (e.g. Source Code)" className="flex-1 px-3 py-1.5 border rounded text-sm focus:outline-blue-500" value={tempResource.title} onChange={(e) => setTempResource({ ...tempResource, title: e.target.value })} />
-                                <input type="text" placeholder="URL (e.g. drive.google...)" className="flex-1 px-3 py-1.5 border rounded text-sm focus:outline-blue-500" value={tempResource.url} onChange={(e) => setTempResource({ ...tempResource, url: e.target.value })} />
-                                <button onClick={addResource} className="bg-blue-600 text-white px-3 rounded hover:bg-blue-700 text-sm font-medium">Add</button>
+
+                        <div className="bg-gray-50 p-4 rounded-lg border mb-3">
+
+                            {/* Tabs Switcher */}
+                            <div className="flex gap-4 mb-3 border-b border-gray-200 pb-2">
+                                <button onClick={() => setResourceType('link')} className={`text-sm font-medium flex items-center gap-1 pb-1 transition-colors ${resourceType === 'link' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}>
+                                    <LinkIcon size={14} /> External Link
+                                </button>
+                                <button onClick={() => setResourceType('upload')} className={`text-sm font-medium flex items-center gap-1 pb-1 transition-colors ${resourceType === 'upload' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}>
+                                    <Upload size={14} /> Upload File
+                                </button>
                             </div>
 
-                            {lesson.resources.length > 0 ? (
-                                <div className="space-y-1">
+                            {/* Input Fields */}
+                            <div className="flex gap-2 items-end">
+                                <div className="flex-1 space-y-2">
+                                    <input type="text" placeholder="Resource Title (e.g. Exercise PDF)" className="w-full px-3 py-1.5 border rounded text-sm focus:outline-blue-500" value={tempResource.title} onChange={(e) => setTempResource({ ...tempResource, title: e.target.value })} />
+
+                                    {resourceType === 'link' ? (
+                                        <input type="text" placeholder="URL (e.g. https://drive.google.com/...)" className="w-full px-3 py-1.5 border rounded text-sm focus:outline-blue-500" value={tempResource.url} onChange={(e) => setTempResource({ ...tempResource, url: e.target.value })} />
+                                    ) : (
+                                        <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip" className="w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" onChange={(e) => setUploadFile(e.target.files[0])} />
+                                    )}
+                                </div>
+
+                                <button onClick={handleAddResource} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium h-10 flex items-center">
+                                    Add
+                                </button>
+                            </div>
+
+                            {/* Resource List */}
+                            {lesson.resources.length > 0 && (
+                                <div className="mt-4 space-y-2">
                                     {lesson.resources.map((res, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded border shadow-sm">
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                                <span className="font-medium">{res.title}</span>
-                                                <span className="text-xs text-gray-400 truncate max-w-[150px]">({res.url})</span>
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className={`p-1.5 rounded-full ${res.type === 'file' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                    {res.type === 'file' ? <FileText size={14} /> : <LinkIcon size={14} />}
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-medium truncate">{res.title}</span>
+                                                    {/* Hiển thị tên file nếu chưa có URL */}
+                                                    <span className="text-xs text-gray-400 truncate max-w-[200px]">
+                                                        {res.type === 'file' && res.file ? `File: ${res.file.name}` : <Link target="_blank" to={res.url}>{res.url}</Link>}
+                                                    </span>
+
+                                                </div>
                                             </div>
-                                            <button onClick={() => removeResource(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded">
-                                                <X size={14} />
+                                            <button onClick={() => removeResource(idx)} className="text-red-500 hover:bg-red-50 p-1.5 rounded transition">
+                                                <X size={16} />
                                             </button>
                                         </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <p className="text-xs text-gray-400 text-center py-1">No resources added yet.</p>
                             )}
                         </div>
                     </div>

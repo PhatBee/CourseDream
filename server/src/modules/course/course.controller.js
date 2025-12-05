@@ -100,6 +100,28 @@ export const uploadCourseVideo = async (req, res, next) => {
 };
 
 /**
+ * @desc    Upload tài liệu khóa học (PDF, Doc, Zip...)
+ * @route   POST /api/courses/upload-resource
+ */
+export const uploadCourseResource = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+    const { title } = req.body;
+    // Gọi service upload resource
+    const result = await courseService.uploadResource(req.file, title || "Course Resource");
+
+    res.status(200).json({
+      success: true,
+      data: result // { url, originalName, format }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Tạo HOẶC Cập nhật Course Revision (Draft/Pending)
  * @route   POST /api/courses
  */
@@ -176,6 +198,27 @@ export const getMyCourses = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Lấy thông tin khóa học để Edit (Instructor Only)
+ * @route   GET /api/courses/instructor/edit/:slug
+ */
+export const getCourseForEdit = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const instructorId = req.user._id;
+
+    // Gọi service
+    const data = await courseService.getCourseForEdit(slug, instructorId);
+
+    res.status(200).json({
+      success: true,
+      data: data
     });
   } catch (error) {
     next(error);

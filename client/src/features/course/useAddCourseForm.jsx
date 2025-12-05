@@ -12,6 +12,7 @@ export const useAddCourseForm = () => {
         shortDescription: '',
         description: '',
         thumbnail: null,
+        thumbnailUrl: '',
         thumbnailPreview: '',
 
         previewVideoType: 'url',
@@ -26,6 +27,44 @@ export const useAddCourseForm = () => {
         sections: [],
         messageToReviewer: '',
     });
+
+    const setFullData = (apiData) => {
+        // apiData là data trả về từ service getCourseForEdit
+        setCourseData({
+            title: apiData.title || '',
+            slug: apiData.slug || '',
+            courseId: apiData.courseId || null, // Lưu lại ID gốc nếu có
+
+            // Map Categories: Backend trả về mảng ID, ta cần convert về format select nếu cần
+            // Lưu ý: Ở EditPage ta sẽ xử lý mapping label sau khi fetch category list
+            categories: apiData.categories || [],
+
+            level: apiData.level || 'alllevels',
+            language: apiData.language || 'Vietnamese',
+            price: apiData.price || 0,
+            priceDiscount: apiData.priceDiscount || 0,
+            isFree: (apiData.price === 0),
+            shortDescription: apiData.shortDescription || '',
+            description: apiData.description || '',
+
+            thumbnail: null, // File upload set null
+            thumbnailUrl: apiData.thumbnail || '', // URL ảnh cũ
+            thumbnailPreview: apiData.thumbnail || '',
+
+            previewVideoType: 'url',
+            previewVideoUrl: apiData.previewUrl || '',
+            previewVideoFile: null,
+
+            learnOutcomes: apiData.learnOutcomes || [],
+            requirements: apiData.requirements || [],
+            audience: apiData.audience || [],
+            includes: apiData.includes || [],
+
+            sections: apiData.sections || [],
+            messageToReviewer: '',
+            status: apiData.status || 'draft'
+        });
+    };
 
     // Xử lý input text/select/checkbox
     const handleInputChange = (e) => {
@@ -112,6 +151,7 @@ export const useAddCourseForm = () => {
         removeSection,
         addLecture,
         updateLecture,
-        removeLecture
+        removeLecture,
+        setFullData
     };
 };

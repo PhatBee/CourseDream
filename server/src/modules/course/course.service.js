@@ -7,7 +7,7 @@ import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
 import Category from "../category/category.model.js";
 import { uploadToYouTube } from "../../config/youtube.js";
-import { uploadToCloudinary } from "../../config/cloudinary.js";
+import { uploadToCloudinary, uploadResourceToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
 /**
@@ -19,9 +19,9 @@ export const getCourseDetailsBySlug = async (slug) => {
   const course = await Course.findOne({ slug: slug, status: "published" })
     .select(
       "title slug thumbnail previewUrl shortDescription topics includes " +
-        "audience description price priceDiscount level language requirements " +
-        "learnOutcomes instructor categories sections rating studentsCount " +
-        "totalLectures totalHours totalDurationSeconds status"
+      "audience description price priceDiscount level language requirements " +
+      "learnOutcomes instructor categories sections rating studentsCount " +
+      "totalLectures totalHours totalDurationSeconds status"
     )
     .populate({
       path: "instructor",
@@ -278,6 +278,13 @@ export const uploadVideo = async (file, title) => {
   return await uploadToYouTube(file.buffer, title, "Uploaded via DreamsLMS");
 };
 
+/**
+ * Upload Resource lên Cloudinary
+ */
+export const uploadResource = async (file, title) => {
+  return await uploadResourceToCloudinary(file, title);
+};
+
 // Hàm helper để chuẩn hóa input mảng từ FormData
 // Vì FormData gửi 1 item sẽ là string, gửi nhiều là array. Chúng ta cần ép về Array.
 const parseArrayField = (fieldData) => {
@@ -344,7 +351,6 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   const requirements = parseArrayField(courseData.requirements);
   const audience = parseArrayField(courseData.audience);
   const includes = parseArrayField(courseData.includes);
-  const resources = parseArrayField(courseData.resources);
 
   // 5. Tạo Course (Draft trước)
   const newCourse = new Course({
@@ -367,7 +373,6 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
     requirements,
     audience,
     includes,
-    resources,
 
     // Relations
     instructor: instructorId,
@@ -418,7 +423,11 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
           duration: Number(lecData.duration) || 0,
           isPreviewFree: lecData.isPreviewFree,
           order: lecData.order || 0,
-          // resources...
+          resources: lecData.resources.map(res => ({
+            title: res.title,
+            url: res.url,
+            type: res.type
+          }))
         });
         lectureIds.push(newLecture._id);
 
@@ -490,100 +499,6 @@ export const getCourseStats = async () => {
     },
     level: levelStats,
   };
-};
-/**
- * Tạo hoặc cập nhật Course Revision
- */
-export const createOrUpdateRevision = async (courseData, thumbnailFile, instructorId) => {
-  // 1. Xử lý Thumbnail
-  let thumbnailUrl = courseData.thumbnailUrl || ''; // Nếu edit thì có thể có URL cũ
-  if (thumbnailFile) {
-    const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
-    thumbnailUrl = uploadResult.secure_url;
-  }
-
-  // 2. Xử lý Category (Giống bài trước)
-  const rawCategories = parseArrayField(courseData.categories);
-  const finalCategoryIds = [];
-  for (const catInput of rawCategories) {
-    if (mongoose.Types.ObjectId.isValid(catInput)) {
-      finalCategoryIds.push(catInput);
-    } else {
-      let existingCat = await Category.findOne({ name: catInput });
-      if (existingCat) {
-        finalCategoryIds.push(existingCat._id);
-      } else {
-        const newCatSlug = slugify(catInput, { lower: true, strict: true });
-        const newCategory = await Category.create({ name: catInput, slug: newCatSlug });
-        finalCategoryIds.push(newCategory._id);
-      }
-    }
-  }
-
-  // 3. Chuẩn hóa mảng
-  const learnOutcomes = parseArrayField(courseData.learnOutcomes);
-  const requirements = parseArrayField(courseData.requirements);
-  const audience = parseArrayField(courseData.audience);
-  const includes = parseArrayField(courseData.includes);
-
-  // 4. Xử lý Sections (Không tạo doc Section/Lecture thật, chỉ lưu JSON trong Revision)
-  let sectionsData = [];
-  try {
-    sectionsData = JSON.parse(courseData.sections || '[]');
-  } catch (e) {
-    console.error("Error parsing sections JSON:", e);
-  }
-
-  // Chuẩn hóa cấu trúc Section để lưu vào Revision.data
-  const sectionsStruct = sectionsData.map(sec => ({
-    title: sec.title,
-    order: sec.order || 0,
-    lectures: sec.lectures.map(lec => ({
-      title: lec.title,
-      videoUrl: lec.videoUrl,
-      duration: Number(lec.duration) || 0,
-      order: lec.order || 0,
-      isPreviewFree: lec.isPreviewFree || false,
-      resources: lec.resources || []
-    }))
-  }));
-
-  // 5. Chuẩn bị Data Object cho Revision
-  const revisionData = {
-    title: courseData.title,
-    slug: courseData.slug || (slugify(courseData.title || '', { lower: true, strict: true }) + '-' + Date.now()), // Tạo slug tạm nếu chưa có
-    thumbnail: thumbnailUrl,
-    previewUrl: courseData.previewUrl || '',
-    shortDescription: courseData.shortDescription,
-    description: courseData.description,
-    price: Number(courseData.price) || 0,
-    priceDiscount: Number(courseData.priceDiscount) || 0,
-    level: courseData.level || 'alllevels',
-    language: courseData.language || 'Vietnamese',
-
-    learnOutcomes,
-    requirements,
-    audience,
-    includes,
-
-    categories: finalCategoryIds,
-    sections: sectionsStruct
-  };
-
-  // 6. Tạo bản ghi Revision mới
-  // (Logic này luôn tạo mới Revision cho mỗi lần Save/Submit để lưu lịch sử. 
-  //  Nếu muốn override draft cũ, bạn cần gửi kèm revisionId từ frontend)
-
-  const newRevision = await CourseRevision.create({
-    instructor: instructorId,
-    // course: courseData.courseId, // Nếu là update khóa học cũ thì mới cần field này
-    status: courseData.status || 'draft', // 'draft' hoặc 'pending'
-    version: 1, // Logic version có thể phức tạp hơn sau này
-    data: revisionData,
-    reviewMessage: courseData.messageToReviewer || ''
-  });
-
-  return newRevision;
 };
 
 /**
@@ -697,4 +612,254 @@ export const getInstructorCourses = async (instructorId, query) => {
       totalPages
     }
   };
+};
+
+/**
+ * Lấy dữ liệu để Edit (Xử lý 3 trường hợp)
+ */
+export const getCourseForEdit = async (slug, instructorId) => {
+  // BƯỚC 1: Tìm xem có Course LIVE (Published/Hidden) nào khớp slug không?
+  const liveCourse = await Course.findOne({ slug, instructor: instructorId }).lean();
+
+  if (liveCourse) {
+    // --- TRƯỜNG HỢP 2 & 3: Course đã từng publish ---
+
+    // Tìm xem có bản Revision nào đang treo (draft/pending) của course này không
+    const existingRevision = await CourseRevision.findOne({
+      course: liveCourse._id,
+      status: { $in: ['draft', 'pending'] }
+    }).lean();
+
+    // CASE 3: Đang Pending -> Chặn
+    if (existingRevision && existingRevision.status === 'pending') {
+      const error = new Error("Khóa học đang chờ duyệt, không thể chỉnh sửa.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // CASE 2.1: Đã có bản Draft -> Trả về bản Draft để edit tiếp
+    if (existingRevision && existingRevision.status === 'draft') {
+      return {
+        ...existingRevision.data, // Bung dữ liệu trong field 'data' ra
+        _id: existingRevision._id, // ID của revision
+        courseId: liveCourse._id,  // ID của course gốc
+        status: 'draft',
+        isUpdateMode: true // Cờ báo frontend đây là update course cũ
+      };
+    }
+
+    // CASE 2.2: Chưa có bản Draft (Lần đầu sửa sau khi publish) -> Clone từ Course Live
+    // Phải map lại cấu trúc từ Course Model -> Form Data Structure
+    // Lưu ý: Course Model lưu sections là mảng ObjectId, ta cần populate để lấy data
+    const populatedCourse = await Course.findById(liveCourse._id)
+      .populate({
+        path: 'sections',
+        populate: { path: 'lectures' }
+      }).lean();
+
+    // Convert cấu trúc Section/Lecture DB sang cấu trúc JSON lưu trong Revision
+    const sectionsStruct = populatedCourse.sections.map(sec => ({
+      title: sec.title,
+      order: sec.order,
+      lectures: sec.lectures.map(lec => ({
+        title: lec.title,
+        videoUrl: lec.videoUrl,
+        duration: lec.duration,
+        order: lec.order,
+        isPreviewFree: lec.isPreviewFree,
+        resources: lec.resources.map(res => ({
+          title: res.title,
+          url: res.url,
+          type: res.type
+        }))
+      }))
+    }));
+
+    return {
+      title: populatedCourse.title,
+      slug: populatedCourse.slug, // Giữ slug cũ
+      thumbnail: populatedCourse.thumbnail,
+      previewUrl: populatedCourse.previewUrl,
+      shortDescription: populatedCourse.shortDescription,
+      description: populatedCourse.description,
+      price: populatedCourse.price,
+      priceDiscount: populatedCourse.priceDiscount,
+      level: populatedCourse.level,
+      language: populatedCourse.language,
+      requirements: populatedCourse.requirements || [],
+      learnOutcomes: populatedCourse.learnOutcomes || [],
+      audience: populatedCourse.audience || [],
+      includes: populatedCourse.includes || [],
+      categories: populatedCourse.categories, // Array IDs
+      sections: sectionsStruct,
+
+      courseId: populatedCourse._id, // Quan trọng: Đánh dấu revision này thuộc về course nào
+      status: 'draft', // Bắt đầu là draft
+      isUpdateMode: true
+    };
+  }
+
+  // --- TRƯỜNG HỢP 1: Course chưa từng publish (Fresh Draft) ---
+  // Tìm trong Revision xem có slug khớp không (lưu ý tìm trong data.slug)
+  const freshDraft = await CourseRevision.findOne({
+    'data.slug': slug,
+    instructor: instructorId,
+    course: null, // Chưa link tới course nào
+    status: 'draft'
+  }).lean();
+
+  if (freshDraft) {
+    return {
+      ...freshDraft.data,
+      _id: freshDraft._id,
+      status: 'draft',
+      isUpdateMode: false
+    };
+  }
+
+  // Nếu pending (Fresh Pending)
+  const freshPending = await CourseRevision.findOne({
+    'data.slug': slug,
+    instructor: instructorId,
+    status: 'pending'
+  });
+  if (freshPending) {
+    const error = new Error("Khóa học đang chờ duyệt, không thể chỉnh sửa.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const error = new Error("Không tìm thấy khóa học hoặc bản nháp phù hợp.");
+  error.statusCode = 404;
+  throw error;
+};
+
+/**
+ * Tạo hoặc cập nhật Course Revision
+ */
+export const createOrUpdateRevision = async (courseData, thumbnailFile, instructorId) => {
+  // 1. Xử lý Thumbnail
+  let thumbnailUrl = courseData.thumbnailUrl || ''; // Nếu edit thì có thể có URL cũ
+  if (thumbnailFile) {
+    const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
+    thumbnailUrl = uploadResult.secure_url;
+  }
+
+  // 2. Xử lý Category (Giống bài trước)
+  const rawCategories = parseArrayField(courseData.categories);
+  const finalCategoryIds = [];
+  for (const catInput of rawCategories) {
+    if (mongoose.Types.ObjectId.isValid(catInput)) {
+      finalCategoryIds.push(catInput);
+    } else {
+      let existingCat = await Category.findOne({ name: catInput });
+      if (existingCat) {
+        finalCategoryIds.push(existingCat._id);
+      } else {
+        const newCatSlug = slugify(catInput, { lower: true, strict: true });
+        const newCategory = await Category.create({ name: catInput, slug: newCatSlug });
+        finalCategoryIds.push(newCategory._id);
+      }
+    }
+  }
+
+  // 3. Chuẩn hóa mảng
+  const learnOutcomes = parseArrayField(courseData.learnOutcomes);
+  const requirements = parseArrayField(courseData.requirements);
+  const audience = parseArrayField(courseData.audience);
+  const includes = parseArrayField(courseData.includes);
+
+  // . Xử lý Sections (Không tạo doc Section/Lecture thật, chỉ lưu JSON trong Revision)
+  let sectionsData = [];
+  try {
+    sectionsData = JSON.parse(courseData.sections || '[]');
+  } catch (e) {
+    console.error("Error parsing sections JSON:", e);
+  }
+
+  // Chuẩn hóa cấu trúc Section để lưu vào Revision.data
+  const sectionsStruct = sectionsData.map(sec => ({
+    title: sec.title,
+    order: sec.order || 0,
+    lectures: sec.lectures.map(lec => ({
+      title: lec.title,
+      videoUrl: lec.videoUrl,
+      duration: Number(lec.duration) || 0,
+      order: lec.order || 0,
+      isPreviewFree: lec.isPreviewFree || false,
+      resources: lec.resources.map(res => ({
+        title: res.title,
+        url: res.url,
+        type: res.type
+      }))
+    }))
+  }));
+
+  // 5. Chuẩn bị Data Object cho Revision
+  const revisionData = {
+    title: courseData.title,
+    slug: courseData.slug, // Slug không đổi khi edit
+    thumbnail: thumbnailUrl,
+    previewUrl: courseData.previewUrl || '',
+    shortDescription: courseData.shortDescription,
+    description: courseData.description,
+    price: Number(courseData.price) || 0,
+    priceDiscount: Number(courseData.priceDiscount) || 0,
+    level: courseData.level || 'alllevels',
+    language: courseData.language || 'Vietnamese',
+
+    learnOutcomes,
+    requirements,
+    audience,
+    includes,
+
+    categories: finalCategoryIds,
+    sections: sectionsStruct
+  };
+
+  // --- [LOGIC VERSION MỚI] ---
+  let nextVersion = 1; // Mặc định cho trường hợp 1 (Fresh Draft)
+
+  // Trường hợp 2: Update Course đã publish (Có courseId)
+  if (courseData.courseId) {
+    // Tìm course gốc để lấy version hiện tại
+    const liveCourse = await Course.findById(courseData.courseId).select('version');
+    if (liveCourse) {
+      // Version của bản Revision = Version Course gốc + 1
+      // Dù instructor có save bao nhiêu lần thì liveCourse.version vẫn không đổi -> nextVersion vẫn giữ nguyên
+      nextVersion = (liveCourse.version || 1) + 1;
+    }
+  }
+
+  // 6. LOGIC SAVE/UPDATE QUAN TRỌNG
+  // Check xem có draft nào đang tồn tại không để update đè lên, tránh spam record
+  const filter = {
+    instructor: instructorId,
+    status: 'draft' // Chỉ update draft, nếu pending thì tạo cái mới hoặc chặn
+  };
+
+  // Nếu có courseId (Case 2: Update Course Live)
+  if (courseData.courseId) {
+    filter.course = courseData.courseId;
+  } else {
+    // Case 1: Fresh Draft -> Tìm theo slug
+    filter.course = null;
+    filter['data.slug'] = courseData.slug;
+  }
+
+  // Thực hiện Upsert (Tìm thấy thì update, không thì tạo mới)
+  const updatedRevision = await CourseRevision.findOneAndUpdate(
+    filter,
+    {
+      instructor: instructorId,
+      course: courseData.courseId || null, // Nếu null thì là fresh draft
+      status: courseData.status || 'draft',
+      version: nextVersion, // Version của bản Revision = Version Course gốc + 1
+      data: revisionData,
+      reviewMessage: courseData.messageToReviewer || ''
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  return updatedRevision;
 };
