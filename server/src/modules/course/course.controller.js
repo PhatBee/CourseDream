@@ -162,6 +162,8 @@ export const getCourseStats = async (req, res, next) => {
     res.status(200).json(stats);
   } catch (err) {
     next(err);
+  }
+};
 /**
  * @desc    Lấy khóa học của Instructor hiện tại
  * @route   GET /api/courses/instructor/my-courses
