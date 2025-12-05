@@ -36,6 +36,10 @@ const getInstructorCourses = (params) => {
   return axiosClient.get(`${path}/instructor/my-courses`, { params });
 };
 
+const getInstructorCourseForEdit = (slug) => {
+  return axiosClient.get(`/courses/instructor/edit/${slug}`);
+};
+
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
@@ -45,4 +49,5 @@ export const courseApi = {
   getLevels,
   getCourseStats,
   getInstructorCourses,
+  getInstructorCourseForEdit
 };
