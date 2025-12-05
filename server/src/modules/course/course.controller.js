@@ -224,3 +224,38 @@ export const getCourseForEdit = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Xóa khóa học (Instructor) - Logic phức tạp (Delete/Hide/Archive)
+ * @route   DELETE /api/courses/:id
+ */
+export const deleteCourse = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const instructorId = req.user._id;
+
+    const result = await courseService.deleteCourse(id, instructorId);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      action: result.action // 'deleted', 'hidden', 'archived'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Kích hoạt lại khóa học (Hidden -> Published)
+ * @route   PATCH /api/courses/:id/activate
+ */
+export const activateCourse = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await courseService.activateCourse(id, req.user._id);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+}
