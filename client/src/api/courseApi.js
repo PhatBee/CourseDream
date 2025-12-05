@@ -31,6 +31,10 @@ export const searchCourses = (params) => {
 const getLevels = () => axiosClient.get("/courses/levels");
 
 const getCourseStats = () => axiosClient.get("/courses/stats");
+// API lấy khóa học của Instructor
+const getInstructorCourses = (params) => {
+  return axiosClient.get(`${path}/instructor/my-courses`, { params });
+};
 
 export const courseApi = {
   getAllCourses,
@@ -40,4 +44,5 @@ export const courseApi = {
   searchCourses,
   getLevels,
   getCourseStats,
+  getInstructorCourses,
 };

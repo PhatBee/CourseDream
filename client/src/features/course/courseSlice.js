@@ -13,6 +13,9 @@ const initialState = {
   isLoading: false,
   isError: false,
   message: '',
+  instructorCourses: [],
+  instructorStats: { all: 0, published: 0, pending: 0, draft: 0 },
+  instructorPagination: { page: 1, limit: 9, totalPages: 1, total: 0 }
 };
 
 export const getAllCourses = createAsyncThunk(
@@ -55,6 +58,20 @@ export const createNewCourse = createAsyncThunk(
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || 'Error creating course';
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+// Thunk: Get Instructor Courses
+export const getInstructorCourses = createAsyncThunk(
+  'course/getInstructorCourses',
+  async (params, thunkAPI) => {
+    try {
+      const response = await courseApi.getInstructorCourses(params);
+      return response.data; // { success, data: { courses, stats, pagination } }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error fetching courses';
       return thunkAPI.rejectWithValue(message);
     }
   }
@@ -117,6 +134,23 @@ export const courseSlice = createSlice({
         state.message = 'Khóa học đã được tạo thành công!';
       })
       .addCase(createNewCourse.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+
+      // Get Instructor Courses Cases
+      .addCase(getInstructorCourses.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getInstructorCourses.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const { courses, stats, pagination } = action.payload.data;
+        state.instructorCourses = courses;
+        state.instructorStats = stats;
+        state.instructorPagination = pagination;
+      })
+      .addCase(getInstructorCourses.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
