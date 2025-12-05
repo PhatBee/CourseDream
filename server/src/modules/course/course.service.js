@@ -472,10 +472,13 @@ export const getInstructorCourses = async (instructorId, query) => {
   const status = query.status; // 'published', 'pending', 'draft', 'hidden'
 
   const filter = { instructor: instructorId };
+  // Nếu status là 'published' thì vẫn cần lấy ra để check xem có draft update không
+  // Nên logic lọc status ở đây áp dụng cho trạng thái CHÍNH của khóa học.
   if (status && status !== 'all') {
     filter.status = status;
   }
 
+  // 1. Lấy danh sách Course gốc
   const courses = await Course.find(filter)
     .select('title slug thumbnail price priceDiscount level rating studentsCount status totalLectures totalHours')
     .sort({ createdAt: -1 })
@@ -484,6 +487,27 @@ export const getInstructorCourses = async (instructorId, query) => {
     .lean();
 
   const totalCourses = await Course.countDocuments(filter);
+
+  // 2. Check Revision: Lấy danh sách ID của các khóa học vừa tìm được
+  const courseIds = courses.map(c => c._id);
+
+  // Tìm các Revision thuộc về các course này mà đang chưa được duyệt (draft hoặc pending)
+  const revisions = await CourseRevision.find({
+    course: { $in: courseIds },
+    status: { $in: ['draft', 'pending'] }
+  }).select('course status');
+
+  // 3. [MỚI] Merge thông tin Revision vào Course object để Frontend xử lý
+  const coursesWithRevisionInfo = courses.map(course => {
+    // Tìm revision tương ứng với course này
+    const activeRevision = revisions.find(r => r.course.toString() === course._id.toString());
+
+    return {
+      ...course,
+      // Tạo thêm field mới trả về cho FE
+      revisionStatus: activeRevision ? activeRevision.status : null, // 'draft' | 'pending' | null
+    };
+  });
 
   // Tính thống kê cho Dashboard
   // (Có thể tách ra API riêng nếu nặng, nhưng làm chung cho tiện)
@@ -502,7 +526,7 @@ export const getInstructorCourses = async (instructorId, query) => {
   });
 
   return {
-    courses,
+    courses: coursesWithRevisionInfo,
     stats: statsObj,
     pagination: {
       total: totalCourses,
