@@ -17,6 +17,12 @@ const uploadVideo = (formData) => {
   });
 };
 
+const uploadResource = (formData) => {
+  return axiosClient.post('/courses/upload-resource', formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+};
+
 // API Mới: Tạo khóa học
 const createCourse = (formData) => {
   return axiosClient.post(path, formData, {
@@ -40,10 +46,13 @@ const getInstructorCourseForEdit = (slug) => {
   return axiosClient.get(`/courses/instructor/edit/${slug}`);
 };
 
+
+
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
   uploadVideo,
+  uploadResource,
   createCourse,
   searchCourses,
   getLevels,

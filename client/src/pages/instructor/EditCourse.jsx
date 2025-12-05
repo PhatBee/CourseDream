@@ -95,6 +95,17 @@ const EditCoursePage = () => {
         throw new Error("Upload failed");
     };
 
+
+    // Helper: Upload Resource Logic
+    const uploadResourceHelper = async (file, title) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', title);
+        const res = await courseApi.uploadResource(formData); // Gọi API upload-resource
+        if (res.data.success) return res.data.data.url;
+        throw new Error("Resource upload failed");
+    };
+
     // 2. Logic Submit (Giống AddCourse nhưng gửi thêm courseId/slug để biết update)
     const handleProcessCourse = async (actionType) => {
         // actionType: 'submit' | 'draft'
@@ -131,8 +142,11 @@ const EditCoursePage = () => {
             for (let i = 0; i < processedSections.length; i++) {
                 const section = processedSections[i];
                 const processedLectures = [...section.lectures];
+
                 for (let j = 0; j < processedLectures.length; j++) {
                     const lecture = processedLectures[j];
+
+                    // 2A. Upload Lecture Video
                     if (lecture.videoType === 'upload' && lecture.videoFile) {
                         toast.loading(`Uploading: ${lecture.title}...`, { id: loadingId });
                         const videoUrl = await uploadVideoHelper(lecture.videoFile, lecture.title);
@@ -142,6 +156,33 @@ const EditCoursePage = () => {
                             videoUrl: videoUrl,
                             videoFile: null
                         };
+                    }
+
+                    // 2B. Upload Resources
+                    if (processedLectures[j].resources && processedLectures[j].resources.length > 0) {
+                        const processedResources = [];
+                        for (const res of processedLectures[j].resources) {
+                            // Nếu type là file VÀ có file object (chưa upload)
+                            if (res.type === 'file' && res.file) {
+                                toast.loading(`Uploading Resource: ${res.title}...`, { id: loadingId });
+                                try {
+                                    const resUrl = await uploadResourceHelper(res.file, res.title);
+                                    // Đẩy vào mảng với URL mới, bỏ file object đi
+                                    processedResources.push({
+                                        title: res.title,
+                                        url: resUrl,
+                                        type: 'file'
+                                    });
+                                } catch (err) {
+                                    console.error("Resource upload error", err);
+                                    toast.error(`Failed to upload ${res.title}`);
+                                }
+                            } else {
+                                // Nếu là link hoặc file đã có URL (edit mode) thì giữ nguyên
+                                processedResources.push(res);
+                            }
+                        }
+                        processedLectures[j].resources = processedResources;
                     }
                 }
                 processedSections[i].lectures = processedLectures;
