@@ -27,10 +27,17 @@ const createCourse = (formData) => {
 export const searchCourses = (params) => {
   return axiosClient.get("/courses/search", { params });
 };
+
+// API lấy khóa học của Instructor
+const getInstructorCourses = (params) => {
+  return axiosClient.get(`${path}/instructor/my-courses`, { params });
+};
+
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
   uploadVideo,
   createCourse,
   searchCourses,
+  getInstructorCourses,
 };

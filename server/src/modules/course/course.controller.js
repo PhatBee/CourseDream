@@ -100,8 +100,32 @@ export const uploadCourseVideo = async (req, res, next) => {
 };
 
 /**
+ * @desc    Tạo HOẶC Cập nhật Course Revision (Draft/Pending)
+ * @route   POST /api/courses
+ */
+export const createCourseRevision = async (req, res, next) => {
+  try {
+    const courseData = req.body;
+    const thumbnailFile = req.file;
+    const instructorId = req.user._id;
+
+    // Gọi service để xử lý Revision
+    const revision = await courseService.createOrUpdateRevision(courseData, thumbnailFile, instructorId);
+
+    res.status(201).json({
+      success: true,
+      message: courseData.status === 'pending' ? "Course submitted for review" : "Draft saved successfully",
+      data: revision
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Tạo khóa học mới
- * @route   POST /api/v1/courses
+ * @route   POST /api/courses
+ * SẼ SỬA LẠI SAU, HIỆN SẼ CHƯA DÙNG (CỦA ADMIN)
  */
 export const createCourse = async (req, res, next) => {
   try {
@@ -116,6 +140,24 @@ export const createCourse = async (req, res, next) => {
       success: true,
       message: "Course created successfully",
       data: newCourse
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Lấy khóa học của Instructor hiện tại
+ * @route   GET /api/courses/instructor/my-courses
+ */
+export const getMyCourses = async (req, res, next) => {
+  try {
+    const instructorId = req.user._id;
+    const result = await courseService.getInstructorCourses(instructorId, req.query);
+
+    res.status(200).json({
+      success: true,
+      data: result
     });
   } catch (error) {
     next(error);

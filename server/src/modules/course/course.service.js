@@ -1,4 +1,5 @@
 import Course from './course.model.js';
+import CourseRevision from './courseRevision.model.js';
 import Review from '../review/review.model.js';
 import Progress from '../progress/progress.model.js';
 import Lecture from "./lecture.model.js";
@@ -199,6 +200,8 @@ const parseArrayField = (fieldData) => {
 
 /**
  * Tạo khóa học mới (Bao gồm Sections và Lectures)
+ * Sau khi ADMIN duyệt sẽ tạo
+ * SẼ ĐIỀU CHỈNH LẠI SAU, HIỆN KHÔNG DÙNG
  */
 export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   // Logic Validation: Nếu KHÔNG phải Draft thì mới bắt buộc validate kỹ
@@ -362,4 +365,212 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   await savedCourse.save();
 
   return savedCourse;
+};
+
+/**
+ * Tạo hoặc cập nhật Course Revision
+ */
+export const createOrUpdateRevision = async (courseData, thumbnailFile, instructorId) => {
+  // 1. Xử lý Thumbnail
+  let thumbnailUrl = courseData.thumbnailUrl || ''; // Nếu edit thì có thể có URL cũ
+  if (thumbnailFile) {
+    const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
+    thumbnailUrl = uploadResult.secure_url;
+  }
+
+  // 2. Xử lý Category (Giống bài trước)
+  const rawCategories = parseArrayField(courseData.categories);
+  const finalCategoryIds = [];
+  for (const catInput of rawCategories) {
+    if (mongoose.Types.ObjectId.isValid(catInput)) {
+      finalCategoryIds.push(catInput);
+    } else {
+      let existingCat = await Category.findOne({ name: catInput });
+      if (existingCat) {
+        finalCategoryIds.push(existingCat._id);
+      } else {
+        const newCatSlug = slugify(catInput, { lower: true, strict: true });
+        const newCategory = await Category.create({ name: catInput, slug: newCatSlug });
+        finalCategoryIds.push(newCategory._id);
+      }
+    }
+  }
+
+  // 3. Chuẩn hóa mảng
+  const learnOutcomes = parseArrayField(courseData.learnOutcomes);
+  const requirements = parseArrayField(courseData.requirements);
+  const audience = parseArrayField(courseData.audience);
+  const includes = parseArrayField(courseData.includes);
+
+  // 4. Xử lý Sections (Không tạo doc Section/Lecture thật, chỉ lưu JSON trong Revision)
+  let sectionsData = [];
+  try {
+    sectionsData = JSON.parse(courseData.sections || '[]');
+  } catch (e) {
+    console.error("Error parsing sections JSON:", e);
+  }
+
+  // Chuẩn hóa cấu trúc Section để lưu vào Revision.data
+  const sectionsStruct = sectionsData.map(sec => ({
+    title: sec.title,
+    order: sec.order || 0,
+    lectures: sec.lectures.map(lec => ({
+      title: lec.title,
+      videoUrl: lec.videoUrl,
+      duration: Number(lec.duration) || 0,
+      order: lec.order || 0,
+      isPreviewFree: lec.isPreviewFree || false,
+      resources: lec.resources || []
+    }))
+  }));
+
+  // 5. Chuẩn bị Data Object cho Revision
+  const revisionData = {
+    title: courseData.title,
+    slug: courseData.slug || (slugify(courseData.title || '', { lower: true, strict: true }) + '-' + Date.now()), // Tạo slug tạm nếu chưa có
+    thumbnail: thumbnailUrl,
+    previewUrl: courseData.previewUrl || '',
+    shortDescription: courseData.shortDescription,
+    description: courseData.description,
+    price: Number(courseData.price) || 0,
+    priceDiscount: Number(courseData.priceDiscount) || 0,
+    level: courseData.level || 'alllevels',
+    language: courseData.language || 'Vietnamese',
+
+    learnOutcomes,
+    requirements,
+    audience,
+    includes,
+
+    categories: finalCategoryIds,
+    sections: sectionsStruct
+  };
+
+  // 6. Tạo bản ghi Revision mới
+  // (Logic này luôn tạo mới Revision cho mỗi lần Save/Submit để lưu lịch sử. 
+  //  Nếu muốn override draft cũ, bạn cần gửi kèm revisionId từ frontend)
+
+  const newRevision = await CourseRevision.create({
+    instructor: instructorId,
+    // course: courseData.courseId, // Nếu là update khóa học cũ thì mới cần field này
+    status: courseData.status || 'draft', // 'draft' hoặc 'pending'
+    version: 1, // Logic version có thể phức tạp hơn sau này
+    data: revisionData,
+    reviewMessage: courseData.messageToReviewer || ''
+  });
+
+  return newRevision;
+};
+
+/**
+ * Lấy danh sách khóa học của Instructor (có phân trang & lọc)
+ */
+export const getInstructorCourses = async (instructorId, query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 9;
+  const skip = (page - 1) * limit;
+  const statusFilter = query.status; // 'published', 'pending', 'draft', 'hidden'
+
+  // 1. Lấy tất cả Course "chính thức" (Published, Hidden, Archived)
+  // Lưu ý: Không phân trang ở đây, cần lấy hết để merge rồi mới cắt trang
+  const courses = await Course.find({ instructor: instructorId })
+    .select('title slug thumbnail price priceDiscount level rating studentsCount status totalLectures totalHours createdAt')
+    .lean();
+
+  // 2. Lấy tất cả Revision của instructor
+  // Ta cần status 'draft' hoặc 'pending' để xác định trạng thái
+  const allRevisions = await CourseRevision.find({
+    instructor: instructorId,
+    status: { $in: ['draft', 'pending'] }
+  }).lean();
+
+  // --- XỬ LÝ GỘP DỮ LIỆU ---
+
+  const mergedList = [];
+
+  // A. Xử lý các Course chính thức
+  courses.forEach(course => {
+    // Tìm xem course này có bản revision nào đang treo không
+    const activeRevision = allRevisions.find(r => r.course && r.course.toString() === course._id.toString());
+
+    mergedList.push({
+      ...course,
+      // Gắn thêm cờ revisionStatus
+      revisionStatus: activeRevision ? activeRevision.status : null,
+      type: 'course' // Đánh dấu đây là course thật
+    });
+  });
+
+  // B. Xử lý các Revision "độc lập" (Course mới chưa từng publish)
+  // Là các revision mà field 'course' bị null
+  const standaloneRevisions = allRevisions.filter(r => !r.course);
+
+  standaloneRevisions.forEach(rev => {
+    // Chuẩn hóa data từ revision.data ra ngoài để giống cấu trúc Course
+    // Giúp Frontend hiển thị thống nhất mà không cần sửa nhiều
+    mergedList.push({
+      _id: rev._id, // Dùng ID của revision
+      title: rev.data.title || 'Untitled Course',
+      slug: rev.data.slug,
+      thumbnail: rev.data.thumbnail,
+      price: rev.data.price || 0,
+      priceDiscount: rev.data.priceDiscount,
+      totalLectures: rev.data.sections ? rev.data.sections.reduce((acc, sec) => acc + (sec.lectures?.length || 0), 0) : 0,
+      totalHours: 0, // Tính toán nếu cần
+      status: rev.status, // 'draft' hoặc 'pending'
+      revisionStatus: null, // Không có revision con
+      type: 'revision', // Đánh dấu là revision
+      createdAt: rev.createdAt
+    });
+  });
+
+  // --- LỌC (FILTER) ---
+  let finalCourses = mergedList;
+
+  if (statusFilter && statusFilter !== 'all') {
+    finalCourses = finalCourses.filter(c => {
+      // Logic filter status
+      // Nếu filter = pending -> Lấy course pending HOẶC course published đang có revision pending
+      if (statusFilter === 'pending') {
+        return c.status === 'pending' || c.revisionStatus === 'pending';
+      }
+      return c.status === statusFilter;
+    });
+  }
+
+  // --- THỐNG KÊ (STATS) ---
+  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0 };
+  mergedList.forEach(c => {
+    stats.all++;
+    // Logic đếm stats: Ưu tiên trạng thái revision nếu là pending
+    if (c.status === 'pending' || c.revisionStatus === 'pending') {
+      stats.pending++;
+    } else if (c.status === 'draft') {
+      stats.draft++;
+    } else if (c.status === 'published') {
+      stats.published++;
+    } else if (c.status === 'hidden') {
+      stats.hidden++;
+    }
+  });
+
+  // --- SẮP XẾP (SORT) ---
+  // Mới nhất lên đầu
+  finalCourses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  // --- PHÂN TRANG (PAGINATION) ---
+  const total = finalCourses.length;
+  const totalPages = Math.ceil(total / limit);
+  const paginatedData = finalCourses.slice((page - 1) * limit, page * limit);
+
+  return {
+    courses: paginatedData,
+    stats,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages
+    }
+  };
 };
