@@ -100,6 +100,28 @@ export const uploadCourseVideo = async (req, res, next) => {
 };
 
 /**
+ * @desc    Upload tài liệu khóa học (PDF, Doc, Zip...)
+ * @route   POST /api/courses/upload-resource
+ */
+export const uploadCourseResource = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+    const { title } = req.body;
+    // Gọi service upload resource
+    const result = await courseService.uploadResource(req.file, title || "Course Resource");
+
+    res.status(200).json({
+      success: true,
+      data: result // { url, originalName, format }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Tạo HOẶC Cập nhật Course Revision (Draft/Pending)
  * @route   POST /api/courses
  */

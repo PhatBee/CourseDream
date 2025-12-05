@@ -7,7 +7,7 @@ import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
 import Category from "../category/category.model.js";
 import { uploadToYouTube } from "../../config/youtube.js";
-import { uploadToCloudinary } from "../../config/cloudinary.js";
+import { uploadToCloudinary, uploadResourceToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
 /**
@@ -278,6 +278,13 @@ export const uploadVideo = async (file, title) => {
   return await uploadToYouTube(file.buffer, title, "Uploaded via DreamsLMS");
 };
 
+/**
+ * Upload Resource lên Cloudinary
+ */
+export const uploadResource = async (file, title) => {
+  return await uploadResourceToCloudinary(file, title);
+};
+
 // Hàm helper để chuẩn hóa input mảng từ FormData
 // Vì FormData gửi 1 item sẽ là string, gửi nhiều là array. Chúng ta cần ép về Array.
 const parseArrayField = (fieldData) => {
@@ -344,7 +351,6 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   const requirements = parseArrayField(courseData.requirements);
   const audience = parseArrayField(courseData.audience);
   const includes = parseArrayField(courseData.includes);
-  const resources = parseArrayField(courseData.resources);
 
   // 5. Tạo Course (Draft trước)
   const newCourse = new Course({
@@ -367,7 +373,6 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
     requirements,
     audience,
     includes,
-    resources,
 
     // Relations
     instructor: instructorId,
@@ -418,7 +423,11 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
           duration: Number(lecData.duration) || 0,
           isPreviewFree: lecData.isPreviewFree,
           order: lecData.order || 0,
-          // resources...
+          resources: lecData.resources.map(res => ({
+            title: res.title,
+            url: res.url,
+            type: res.type
+          }))
         });
         lectureIds.push(newLecture._id);
 
@@ -658,7 +667,11 @@ export const getCourseForEdit = async (slug, instructorId) => {
         duration: lec.duration,
         order: lec.order,
         isPreviewFree: lec.isPreviewFree,
-        resources: lec.resources || []
+        resources: lec.resources.map(res => ({
+          title: res.title,
+          url: res.url,
+          type: res.type
+        }))
       }))
     }));
 
@@ -774,7 +787,11 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
       duration: Number(lec.duration) || 0,
       order: lec.order || 0,
       isPreviewFree: lec.isPreviewFree || false,
-      resources: lec.resources || []
+      resources: lec.resources.map(res => ({
+        title: res.title,
+        url: res.url,
+        type: res.type
+      }))
     }))
   }));
 

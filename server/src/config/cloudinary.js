@@ -1,5 +1,8 @@
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
+import slugify from 'slugify';
+import path from 'path';
+
 
 // Cấu hình Cloudinary từ biến môi trường
 const cloudName = process.env.CLOUDINARY_NAME || process.env.CLOUDINARY_CLOUD_NAME;
@@ -52,4 +55,31 @@ export const deleteFromCloudinary = async (publicId) => {
     } catch (error) {
         console.error("Lỗi xóa ảnh Cloudinary:", error);
     }
+};
+
+/**
+ * Upload Resource lên Cloudinary
+ */
+
+export const uploadResourceToCloudinary = (file, title) => {
+    return new Promise((resolve, reject) => {
+        const fileExt = file.originalname ? path.extname(file.originalname) : '';
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'dreamcourse/resources',
+                resource_type: 'raw', // Quan trọng cho file docs/zip
+                public_id: `${slugify(title, { lower: true })}-${Date.now()}${fileExt}`,
+                use_filename: true
+            },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve({
+                    url: result.secure_url,
+                    originalName: title,
+                    format: result.format || (file.mimetype ? file.mimetype.split('/')[1] : null)
+                });
+            }
+        );
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+    });
 };
