@@ -27,8 +27,8 @@ const ProfileHeader = () => {
             {/* (Bạn có thể thêm icon "verify tick" ở đây) */}
           </div>
           <div>
-            <h5 className="text-xl font-bold">{user.name}</h5>
-            <p className="text-blue-100 capitalize">{user.role}</p>
+            <h5 className="text-white text-xl font-bold">{user.name}</h5>
+            <p className="text-white capitalize">{user.role}</p>
           </div>
         </div>
 

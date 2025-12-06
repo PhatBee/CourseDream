@@ -25,6 +25,7 @@ import AddCoursePage from "../pages/instructor/AddCourse";
 import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
+import InstructorDashboard from "../pages/instructor/InstructorDashboard";
 
 export default function AppRoutes() {
   return (
@@ -65,6 +66,7 @@ export default function AppRoutes() {
             <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
               <Route path="instructor/courses" element={<InstructorCourses />} />
             </Route>
+            <Route path="/profile/dashboard" element={<InstructorDashboard />} />
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
