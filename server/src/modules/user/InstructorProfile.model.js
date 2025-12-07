@@ -12,7 +12,6 @@ const InstructorProfileSchema = new mongoose.Schema({
     },
 
     // UI Hiển thị trên trang Instructor
-    displayName: { type: String },           // Tên giảng viên public
     headline: { type: String },              // Ví dụ: "Senior Backend Developer"
 
     // Từ hồ sơ apply

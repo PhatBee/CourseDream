@@ -33,7 +33,8 @@ const getPublicIdFromUrl = (url) => {
  * Lấy thông tin profile của user
  */
 export const getProfile = async (userId) => {
-  const user = await User.findById(userId).select('-password -otp -otpExpires -refreshToken');
+  // Select +password để check tồn tại, sau đó sẽ xóa đi trước khi trả về
+  const user = await User.findById(userId).select('-otp -otpExpires -refreshToken');
 
   if (!user) {
     const error = new Error('Không tìm thấy người dùng.');
@@ -41,7 +42,16 @@ export const getProfile = async (userId) => {
     throw error;
   }
 
-  return user;
+  // Convert sang object thuần túy để thêm field custom
+  const userObj = user.toObject();
+
+  // Tạo cờ hasPassword
+  userObj.hasPassword = !!user.password;
+
+  // Xóa trường password hash khỏi object trả về
+  delete userObj.password;
+
+  return userObj;
 };
 
 export const updateProfile = async (userId, updateData, file) => {
@@ -100,9 +110,12 @@ export const updatePassword = async (userId, oldPassword, newPassword) => {
     throw error;
   }
 
-  if (user.authProvider === 'local') {
-    if (!user.password) {
-      const error = new Error('Tài khoản này không dùng mật khẩu.');
+  const hasPassword = !!user.password;
+
+  // LOGIC MỚI: Chỉ kiểm tra mật khẩu cũ NẾU user đã có mật khẩu
+  if (hasPassword) {
+    if (!oldPassword) {
+      const error = new Error('Vui lòng nhập mật khẩu hiện tại.');
       error.statusCode = 400;
       throw error;
     }
@@ -110,15 +123,15 @@ export const updatePassword = async (userId, oldPassword, newPassword) => {
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       const error = new Error('Mật khẩu cũ không chính xác.');
-      error.statusCode = 401; // Unauthorized
+      error.statusCode = 401;
       throw error;
     }
-  }
 
-  if (oldPassword === newPassword) {
-    const error = new Error('Mật khẩu mới phải khác mật khẩu cũ.');
-    error.statusCode = 400;
-    throw error;
+    if (oldPassword === newPassword) {
+      const error = new Error('Mật khẩu mới phải khác mật khẩu cũ.');
+      error.statusCode = 400;
+      throw error;
+    }
   }
 
   if (!validatePasswordStrength(newPassword)) {
@@ -131,11 +144,14 @@ export const updatePassword = async (userId, oldPassword, newPassword) => {
 
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(newPassword, salt);
+
+  // Quan trọng: Chuyển authProvider thành 'local' (hoặc giữ nguyên nhưng việc có password sẽ cho phép login local)
+  // Ở đây ta set thành 'local' để đảm bảo tính nhất quán với Model (required function)
   user.authProvider = 'local';
 
   await user.save();
 
-  return { message: 'Cập nhật mật khẩu thành công.' };
+  return { message: hasPassword ? 'Cập nhật mật khẩu thành công.' : 'Tạo mật khẩu thành công.' };
 };
 
 /**
