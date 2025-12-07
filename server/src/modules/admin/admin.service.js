@@ -236,7 +236,7 @@ export const getAllStudents = async (query) => {
 
   // 2. Query DB lấy User
   const students = await User.find(filter)
-    .select('name email avatar phone createdAt isVerified isBlocked')
+    .select('name email avatar phone createdAt isVerified isActive')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
@@ -280,7 +280,7 @@ export const getAllInstructors = async (query) => {
   }
 
   const instructors = await User.find(filter)
-    .select('name email avatar phone createdAt isBlocked bio expertise')
+    .select('name email avatar phone createdAt isActive bio expertise')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)

@@ -33,7 +33,7 @@ const StudentsManagement = () => {
 
   const openToggleBlockModal = (user) => {
     setSelectedUser(user);
-    setIsBanning(!user.isBlocked);
+    setIsBanning(user.isActive);
     setIsBanModalOpen(true);
   };
 
@@ -42,6 +42,7 @@ const StudentsManagement = () => {
       const result = await dispatch(toggleBlockUser({ userId, reason })).unwrap();
       toast.success(result.message);
       setIsBanModalOpen(false);
+      dispatch(fetchStudents({ page: currentPage, search: searchTerm }));
     } catch (error) {
       toast.error("Hành động thất bại: " + error);
     }
@@ -129,7 +130,7 @@ const StudentsManagement = () => {
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    {student.isBlocked ? (
+                    {!student.isActive ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
                         Banned
                       </span>

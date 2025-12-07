@@ -35,6 +35,13 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
+        <Route path="/set-password" element={<SetPassword />} />
+        
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/courses" element={<CoursePage />} />
@@ -42,13 +49,6 @@ export default function AppRoutes() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment/return" element={<PaymentReturn />} />
-          
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
-          <Route path="/set-password" element={<SetPassword />} />
 
           <Route path="/profile" element={<ProfileLayout />}>
             <Route index element={<Navigate to="my-profile" replace />} />

@@ -42,7 +42,7 @@ const ActionMenu = ({ user, onToggleBlock, onViewDetails }) => {
     <div 
       className="fixed z-[9999] w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 animate-fadeIn"
       style={{ top: menuPosition.top, left: menuPosition.left }}
-      onClick={(e) => e.stopPropagation()} // Ngăn sự kiện click lan ra ngoài làm đóng menu ngay lập tức
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Nút Ban/Unban */}
       <button
@@ -51,10 +51,10 @@ const ActionMenu = ({ user, onToggleBlock, onViewDetails }) => {
           setIsOpen(false);
         }}
         className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors font-medium
-          ${user.isBlocked ? 'text-green-600' : 'text-red-600'}
+          ${!user.isActive ? 'text-green-600' : 'text-red-600'}
         `}
       >
-        {user.isBlocked ? (
+        {!user.isActive ? (
           <>
             <CheckCircle size={16} /> Unban User
           </>
@@ -65,7 +65,6 @@ const ActionMenu = ({ user, onToggleBlock, onViewDetails }) => {
         )}
       </button>
       
-      {/* Nút Xem chi tiết (Nếu cần) */}
       {onViewDetails && (
         <button 
           onClick={() => {
@@ -90,7 +89,6 @@ const ActionMenu = ({ user, onToggleBlock, onViewDetails }) => {
         <MoreVertical size={18} />
       </button>
       
-      {/* Render menu ra ngoài body bằng Portal để không bị khuất */}
       {isOpen && createPortal(menuContent, document.body)}
     </>
   );

@@ -33,7 +33,7 @@ const InstructorsManagement = () => {
 
   const openToggleBlockModal = (user) => {
     setSelectedUser(user);
-    setIsBanning(!user.isBlocked);
+    setIsBanning(user.isActive);
     setIsBanModalOpen(true);
   };
 
@@ -42,6 +42,7 @@ const InstructorsManagement = () => {
       const result = await dispatch(toggleBlockUser({ userId, reason })).unwrap();
       toast.success(result.message);
       setIsBanModalOpen(false);
+      dispatch(fetchStudents({ page: currentPage, search: searchTerm }));
     } catch (error) {
       toast.error("Hành động thất bại: " + error);
     }
