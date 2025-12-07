@@ -8,6 +8,7 @@ import ForgotPassword from "../pages/ForgotPassword";
 import VerifyResetOTP from "../pages/VerifyResetOTP";
 import SetPassword from "../pages/SetPassword";
 import CourseDetail from '../pages/CourseDetail';
+// import Header from '../components/Header'; // Không dùng trực tiếp ở đây
 import ProfileLayout from '../layouts/ProfileLayout';
 import MyProfile from '../components/profile/MyProfile';
 import SettingsPage from '../pages/SettingsPage';
@@ -40,29 +41,30 @@ export default function AppRoutes() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment/return" element={<PaymentReturn />} />
+          
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
           <Route path="/set-password" element={<SetPassword />} />
-          <Route path="/profile" element={<ProfileLayout />}>
-            <Route path="my-profile" element={<MyProfile />} />
 
+          <Route path="/profile" element={<ProfileLayout />}>
+            <Route index element={<Navigate to="my-profile" replace />} />
+            <Route path="my-profile" element={<MyProfile />} />
+            
             <Route path="settings" element={<SettingsPage />}>
+              <Route index element={<Navigate to="edit" replace />} />
               <Route path="edit" element={<EditProfile />} />
               <Route path="security" element={<ChangePassword />} />
-              <Route index element={<Navigate to="edit" replace />} />
             </Route>
 
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
-
+            
             <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
               <Route path="instructor/courses" element={<InstructorCourses />} />
             </Route>
-
-            <Route index element={<Navigate to="my-profile" replace />} />
           </Route>
 
           <Route path="/courses/:slug/overview" element={<OverviewPage />} />
@@ -70,22 +72,17 @@ export default function AppRoutes() {
 
           <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
             <Route path="instructor/add-course" element={<AddCoursePage />} />
+            <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
           </Route>
-        </Route>
+        </Route> 
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<StudentsManagement />} />
+          <Route path="courses" element={<div>Manage Courses</div>} />
+          <Route path="blogs" element={<div>Manage Blogs</div>} />
         </Route>
-
-        <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
-          <Route path="instructor/add-course" element={<AddCoursePage />} />
-          <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
-        </Route>
-
-        <Route path="users" element={<StudentsManagement />} />
-        <Route path="courses" element={<div>Manage Courses</div>} />
-        <Route path="blogs" element={<div>Manage Blogs</div>} />
 
       </Routes>
     </BrowserRouter>
