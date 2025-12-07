@@ -26,6 +26,7 @@ import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
 import EditCoursePage from "../pages/instructor/EditCourse";
+import BecomeInstructor from "../pages/BecomeInstructor";
 
 export default function AppRoutes() {
   return (
@@ -47,6 +48,7 @@ export default function AppRoutes() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
           <Route path="/set-password" element={<SetPassword />} />
+          <Route path="/profile/become-instructor" element={<BecomeInstructor />} />
           <Route path="/profile" element={<ProfileLayout />}>
 
             {/* 1. Trang My Profile (Ảnh 1) */}
