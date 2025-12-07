@@ -25,14 +25,14 @@ import AddCoursePage from "../pages/instructor/AddCourse";
 import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
+import AdminLayout from '../layouts/AdminLayout';
+import AdminDashboard from '../pages/admin/AdminDashboard';
 import EditCoursePage from "../pages/instructor/EditCourse";
 import BecomeInstructor from "../pages/BecomeInstructor";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
-      <Header />
-      <main className="pt-16"> {/* Offset cho Header fixed */}
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
@@ -51,37 +51,50 @@ export default function AppRoutes() {
           <Route path="/profile/become-instructor" element={<BecomeInstructor />} />
           <Route path="/profile" element={<ProfileLayout />}>
 
-            {/* 1. Trang My Profile (Ảnh 1) */}
-            <Route path="my-profile" element={<MyProfile />} />
+              {/* 1. Trang My Profile (Ảnh 1) */}
+              <Route path="my-profile" element={<MyProfile />} />
 
-            {/* 2. Trang Settings (Ảnh 2, chứa 2 tab) */}
-            <Route path="settings" element={<SettingsPage />}>
-              {/* 2a. Tab Edit */}
-              <Route path="edit" element={<EditProfile />} />
-              {/* 2b. Tab Security */}
-              <Route path="security" element={<ChangePassword />} />
-              {/* Khi vào /profile/settings, tự động nhảy sang /edit */}
-              <Route index element={<Navigate to="edit" replace />} />
+              {/* 2. Trang Settings (Ảnh 2, chứa 2 tab) */}
+              <Route path="settings" element={<SettingsPage />}>
+                {/* 2a. Tab Edit */}
+                <Route path="edit" element={<EditProfile />} />
+                {/* 2b. Tab Security */}
+                <Route path="security" element={<ChangePassword />} />
+                {/* Khi vào /profile/settings, tự động nhảy sang /edit */}
+                <Route index element={<Navigate to="edit" replace />} />
+              </Route>
+              <Route path="wishlist" element={<WishlistPage />} />
+              <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
+              <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+                <Route path="instructor/courses" element={<InstructorCourses />} />
+              </Route>
+              {/* (Thêm route cho "Become Instructor" ở đây sau) */}
+              {/* Khi vào /profile, tự động nhảy sang /my-profile */}
+              <Route index element={<Navigate to="my-profile" replace />} />
             </Route>
-            <Route path="wishlist" element={<WishlistPage />} />
-            <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
+            <Route path="/courses/:slug/overview" element={<OverviewPage />} />
+            <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
+
             <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
-              <Route path="instructor/courses" element={<InstructorCourses />} />
+              <Route path="instructor/add-course" element={<AddCoursePage />} />
             </Route>
-            {/* (Thêm route cho "Become Instructor" ở đây sau) */}
-            {/* Khi vào /profile, tự động nhảy sang /my-profile */}
-            <Route index element={<Navigate to="my-profile" replace />} />
           </Route>
-          <Route path="/courses/:slug/overview" element={<OverviewPage />} />
-          <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
 
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+          </Route>
           <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
             <Route path="instructor/add-course" element={<AddCoursePage />} />
             <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
           </Route>
 
+            {/* Các trang placeholder cho menu */}
+            <Route path="users" element={<div>Manage Students</div>} />
+            <Route path="courses" element={<div>Manage Courses</div>} />
+            <Route path="blogs" element={<div>Manage Blogs</div>} />
+          </Route>
         </Routes>
-      </main>
     </BrowserRouter>
   );
 }
