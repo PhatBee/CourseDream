@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
 import { toast, Toaster } from 'react-hot-toast';
 import { Check, ChevronRight, ChevronLeft, Save, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -9,7 +9,7 @@ import { createNewCourse } from '../../features/course/courseSlice';
 import { courseApi } from '../../api/courseApi';
 import { categoryApi } from '../../api/categoryApi';
 
-// Hooks & Components
+// Hooks & Components   
 import { useAddCourseForm } from '../../features/course/useAddCourseForm';
 import Step1_CourseInfo from '../../components/instructor/Step1_CourseInfo';
 import Step2_Media from '../../components/instructor/Step2_Media'; // Tách tương tự Step1
@@ -19,13 +19,16 @@ import Step5_Pricing from '../../components/instructor/Step5_Pricing'; // Tách 
 import LessonModal from '../../components/instructor/LessonModal';
 import CancelModal from '../../components/common/CancelModal';
 
-const AddCoursePage = () => {
+const EditCoursePage = () => {
+    const { slug } = useParams(); // Lấy slug từ URL
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { isLoading } = useSelector(state => state.course);
 
     const [currentStep, setCurrentStep] = useState(1);
     const [categoriesList, setCategoriesList] = useState([]);
+    const [isFetching, setIsFetching] = useState(true); // Loading state khi fetch data edit
+
 
     // Modal State
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
@@ -40,16 +43,47 @@ const AddCoursePage = () => {
 
     // Load Categories
     useEffect(() => {
-        const fetchCategories = async () => {
+        const initData = async () => {
             try {
-                const res = await categoryApi.getAllCategories();
-                setCategoriesList(res.data?.data || res.data || []);
+                // A. Lấy danh sách Categories
+                const catRes = await categoryApi.getAllCategories();
+                const cats = catRes.data?.data || [];
+                setCategoriesList(cats);
+
+                // B. Lấy dữ liệu khóa học để Edit
+                // Gọi API backend mới tạo: /api/courses/instructor/edit/:slug
+                const courseRes = await courseApi.getInstructorCourseForEdit(slug);
+                const apiData = courseRes.data.data;
+
+                // C. Map dữ liệu Categories (ID -> Object {value, label}) cho Select
+                const mappedCategories = (apiData.categories || []).map(catId => {
+                    // Nếu catId là object (do populate) thì lấy _id, ko thì lấy chính nó
+                    const id = typeof catId === 'object' ? catId._id : catId;
+                    const found = cats.find(c => c._id === id);
+                    return found
+                        ? { value: found._id, label: found.name, isNew: false }
+                        : { value: id, label: 'Unknown', isNew: false };
+                });
+
+                // D. Đổ dữ liệu vào Form
+                form.setFullData({
+                    ...apiData,
+                    categories: mappedCategories
+                });
+
             } catch (error) {
-                console.error("Failed to load categories", error);
+                console.error(error);
+                toast.error("Không thể tải dữ liệu khóa học hoặc bạn không có quyền sửa.");
+                navigate('/profile/instructor/courses'); // Kick ra nếu lỗi
+            } finally {
+                setIsFetching(false);
             }
         };
-        fetchCategories();
-    }, []);
+
+        if (slug) {
+            initData();
+        }
+    }, [slug, navigate]);
 
     // Helper: Upload Logic (Tách riêng để clean code)
     const uploadVideoHelper = async (file, title) => {
@@ -61,6 +95,7 @@ const AddCoursePage = () => {
         throw new Error("Upload failed");
     };
 
+
     // Helper: Upload Resource Logic
     const uploadResourceHelper = async (file, title) => {
         const formData = new FormData();
@@ -71,7 +106,7 @@ const AddCoursePage = () => {
         throw new Error("Resource upload failed");
     };
 
-    // Submit Handler (Dùng chung cho Save Draft & Submit)
+    // 2. Logic Submit (Giống AddCourse nhưng gửi thêm courseId/slug để biết update)
     const handleProcessCourse = async (actionType) => {
         // actionType: 'submit' | 'draft'
 
@@ -89,7 +124,7 @@ const AddCoursePage = () => {
 
         let loadingId;
 
-        loadingId = toast.loading(isDraft ? "Đang lưu nháp..." : "Đang tạo khóa học...", { id: loadingId });
+        loadingId = toast.loading("Đang xử lý...");
 
         try {
             const finalCourseData = { ...courseData };
@@ -103,7 +138,7 @@ const AddCoursePage = () => {
                 finalCourseData.previewUrl = finalCourseData.previewVideoUrl;
             }
 
-            // 2. Upload Lecture Videos and Resources
+            // 2. Upload Lecture Videos
             for (let i = 0; i < processedSections.length; i++) {
                 const section = processedSections[i];
                 const processedLectures = [...section.lectures];
@@ -156,6 +191,10 @@ const AddCoursePage = () => {
             // 3. Pack FormData
             const formData = new FormData();
             formData.append('title', finalCourseData.title);
+            formData.append('slug', slug); // Gửi slug gốc để backend tìm
+            if (finalCourseData.courseId) {
+                formData.append('courseId', finalCourseData.courseId); // Gửi courseId nếu là update course live
+            }
             finalCourseData.categories.forEach(cat => formData.append('categories', cat.value));
             formData.append('level', finalCourseData.level);
             formData.append('language', finalCourseData.language);
@@ -165,32 +204,32 @@ const AddCoursePage = () => {
             formData.append('description', finalCourseData.description);
             formData.append('previewUrl', finalCourseData.previewUrl);
 
-            // SET STATUS
-            // Nếu là Submit -> force 'pending' để admin duyệt
-            // Nếu là Draft -> dùng status hiện tại (draft/hidden) hoặc default 'draft'
-            const statusToSend = isDraft ? (finalCourseData.status || 'draft') : 'pending';
-            formData.append('status', statusToSend);
-
             // Arrays
             ['learnOutcomes', 'requirements', 'audience', 'includes'].forEach(field => {
                 finalCourseData[field].forEach(item => formData.append(field, item));
             });
 
-            if (finalCourseData.thumbnail) {
-                formData.append('thumbnail', finalCourseData.thumbnail);
-            }
-
             formData.append('sections', JSON.stringify(processedSections));
 
+            // Status
+            const statusToSend = isDraft ? 'draft' : 'pending';
+            formData.append('status', statusToSend);
+
+            // Thumbnail (chỉ gửi nếu user chọn file mới)
+            if (courseData.thumbnail) {
+                formData.append('thumbnail', courseData.thumbnail);
+            } else {
+                formData.append('thumbnailUrl', courseData.thumbnailUrl); // Gửi URL cũ nếu không đổi
+            }
+
             // 4. Dispatch Redux Action
-            toast.loading("Đang tạo khóa học...", { id: loadingId });
             const resultAction = await dispatch(createNewCourse(formData));
 
             if (createNewCourse.fulfilled.match(resultAction)) {
-                toast.success(isDraft ? "Đã lưu nháp!" : "Đã gửi thông tin khóa học lên chờ duyệt!", { id: loadingId });
-                navigate('/instructor/courses');
+                toast.success("Cập nhật thành công!", { id: loadingId });
+                navigate('/profile/instructor/courses');
             } else {
-                toast.error(resultAction.payload || "Thất bại", { id: loadingId });
+                toast.error("Lỗi Cập nhật.", { id: loadingId });
             }
 
         } catch (error) {
@@ -270,6 +309,8 @@ const AddCoursePage = () => {
         }
     };
 
+    if (isFetching) return <div className="flex h-screen justify-center items-center">Loading Course Data...</div>;
+
     return (
         <div className="min-h-screen bg-gray-100 py-10 px-4 font-sans text-gray-800">
             <Toaster position="top-right" />
@@ -277,7 +318,7 @@ const AddCoursePage = () => {
 
                 {/* Header Controls (New) */}
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">Create New Course</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Edit Course: {form.courseData.title}</h1>
                     <div className="flex gap-3">
                         <button onClick={onCancel} className="px-4 py-2 text-gray-600 bg-white border rounded-lg hover:bg-gray-50 font-medium flex items-center gap-2">
                             <XCircle size={18} /> Cancel
@@ -348,4 +389,4 @@ const AddCoursePage = () => {
     );
 };
 
-export default AddCoursePage;
+export default EditCoursePage;
