@@ -3,9 +3,24 @@ import axiosClient from "./axiosClient";
 const path = "/categories";
 
 const getAllCategories = () => {
-  return axiosClient.get(path);
+  return axiosClient.get(path, { params });
+};
+
+const createCategory = (data) => {
+  return axiosClient.post(path, data);
+};
+
+const updateCategory = (id, data) => {
+  return axiosClient.put(`${path}/${id}`, data);
+};
+
+const deleteCategory = (id) => {
+  return axiosClient.delete(`${path}/${id}`);
 };
 
 export const categoryApi = {
   getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory
 };

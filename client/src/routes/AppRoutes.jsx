@@ -30,6 +30,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import EditCoursePage from "../pages/instructor/EditCourse";
 import StudentsManagement from "../pages/admin/StudentsManagement";
 import InstructorsManagement from "../pages/admin/InstructorsManagement";
+import CategoriesManagement from "../pages/admin/CategoriesManagement";
 
 export default function AppRoutes() {
   return (
@@ -83,6 +84,7 @@ export default function AppRoutes() {
           <Route path="users" element={<StudentsManagement />} />
           <Route path="instructors" element={<InstructorsManagement />} />
           <Route path="courses" element={<div>Manage Courses</div>} />
+          <Route path="categories" element={<CategoriesManagement />} />
           <Route path="blogs" element={<div>Manage Blogs</div>} />
         </Route>
 

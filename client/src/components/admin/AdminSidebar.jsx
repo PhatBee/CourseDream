@@ -16,7 +16,8 @@ const AdminSidebar = () => {
         { path: '/admin/users', icon: <Users size={20} />, label: 'Students' },
         { path: '/admin/instructors', icon: <Users size={20} />, label: 'Instructors' },
         { path: '/admin/courses', icon: <BookOpen size={20} />, label: 'Courses' },
-        { path: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' }, // Thêm Blog
+        { path: '/admin/categories', icon: <BookOpen size={20} />, label: 'Categories' },
+        { path: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
         { path: '/admin/reports', icon: <BarChart2 size={20} />, label: 'Reports' },
         { path: '/admin/messages', icon: <MessageSquare size={20} />, label: 'Messages' },
     ];
