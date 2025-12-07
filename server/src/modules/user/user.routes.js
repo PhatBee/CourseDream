@@ -29,13 +29,20 @@ router.put(
   userController.updatePassword
 );
 
+router.get('/', userController.getUsers);
+
+// Thêm route GET để lấy trạng thái đơn
+router.get(
+  '/profile/become-instructor',
+  verifyToken,
+  userController.getMyInstructorApplication
+);
+
 router.post(
   '/profile/become-instructor',
   verifyToken,
-  checkRole('student'),
+  // checkRole('student'), // Có thể bỏ checkRole nếu muốn cho phép check status linh hoạt
   userController.requestInstructorRole
 );
-
-router.get('/', userController.getUsers);
 
 export default router;

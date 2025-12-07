@@ -75,32 +75,6 @@ export const updatePassword = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Student gửi yêu cầu làm Giảng viên
- * @route   POST /api/users/profile/become-instructor
- */
-export const requestInstructorRole = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const { reason } = req.body;
-
-    if (!reason) {
-      const error = new Error('Vui lòng cung cấp lý do/kinh nghiệm.');
-      error.statusCode = 400;
-      throw error;
-    }
-
-    const result = await userService.requestInstructorRole(userId, reason);
-
-    res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const getUsers = async (req, res, next) => {
   try {
     const role = req.query.role;
@@ -109,5 +83,51 @@ export const getUsers = async (req, res, next) => {
     res.json(users);
   } catch (err) {
     next(err);
+  }
+};
+
+/**
+ * @desc    Lấy trạng thái đơn đăng ký Instructor
+ * @route   GET /api/users/profile/become-instructor
+ */
+export const getMyInstructorApplication = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const application = await userService.getInstructorApplicationStatus(userId);
+    res.status(200).json({
+      success: true,
+      data: application
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Student gửi yêu cầu làm Giảng viên
+ * @route   POST /api/users/profile/become-instructor
+ */
+export const requestInstructorRole = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    // Lấy data từ body (bio, experience, video...)
+    const { bio, experience, sampleVideoUrl, intendedTopics } = req.body;
+
+    if (!bio || !experience) {
+      const error = new Error('Vui lòng cung cấp Bio và Kinh nghiệm.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const result = await userService.requestInstructorRole(userId, {
+      bio, experience, sampleVideoUrl, intendedTopics
+    });
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
   }
 };

@@ -1,4 +1,5 @@
 import User from '../auth/auth.model.js';
+import InstructorApplication from './instructorApplication.model.js';
 import bcrypt from 'bcryptjs';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../config/cloudinary.js';
 
@@ -137,35 +138,60 @@ export const updatePassword = async (userId, oldPassword, newPassword) => {
   return { message: 'Cập nhật mật khẩu thành công.' };
 };
 
-export const requestInstructorRole = async (userId, reason) => {
-  const user = await User.findById(userId);
+/**
+ * Lấy trạng thái đơn đăng ký của user hiện tại
+ */
+export const getInstructorApplicationStatus = async (userId) => {
+  const application = await InstructorApplication.findOne({ user: userId });
+  return application; // Trả về null hoặc object application
+};
 
+/**
+ * Gửi yêu cầu làm giảng viên
+ */
+export const requestInstructorRole = async (userId, data) => {
+  const user = await User.findById(userId);
   if (!user) {
     const error = new Error('Không tìm thấy người dùng.');
     error.statusCode = 404;
     throw error;
   }
 
-  if (user.role !== 'student') {
-    const error = new Error('Chỉ có Student mới có thể gửi yêu cầu.');
-    error.statusCode = 403; // Forbidden
-    throw error;
-  }
+  // Tìm đơn cũ
+  let application = await InstructorApplication.findOne({ user: userId });
 
-  if (user.instructorApplication.status === 'pending') {
-    const error = new Error('Yêu cầu của bạn đang được xem xét.');
+  // Nếu đang pending thì chặn
+  if (application && application.status === 'pending') {
+    const error = new Error('Yêu cầu của bạn đang được xem xét, vui lòng chờ.');
     error.statusCode = 400;
     throw error;
   }
 
-  // Cập nhật trạng thái
-  user.instructorApplication = {
-    status: 'pending',
-    reason: reason,
-    submittedAt: new Date()
+  // Nếu đã là instructor rồi thì chặn
+  if (user.role === 'instructor') {
+    const error = new Error('Bạn đã là giảng viên rồi.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Chuẩn bị dữ liệu
+  const appData = {
+    user: userId,
+    bio: data.bio,
+    experience: data.experience,
+    sampleVideoUrl: data.sampleVideoUrl,
+    intendedTopics: data.intendedTopics ? data.intendedTopics.split(',').map(t => t.trim()) : [],
+    status: 'pending' // Reset về pending nếu trước đó bị reject
   };
 
-  await user.save();
+  if (application) {
+    // Update đơn cũ (trường hợp bị reject và apply lại)
+    Object.assign(application, appData);
+    await application.save();
+  } else {
+    // Tạo đơn mới
+    application = await InstructorApplication.create(appData);
+  }
 
-  return { message: 'Yêu cầu đã được gửi. Chúng tôi sẽ xem xét sớm.' };
+  return { message: 'Hồ sơ đã được gửi thành công. Vui lòng chờ quản trị viên duyệt.' };
 };
