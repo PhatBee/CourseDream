@@ -27,6 +27,7 @@ import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import StudentsManagement from "../pages/admin/StudentsManagement";
 
 export default function AppRoutes() {
   return (
@@ -79,9 +80,9 @@ export default function AppRoutes() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
-
+    
             {/* Các trang placeholder cho menu */}
-            <Route path="users" element={<div>Manage Students</div>} />
+            <Route path="users" element={<StudentsManagement />} />
             <Route path="courses" element={<div>Manage Courses</div>} />
             <Route path="blogs" element={<div>Manage Blogs</div>} />
           </Route>

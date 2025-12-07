@@ -7,6 +7,10 @@ const initialState = {
   isLoading: false,
   isError: false,
   message: '',
+  studentsList: {
+    data: [],
+    pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+  },
 };
 
 // 1. Thunk: Lấy số liệu tổng quan
@@ -35,6 +39,18 @@ export const fetchRevenueAnalytics = createAsyncThunk(
   }
 );
 
+export const fetchStudents = createAsyncThunk(
+  'admin/fetchStudents',
+  async (params, thunkAPI) => {
+    try {
+      const response = await adminApi.getStudents(params);
+      return response.data.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message);
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: 'admin',
   initialState,
@@ -57,7 +73,15 @@ const adminSlice = createSlice({
       // Revenue Analytics
       .addCase(fetchRevenueAnalytics.fulfilled, (state, action) => {
         state.revenueData = action.payload;
-      });
+      })
+      .addCase(fetchStudents.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchStudents.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.studentsList.data = action.payload.students;
+        state.studentsList.pagination = action.payload.pagination;
+      })
   },
 });
 

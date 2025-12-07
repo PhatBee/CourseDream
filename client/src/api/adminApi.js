@@ -21,9 +21,14 @@ const reviewApplication = (userId, data) => {
   return axiosClient.put(`${path}/instructor-applications/${userId}`, data);
 };
 
+const getStudents = (params) => {
+  return axiosClient.get(`${path}/users`, { params });
+};
+
 export const adminApi = {
   getDashboardStats,
   getRevenueAnalytics,
   getPendingApplications,
-  reviewApplication
+  reviewApplication,
+  getStudents,
 };
