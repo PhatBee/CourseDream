@@ -2,6 +2,18 @@ import { useEffect, useState } from "react";
 import { getDiscussionsByCourse, createDiscussion, replyToDiscussion } from "../../api/discussionApi";
 import Spinner from "../common/Spinner";
 import { FaUserCircle } from "react-icons/fa";
+import ReportModal from "../common/ReportModal";
+import reportApi from "../../api/reportApi";
+import { FaFlag } from "react-icons/fa";
+import toast from "react-hot-toast";
+
+const DISCUSSION_REPORT_REASONS = [
+  "Hành vi không phù hợp",
+  "Nội dung rác",
+  "Vi phạm chính sách cộng đồng",
+  "Spam hoặc quảng cáo",
+  "Ý khác"
+];
 
 const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
   const [discussions, setDiscussions] = useState([]);
@@ -10,6 +22,10 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
   const [newContent, setNewContent] = useState("");
   const [replyContent, setReplyContent] = useState({});
   const [page, setPage] = useState(1);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDiscussionId, setReportDiscussionId] = useState(null);
+  const [reportReplyOpen, setReportReplyOpen] = useState(false);
+  const [reportReplyId, setReportReplyId] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -41,6 +57,28 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
       setDiscussions(res.data.discussions);
       setPagination(res.data.pagination);
     });
+  };
+
+  const openReportPopup = (discussionId) => {
+    setReportDiscussionId(discussionId);
+    setReportOpen(true);
+  };
+
+  const handleReportSubmit = async (reason, detail) => {
+    await reportApi.reportDiscussion(reportDiscussionId, reason + (detail ? `\n${detail}` : ""));
+    setReportOpen(false);
+    toast.success("Báo cáo của bạn đã được gửi!");
+  };
+
+  const openReportReplyPopup = (replyId) => {
+    setReportReplyId(replyId);
+    setReportReplyOpen(true);
+  };
+
+  const handleReportReplySubmit = async (reason, detail) => {
+    await reportApi.reportReply(reportReplyId, reason + (detail ? `\n${detail}` : ""));
+    setReportReplyOpen(false);
+    toast.success("Báo cáo của bạn đã được gửi!");
   };
 
   if (loading) return <Spinner />;
@@ -110,19 +148,24 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
             {/* Replies */}
             <div className="ml-14 space-y-3">
               {discussion.replies?.map(reply => (
-                <div
-                  key={reply._id}
-                  className="flex items-start gap-2 border-l-4 border-gray-200 pl-4 py-2 bg-gray-50 rounded group-hover:bg-gray-100"
-                >
+                <div key={reply._id} className="flex items-start gap-2 border-l-4 border-gray-200 pl-4 py-2 bg-gray-50 rounded group-hover:bg-gray-100">
                   {reply.author?.avatar ? (
                     <img src={reply.author.avatar} alt="avatar" className="w-8 h-8 rounded-full object-cover mt-1" />
                   ) : (
                     <FaUserCircle className="w-8 h-8 text-gray-400 mt-1" />
                   )}
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-sm">{reply.author?.name || "Ẩn danh"}</span>
                       <span className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</span>
+                      {/* Lá cờ sát ngày tháng năm */}
+                      <button
+                        className="ml-2 text-gray-400 hover:text-red-500"
+                        title="Báo cáo bình luận"
+                        onClick={() => openReportReplyPopup(reply._id)}
+                      >
+                        <FaFlag />
+                      </button>
                     </div>
                     <div className="text-gray-800 text-sm">{reply.content}</div>
                   </div>
@@ -161,6 +204,13 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
                 <div className="text-xs text-yellow-600 mt-1">Bạn cần ghi danh để trả lời thảo luận.</div>
               )}
             </div>
+            <button
+              className="ml-auto text-gray-400 hover:text-red-500"
+              title="Báo cáo thảo luận"
+              onClick={() => openReportPopup(discussion._id)}
+            >
+              <FaFlag />
+            </button>
           </div>
         ))}
       </div>
@@ -181,6 +231,19 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
           </button>
         ))}
       </div>
+
+      <ReportModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        onSubmit={handleReportSubmit}
+        reasons={DISCUSSION_REPORT_REASONS}
+      />
+      <ReportModal
+        open={reportReplyOpen}
+        onClose={() => setReportReplyOpen(false)}
+        onSubmit={handleReportReplySubmit}
+        reasons={DISCUSSION_REPORT_REASONS}
+      />
     </div>
   );
 };
