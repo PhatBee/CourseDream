@@ -45,5 +45,6 @@ router.get('/revenue-analytics', adminController.getRevenueAnalytics);
  * @desc    Lấy danh sách học viên
  */
 router.get('/users', adminController.getStudents);
+router.get('/instructors', adminController.getInstructors);
 
 export default router;

@@ -264,3 +264,53 @@ export const getAllStudents = async (query) => {
     }
   };
 };
+
+export const getAllInstructors = async (query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const search = query.search || '';
+  const skip = (page - 1) * limit;
+
+  const filter = { role: 'instructor' };
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const instructors = await User.find(filter)
+    .select('name email avatar phone createdAt isBlocked bio expertise')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const totalInstructors = await User.countDocuments(filter);
+
+  const instructorsWithStats = await Promise.all(
+    instructors.map(async (inst) => {
+      const coursesCount = await Course.countDocuments({ instructor: inst._id, status: 'published' });
+      const courses = await Course.find({ instructor: inst._id }).select('studentsCount');
+      const totalStudents = courses.reduce((acc, curr) => acc + (curr.studentsCount || 0), 0);
+
+      return { 
+        ...inst, 
+        stats: {
+          courses: coursesCount,
+          students: totalStudents
+        }
+      };
+    })
+  );
+
+  return {
+    instructors: instructorsWithStats,
+    pagination: {
+      total: totalInstructors,
+      page,
+      limit,
+      totalPages: Math.ceil(totalInstructors / limit)
+    }
+  };
+};

@@ -87,3 +87,15 @@ export const getStudents = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getInstructors = async (req, res, next) => {
+  try {
+    const result = await adminService.getAllInstructors(req.query);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
