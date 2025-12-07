@@ -99,3 +99,20 @@ export const getInstructors = async (req, res, next) => {
     next(error);
   }
 };
+
+export const toggleBlockUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+
+    const result = await adminService.toggleBlockUser(userId, reason);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      data: { isActive: result.isActive, banReason: result.banReason }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -47,4 +47,10 @@ router.get('/revenue-analytics', adminController.getRevenueAnalytics);
 router.get('/users', adminController.getStudents);
 router.get('/instructors', adminController.getInstructors);
 
+/**
+ * @route   PATCH /api/admin/users/:userId/toggle-block
+ * @desc    Khóa/Mở khóa tài khoản user
+ */
+router.patch('/users/:userId/toggle-block', adminController.toggleBlockUser);
+
 export default router;

@@ -314,3 +314,28 @@ export const getAllInstructors = async (query) => {
     }
   };
 };
+
+export const toggleBlockUser = async (userId, reason) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('Không tìm thấy người dùng.');
+  if (user.role === 'admin') throw new Error('Không thể khóa Admin.');
+
+  const willBan = user.isActive;
+
+  if (willBan) {
+    if (!reason) throw new Error('Vui lòng cung cấp lý do khóa tài khoản.');
+    user.isActive = false;
+    user.banReason = reason;
+  } else {
+    user.isActive = true;
+    user.banReason = null;
+  }
+
+  await user.save();
+
+  return { 
+    message: willBan ? `Đã khóa tài khoản. Lý do: ${reason}` : 'Đã mở khóa tài khoản.',
+    isActive: user.isActive,
+    banReason: user.banReason
+  };
+};

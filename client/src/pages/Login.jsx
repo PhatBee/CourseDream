@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 import auth1 from "../assets/img/auth/auth-1.svg";
 import google from "../assets/img/icons/google.svg";
 import facebook from "../assets/img/icons/facebook.svg";
+import BannedModal from '../components/admin/user/BannedModal.jsx';
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: "", password: "" });
@@ -17,16 +18,23 @@ const Login = () => {
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { user, isLoading, isError, isSuccess, message } = useSelector(
+    const { user, isLoading, isError, isSuccess, message, banReason } = useSelector(
         (state) => state.auth
     );
+    const [showBanModal, setShowBanModal] = useState(false);
 
     useEffect(() => {
         dispatch(reset());
     }, [dispatch]);
 
     useEffect(() => {
-        if (isError) {
+        if (isError && banReason) {
+            setShowBanModal(true);
+        
+            dispatch(reset());
+            return;
+        }
+        if (isError && !banReason) {
             toast.error(message || "Đăng nhập thất bại");
             dispatch(reset());
         }
@@ -37,7 +45,12 @@ const Login = () => {
             else if (user?.role === "instructor") navigate("/instructor/dashboard");
             else navigate("/");
         }
-    }, [user, isError, isSuccess, message, navigate, dispatch]);
+    }, [user, isError, isSuccess, message, banReason, navigate, dispatch]);
+
+    const closeBanModal = () => {
+        setShowBanModal(false);
+        dispatch(reset());
+    };
 
     const onChange = (e) =>
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -237,6 +250,11 @@ const Login = () => {
                     </div>
                 </div>
             </div>
+            <BannedModal
+                isOpen={showBanModal}
+                onClose={closeBanModal}
+                reason={banReason}
+            />
         </div>
     );
 };

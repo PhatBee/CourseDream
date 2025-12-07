@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchStudents, toggleBlockUser } from '../../features/admin/adminSlice';
-import { Search, MoreVertical, Mail, Phone, BookOpen, Calendar, Ban, CheckCircle } from 'lucide-react';
+import { fetchInstructors, toggleBlockUser } from '../../features/admin/adminSlice';
+import { Search, MoreVertical, Mail, Phone, BookOpen, Users, Award } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import defaultAvatar from '../../assets/img/icons/apple-icon.png';
-import { toast } from 'react-toastify';
-import BanUserModal from '../../components/admin/user/BanUserModal';
 import ActionMenu from '../../components/admin/common/ActionMenu';
+import BanUserModal from '../../components/admin/user/BanUserModal';
+import { toast } from 'react-toastify';
 
-const StudentsManagement = () => {
+const InstructorsManagement = () => {
   const dispatch = useDispatch();
-  const { studentsList, isLoading } = useSelector((state) => state.admin);
-  const { data: students, pagination } = studentsList;
+  const { instructorsList, isLoading } = useSelector((state) => state.admin);
+  const { data: instructors, pagination } = instructorsList;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,7 +22,7 @@ const StudentsManagement = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      dispatch(fetchStudents({ page: currentPage, search: searchTerm }));
+      dispatch(fetchInstructors({ page: currentPage, search: searchTerm }));
     }, 500);
     return () => clearTimeout(timer);
   }, [dispatch, currentPage, searchTerm]);
@@ -48,13 +48,18 @@ const StudentsManagement = () => {
   };
 
   return (
-    <div className="space-y-6 font-inter text-left">
-      {/* 1. Header & Actions */}
+    <div className="space-y-6 font-inter">
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative absolute right">
-          <input
-            type="text"
-            placeholder="Search by name or email..."
+        {/* <div>
+          <h2 className="text-2xl font-bold text-gray-800">Instructors List</h2>
+          <p className="text-sm text-gray-500">Manage your teaching staff</p>
+        </div> */}
+        
+        <div className="relative">
+          <input 
+            type="text" 
+            placeholder="Search instructor..." 
             className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl w-64 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -69,28 +74,29 @@ const StudentsManagement = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Contact Info</th>
-                <th className="px-6 py-4 text-center">Enrolled</th>
-                <th className="px-6 py-4">Joined Date</th>
+                <th className="px-6 py-4">Instructor</th>
+                <th className="px-6 py-4">Contact</th>
+                <th className="px-6 py-4">Expertise</th>
+                <th className="px-6 py-4 text-center">Stats</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">
-              {students.map((student) => (
-                <tr key={student._id} className="hover:bg-gray-50/50 transition-colors group">
-
+              {instructors.map((inst) => (
+                <tr key={inst._id} className="hover:bg-gray-50/50 transition-colors group">
+                  
                   {/* Avatar & Name */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={student.avatar || defaultAvatar}
-                        alt=""
+                      <img 
+                        src={inst.avatar || defaultAvatar} 
+                        alt="" 
                         className="w-10 h-10 rounded-full object-cover border border-gray-100"
                       />
                       <div>
-                        <p className="font-semibold text-gray-800">{student.name}</p>
+                        <p className="font-semibold text-gray-800">{inst.name}</p>
+                        <p className="text-xs text-gray-400">Joined: {new Date(inst.createdAt).toLocaleDateString('vi-VN')}</p>
                       </div>
                     </div>
                   </td>
@@ -100,64 +106,74 @@ const StudentsManagement = () => {
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-gray-600">
                         <Mail size={14} className="text-gray-400" />
-                        <span>{student.email}</span>
+                        <span>{inst.email}</span>
                       </div>
-                      {student.phone && (
+                      {inst.phone && (
                         <div className="flex items-center gap-2 text-gray-500">
                           <Phone size={14} className="text-gray-400" />
-                          <span>{student.phone}</span>
+                          <span>{inst.phone}</span>
                         </div>
                       )}
                     </div>
                   </td>
 
-                  {/* Courses Enrolled */}
-                  <td className="px-6 py-4 text-center">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 font-medium text-xs">
-                      <BookOpen size={14} className="mr-1.5" />
-                      {student.coursesEnrolled || 0}
-                    </span>
+                  {/* Expertise (Chuyên môn) */}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {inst.expertise && inst.expertise.length > 0 ? (
+                        inst.expertise.slice(0, 2).map((skill, index) => (
+                          <span key={index} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700">
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400 italic">Not updated</span>
+                      )}
+                    </div>
                   </td>
 
-                  {/* Joined Date */}
-                  <td className="px-6 py-4 text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-gray-400" />
-                      {new Date(student.createdAt).toLocaleDateString('vi-VN')}
+                  {/* Stats (Số khóa học / Học viên) */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="text-center" title="Courses Created">
+                        <BookOpen size={14} className="text-gray-400 mx-auto mt-0.5" />
+                        <span className="block font-bold text-gray-800">{inst.stats?.courses || 0}</span>
+                      </div>
+                      <div className="w-[1px] h-6 bg-gray-200"></div>
+                      <div className="text-center" title="Total Students">
+                        <Users size={14} className="text-gray-400 mx-auto mt-0.5" />
+                        <span className="block font-bold text-gray-800">{inst.stats?.students || 0}</span>
+                      </div>
                     </div>
                   </td>
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    {student.isBlocked ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-                        Banned
-                      </span>
-                    ) : student.isVerified ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                        Active
+                    {inst.isBlocked ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        Blocked
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                        Unverified
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Active
                       </span>
                     )}
                   </td>
 
+                  {/* Actions */}
                   <td className="px-6 py-4 text-right">
-                    <ActionMenu
-                      user={student}
-                      onToggleBlock={() => openToggleBlockModal(student)}
-                      onViewDetails={() => navigate(`/admin/users/${student._id}`)}
+                    <ActionMenu 
+                      user={inst} 
+                      onToggleBlock={() => openToggleBlockModal(inst)}
                     />
                   </td>
                 </tr>
               ))}
 
-              {students.length === 0 && !isLoading && (
+              {instructors.length === 0 && !isLoading && (
                 <tr>
                   <td colSpan="6" className="text-center py-10 text-gray-400">
-                    No students found matching your search.
+                    No instructors found.
                   </td>
                 </tr>
               )}
@@ -165,9 +181,9 @@ const StudentsManagement = () => {
           </table>
         </div>
 
-        {/* 3. Pagination */}
+        {/* Pagination */}
         <div className="px-6 pb-6">
-          <Pagination
+          <Pagination 
             currentPage={pagination.page}
             totalPages={pagination.totalPages}
             onPageChange={handlePageChange}
@@ -185,4 +201,4 @@ const StudentsManagement = () => {
   );
 };
 
-export default StudentsManagement;
+export default InstructorsManagement;

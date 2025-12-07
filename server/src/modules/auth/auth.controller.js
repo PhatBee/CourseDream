@@ -345,6 +345,14 @@ const login = async (req, res, next) => {
             return next(err);
         }
 
+        if (!user.isActive) {
+            const reason = user.banReason || "Vi phạm điều khoản.";
+            return res.status(403).json({
+                message: "Tài khoản của bạn đã bị vô hiệu hóa.",
+                reason: reason
+            });
+        }
+
         // 3. So sánh mật khẩu
         if (!user.password) {
             const err = new Error('Tài khoản này chưa thiết lập mật khẩu. Vui lòng đăng nhập bằng Google/Facebook hoặc sử dụng chức năng Quên mật khẩu.');

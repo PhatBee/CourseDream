@@ -25,10 +25,20 @@ const getStudents = (params) => {
   return axiosClient.get(`${path}/users`, { params });
 };
 
+const getInstructors = (params) => {
+  return axiosClient.get(`${path}/instructors`, { params });
+};
+
+const toggleBlockUser = (userId, reason) => {
+  return axiosClient.patch(`${path}/users/${userId}/toggle-block`, { reason });
+};
+
 export const adminApi = {
   getDashboardStats,
   getRevenueAnalytics,
   getPendingApplications,
   reviewApplication,
   getStudents,
+  getInstructors,
+  toggleBlockUser,
 };

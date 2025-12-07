@@ -18,6 +18,7 @@ const initialState = {
   isForgotSuccess: false,
   isVerifyResetSuccess: false,
   isSetPasswordSuccess: false,
+  banReason: null,
 };
 
 // Async Thunk cho Đăng nhập
@@ -258,7 +259,12 @@ export const authSlice = createSlice({
       // Xử lý khi 'login' đang chờ (pending)
       .addCase(login.pending, (state) => {
         state.isLoading = true;
+        state.isError = false;
+        state.isSuccess = false;
+        state.message = '';
+        state.banReason = null;
       })
+      .addCase(reset, (state) => { state.banReason = null; })
       // Xử lý khi 'login' thành công (fulfilled)
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -269,8 +275,13 @@ export const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload; // Lấy thông báo lỗi từ payload
-        state.user = null;
+        if (action.payload && typeof action.payload === 'object') {
+            state.message = action.payload.message;
+            state.banReason = action.payload.reason;
+        } else {
+            state.message = action.payload;
+            state.banReason = null;
+        }
       })
       // Xử lý khi 'logout'
       .addCase(logout.fulfilled, (state) => {
@@ -432,7 +443,7 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
-      });
+      })
 
   },
 });
