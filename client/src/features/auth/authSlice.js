@@ -413,6 +413,13 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.message = action.payload.message;
+
+        // [CẬP NHẬT MỚI] Nếu thành công, nghĩa là user giờ đã có mật khẩu
+        if (state.user) {
+          state.user.hasPassword = true;
+          // Cập nhật luôn vào localStorage để đồng bộ
+          localStorage.setItem('user', JSON.stringify(state.user));
+        }
       })
       .addCase(changePassword.rejected, (state, action) => {
         state.isLoading = false;

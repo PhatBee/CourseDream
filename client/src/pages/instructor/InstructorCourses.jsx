@@ -4,8 +4,10 @@ import { getInstructorCourses } from '../../features/course/courseSlice';
 import InstructorCourseCard from '../../components/instructor/InstructorCourseCard';
 import Pagination from '../../components/common/Pagination'; // Import component Pagination bạn đã có
 import { Link } from 'react-router-dom';
-import { PlusCircle, BookOpen, FileText, AlertCircle, Archive } from 'lucide-react';
+import { PlusCircle, BookOpen, FileText, AlertCircle, Archive, Lock } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
+import RemoveModal from '../../components/common/RemoveModal';
+import { deleteInstructorCourse, activateInstructorCourse } from '../../features/course/courseSlice';
 
 const InstructorCourses = () => {
     const dispatch = useDispatch();
@@ -13,6 +15,10 @@ const InstructorCourses = () => {
 
     const [activeTab, setActiveTab] = useState('all'); // all, published, pending, draft...
     const [currentPage, setCurrentPage] = useState(1);
+
+    const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+    const [courseToDelete, setCourseToDelete] = useState(null);
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', btnLabel: '' });
 
     // Gọi API khi tab hoặc page thay đổi
     useEffect(() => {
@@ -32,11 +38,51 @@ const InstructorCourses = () => {
         setCurrentPage(1); // Reset về trang 1 khi đổi tab
     };
 
-    // Mock delete (Bạn cần implement thunk delete)
-    const handleDelete = (id) => {
-        if (window.confirm("Are you sure you want to delete this course?")) {
-            console.log("Delete course:", id);
+    // Handle Click Delete Button từ Card
+    const handleDeleteClick = (course) => {
+        setCourseToDelete(course);
+
+        // TRƯỜNG HỢP A: Fresh Draft (Chưa có trong Course Model)
+        // Dấu hiệu nhận biết: status là 'draft' và không phải là bản update của course đã publish
+        // (Hoặc đơn giản là status = 'draft' vì Backend đã gộp list trả về chuẩn rồi)
+        if (course.status === 'draft') {
+            setModalConfig({
+                title: "Xóa khóa học Draft",
+                message: "Đây là khóa học chưa được publish. Nó sẽ bị xóa vĩnh viễn cùng với tất cả nội dung. Hành động này không thể được hoàn tác.",
+                btnLabel: "Xóa vĩnh viễn" // Hành động: Xóa cứng
+            });
         }
+        // // TRƯỜNG HỢP C: Đã có học viên
+        else if (course.studentsCount > 0) {
+            setModalConfig({
+                title: "Archive khóa học",
+                message: `Khóa học này có ${course.studentsCount} sinh viên đã đăng ký. Nó không thể bị xóa. Thay vào đó, nó sẽ được chuyển đến trạng thái "Archived". Sinh viên hiện tại vẫn có thể truy cập nó, nhưng không có thêm các đăng ký mới được cho phép.`,
+                btnLabel: "Archive khóa học"
+            });
+        }
+        // TRƯỜNG HỢP B: Published/Hidden nhưng chưa có học viên
+        else {
+            setModalConfig({
+                title: "Ẩn khóa học",
+                message: "Khóa học này chưa có sinh viên nào đăng ký. Nó sẽ được chuyển đến trạng thái 'Hidden'. Nó sẽ không xuất hiện trên trang web, và bạn không thể chỉnh sửa nó cho đến khi bạn publish nó lại.",
+                btnLabel: "Ẩn khóa học"
+            });
+        }
+
+        setIsRemoveModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (courseToDelete) {
+            // Gọi action delete chung, backend tự quyết định xóa thật hay ẩn dựa trên logic service
+            await dispatch(deleteInstructorCourse(courseToDelete._id));
+            setIsRemoveModalOpen(false);
+            setCourseToDelete(null);
+        }
+    };
+
+    const handleActivate = (id) => {
+        dispatch(activateInstructorCourse(id));
     };
 
     return (
@@ -49,6 +95,8 @@ const InstructorCourses = () => {
                     <StatCard icon={<CheckCircle className="text-white" />} title="Published" value={instructorStats.published} color="bg-green-500" />
                     <StatCard icon={<AlertCircle className="text-white" />} title="Pending" value={instructorStats.pending} color="bg-yellow-500" />
                     <StatCard icon={<FileText className="text-white" />} title="Drafts" value={instructorStats.draft} color="bg-gray-500" />
+                    <StatCard icon={<Lock className="text-white" />} title="Hidden" value={instructorStats.hidden} color="bg-red-500" />
+                    <StatCard icon={<Archive className="text-white" />} title="Archived" value={instructorStats.archived} color="bg-purple-500" />
                 </div>
 
                 {/* Header & Add Button */}
@@ -62,13 +110,13 @@ const InstructorCourses = () => {
                 {/* Tabs */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
                     <div className="flex overflow-x-auto">
-                        {['all', 'published', 'pending', 'draft'].map((tab) => (
+                        {['all', 'published', 'pending', 'draft', 'hidden', 'archived'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => handleTabChange(tab)}
                                 className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${activeTab === tab
-                                        ? 'border-blue-600 text-blue-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -90,7 +138,8 @@ const InstructorCourses = () => {
                                 <InstructorCourseCard
                                     key={course._id}
                                     course={course}
-                                    onDelete={handleDelete}
+                                    onDelete={handleDeleteClick} // Pass function mở modal
+                                    onActivate={handleActivate}  // Pass function kích hoạt lại
                                 />
                             ))}
                         </div>
@@ -110,6 +159,17 @@ const InstructorCourses = () => {
                     </div>
                 )}
             </div>
+
+            {/* Remove Modal */}
+            <RemoveModal
+                isOpen={isRemoveModalOpen}
+                onClose={() => setIsRemoveModalOpen(false)}
+                onConfirm={confirmDelete}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                confirmLabel={modalConfig.btnLabel}
+                isDeleting={isLoading} // Tận dụng loading state của redux hoặc tạo local state
+            />
         </div>
     );
 };

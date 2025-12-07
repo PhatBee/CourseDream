@@ -28,6 +28,7 @@ import InstructorCourses from "../pages/instructor/InstructorCourses";
 import AdminLayout from '../layouts/AdminLayout';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import EditCoursePage from "../pages/instructor/EditCourse";
+import BecomeInstructor from "../pages/BecomeInstructor";
 
 export default function AppRoutes() {
   return (
@@ -40,13 +41,15 @@ export default function AppRoutes() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/payment/return" element={<PaymentReturn />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/verify-otp" element={<VerifyOTP />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
-            <Route path="/set-password" element={<SetPassword />} />
-            <Route path="/profile" element={<ProfileLayout />}>
+          </Route>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
+          <Route path="/set-password" element={<SetPassword />} />
+          <Route path="/profile/become-instructor" element={<BecomeInstructor />} />
+          <Route path="/profile" element={<ProfileLayout />}>
 
               {/* 1. Trang My Profile (Ảnh 1) */}
               <Route path="my-profile" element={<MyProfile />} />

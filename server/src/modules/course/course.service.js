@@ -508,7 +508,7 @@ export const getInstructorCourses = async (instructorId, query) => {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 9;
   const skip = (page - 1) * limit;
-  const statusFilter = query.status; // 'published', 'pending', 'draft', 'hidden'
+  const statusFilter = query.status; // 'published', 'pending', 'draft', 'hidden', 
 
   // 1. Lấy tất cả Course "chính thức" (Published, Hidden, Archived)
   // Lưu ý: Không phân trang ở đây, cần lấy hết để merge rồi mới cắt trang
@@ -578,7 +578,7 @@ export const getInstructorCourses = async (instructorId, query) => {
   }
 
   // --- THỐNG KÊ (STATS) ---
-  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0 };
+  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0, archived: 0 };
   mergedList.forEach(c => {
     stats.all++;
     // Logic đếm stats: Ưu tiên trạng thái revision nếu là pending
@@ -590,6 +590,8 @@ export const getInstructorCourses = async (instructorId, query) => {
       stats.published++;
     } else if (c.status === 'hidden') {
       stats.hidden++;
+    } else if (c.status === 'archived') {
+      stats.archived++;
     }
   });
 
@@ -862,4 +864,78 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
   );
 
   return updatedRevision;
+};
+
+/**
+ * Xóa khóa học (Xử lý cả 3 trường hợp A, B, C)
+ */
+export const deleteCourse = async (id, instructorId) => {
+  // BƯỚC 1: Tìm trong Collection COURSE trước (Cho Case B & C)
+  const course = await Course.findOne({ _id: id, instructor: instructorId });
+
+  if (course) {
+    // --- TRƯỜNG HỢP C: Đã có học viên -> Archive ---
+    if (course.studentsCount > 0) {
+      // Nếu đã archived rồi thì không cần làm gì hoặc báo lỗi tùy bạn
+      if (course.status === 'archived') {
+        return { message: "Khóa học đã được lưu trữ.", action: "archived" };
+      }
+
+      course.status = 'archived';
+      await course.save();
+      return {
+        message: "Khóa học đã chuyển sang trạng thái Lưu trữ (Archived) vì đã có học viên.",
+        action: "archived"
+      };
+    }
+
+    // --- TRƯỜNG HỢP B: Chưa có học viên -> Hidden ---
+    else {
+      // Logic: Ẩn khóa học khỏi marketplace
+      course.status = 'hidden';
+      await course.save();
+      return {
+        message: "Khóa học đã được ẩn (Hidden).",
+        action: "hidden"
+      };
+    }
+  }
+
+  // BƯỚC 2: Nếu không tìm thấy Course, tìm trong REVISION (Cho Case A - Fresh Draft)
+  // Lưu ý: Fresh Draft có course: null
+  const revision = await CourseRevision.findOne({
+    _id: id,
+    instructor: instructorId,
+    course: null // Đảm bảo đây là fresh draft chưa link tới course nào
+  });
+
+  if (revision) {
+    // --- TRƯỜNG HỢP A: Course Draft (Chưa từng publish) ---
+    await CourseRevision.findByIdAndDelete(id);
+    return {
+      message: "Đã xóa vĩnh viễn bản nháp khóa học.",
+      action: "deleted"
+    };
+  }
+
+  // Nếu không tìm thấy ở cả 2 nơi
+  const error = new Error("Không tìm thấy khóa học hoặc bạn không có quyền xóa.");
+  error.statusCode = 404;
+  throw error;
+};
+
+/**
+ * Kích hoạt lại khóa học (Hidden -> Published)
+ */
+export const activateCourse = async (courseId, instructorId) => {
+  const course = await Course.findOne({ _id: courseId, instructor: instructorId });
+  if (!course) throw new Error("Course not found");
+
+  // Chỉ cho phép kích hoạt nếu đang hidden hoặc archived
+  if (course.status === 'hidden' || course.status === 'archived') {
+    course.status = 'published';
+    await course.save();
+    return { message: "Khóa học đã được xuất bản trở lại (Published)." };
+  }
+  throw new Error("Khóa học đang ở trạng thái không thể kích hoạt nhanh.");
 };

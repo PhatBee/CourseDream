@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { Check, ChevronRight, ChevronLeft, Save, XCircle, AlertTriangle } from 'lucide-react';
 
 // Redux & API
 import { createNewCourse } from '../../features/course/courseSlice';
-import { courseApi } from '../../api/courseApi';
+import courseService from '../../features/course/courseService';
 import { categoryApi } from '../../api/categoryApi';
 
 // Hooks & Components   
@@ -52,8 +52,8 @@ const EditCoursePage = () => {
 
                 // B. Lấy dữ liệu khóa học để Edit
                 // Gọi API backend mới tạo: /api/courses/instructor/edit/:slug
-                const courseRes = await courseApi.getInstructorCourseForEdit(slug);
-                const apiData = courseRes.data.data;
+                const courseRes = await courseService.getInstructorCourseForEdit(slug);
+                const apiData = courseRes.data;
 
                 // C. Map dữ liệu Categories (ID -> Object {value, label}) cho Select
                 const mappedCategories = (apiData.categories || []).map(catId => {
@@ -90,8 +90,8 @@ const EditCoursePage = () => {
         const formData = new FormData();
         formData.append('video', file);
         formData.append('title', title);
-        const res = await courseApi.uploadVideo(formData);
-        if (res.data.success) return res.data.data.videoUrl;
+        const res = await courseService.uploadVideo(formData);
+        if (res.success) return res.data.videoUrl;
         throw new Error("Upload failed");
     };
 
@@ -101,8 +101,8 @@ const EditCoursePage = () => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('title', title);
-        const res = await courseApi.uploadResource(formData); // Gọi API upload-resource
-        if (res.data.success) return res.data.data.url;
+        const res = await courseService.uploadResource(formData); // Gọi API upload-resource
+        if (res.success) return res.data.url;
         throw new Error("Resource upload failed");
     };
 
@@ -226,15 +226,15 @@ const EditCoursePage = () => {
             const resultAction = await dispatch(createNewCourse(formData));
 
             if (createNewCourse.fulfilled.match(resultAction)) {
-                toast.success("Cập nhật thành công!", { id: loadingId });
+                toast.success("Cập nhật thành công!", { id: loadingId, duration: 2000 });
                 navigate('/profile/instructor/courses');
             } else {
-                toast.error("Lỗi Cập nhật.", { id: loadingId });
+                toast.error("Lỗi Cập nhật.", { id: loadingId, duration: 3000 });
             }
 
         } catch (error) {
             console.error(error);
-            toast.error("Có lỗi xảy ra.", { id: loadingId });
+            toast.error("Có lỗi xảy ra.", { id: loadingId, duration: 3000 });
         }
     };
 
@@ -313,7 +313,6 @@ const EditCoursePage = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 py-10 px-4 font-sans text-gray-800">
-            <Toaster position="top-right" />
             <div className="max-w-6xl mx-auto">
 
                 {/* Header Controls (New) */}

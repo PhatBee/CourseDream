@@ -1,7 +1,8 @@
 import express from 'express';
 import {
   searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
-  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource
+  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource, deleteCourse,
+  activateCourse,
 } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
@@ -70,11 +71,21 @@ router.get(
   getCourseForEdit
 );
 
-// router.delete('/:id', 
-//     verifyToken, 
-//     checkRole('admin'), 
-//     courseController.deleteCourse
-// );
+// Route xóa khóa học
+router.delete(
+  '/:id',
+  verifyToken,
+  // checkRole('instructor'),
+  deleteCourse
+);
+
+// Route kích hoạt lại khóa học ẩn
+router.patch(
+  '/:id/activate',
+  verifyToken,
+  // checkRole('instructor'),
+  activateCourse
+);
 
 router.get("/:courseId/lectures/:lectureId", verifyToken, getLecture);
 

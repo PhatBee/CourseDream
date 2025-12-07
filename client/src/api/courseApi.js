@@ -46,7 +46,13 @@ const getInstructorCourseForEdit = (slug) => {
   return axiosClient.get(`/courses/instructor/edit/${slug}`);
 };
 
+const deleteCourse = (id) => {
+  return axiosClient.delete(`${path}/${id}`);
+};
 
+const activateCourse = (id) => {
+  return axiosClient.patch(`${path}/${id}/activate`);
+};
 
 export const courseApi = {
   getAllCourses,
@@ -58,5 +64,7 @@ export const courseApi = {
   getLevels,
   getCourseStats,
   getInstructorCourses,
-  getInstructorCourseForEdit
+  getInstructorCourseForEdit,
+  deleteCourse,
+  activateCourse
 };
