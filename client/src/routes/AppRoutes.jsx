@@ -34,6 +34,7 @@ import AdminPendingCourseDetail from "../pages/admin/AdminPendingCourseDetail";
 import StudentsManagement from "../pages/admin/StudentsManagement";
 import InstructorsManagement from "../pages/admin/InstructorsManagement";
 import CategoriesManagement from "../pages/admin/CategoriesManagement";
+import InstructorDashboard from "../pages/instructor/InstructorDashboard";
 
 export default function AppRoutes() {
 
@@ -75,6 +76,7 @@ export default function AppRoutes() {
             <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
             <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
               <Route path="instructor/courses" element={<InstructorCourses />} />
+              <Route path="instructor/dashboard" element={<InstructorDashboard />} />
             </Route>
 
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getCourseDetails, resetCourse } from '../features/course/courseSlice';
+import { fetchMyEnrollments } from "../features/enrollment/enrollmentSlice";
 
 // Import các component con
 import Breadcrumb from '../components/common/Breadcrumb';
@@ -9,6 +10,7 @@ import CourseHeader from '../components/course/CourseHeader';
 import CourseSidebar from '../components/course/CourseSidebar';
 import CourseContent from '../components/course/CourseContent';
 import Spinner from '../components/common/Spinner';
+import CourseDiscussion from '../components/course/CourseDiscussion';
 
 const CourseDetail = () => {
   const { slug } = useParams();
@@ -18,20 +20,20 @@ const CourseDetail = () => {
   const { course, reviews, reviewCount, isLoading, isError, message } = useSelector(
     (state) => state.course
   );
+  const user = useSelector((state) => state.auth.user);
+  const enrolledCourseIds = useSelector((state) => state.enrollment.enrolledCourseIds);
 
   useEffect(() => {
-    if (isError) {
-      console.error(message);
-    }
-
-    // Gọi thunk để lấy dữ liệu
     dispatch(getCourseDetails(slug));
+    dispatch(fetchMyEnrollments());
 
-    // Cleanup: Reset state khi rời khỏi trang
     return () => {
       dispatch(resetCourse());
     };
-  }, [slug, dispatch, isError, message]);
+  }, [slug, dispatch]);
+
+  // Xác định user đã ghi danh chưa
+  const isEnrolled = enrolledCourseIds?.includes(String(course?._id));
 
   // Xử lý trạng thái Loading
   if (isLoading || !course) {
@@ -79,6 +81,10 @@ const CourseDetail = () => {
           </div>
         </div>
       </section>
+
+      <div className="container mx-auto px-4 max-w-7xl">
+        <CourseDiscussion courseId={course._id} user={user} isEnrolled={isEnrolled} />
+      </div>
     </>
   );
 };

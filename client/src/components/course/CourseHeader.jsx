@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
+import toast from "react-hot-toast";
 
 import StarRating from '../common/StarRating';
+import ReportModal from '../common/ReportModal';
 
-import { FaPlay } from 'react-icons/fa';
+import { FaPlay, FaFlag } from 'react-icons/fa';
 import { HiOutlineBookOpen, HiOutlineClock, HiOutlineUsers } from 'react-icons/hi';
 import { getEmbedUrl } from '../../utils/videoUtils.js';
+import reportApi from '../../api/reportApi';
+
+const COURSE_REPORT_REASONS = [
+  'Nội dung khóa học không phù hợp - Có hại, bạo lực, thù hận hoặc tội phạm',
+  'Nội dung khóa học không phù hợp - Khác',
+  'Vi phạm chính sách của nền tảng',
+  'Nội dung quảng cáo không phù hợp',
+  'Ý khác',
+];
 
 const CourseHeader = ({ course }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const {
     title = '',
     description = '',
@@ -29,6 +41,12 @@ const CourseHeader = ({ course }) => {
     if (embedUrl) {
       setIsPlaying(true);
     }
+  };
+
+  const handleReportSubmit = async (reason, detail) => {
+    await reportApi.reportCourse(course._id, reason + (detail ? `\n${detail}` : ''));
+    setReportOpen(false);
+    toast.success("Báo cáo của bạn đã được gửi!");
   };
 
   return (
@@ -120,8 +138,28 @@ const CourseHeader = ({ course }) => {
               </p>
             </div>
           </div>
+
+          {/* Nút báo cáo khóa học */}
+          <div className="mt-4 flex items-center">
+            <button
+              onClick={() => setReportOpen(true)}
+              className="flex items-center text-sm font-medium text-gray-700 hover:text-red-500"
+              aria-label="Report course"
+            >
+              <FaFlag className="mr-1.5" />
+              Báo cáo khóa học
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Modal báo cáo khóa học */}
+      <ReportModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        onSubmit={handleReportSubmit}
+        reasons={COURSE_REPORT_REASONS}
+      />
     </div>
   );
 };
