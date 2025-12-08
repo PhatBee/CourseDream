@@ -2,7 +2,7 @@ import axiosClient from "./axiosClient";
 
 const path = "/categories";
 
-const getAllCategories = () => {
+const getAllCategories = (params) => {
   return axiosClient.get(path, { params });
 };
 

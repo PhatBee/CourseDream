@@ -22,6 +22,7 @@ import instructorRoutes from "./modules/instructor/instructor.routes.js";
 import reportRoutes from "./modules/report/report.routes.js";
 import notificationRoutes from "./modules/notification/notification.routes.js";
 import discussionRoutes from "./modules/discussion/discussion.routes.js";
+import promotionRoutes from "./modules/promotion/promotion.routes.js";
 
 const app = express();
 
@@ -66,6 +67,8 @@ app.use("/api/instructor", instructorRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/discussions", discussionRoutes);
+
+app.use("/api/promotions", promotionRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

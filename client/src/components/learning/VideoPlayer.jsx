@@ -35,6 +35,39 @@ const VideoPlayer = ({ lecture, onNext, onPrevious, onToggleComplete, isComplete
         )}
       </div>
 
+      {/* --- RESOURCES SECTION --- */}
+                {lecture.resources && lecture.resources.length > 0 && (
+                    <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            <Download size={18} /> Downloadable Resources
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {lecture.resources.map((res, index) => (
+                                <a 
+                                    key={index}
+                                    href={res.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm hover:border-blue-300 transition-all group"
+                                >
+                                    <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-50 transition-colors">
+                                        {getResourceIcon(res.type)}
+                                    </div>
+                                    <div className="ml-3 overflow-hidden">
+                                        <p className="text-sm font-medium text-gray-700 truncate group-hover:text-blue-600 transition-colors">
+                                            {res.title}
+                                        </p>
+                                        <p className="text-xs text-gray-400 uppercase">
+                                            {res.type === 'file' ? 'File Download' : 'External Link'}
+                                        </p>
+                                    </div>
+                                    <Download size={16} className="ml-auto text-gray-300 group-hover:text-blue-500" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
       {/* Controls & Title - Căn trái */}
       <div className="mt-6 mb-8">
         <div className="flex flex-col gap-4">

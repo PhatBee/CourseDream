@@ -76,12 +76,12 @@ const categorySlice = createSlice({
         state.items = action.payload.data;
         state.pagination = action.payload.pagination;
       })
-      
+
       // Create
       .addCase(createCategory.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
       })
-      
+
       // Update
       .addCase(updateCategory.fulfilled, (state, action) => {
         const index = state.items.findIndex(c => c._id === action.payload._id);
@@ -89,7 +89,7 @@ const categorySlice = createSlice({
           state.items[index] = action.payload;
         }
       })
-      
+
       // Delete
       .addCase(deleteCategory.fulfilled, (state, action) => {
         state.items = state.items.filter(c => c._id !== action.payload);

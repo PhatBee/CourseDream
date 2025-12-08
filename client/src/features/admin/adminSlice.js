@@ -13,7 +13,16 @@ const initialState = {
     adminPendingPagination: { page: 1, limit: 10, totalPages: 1, total: 0 },
     adminPendingDetail: null,
     adminActionLoading: false,
-
+    studentsList: {
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+    },
+    instructorsList: {
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+    },
+    adminApplications: [], // List đơn đăng ký
+    adminAppPagination: { page: 1, limit: 10, totalPages: 1, total: 0 },
 };
 
 // 1. Thunk: Lấy số liệu tổng quan
@@ -144,6 +153,34 @@ export const adminRejectCourse = createAsyncThunk(
     }
 );
 
+// [MỚI] Thunk: Get Applications
+export const fetchInstructorApplications = createAsyncThunk(
+    'admin/fetchInstructorApplications',
+    async (params, thunkAPI) => {
+        try {
+            const response = await adminService.getInstructorApplications(params);
+            return response.data; // { applications, pagination }
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message);
+        }
+    }
+);
+
+// [MỚI] Thunk: Review Application
+export const reviewInstructorApp = createAsyncThunk(
+    'admin/reviewInstructorApp',
+    async ({ id, action, reason }, thunkAPI) => {
+        try {
+            const response = await adminService.reviewInstructorApplication(id, { action, reason });
+            toast.success(action === 'approve' ? 'Đã duyệt giảng viên!' : 'Đã từ chối đơn đăng ký');
+            return { id, message: response.message };
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Xử lý thất bại');
+            return thunkAPI.rejectWithValue(error.response?.data?.message);
+        }
+    }
+);
+
 const adminSlice = createSlice({
     name: 'admin',
     initialState,
@@ -263,6 +300,30 @@ const adminSlice = createSlice({
                 state.adminActionLoading = false;
                 state.isError = true;
                 state.message = action.payload;
+            })
+
+            // === Instructor Applications ===
+            .addCase(fetchInstructorApplications.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchInstructorApplications.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.adminApplications = action.payload.applications;
+                state.adminAppPagination = action.payload.pagination;
+            })
+            .addCase(fetchInstructorApplications.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+
+            // === Review Application ===
+            .addCase(reviewInstructorApp.fulfilled, (state, action) => {
+                // Xóa item đã duyệt khỏi danh sách pending để UI cập nhật ngay
+                state.adminApplications = state.adminApplications.filter(
+                    app => app._id !== action.payload.id
+                );
+                state.adminAppPagination.total -= 1;
             });
 
     },
