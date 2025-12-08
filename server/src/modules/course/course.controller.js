@@ -259,3 +259,5 @@ export const activateCourse = async (req, res, next) => {
     next(error);
   }
 }
+
+// ==================== ADMIN CONTROLLERS ====================

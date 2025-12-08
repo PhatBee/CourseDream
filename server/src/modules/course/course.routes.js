@@ -2,7 +2,7 @@ import express from 'express';
 import {
   searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
   getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource, deleteCourse,
-  activateCourse,
+  activateCourse
 } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
@@ -11,6 +11,12 @@ import { uploadVideo, upload, uploadDocument } from '../../middlewares/upload.mi
 
 
 const router = express.Router();
+
+// ==================== ADMIN ROUTES ====================
+// Đặt trước các route public để tránh conflict với :slug
+
+
+// ==================== PUBLIC & INSTRUCTOR ROUTES ====================
 
 router.get('/', getCourses);
 router.get('/levels', getLevels);

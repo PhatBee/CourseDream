@@ -54,6 +54,8 @@ const activateCourse = (id) => {
   return axiosClient.patch(`${path}/${id}/activate`);
 };
 
+// ==================== ADMIN APIs ====================
+
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
@@ -66,5 +68,5 @@ export const courseApi = {
   getInstructorCourses,
   getInstructorCourseForEdit,
   deleteCourse,
-  activateCourse
+  activateCourse,
 };

@@ -52,6 +52,8 @@ const activateCourse = async (id) => {
   return response.data;
 };
 
+// ==================== ADMIN SERVICES ====================
+
 const courseService = {
   getDetails,
   getAllCourses,
@@ -61,7 +63,8 @@ const courseService = {
   getInstructorCourses,
   getInstructorCourseForEdit,
   deleteCourse,
-  activateCourse
+  activateCourse,
+  // Admin Services
 };
 
 export default courseService;

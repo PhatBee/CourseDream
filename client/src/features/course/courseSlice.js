@@ -103,6 +103,7 @@ export const activateInstructorCourse = createAsyncThunk(
   }
 );
 
+
 export const courseSlice = createSlice({
   name: 'course',
   initialState,
@@ -219,7 +220,7 @@ export const courseSlice = createSlice({
         state.instructorStats.published += 1;
         state.instructorStats.hidden -= 1;
         toast.success("Khóa học đã được kích hoạt lại!");
-      });
+      })
   },
 });
 
