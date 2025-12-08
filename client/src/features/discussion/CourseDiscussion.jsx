@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { getDiscussionsByCourse, createDiscussion, replyToDiscussion } from "../../api/discussionApi";
-import Spinner from "../common/Spinner";
-import { FaUserCircle } from "react-icons/fa";
-import ReportModal from "../common/ReportModal";
-import reportApi from "../../api/reportApi";
-import { FaFlag } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchDiscussions, addDiscussion, replyDiscussion } from "./discussionSlice";
+import Spinner from "../../components/common/Spinner";
+import { FaUserCircle, FaFlag } from "react-icons/fa";
+import ReportModal from "../../components/common/ReportModal";
 import toast from "react-hot-toast";
+import reportApi from "../../api/reportApi";
+import Pagination from "../../components/common/Pagination";
+import { sendReport, resetReportState } from "../../features/report/reportSlice";
 
 const DISCUSSION_REPORT_REASONS = [
   "Hành vi không phù hợp",
@@ -16,9 +18,9 @@ const DISCUSSION_REPORT_REASONS = [
 ];
 
 const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
-  const [discussions, setDiscussions] = useState([]);
-  const [pagination, setPagination] = useState({});
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { discussions, pagination, loading } = useSelector(state => state.discussion);
+  const { success, error } = useSelector(state => state.report);
   const [newContent, setNewContent] = useState("");
   const [replyContent, setReplyContent] = useState({});
   const [page, setPage] = useState(1);
@@ -28,35 +30,38 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
   const [reportReplyId, setReportReplyId] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    getDiscussionsByCourse(courseId, page, 10)
-      .then(res => {
-        setDiscussions(res.data.discussions);
-        setPagination(res.data.pagination);
-      })
-      .finally(() => setLoading(false));
-  }, [courseId, page]);
+    if (courseId) {
+      dispatch(fetchDiscussions({ courseId, page, limit: 10 }));
+    }
+  }, [courseId, page, dispatch]);
+
+  useEffect(() => {
+    if (success) {
+      toast.success("Báo cáo của bạn đã được gửi!");
+      dispatch(resetReportState());
+      setReportOpen(false);
+      setReportReplyOpen(false);
+    }
+    if (error) {
+      toast.error(error);
+      dispatch(resetReportState());
+    }
+  }, [success, error, dispatch]);
 
   const handleCreateDiscussion = async (e) => {
     e.preventDefault();
     if (!newContent.trim()) return;
-    await createDiscussion(courseId, newContent);
+    await dispatch(addDiscussion({ courseId, content: newContent }));
     setNewContent("");
     setPage(1);
-    getDiscussionsByCourse(courseId, 1, 10).then(res => {
-      setDiscussions(res.data.discussions);
-      setPagination(res.data.pagination);
-    });
+    dispatch(fetchDiscussions({ courseId, page: 1, limit: 10 }));
   };
 
   const handleReply = async (discussionId) => {
     if (!replyContent[discussionId]?.trim()) return;
-    await replyToDiscussion(discussionId, replyContent[discussionId]);
+    await dispatch(replyDiscussion({ discussionId, content: replyContent[discussionId] }));
     setReplyContent({ ...replyContent, [discussionId]: "" });
-    getDiscussionsByCourse(courseId, page, 10).then(res => {
-      setDiscussions(res.data.discussions);
-      setPagination(res.data.pagination);
-    });
+    dispatch(fetchDiscussions({ courseId, page, limit: 10 }));
   };
 
   const openReportPopup = (discussionId) => {
@@ -64,10 +69,12 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
     setReportOpen(true);
   };
 
-  const handleReportSubmit = async (reason, detail) => {
-    await reportApi.reportDiscussion(reportDiscussionId, reason + (detail ? `\n${detail}` : ""));
-    setReportOpen(false);
-    toast.success("Báo cáo của bạn đã được gửi!");
+  const handleReportSubmit = (reason, detail) => {
+    dispatch(sendReport({
+      type: "discussion",
+      targetId: reportDiscussionId,
+      reason: reason + (detail ? `\n${detail}` : "")
+    }));
   };
 
   const openReportReplyPopup = (replyId) => {
@@ -75,10 +82,12 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
     setReportReplyOpen(true);
   };
 
-  const handleReportReplySubmit = async (reason, detail) => {
-    await reportApi.reportReply(reportReplyId, reason + (detail ? `\n${detail}` : ""));
-    setReportReplyOpen(false);
-    toast.success("Báo cáo của bạn đã được gửi!");
+  const handleReportReplySubmit = (reason, detail) => {
+    dispatch(sendReport({
+      type: "reply",
+      targetId: reportReplyId,
+      reason: reason + (detail ? `\n${detail}` : "")
+    }));
   };
 
   if (loading) return <Spinner />;
@@ -114,7 +123,7 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
           <div className="flex justify-end mt-2">
             <button
               type="submit"
-              className="inline-flex items-center px-6 py-2 rounded-full font-semibold text-white bg-blue-600 hover:bg-blue-700 transition disabled:bg-gray-400"
+              className="inline-flex items-center px-6 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-md shadow-rose-200 transition disabled:bg-gray-400"
               disabled={!isEnrolled || !newContent.trim()}
             >
               Gửi
@@ -193,7 +202,7 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
                   className="border border-gray-300 rounded-full px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100"
                 />
                 <button
-                  className="inline-flex items-center px-4 py-1.5 rounded-full font-semibold text-white bg-blue-600 hover:bg-blue-700 transition ml-2 disabled:bg-gray-400"
+                  className="inline-flex items-center px-4 py-1.5 rounded-full font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-md shadow-rose-200 transition ml-2 disabled:bg-gray-400"
                   disabled={!isEnrolled || !replyContent[discussion._id]?.trim()}
                   type="submit"
                 >
@@ -216,21 +225,11 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
       </div>
 
       {/* Phân trang */}
-      <div className="mt-8 flex gap-2 justify-center">
-        {Array.from({ length: pagination.totalPages || 1 }, (_, i) => (
-          <button
-            key={i}
-            className={`px-3 py-1 rounded-full font-semibold ${
-              page === i + 1
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-blue-600 hover:text-white transition"
-            }`}
-            onClick={() => setPage(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+      <Pagination
+        currentPage={page}
+        totalPages={pagination?.totalPages || 1}
+        onPageChange={setPage}
+      />
 
       <ReportModal
         open={reportOpen}

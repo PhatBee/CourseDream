@@ -12,7 +12,16 @@ const initialState = {
     adminPendingCourses: [],
     adminPendingPagination: { page: 1, limit: 10, totalPages: 1, total: 0 },
     adminPendingDetail: null,
-    adminActionLoading: false
+    adminActionLoading: false,
+    studentsList: {
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+    },
+    instructorsList: {
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+    },
+
 };
 
 // 1. Thunk: Lấy số liệu tổng quan
@@ -37,6 +46,48 @@ export const fetchRevenueAnalytics = createAsyncThunk(
             return response.data.data;
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data?.message || 'Error fetching revenue');
+        }
+    }
+);
+
+export const fetchStudents = createAsyncThunk(
+    'admin/fetchStudents',
+    async (params, thunkAPI) => {
+        try {
+            const response = await adminApi.getStudents(params);
+            return response.data.data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message);
+        }
+    }
+);
+
+export const fetchInstructors = createAsyncThunk(
+    'admin/fetchInstructors',
+    async (params, thunkAPI) => {
+        try {
+            const response = await adminApi.getInstructors(params);
+            return response.data.data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message);
+        }
+    }
+);
+
+export const toggleBlockUser = createAsyncThunk(
+    'admin/toggleBlockUser',
+    async ({ userId, reason }, thunkAPI) => {
+        try {
+            const response = await adminApi.toggleBlockUser(userId, reason);
+            const isBlocked = !response.data.data.isActive;
+
+            return {
+                userId,
+                isBlocked,
+                message: response.data.message
+            };
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message);
         }
     }
 );
@@ -101,7 +152,7 @@ export const adminRejectCourse = createAsyncThunk(
     }
 );
 
-export const adminSlice = createSlice({
+const adminSlice = createSlice({
     name: 'admin',
     initialState,
     reducers: {
@@ -113,7 +164,6 @@ export const adminSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-
             // Dashboard Stats
             .addCase(fetchDashboardStats.pending, (state) => {
                 state.isLoading = true;
@@ -130,6 +180,32 @@ export const adminSlice = createSlice({
             // Revenue Analytics
             .addCase(fetchRevenueAnalytics.fulfilled, (state, action) => {
                 state.revenueData = action.payload;
+            })
+            .addCase(fetchStudents.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchStudents.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.studentsList.data = action.payload.students;
+                state.studentsList.pagination = action.payload.pagination;
+            })
+
+            .addCase(fetchInstructors.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchInstructors.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.instructorsList.data = action.payload.instructors;
+                state.instructorsList.pagination = action.payload.pagination;
+            })
+            .addCase(toggleBlockUser.fulfilled, (state, action) => {
+                const { userId, isBlocked } = action.payload;
+
+                const student = state.studentsList.data.find(u => u._id === userId);
+                if (student) student.isBlocked = isBlocked;
+
+                const instructor = state.instructorsList.data.find(u => u._id === userId);
+                if (instructor) instructor.isBlocked = isBlocked;
             })
             // Get Admin Pending Courses
             .addCase(getAdminPendingCourses.pending, (state) => {
@@ -196,6 +272,7 @@ export const adminSlice = createSlice({
                 state.isError = true;
                 state.message = action.payload;
             });
+
     },
 });
 

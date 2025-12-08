@@ -50,7 +50,7 @@ const ReportModal = ({ open, onClose, onSubmit, reasons }) => {
         <div className="flex justify-end gap-2">
           <button className="px-5 py-2 rounded bg-gray-200 text-base" onClick={onClose}>Hủy</button>
           <button
-            className="px-5 py-2 rounded bg-blue-600 text-white font-semibold text-base"
+            className="px-5 py-2 rounded font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-md shadow-rose-200 text-base transition"
             onClick={handleSend}
           >
             Gửi

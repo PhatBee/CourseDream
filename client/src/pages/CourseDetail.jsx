@@ -10,7 +10,7 @@ import CourseHeader from '../components/course/CourseHeader';
 import CourseSidebar from '../components/course/CourseSidebar';
 import CourseContent from '../components/course/CourseContent';
 import Spinner from '../components/common/Spinner';
-import CourseDiscussion from '../components/course/CourseDiscussion';
+import CourseDiscussion from '../features/discussion/CourseDiscussion';
 
 const CourseDetail = () => {
   const { slug } = useParams();

@@ -1,7 +1,18 @@
-import React from 'react';
-import { Search, ArrowRight, Star, User } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Search, ArrowRight, Star, User } from "lucide-react";
 
 const HeroSection = () => {
+  const [keyword, setKeyword] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (keyword.trim()) {
+      navigate(`/courses?q=${encodeURIComponent(keyword.trim())}`);
+    }
+  };
+
   return (
     // Đổi nền sang tông Rose/Red nhẹ
     <section className="relative bg-gradient-to-br from-rose-50 via-white to-orange-50 py-20 lg:py-28 overflow-hidden">
@@ -31,13 +42,15 @@ const HeroSection = () => {
             
             {/* Search Form */}
             <div className="bg-white p-2 rounded-lg shadow-xl shadow-rose-100/50 max-w-lg border border-gray-100">
-              <form className="flex items-center gap-2">
+              <form className="flex items-center gap-2" onSubmit={handleSearch}>
                 <div className="flex items-center flex-1 px-3">
                   <Search className="w-5 h-5 text-gray-400 mr-2" />
                   <input 
                     type="text" 
                     placeholder="Search courses..." 
                     className="w-full p-2 focus:outline-none text-gray-700 placeholder-gray-400 bg-transparent" 
+                    value={keyword}
+                    onChange={e => setKeyword(e.target.value)}
                   />
                 </div>
                 <button className="bg-rose-600 hover:bg-rose-700 text-white p-3 rounded-md transition-colors shadow-lg shadow-rose-200">
