@@ -25,6 +25,8 @@ import AddCoursePage from "../pages/instructor/AddCourse";
 import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
+import AdminLayout from '../layouts/AdminLayout';
+import AdminDashboard from '../pages/admin/AdminDashboard';
 import EditCoursePage from "../pages/instructor/EditCourse";
 import BecomeInstructor from "../pages/BecomeInstructor";
 import AdminPendingCourses from "../pages/admin/AdminPendingCourses";
@@ -82,6 +84,7 @@ export default function AppRoutes() {
             <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
           </Route>
 
+
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
             <Route path="admin/pending-courses" element={<AdminPendingCourses />} />
             <Route path="admin/pending-courses/:revisionId" element={<AdminPendingCourseDetail />} />
@@ -89,6 +92,14 @@ export default function AppRoutes() {
 
         </Routes>
       </main>
+
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="users" element={<div>Manage Students</div>} />
+        <Route path="courses" element={<div>Manage Courses</div>} />
+        <Route path="blogs" element={<div>Manage Blogs</div>} />
+      </Route>
     </BrowserRouter>
   );
 }
