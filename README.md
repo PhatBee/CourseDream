@@ -25,6 +25,7 @@ npm install --save-dev nodemon
 cd client
 npm install axios react-router-dom redux @reduxjs/toolkit react-hot-toast react-toastify @react-oauth/google
 npm install react-facebook-login -S --force
+npm install recharts --force
 npm i lucide-react --force
 npm install react-icons --force
 

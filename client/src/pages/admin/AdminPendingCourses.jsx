@@ -101,7 +101,7 @@ const AdminPendingCourses = () => {
                                                     Khóa học mới
                                                 </span>
                                             ) : (
-                                                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                                                <span className="px-3 py-1 bg-rose-100 text-rose-800 text-xs font-semibold rounded-full">
                                                     Cập nhật khóa học
                                                 </span>
                                             )}
@@ -117,7 +117,7 @@ const AdminPendingCourses = () => {
                                     {/* Action button */}
                                     <div>
                                         <button
-                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                            className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleViewDetail(course._id);

@@ -198,7 +198,7 @@ const AdminPendingCourseDetail = () => {
                                     Khóa học mới
                                 </span>
                             ) : (
-                                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                                <span className="px-3 py-1 bg-rose-100 text-rose-800 text-sm font-semibold rounded-full">
                                     Cập nhật khóa học
                                 </span>
                             )}
@@ -208,7 +208,7 @@ const AdminPendingCourseDetail = () => {
                     {/* Action buttons */}
                     <div className="flex gap-2">
                         <button
-                            onClick={() => navigate('/admin/pending-courses')}
+                            onClick={() => navigate('/admin/courses')}
                             className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
                         >
                             Quay lại
@@ -358,7 +358,7 @@ const AdminPendingCourseDetail = () => {
                                                     {lecture.videoUrl && (
                                                         <button
                                                             onClick={() => handleVideoPreview(lecture.videoUrl)}
-                                                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                                            className="px-3 py-1 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors"
                                                         >
                                                             Xem video
                                                         </button>
