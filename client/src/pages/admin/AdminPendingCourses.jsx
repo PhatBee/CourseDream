@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAdminPendingCourses } from '../../features/course/courseSlice';
+import Pagination from '../../components/common/Pagination';
 
 const AdminPendingCourses = () => {
     const navigate = useNavigate();
@@ -131,30 +132,12 @@ const AdminPendingCourses = () => {
                     </div>
                 )}
 
-                {/* Pagination */}
-                {adminPendingPagination.totalPages > 1 && (
-                    <div className="flex justify-center gap-2 mt-6">
-                        <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                        >
-                            Trước
-                        </button>
-
-                        <span className="px-4 py-2">
-                            Trang {currentPage} / {adminPendingPagination.totalPages}
-                        </span>
-
-                        <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === adminPendingPagination.totalPages}
-                            className="px-4 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                        >
-                            Sau
-                        </button>
-                    </div>
-                )}
+                {/* Pagination Component */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={adminPendingPagination.totalPages}
+                    onPageChange={handlePageChange}
+                />
             </div>
         </div>
     );

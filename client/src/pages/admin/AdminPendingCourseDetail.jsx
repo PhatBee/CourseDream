@@ -6,8 +6,115 @@ import {
     adminApproveCourse,
     adminRejectCourse
 } from '../../features/course/courseSlice';
-import { ChevronDown, ChevronUp, Play } from 'lucide-react';
+import { ChevronDown, ChevronUp, Play, X, CheckCircle } from 'lucide-react';
 import VideoPreviewModal from '../../components/common/VideoPreviewModal';
+import { createPortal } from 'react-dom';
+
+// Approve Confirmation Modal Component
+const ApproveModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
+    if (!isOpen) return null;
+
+    const modalContent = (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
+            <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined}></div>
+
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative z-10 animate-scaleIn text-center">
+                <button
+                    onClick={onClose}
+                    disabled={isLoading}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                >
+                    <X size={20} />
+                </button>
+
+                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="text-green-500 w-8 h-8" />
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Xác nhận duyệt khóa học</h3>
+                <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+                    Bạn có chắc chắn muốn duyệt khóa học này? Khóa học sẽ được xuất bản và hiển thị công khai.
+                </p>
+
+                <div className="flex items-center justify-center gap-3">
+                    <button
+                        onClick={onClose}
+                        disabled={isLoading}
+                        className="px-6 py-2.5 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors min-w-[100px] disabled:opacity-50"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={isLoading}
+                        className="px-6 py-2.5 rounded-full bg-green-500 text-white font-medium hover:bg-green-600 shadow-lg shadow-green-200 transition-all transform hover:scale-105 min-w-[140px] flex justify-center items-center disabled:transform-none disabled:opacity-70"
+                    >
+                        {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : 'Xác nhận duyệt'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
+};
+
+// Reject Input Modal Component
+const RejectModal = ({ isOpen, onClose, onConfirm, isLoading, rejectMessage, setRejectMessage }) => {
+    if (!isOpen) return null;
+
+    const modalContent = (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
+            <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined}></div>
+
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative z-10 animate-scaleIn">
+                <button
+                    onClick={onClose}
+                    disabled={isLoading}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                >
+                    <X size={20} />
+                </button>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Từ chối khóa học</h3>
+                <p className="text-gray-600 mb-4 text-sm">
+                    Vui lòng nhập lý do từ chối để giảng viên có thể chỉnh sửa:
+                </p>
+
+                <textarea
+                    value={rejectMessage}
+                    onChange={(e) => setRejectMessage(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-3 mb-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="Nhập lý do từ chối..."
+                    disabled={isLoading}
+                />
+
+                <div className="flex justify-end gap-3">
+                    <button
+                        onClick={onClose}
+                        disabled={isLoading}
+                        className="px-6 py-2.5 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={isLoading || !rejectMessage.trim()}
+                        className="px-6 py-2.5 rounded-full bg-red-500 text-white font-medium hover:bg-red-600 shadow-lg shadow-red-200 transition-all transform hover:scale-105 flex justify-center items-center min-w-[140px] disabled:transform-none disabled:opacity-50"
+                    >
+                        {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : 'Xác nhận từ chối'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
+};
 
 const AdminPendingCourseDetail = () => {
     const { revisionId } = useParams();
@@ -18,6 +125,7 @@ const AdminPendingCourseDetail = () => {
         (state) => state.course
     );
 
+    const [showApproveModal, setShowApproveModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectMessage, setRejectMessage] = useState('');
     const [expandedSections, setExpandedSections] = useState([]);
@@ -28,24 +136,19 @@ const AdminPendingCourseDetail = () => {
     }, [dispatch, revisionId]);
 
     const handleApprove = async () => {
-        if (!window.confirm('Bạn có chắc chắn muốn duyệt khóa học này?')) {
-            return;
-        }
-
         const result = await dispatch(adminApproveCourse(revisionId));
         if (result.type.endsWith('/fulfilled')) {
+            setShowApproveModal(false);
             navigate('/admin/pending-courses');
         }
     };
 
     const handleReject = async () => {
-        if (!rejectMessage.trim()) {
-            alert('Vui lòng nhập lý do từ chối');
-            return;
-        }
+        if (!rejectMessage.trim()) return;
 
         const result = await dispatch(adminRejectCourse({ revisionId, reviewMessage: rejectMessage }));
         if (result.type.endsWith('/fulfilled')) {
+            setShowRejectModal(false);
             navigate('/admin/pending-courses');
         }
     };
@@ -111,11 +214,11 @@ const AdminPendingCourseDetail = () => {
                             Quay lại
                         </button>
                         <button
-                            onClick={handleApprove}
+                            onClick={() => setShowApproveModal(true)}
                             disabled={adminActionLoading}
                             className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
                         >
-                            {adminActionLoading ? 'Đang xử lý...' : 'Duyệt'}
+                            Duyệt
                         </button>
                         <button
                             onClick={() => setShowRejectModal(true)}
@@ -286,42 +389,25 @@ const AdminPendingCourseDetail = () => {
                 )}
             </div>
 
-            {/* Reject Modal */}
-            {showRejectModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <h3 className="text-xl font-bold mb-4">Từ chối khóa học</h3>
-                        <p className="text-gray-600 mb-4">
-                            Vui lòng nhập lý do từ chối để giảng viên có thể chỉnh sửa:
-                        </p>
-                        <textarea
-                            value={rejectMessage}
-                            onChange={(e) => setRejectMessage(e.target.value)}
-                            className="w-full border rounded p-2 mb-4 min-h-[120px]"
-                            placeholder="Nhập lý do từ chối..."
-                        />
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => {
-                                    setShowRejectModal(false);
-                                    setRejectMessage('');
-                                }}
-                                disabled={adminActionLoading}
-                                className="px-4 py-2 border rounded hover:bg-gray-50"
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                onClick={handleReject}
-                                disabled={adminActionLoading}
-                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-                            >
-                                {adminActionLoading ? 'Đang xử lý...' : 'Xác nhận từ chối'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modals */}
+            <ApproveModal
+                isOpen={showApproveModal}
+                onClose={() => setShowApproveModal(false)}
+                onConfirm={handleApprove}
+                isLoading={adminActionLoading}
+            />
+
+            <RejectModal
+                isOpen={showRejectModal}
+                onClose={() => {
+                    setShowRejectModal(false);
+                    setRejectMessage('');
+                }}
+                onConfirm={handleReject}
+                isLoading={adminActionLoading}
+                rejectMessage={rejectMessage}
+                setRejectMessage={setRejectMessage}
+            />
 
             {/* Video Preview Modal */}
             {videoPreview && (
