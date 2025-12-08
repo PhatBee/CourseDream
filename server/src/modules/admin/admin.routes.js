@@ -14,7 +14,7 @@ router.use(verifyToken, checkRole('admin'));
  * @access  Admin
  */
 router.get(
-  '/instructor-applications', 
+  '/instructor-applications',
   adminController.getPendingApplications
 );
 
@@ -24,8 +24,36 @@ router.get(
  * @access  Admin
  */
 router.put(
-  '/instructor-applications/:targetUserId', 
+  '/instructor-applications/:targetUserId',
   adminController.reviewApplication
+);
+
+router.get(
+  '/courses/pending',
+  verifyToken,
+  checkRole('admin'),
+  adminController.getPendingCourses
+);
+
+router.get(
+  '/courses/pending/:revisionId',
+  verifyToken,
+  checkRole('admin'),
+  adminController.getPendingCourseDetail
+);
+
+router.post(
+  '/courses/approve/:revisionId',
+  verifyToken,
+  checkRole('admin'),
+  adminController.approveCourseRevision
+);
+
+router.post(
+  '/courses/reject/:revisionId',
+  verifyToken,
+  checkRole('admin'),
+  rejectCourseRevision
 );
 
 export default router;

@@ -15,33 +15,6 @@ const router = express.Router();
 // ==================== ADMIN ROUTES ====================
 // Đặt trước các route public để tránh conflict với :slug
 
-router.get(
-  '/admin/pending',
-  verifyToken,
-  checkRole('admin'),
-  getPendingCourses
-);
-
-router.get(
-  '/admin/pending/:revisionId',
-  verifyToken,
-  checkRole('admin'),
-  getPendingCourseDetail
-);
-
-router.post(
-  '/admin/approve/:revisionId',
-  verifyToken,
-  checkRole('admin'),
-  approveCourseRevision
-);
-
-router.post(
-  '/admin/reject/:revisionId',
-  verifyToken,
-  checkRole('admin'),
-  rejectCourseRevision
-);
 
 // ==================== PUBLIC & INSTRUCTOR ROUTES ====================
 
