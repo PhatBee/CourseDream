@@ -13,6 +13,14 @@ const initialState = {
     adminPendingPagination: { page: 1, limit: 10, totalPages: 1, total: 0 },
     adminPendingDetail: null,
     adminActionLoading: false,
+    studentsList: {
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+    },
+    instructorsList: {
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+    },
 
 };
 
