@@ -2,7 +2,7 @@ import express from 'express';
 import {
   searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
   getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource, deleteCourse,
-  activateCourse, getPendingCourses, getPendingCourseDetail, approveCourseRevision, rejectCourseRevision
+  activateCourse
 } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
