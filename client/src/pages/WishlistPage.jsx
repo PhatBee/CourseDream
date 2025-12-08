@@ -115,7 +115,7 @@ const WishlistPage = () => {
                 onConfirm={handleConfirmClear}
                 title="Clear Wishlist"
                 message="Are you sure you want to remove all items?"
-                confirmLabel="Yes, Clear All"
+                confirmLabel="Clear All"
                 isDeleting={isDeleting}
             />
         </div>

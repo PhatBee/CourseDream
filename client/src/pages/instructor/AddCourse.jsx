@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { Check, ChevronRight, ChevronLeft, Save, XCircle, AlertTriangle } from 'lucide-react';
 
 // Redux & API
 import { createNewCourse } from '../../features/course/courseSlice';
-import { courseApi } from '../../api/courseApi';
+import courseService from '../../features/course/courseService';
 import { categoryApi } from '../../api/categoryApi';
 
 // Hooks & Components
@@ -56,9 +56,19 @@ const AddCoursePage = () => {
         const formData = new FormData();
         formData.append('video', file);
         formData.append('title', title);
-        const res = await courseApi.uploadVideo(formData);
-        if (res.data.success) return res.data.data.videoUrl;
+        const res = await courseService.uploadVideo(formData);
+        if (res.success) return res.data.videoUrl;
         throw new Error("Upload failed");
+    };
+
+    // Helper: Upload Resource Logic
+    const uploadResourceHelper = async (file, title) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', title);
+        const res = await courseService.uploadResource(formData); // Gọi API upload-resource
+        if (res.success) return res.data.url;
+        throw new Error("Resource upload failed");
     };
 
     // Submit Handler (Dùng chung cho Save Draft & Submit)
@@ -93,12 +103,15 @@ const AddCoursePage = () => {
                 finalCourseData.previewUrl = finalCourseData.previewVideoUrl;
             }
 
-            // 2. Upload Lecture Videos
+            // 2. Upload Lecture Videos and Resources
             for (let i = 0; i < processedSections.length; i++) {
                 const section = processedSections[i];
                 const processedLectures = [...section.lectures];
+
                 for (let j = 0; j < processedLectures.length; j++) {
                     const lecture = processedLectures[j];
+
+                    // 2A. Upload Lecture Video
                     if (lecture.videoType === 'upload' && lecture.videoFile) {
                         toast.loading(`Uploading: ${lecture.title}...`, { id: loadingId });
                         const videoUrl = await uploadVideoHelper(lecture.videoFile, lecture.title);
@@ -108,6 +121,33 @@ const AddCoursePage = () => {
                             videoUrl: videoUrl,
                             videoFile: null
                         };
+                    }
+
+                    // 2B. Upload Resources
+                    if (processedLectures[j].resources && processedLectures[j].resources.length > 0) {
+                        const processedResources = [];
+                        for (const res of processedLectures[j].resources) {
+                            // Nếu type là file VÀ có file object (chưa upload)
+                            if (res.type === 'file' && res.file) {
+                                toast.loading(`Uploading Resource: ${res.title}...`, { id: loadingId });
+                                try {
+                                    const resUrl = await uploadResourceHelper(res.file, res.title);
+                                    // Đẩy vào mảng với URL mới, bỏ file object đi
+                                    processedResources.push({
+                                        title: res.title,
+                                        url: resUrl,
+                                        type: 'file'
+                                    });
+                                } catch (err) {
+                                    console.error("Resource upload error", err);
+                                    toast.error(`Failed to upload ${res.title}`);
+                                }
+                            } else {
+                                // Nếu là link hoặc file đã có URL (edit mode) thì giữ nguyên
+                                processedResources.push(res);
+                            }
+                        }
+                        processedLectures[j].resources = processedResources;
                     }
                 }
                 processedSections[i].lectures = processedLectures;
@@ -147,15 +187,15 @@ const AddCoursePage = () => {
             const resultAction = await dispatch(createNewCourse(formData));
 
             if (createNewCourse.fulfilled.match(resultAction)) {
-                toast.success(isDraft ? "Đã lưu nháp!" : "Đã gửi thông tin khóa học lên chờ duyệt!", { id: loadingId });
-                navigate('/instructor/courses');
+                toast.success(isDraft ? "Đã lưu nháp!" : "Đã gửi thông tin khóa học lên chờ duyệt!", { id: loadingId, duration: 2000 });
+                navigate('/profile/instructor/courses');
             } else {
-                toast.error(resultAction.payload || "Thất bại", { id: loadingId });
+                toast.error(resultAction.payload || "Thất bại", { id: loadingId, duration: 3000 });
             }
 
         } catch (error) {
             console.error(error);
-            toast.error("Có lỗi xảy ra.", { id: loadingId });
+            toast.error("Có lỗi xảy ra.", { id: loadingId, duration: 3000 });
         }
     };
 
@@ -171,7 +211,7 @@ const AddCoursePage = () => {
 
     const handleModalExit = () => {
         setIsCancelModalOpen(false);
-        navigate('/instructor/courses');
+        navigate('/profile/instructor/courses');
     };
 
     // Modal Handlers
@@ -232,7 +272,6 @@ const AddCoursePage = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 py-10 px-4 font-sans text-gray-800">
-            <Toaster position="top-right" />
             <div className="max-w-6xl mx-auto">
 
                 {/* Header Controls (New) */}

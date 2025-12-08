@@ -1,12 +1,22 @@
 import express from 'express';
-import { searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse, getLevels, getCourseStats, createCourseRevision, getMyCourses } from './course.controller.js';
+import {
+  searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
+  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource, deleteCourse,
+  activateCourse
+} from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
-import { uploadVideo, upload } from '../../middlewares/upload.middleware.js';
+import { uploadVideo, upload, uploadDocument } from '../../middlewares/upload.middleware.js';
 
 
 const router = express.Router();
+
+// ==================== ADMIN ROUTES ====================
+// Đặt trước các route public để tránh conflict với :slug
+
+
+// ==================== PUBLIC & INSTRUCTOR ROUTES ====================
 
 router.get('/', getCourses);
 router.get('/levels', getLevels);
@@ -42,6 +52,15 @@ router.post(
   uploadCourseVideo
 );
 
+// Route upload tài liệu (Resource)
+router.post(
+  '/upload-resource',
+  verifyToken,
+  // checkRole('instructor', 'admin'),
+  uploadDocument.single('file'), // Key là 'file'
+  uploadCourseResource
+);
+
 // Route tạo khóa học (bản Revision)
 router.post(
   '/',
@@ -51,11 +70,28 @@ router.post(
   createCourseRevision
 );
 
-// router.delete('/:id', 
-//     verifyToken, 
-//     checkRole('admin'), 
-//     courseController.deleteCourse
-// );
+router.get(
+  '/instructor/edit/:slug', // Route mới
+  verifyToken,
+  // checkRole('instructor'),
+  getCourseForEdit
+);
+
+// Route xóa khóa học
+router.delete(
+  '/:id',
+  verifyToken,
+  // checkRole('instructor'),
+  deleteCourse
+);
+
+// Route kích hoạt lại khóa học ẩn
+router.patch(
+  '/:id/activate',
+  verifyToken,
+  // checkRole('instructor'),
+  activateCourse
+);
 
 router.get("/:courseId/lectures/:lectureId", verifyToken, getLecture);
 

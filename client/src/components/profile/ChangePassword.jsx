@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePassword, reset } from '../../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, ShieldCheck } from 'lucide-react';
 
-const PasswordInput = ({ label, name, value, onChange }) => {
+const PasswordInput = ({ label, name, value, onChange, placeholder }) => {
   const [show, setShow] = useState(false);
   return (
     <div className="mb-5">
@@ -17,6 +17,7 @@ const PasswordInput = ({ label, name, value, onChange }) => {
           name={name}
           value={value}
           onChange={onChange}
+          placeholder={placeholder}
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-rose-100 focus:border-rose-400 outline-none transition pr-12"
         />
         <button
@@ -33,12 +34,16 @@ const PasswordInput = ({ label, name, value, onChange }) => {
 
 const ChangePassword = () => {
   const dispatch = useDispatch();
-  // Lấy thêm isSuccess
-  const { isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
+  // Lấy thêm isSuccess, // Lấy user từ Redux để check hasPassword
+  const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
 
   // State cho độ mạnh mật khẩu (0 -> 4)
   const [strength, setStrength] = useState(0);
+
+  // Kiểm tra user có password chưa (backend trả về field hasPassword)
+  // Nếu user đăng nhập Google/FB lần đầu, thường hasPassword = false
+  const hasPassword = user?.hasPassword;
 
   // Hàm tính độ mạnh mật khẩu
   const calculateStrength = (password) => {
@@ -76,7 +81,13 @@ const ChangePassword = () => {
     if (formData.newPassword !== formData.confirmPassword) return toast.error('Mật khẩu nhập lại không khớp!');
     if (strength < 2) return toast.error('Mật khẩu quá yếu!'); // Tùy chọn: bắt buộc mật khẩu mạnh
 
-    dispatch(changePassword({ oldPassword: formData.oldPassword, newPassword: formData.newPassword }));
+    // Nếu có password cũ thì bắt buộc nhập, nếu chưa có thì gửi string rỗng hoặc null
+    if (hasPassword && !formData.oldPassword) return toast.error('Vui lòng nhập mật khẩu hiện tại!');
+
+    dispatch(changePassword({
+      oldPassword: hasPassword ? formData.oldPassword : null, // Chỉ gửi nếu có
+      newPassword: formData.newPassword
+    }));
   };
 
   // Hàm lấy màu cho thanh bar dựa trên index và score hiện tại
@@ -95,22 +106,38 @@ const ChangePassword = () => {
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 md:p-8 text-left">
-      <h3 className="text-lg font-bold text-gray-800 mb-1">Change Password</h3>
-      <p className="text-sm text-gray-500 mb-6">Ensuring your account is using a long, random password to stay secure.</p>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2 bg-rose-50 rounded-full text-rose-500">
+          {hasPassword ? <ShieldCheck size={24} /> : <AlertCircle size={24} />}
+        </div>
+        <h3 className="text-lg font-bold text-gray-800">
+          {hasPassword ? 'Change Password' : 'Set Password'}
+        </h3>
+      </div>
+      <p className="text-sm text-gray-500 mb-6 ml-12">
+        {hasPassword
+          ? 'Ensuring your account is using a long, random password to stay secure.'
+          : 'You logged in via Social Media. Set a password to log in with email next time.'}
+      </p>
 
       <form onSubmit={onSubmit} className="max-w-2xl">
-        <PasswordInput
-          label="Current Password"
-          name="oldPassword"
-          value={formData.oldPassword}
-          onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
-        />
+        {/* Chỉ hiện ô nhập mật khẩu cũ nếu user đã có mật khẩu */}
+        {hasPassword && (
+          <PasswordInput
+            label="Current Password"
+            name="oldPassword"
+            value={formData.oldPassword}
+            onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
+            placeholder="Enter your current password"
+          />
+        )}
 
         <PasswordInput
           label="New Password"
           name="newPassword"
           value={formData.newPassword}
           onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
+          placeholder="Enter new password (min 8 chars)"
         />
 
         {/* Thanh Progress Bar Dynamic */}
@@ -137,6 +164,7 @@ const ChangePassword = () => {
           name="confirmPassword"
           value={formData.confirmPassword}
           onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
+          placeholder="Re-enter new password"
         />
 
         <button
@@ -144,7 +172,7 @@ const ChangePassword = () => {
           disabled={isLoading}
           className="mt-2 px-8 py-3 bg-rose-500 text-white rounded-lg font-bold hover:bg-rose-600 transition shadow-lg shadow-rose-200 disabled:opacity-70"
         >
-          {isLoading ? 'Updating...' : 'Change Password'}
+          {isLoading ? 'Updating...' : (hasPassword ? 'Change Password' : 'Set Password')}
         </button>
       </form>
     </div>

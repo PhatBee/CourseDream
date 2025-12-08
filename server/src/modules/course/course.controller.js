@@ -100,6 +100,28 @@ export const uploadCourseVideo = async (req, res, next) => {
 };
 
 /**
+ * @desc    Upload tài liệu khóa học (PDF, Doc, Zip...)
+ * @route   POST /api/courses/upload-resource
+ */
+export const uploadCourseResource = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+    const { title } = req.body;
+    // Gọi service upload resource
+    const result = await courseService.uploadResource(req.file, title || "Course Resource");
+
+    res.status(200).json({
+      success: true,
+      data: result // { url, originalName, format }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Tạo HOẶC Cập nhật Course Revision (Draft/Pending)
  * @route   POST /api/courses
  */
@@ -181,3 +203,61 @@ export const getMyCourses = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Lấy thông tin khóa học để Edit (Instructor Only)
+ * @route   GET /api/courses/instructor/edit/:slug
+ */
+export const getCourseForEdit = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const instructorId = req.user._id;
+
+    // Gọi service
+    const data = await courseService.getCourseForEdit(slug, instructorId);
+
+    res.status(200).json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Xóa khóa học (Instructor) - Logic phức tạp (Delete/Hide/Archive)
+ * @route   DELETE /api/courses/:id
+ */
+export const deleteCourse = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const instructorId = req.user._id;
+
+    const result = await courseService.deleteCourse(id, instructorId);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      action: result.action // 'deleted', 'hidden', 'archived'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Kích hoạt lại khóa học (Hidden -> Published)
+ * @route   PATCH /api/courses/:id/activate
+ */
+export const activateCourse = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await courseService.activateCourse(id, req.user._id);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ==================== ADMIN CONTROLLERS ====================

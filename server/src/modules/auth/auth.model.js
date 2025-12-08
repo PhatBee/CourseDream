@@ -51,19 +51,12 @@ const UserSchema = new mongoose.Schema({
   },
   avatar: String,
   bio: String,
-  expertise: [String], // dành cho instructor
 
-  instructorApplication: {
-    status: {
-      type: String,
-      enum: ['none', 'pending', 'approved', 'rejected'],
-      default: 'none'
-    },
-    reason: String, // Lý do/kinh nghiệm họ nhập vào form
-    submittedAt: Date,
-    reviewedAt: Date,
-    adminNotes: String // Admin ghi chú khi duyệt
+  instructorRejectionReason: {
+    type: String,
+    default: null
   },
+
   refreshToken: {
     type: String,
     default: null,
