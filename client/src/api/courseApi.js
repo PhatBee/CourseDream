@@ -54,6 +54,24 @@ const activateCourse = (id) => {
   return axiosClient.patch(`${path}/${id}/activate`);
 };
 
+// ==================== ADMIN APIs ====================
+
+const getPendingCourses = (params) => {
+  return axiosClient.get(`${path}/admin/pending`, { params });
+};
+
+const getPendingCourseDetail = (revisionId) => {
+  return axiosClient.get(`${path}/admin/pending/${revisionId}`);
+};
+
+const approveCourse = (revisionId) => {
+  return axiosClient.post(`${path}/admin/approve/${revisionId}`);
+};
+
+const rejectCourse = (revisionId, reviewMessage) => {
+  return axiosClient.post(`${path}/admin/reject/${revisionId}`, { reviewMessage });
+};
+
 export const courseApi = {
   getAllCourses,
   getDetailsBySlug,
@@ -66,5 +84,10 @@ export const courseApi = {
   getInstructorCourses,
   getInstructorCourseForEdit,
   deleteCourse,
-  activateCourse
+  activateCourse,
+  // Admin APIs
+  getPendingCourses,
+  getPendingCourseDetail,
+  approveCourse,
+  rejectCourse
 };

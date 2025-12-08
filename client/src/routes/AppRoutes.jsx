@@ -27,6 +27,8 @@ import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
 import EditCoursePage from "../pages/instructor/EditCourse";
 import BecomeInstructor from "../pages/BecomeInstructor";
+import AdminPendingCourses from "../pages/admin/AdminPendingCourses";
+import AdminPendingCourseDetail from "../pages/admin/AdminPendingCourseDetail";
 
 export default function AppRoutes() {
   return (
@@ -78,6 +80,11 @@ export default function AppRoutes() {
           <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
             <Route path="instructor/add-course" element={<AddCoursePage />} />
             <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
+          </Route>
+
+          <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+            <Route path="admin/pending-courses" element={<AdminPendingCourses />} />
+            <Route path="admin/pending-courses/:revisionId" element={<AdminPendingCourseDetail />} />
           </Route>
 
         </Routes>

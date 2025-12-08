@@ -52,6 +52,28 @@ const activateCourse = async (id) => {
   return response.data;
 };
 
+// ==================== ADMIN SERVICES ====================
+
+const getPendingCourses = async (params) => {
+  const response = await courseApi.getPendingCourses(params);
+  return response.data;
+};
+
+const getPendingCourseDetail = async (revisionId) => {
+  const response = await courseApi.getPendingCourseDetail(revisionId);
+  return response.data;
+};
+
+const approveCourse = async (revisionId) => {
+  const response = await courseApi.approveCourse(revisionId);
+  return response.data;
+};
+
+const rejectCourse = async (revisionId, reviewMessage) => {
+  const response = await courseApi.rejectCourse(revisionId, reviewMessage);
+  return response.data;
+};
+
 const courseService = {
   getDetails,
   getAllCourses,
@@ -61,7 +83,12 @@ const courseService = {
   getInstructorCourses,
   getInstructorCourseForEdit,
   deleteCourse,
-  activateCourse
+  activateCourse,
+  // Admin Services
+  getPendingCourses,
+  getPendingCourseDetail,
+  approveCourse,
+  rejectCourse
 };
 
 export default courseService;

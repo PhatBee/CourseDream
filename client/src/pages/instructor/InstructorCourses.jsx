@@ -4,7 +4,7 @@ import { getInstructorCourses } from '../../features/course/courseSlice';
 import InstructorCourseCard from '../../components/instructor/InstructorCourseCard';
 import Pagination from '../../components/common/Pagination'; // Import component Pagination bạn đã có
 import { Link } from 'react-router-dom';
-import { PlusCircle, BookOpen, FileText, AlertCircle, Archive, Lock } from 'lucide-react';
+import { PlusCircle, BookOpen, FileText, AlertCircle, Archive, Lock, XCircle } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
 import RemoveModal from '../../components/common/RemoveModal';
 import { deleteInstructorCourse, activateInstructorCourse } from '../../features/course/courseSlice';
@@ -90,12 +90,13 @@ const InstructorCourses = () => {
             <div className="max-w-7xl mx-auto">
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     <StatCard icon={<BookOpen className="text-white" />} title="Total Courses" value={instructorStats.all} color="bg-blue-500" />
                     <StatCard icon={<CheckCircle className="text-white" />} title="Published" value={instructorStats.published} color="bg-green-500" />
                     <StatCard icon={<AlertCircle className="text-white" />} title="Pending" value={instructorStats.pending} color="bg-yellow-500" />
                     <StatCard icon={<FileText className="text-white" />} title="Drafts" value={instructorStats.draft} color="bg-gray-500" />
-                    <StatCard icon={<Lock className="text-white" />} title="Hidden" value={instructorStats.hidden} color="bg-red-500" />
+                    <StatCard icon={<XCircle className="text-white" />} title="Rejected" value={instructorStats.rejected} color="bg-red-500" />
+                    <StatCard icon={<Lock className="text-white" />} title="Hidden" value={instructorStats.hidden} color="bg-orange-500" />
                     <StatCard icon={<Archive className="text-white" />} title="Archived" value={instructorStats.archived} color="bg-purple-500" />
                 </div>
 
@@ -110,7 +111,7 @@ const InstructorCourses = () => {
                 {/* Tabs */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
                     <div className="flex overflow-x-auto">
-                        {['all', 'published', 'pending', 'draft', 'hidden', 'archived'].map((tab) => (
+                        {['all', 'published', 'pending', 'draft', 'rejected', 'hidden', 'archived'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => handleTabChange(tab)}

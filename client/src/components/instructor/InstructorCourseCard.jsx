@@ -24,9 +24,12 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
     // Xảy ra khi: Status chính là pending HOẶC có bản revision đang pending
     const isPendingReview = status === 'pending' || revisionStatus === 'pending';
 
+    // Case 5: Bị từ chối (Rejected)
+    const isRejected = status === 'rejected' || revisionStatus === 'rejected';
+
     // Case 1: Course đang nháp hoàn toàn (Chưa từng publish)
-    // Xảy ra khi: Status là draft (có thể từ course gốc hoặc revision độc lập) VÀ không pending
-    const isFreshDraft = (status === 'draft' || status === 'hidden') && !isPendingReview;
+    // Xảy ra khi: Status là draft (có thể từ course gốc hoặc revision độc lập) VÀ không pending và không rejected
+    const isFreshDraft = (status === 'draft' || status === 'hidden') && !isPendingReview && !isRejected;
 
     // Case 3: Course đã publish NHƯNG đang có bản edit (Draft update)
     const isPublishedWithDraft = status === 'published' && revisionStatus === 'draft';
@@ -47,6 +50,9 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
     const renderStatusBadge = () => {
         if (isPendingReview) {
             return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded uppercase flex items-center gap-1">Waiting for Review</span>;
+        }
+        if (isRejected) {
+            return <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded uppercase flex items-center gap-1">Rejected</span>;
         }
         if (isPublishedWithDraft) {
             return (
@@ -89,6 +95,15 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
                 <button disabled className="flex items-center gap-1 text-sm text-gray-400 cursor-not-allowed">
                     <Lock size={16} /> Locked (Reviewing)
                 </button>
+            );
+        }
+
+        // Nếu bị rejected -> Cho phép edit với message khác
+        if (isRejected) {
+            return (
+                <Link to={editLink} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 transition-colors font-medium">
+                    <Edit2 size={16} /> Fix & Resubmit
+                </Link>
             );
         }
 
@@ -228,6 +243,14 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
                         <span>{totalHours || 0} Hours</span>
                     </div>
                 </div>
+
+                {/* Review Message (Nếu bị rejected) */}
+                {isRejected && course.reviewMessage && (
+                    <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs">
+                        <p className="font-semibold text-red-700 mb-1">❌ Lý do từ chối:</p>
+                        <p className="text-red-600">{course.reviewMessage}</p>
+                    </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex justify-between items-center mt-auto">
