@@ -9,7 +9,7 @@ const FilterSection = ({ title, children, defaultOpen = true }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div className="border-b border-gray-100 py-5">
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full mb-4 group"
       >
@@ -71,7 +71,7 @@ const CourseFilter = ({ onFilterChange }) => {
 
   // Lấy dữ liệu động từ API khi mount
   useEffect(() => {
-    categoryApi.getAllCategories().then(res => setCategories(res.data.data || []));
+    categoryApi.getAllCategories().then(res => setCategories(res.data.data.data || []));
     userApi.getInstructors().then(res => setInstructors(res.data || []));
     courseApi.getLevels().then(res => setLevelsData(res.data || []));
     courseApi.getCourseStats().then(res => {
@@ -123,9 +123,9 @@ const CourseFilter = ({ onFilterChange }) => {
 
       {/* Search trong Filter */}
       <div className="relative mb-6">
-        <input 
-          type="text" 
-          placeholder="Search keywords..." 
+        <input
+          type="text"
+          placeholder="Search keywords..."
           value={keyword}
           onChange={e => setKeyword(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-100 focus:border-rose-400 transition-all"
@@ -135,7 +135,7 @@ const CourseFilter = ({ onFilterChange }) => {
 
       {/* Categories */}
       <FilterSection title="Categories">
-        {categories.map(cat => (
+        {categories && categories.map && categories.map(cat => (
           <CheckboxItem
             key={cat._id}
             label={cat.name}

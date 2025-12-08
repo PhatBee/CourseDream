@@ -28,6 +28,7 @@ npm install react-facebook-login -S --force
 npm install recharts --force
 npm i lucide-react --force
 npm install react-icons --force
+npm install react-apexcharts --force
 
 # app
 cd course-app

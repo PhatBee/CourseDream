@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getWishlist, clearWishlistState } from '../features/wishlist/wishlistSlice';
 import Header from "../components/Header";
 import { fetchMyEnrollments, resetEnrollment } from '../features/enrollment/enrollmentSlice';
+import { Toaster } from 'react-hot-toast';
 
 export default function MainLayout() {
   const dispatch = useDispatch();
@@ -21,6 +22,7 @@ export default function MainLayout() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Toaster position="top-right" reverseOrder={false} />
       <Header />
       {/* chừa top padding để tránh che nội dung bởi header fixed */}
       <main className="pt-10">        

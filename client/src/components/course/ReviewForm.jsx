@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { postReview } from '../../api/reviewApi';
 import StarRating from '../common/StarRating';
+import toast from 'react-hot-toast';
 
 const ReviewForm = ({ courseId, onReviewSuccess }) => {
   const [rating, setRating] = useState(5);
@@ -15,9 +16,9 @@ const ReviewForm = ({ courseId, onReviewSuccess }) => {
       await postReview(courseId, { rating, comment });
       setComment('');
       if (onReviewSuccess) onReviewSuccess();
-      alert('Đánh giá thành công!');
+      toast.success('Đánh giá thành công!'); // Sử dụng toast thay cho alert
     } catch (err) {
-      alert(err.response?.data?.message || 'Có lỗi xảy ra');
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra'); // Sử dụng toast cho lỗi
     }
     setLoading(false);
   };

@@ -2,7 +2,7 @@ import { createDiscussion, replyToDiscussion, getDiscussionsByCourse } from "../
 
 export const postDiscussion = async (req, res, next) => {
   try {
-    const courseId = req.courseId;
+    const courseId = req.courseId || req.params.courseId;
     const author = req.user._id;
     const { content } = req.body;
     const discussion = await createDiscussion(courseId, author, content);

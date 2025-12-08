@@ -21,13 +21,13 @@ export const getStatsForInstructor = async (instructorId) => {
     // Lấy tất cả khóa học (để FE có nút xem tất cả)
     Course.find({ instructor: instructorId })
       .sort({ createdAt: -1 })
-      .select("title slug thumbnail studentsCount rating createdAt"),
+      .select("title slug thumbnail studentsCount rating createdAt status"),
 
     // Lấy 5 khóa học mới nhất
     Course.find({ instructor: instructorId })
       .sort({ createdAt: -1 })
       .limit(5)
-      .select("title slug thumbnail studentsCount rating createdAt"),
+      .select("title slug thumbnail studentsCount rating createdAt status"),
 
     // Lấy danh sách học viên UNIQUE tham gia tất cả các khóa của instructor
     Enrollment.distinct("student", { course: { $in: courseIds } })

@@ -36,14 +36,14 @@ const CourseListHeader = ({ totalCourses, viewMode, setViewMode }) => {
         </select>
 
         {/* Search Input (Optional - as seen in screenshot) */}
-        <div className="relative hidden md:block">
+        {/* <div className="relative hidden md:block">
            <input 
              type="text" 
              placeholder="Search..." 
              className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-100 w-[200px]"
            />
            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
+        </div> */}
       </div>
     </div>
   );
