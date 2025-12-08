@@ -112,7 +112,7 @@ export const rejectCourseRevision = async (req, res, next) => {
       });
     }
 
-    const result = await courseService.rejectRevision(revisionId, reviewMessage, adminId);
+    const result = await adminService.rejectRevision(revisionId, reviewMessage, adminId);
 
     res.status(200).json({
       success: true,

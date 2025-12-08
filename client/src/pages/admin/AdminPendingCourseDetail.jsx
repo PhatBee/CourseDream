@@ -5,7 +5,7 @@ import {
     getAdminPendingDetail,
     adminApproveCourse,
     adminRejectCourse
-} from '../../features/course/courseSlice';
+} from '../../features/admin/adminSlice';
 import { ChevronDown, ChevronUp, Play, X, CheckCircle } from 'lucide-react';
 import VideoPreviewModal from '../../components/common/VideoPreviewModal';
 import { createPortal } from 'react-dom';
@@ -122,7 +122,7 @@ const AdminPendingCourseDetail = () => {
     const dispatch = useDispatch();
 
     const { adminPendingDetail, isLoading, adminActionLoading } = useSelector(
-        (state) => state.course
+        (state) => state.admin
     );
 
     const [showApproveModal, setShowApproveModal] = useState(false);

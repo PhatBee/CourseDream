@@ -30,30 +30,22 @@ router.put(
 
 router.get(
   '/courses/pending',
-  verifyToken,
-  checkRole('admin'),
   adminController.getPendingCourses
 );
 
 router.get(
   '/courses/pending/:revisionId',
-  verifyToken,
-  checkRole('admin'),
   adminController.getPendingCourseDetail
 );
 
 router.post(
   '/courses/approve/:revisionId',
-  verifyToken,
-  checkRole('admin'),
   adminController.approveCourseRevision
 );
 
 router.post(
   '/courses/reject/:revisionId',
-  verifyToken,
-  checkRole('admin'),
-  rejectCourseRevision
+  adminController.rejectCourseRevision
 );
 
 export default router;

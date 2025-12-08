@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAdminPendingCourses } from '../../features/course/courseSlice';
+import { getAdminPendingCourses } from '../../features/admin/adminSlice';
 import Pagination from '../../components/common/Pagination';
 
 const AdminPendingCourses = () => {
@@ -9,7 +9,7 @@ const AdminPendingCourses = () => {
     const dispatch = useDispatch();
 
     const { adminPendingCourses, adminPendingPagination, isLoading } = useSelector(
-        (state) => state.course
+        (state) => state.admin
     );
 
     const [currentPage, setCurrentPage] = React.useState(1);
