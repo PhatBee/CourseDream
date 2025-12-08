@@ -517,10 +517,10 @@ export const getInstructorCourses = async (instructorId, query) => {
     .lean();
 
   // 2. Lấy tất cả Revision của instructor
-  // Ta cần status 'draft' hoặc 'pending' để xác định trạng thái
+  // Ta cần status 'draft', 'pending', hoặc 'rejected' để xác định trạng thái
   const allRevisions = await CourseRevision.find({
     instructor: instructorId,
-    status: { $in: ['draft', 'pending'] }
+    status: { $in: ['draft', 'pending', 'rejected'] }
   }).lean();
 
   // --- XỬ LÝ GỘP DỮ LIỆU ---
@@ -536,6 +536,7 @@ export const getInstructorCourses = async (instructorId, query) => {
       ...course,
       // Gắn thêm cờ revisionStatus
       revisionStatus: activeRevision ? activeRevision.status : null,
+      reviewMessage: activeRevision?.reviewMessage || null, // Message từ admin khi reject
       type: 'course' // Đánh dấu đây là course thật
     });
   });
@@ -556,8 +557,9 @@ export const getInstructorCourses = async (instructorId, query) => {
       priceDiscount: rev.data.priceDiscount,
       totalLectures: rev.data.sections ? rev.data.sections.reduce((acc, sec) => acc + (sec.lectures?.length || 0), 0) : 0,
       totalHours: 0, // Tính toán nếu cần
-      status: rev.status, // 'draft' hoặc 'pending'
+      status: rev.status, // 'draft', 'pending', hoặc 'rejected'
       revisionStatus: null, // Không có revision con
+      reviewMessage: rev.reviewMessage || null,
       type: 'revision', // Đánh dấu là revision
       createdAt: rev.createdAt
     });
@@ -573,17 +575,23 @@ export const getInstructorCourses = async (instructorId, query) => {
       if (statusFilter === 'pending') {
         return c.status === 'pending' || c.revisionStatus === 'pending';
       }
+      // Nếu filter = rejected -> Lấy course rejected HOẶC course có revision rejected
+      if (statusFilter === 'rejected') {
+        return c.status === 'rejected' || c.revisionStatus === 'rejected';
+      }
       return c.status === statusFilter;
     });
   }
 
   // --- THỐNG KÊ (STATS) ---
-  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0, archived: 0 };
+  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0, archived: 0, rejected: 0 };
   mergedList.forEach(c => {
     stats.all++;
-    // Logic đếm stats: Ưu tiên trạng thái revision nếu là pending
+    // Logic đếm stats: Ưu tiên trạng thái revision nếu là pending hoặc rejected
     if (c.status === 'pending' || c.revisionStatus === 'pending') {
       stats.pending++;
+    } else if (c.status === 'rejected' || c.revisionStatus === 'rejected') {
+      stats.rejected++;
     } else if (c.status === 'draft') {
       stats.draft++;
     } else if (c.status === 'published') {
@@ -626,10 +634,10 @@ export const getCourseForEdit = async (slug, instructorId) => {
   if (liveCourse) {
     // --- TRƯỜNG HỢP 2 & 3: Course đã từng publish ---
 
-    // Tìm xem có bản Revision nào đang treo (draft/pending) của course này không
+    // Tìm xem có bản Revision nào đang treo (draft/pending/rejected) của course này không
     const existingRevision = await CourseRevision.findOne({
       course: liveCourse._id,
-      status: { $in: ['draft', 'pending'] }
+      status: { $in: ['draft', 'pending', 'rejected'] }
     }).lean();
 
     // CASE 3: Đang Pending -> Chặn
@@ -639,14 +647,27 @@ export const getCourseForEdit = async (slug, instructorId) => {
       throw error;
     }
 
-    // CASE 2.1: Đã có bản Draft -> Trả về bản Draft để edit tiếp
+    // CASE 2.1.1: Đã có bản Draft -> Trả về bản Draft để edit tiếp
     if (existingRevision && existingRevision.status === 'draft') {
       return {
         ...existingRevision.data, // Bung dữ liệu trong field 'data' ra
         _id: existingRevision._id, // ID của revision
         courseId: liveCourse._id,  // ID của course gốc
         status: 'draft',
+        reviewMessage: existingRevision.reviewMessage || null,
         isUpdateMode: true // Cờ báo frontend đây là update course cũ
+      };
+    }
+
+    // CASE 2.1.2: Có bản Rejected -> Cho phép edit lại
+    if (existingRevision && existingRevision.status === 'rejected') {
+      return {
+        ...existingRevision.data,
+        _id: existingRevision._id,
+        courseId: liveCourse._id,
+        status: 'rejected',
+        reviewMessage: existingRevision.reviewMessage || null,
+        isUpdateMode: true
       };
     }
 
@@ -719,16 +740,34 @@ export const getCourseForEdit = async (slug, instructorId) => {
     };
   }
 
-  // Nếu pending (Fresh Pending)
+  // Nếu pending (Fresh Pending) -> Chặn
   const freshPending = await CourseRevision.findOne({
     'data.slug': slug,
     instructor: instructorId,
+    course: null,
     status: 'pending'
   });
   if (freshPending) {
     const error = new Error("Khóa học đang chờ duyệt, không thể chỉnh sửa.");
     error.statusCode = 400;
     throw error;
+  }
+
+  // Nếu rejected (Fresh Rejected) -> Cho phép edit lại
+  const freshRejected = await CourseRevision.findOne({
+    'data.slug': slug,
+    instructor: instructorId,
+    course: null,
+    status: 'rejected'
+  }).lean();
+  if (freshRejected) {
+    return {
+      ...freshRejected.data,
+      _id: freshRejected._id,
+      status: 'rejected',
+      reviewMessage: freshRejected.reviewMessage || null,
+      isUpdateMode: false
+    };
   }
 
   const error = new Error("Không tìm thấy khóa học hoặc bản nháp phù hợp.");
@@ -834,10 +873,10 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
   }
 
   // 6. LOGIC SAVE/UPDATE QUAN TRỌNG
-  // Check xem có draft nào đang tồn tại không để update đè lên, tránh spam record
+  // Check xem có draft/rejected nào đang tồn tại không để update đè lên, tránh spam record
   const filter = {
     instructor: instructorId,
-    status: 'draft' // Chỉ update draft, nếu pending thì tạo cái mới hoặc chặn
+    status: { $in: ['draft', 'rejected'] } // Cho phép update cả draft và rejected
   };
 
   // Nếu có courseId (Case 2: Update Course Live)
@@ -858,7 +897,7 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
       status: courseData.status || 'draft',
       version: nextVersion, // Version của bản Revision = Version Course gốc + 1
       data: revisionData,
-      reviewMessage: courseData.messageToReviewer || ''
+      reviewMessage: courseData.status === 'pending' ? (courseData.messageToReviewer || '') : '' // Clear message nếu save draft
     },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
@@ -938,4 +977,319 @@ export const activateCourse = async (courseId, instructorId) => {
     return { message: "Khóa học đã được xuất bản trở lại (Published)." };
   }
   throw new Error("Khóa học đang ở trạng thái không thể kích hoạt nhanh.");
+};
+
+// ==================== ADMIN SERVICES ====================
+
+/**
+ * Lấy danh sách Course Revisions đang chờ duyệt (Admin)
+ */
+export const getPendingRevisions = async (query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // Lấy tất cả revision có status = 'pending'
+  const revisions = await CourseRevision.find({ status: 'pending' })
+    .populate('instructor', 'name email avatar')
+    .populate('course', 'title slug status') // Nếu có course link (Case 2)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const total = await CourseRevision.countDocuments({ status: 'pending' });
+  const totalPages = Math.ceil(total / limit);
+
+  // Format lại data cho frontend dễ hiển thị
+  const formattedRevisions = revisions.map(rev => ({
+    _id: rev._id,
+    title: rev.data.title || 'Untitled Course',
+    thumbnail: rev.data.thumbnail,
+    instructor: rev.instructor,
+    courseId: rev.course?._id || null, // Null = khóa học mới, có ID = chỉnh sửa
+    courseName: rev.course?.title || null,
+    courseStatus: rev.course?.status || null,
+    revisionStatus: rev.status,
+    submittedAt: rev.updatedAt, // Thời gian submit
+    type: rev.course ? 'update' : 'new' // Phân biệt Case 1 và Case 2
+  }));
+
+  return {
+    revisions: formattedRevisions,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages
+    }
+  };
+};
+
+/**
+ * Lấy chi tiết CourseRevision đang chờ duyệt (Admin)
+ */
+export const getPendingRevisionDetail = async (revisionId) => {
+  const revision = await CourseRevision.findOne({
+    _id: revisionId,
+    status: 'pending'
+  })
+    .populate('instructor', 'name email avatar')
+    .populate('course', 'title slug status version') // Course gốc (nếu có)
+    .populate('data.categories', 'name slug')
+    .lean();
+
+  if (!revision) {
+    const error = new Error("Không tìm thấy khóa học đang chờ duyệt.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Nếu là Case 2 (Update course đã publish), lấy thông tin course gốc để so sánh
+  let originalCourse = null;
+  if (revision.course) {
+    originalCourse = await Course.findById(revision.course)
+      .populate({
+        path: 'sections',
+        populate: { path: 'lectures' }
+      })
+      .populate('categories', 'name slug')
+      .lean();
+  }
+
+  return {
+    revision: {
+      ...revision,
+      // Bung data ra ngoài để dễ access
+      ...revision.data
+    },
+    originalCourse, // Để admin có thể so sánh (nếu là update)
+    type: revision.course ? 'update' : 'new'
+  };
+};
+
+/**
+ * Duyệt khóa học (Approve)
+ * - Case 1: Tạo Course mới từ Revision
+ * - Case 2: Merge Revision vào Course hiện có
+ */
+export const approveRevision = async (revisionId, adminId) => {
+  const revision = await CourseRevision.findById(revisionId);
+
+  if (!revision) {
+    const error = new Error("Không tìm thấy bản revision.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (revision.status !== 'pending') {
+    const error = new Error("Chỉ có thể duyệt các khóa học đang ở trạng thái Pending.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  let resultCourse;
+
+  // --- CASE 1: Khóa học mới (chưa từng publish) ---
+  if (!revision.course) {
+    // Tạo Sections và Lectures thật
+    const sectionIds = [];
+    let totalLectures = 0;
+    let totalDuration = 0;
+
+    for (const sectionData of revision.data.sections || []) {
+      const lectureIds = [];
+
+      for (const lecData of sectionData.lectures || []) {
+        const newLecture = await Lecture.create({
+          title: lecData.title,
+          videoUrl: lecData.videoUrl,
+          duration: Number(lecData.duration) || 0,
+          order: lecData.order || 0,
+          isPreviewFree: lecData.isPreviewFree || false,
+          resources: lecData.resources || []
+        });
+        lectureIds.push(newLecture._id);
+        totalLectures++;
+        totalDuration += newLecture.duration;
+      }
+
+      // Tạo Section (chưa có course, sẽ set sau)
+      const newSection = await Section.create({
+        title: sectionData.title,
+        course: null, // Tạm null, sẽ update sau khi có Course
+        lectures: lectureIds,
+        order: sectionData.order || 0
+      });
+
+      // Update lại lecture.section
+      await Lecture.updateMany(
+        { _id: { $in: lectureIds } },
+        { $set: { section: newSection._id } }
+      );
+
+      sectionIds.push(newSection._id);
+    }
+
+    // Tạo Course mới
+    const newCourse = await Course.create({
+      title: revision.data.title,
+      slug: revision.data.slug,
+      thumbnail: revision.data.thumbnail,
+      previewUrl: revision.data.previewUrl,
+      shortDescription: revision.data.shortDescription,
+      description: revision.data.description,
+      price: revision.data.price || 0,
+      priceDiscount: revision.data.priceDiscount || 0,
+      level: revision.data.level || 'alllevels',
+      language: revision.data.language || 'Vietnamese',
+      requirements: revision.data.requirements || [],
+      learnOutcomes: revision.data.learnOutcomes || [],
+      audience: revision.data.audience || [],
+      includes: revision.data.includes || [],
+      instructor: revision.instructor,
+      categories: revision.data.categories || [],
+      sections: sectionIds,
+      status: 'published', // Duyệt = Publish luôn
+      totalLectures,
+      totalDurationSeconds: totalDuration,
+      totalHours: parseFloat((totalDuration / 3600).toFixed(1)),
+      version: 1
+    });
+
+    // Update lại section.course
+    await Section.updateMany(
+      { _id: { $in: sectionIds } },
+      { $set: { course: newCourse._id } }
+    );
+
+    // Cập nhật Revision
+    revision.status = 'approved';
+    revision.course = newCourse._id; // Link revision với course vừa tạo
+    await revision.save();
+
+    resultCourse = newCourse;
+  }
+  // --- CASE 2: Update khóa học đã publish ---
+  else {
+    const liveCourse = await Course.findById(revision.course);
+
+    if (!liveCourse) {
+      const error = new Error("Không tìm thấy khóa học gốc.");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Xóa các Section/Lecture cũ
+    const oldSections = liveCourse.sections || [];
+    for (const sectionId of oldSections) {
+      const section = await Section.findById(sectionId);
+      if (section) {
+        // Xóa các lectures thuộc section này
+        await Lecture.deleteMany({ _id: { $in: section.lectures } });
+        await Section.findByIdAndDelete(sectionId);
+      }
+    }
+
+    // Tạo lại Sections/Lectures mới từ Revision
+    const sectionIds = [];
+    let totalLectures = 0;
+    let totalDuration = 0;
+
+    for (const sectionData of revision.data.sections || []) {
+      const lectureIds = [];
+
+      for (const lecData of sectionData.lectures || []) {
+        const newLecture = await Lecture.create({
+          title: lecData.title,
+          videoUrl: lecData.videoUrl,
+          duration: Number(lecData.duration) || 0,
+          order: lecData.order || 0,
+          isPreviewFree: lecData.isPreviewFree || false,
+          resources: lecData.resources || []
+        });
+        lectureIds.push(newLecture._id);
+        totalLectures++;
+        totalDuration += newLecture.duration;
+      }
+
+      const newSection = await Section.create({
+        title: sectionData.title,
+        course: liveCourse._id,
+        lectures: lectureIds,
+        order: sectionData.order || 0
+      });
+
+      await Lecture.updateMany(
+        { _id: { $in: lectureIds } },
+        { $set: { section: newSection._id } }
+      );
+
+      sectionIds.push(newSection._id);
+    }
+
+    // Cập nhật Course
+    liveCourse.title = revision.data.title;
+    liveCourse.slug = revision.data.slug;
+    liveCourse.thumbnail = revision.data.thumbnail;
+    liveCourse.previewUrl = revision.data.previewUrl;
+    liveCourse.shortDescription = revision.data.shortDescription;
+    liveCourse.description = revision.data.description;
+    liveCourse.price = revision.data.price || 0;
+    liveCourse.priceDiscount = revision.data.priceDiscount || 0;
+    liveCourse.level = revision.data.level;
+    liveCourse.language = revision.data.language;
+    liveCourse.requirements = revision.data.requirements || [];
+    liveCourse.learnOutcomes = revision.data.learnOutcomes || [];
+    liveCourse.audience = revision.data.audience || [];
+    liveCourse.includes = revision.data.includes || [];
+    liveCourse.categories = revision.data.categories || [];
+    liveCourse.sections = sectionIds;
+    liveCourse.totalLectures = totalLectures;
+    liveCourse.totalDurationSeconds = totalDuration;
+    liveCourse.totalHours = parseFloat((totalDuration / 3600).toFixed(1));
+    liveCourse.version = revision.version; // Tăng version
+    liveCourse.status = 'published'; // Đảm bảo vẫn published
+
+    await liveCourse.save();
+
+    // Cập nhật Revision
+    revision.status = 'approved';
+    await revision.save();
+
+    resultCourse = liveCourse;
+  }
+
+  return {
+    message: "Khóa học đã được duyệt thành công!",
+    course: resultCourse
+  };
+};
+
+/**
+ * Từ chối khóa học (Reject)
+ */
+export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
+  const revision = await CourseRevision.findById(revisionId);
+
+  if (!revision) {
+    const error = new Error("Không tìm thấy bản revision.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (revision.status !== 'pending') {
+    const error = new Error("Chỉ có thể từ chối các khóa học đang ở trạng thái Pending.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Cập nhật status thành rejected và lưu message
+  revision.status = 'rejected';
+  revision.reviewMessage = reviewMessage;
+  await revision.save();
+
+  return {
+    message: "Khóa học đã bị từ chối. Instructor có thể chỉnh sửa và submit lại."
+  };
 };

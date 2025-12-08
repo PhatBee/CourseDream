@@ -2,7 +2,7 @@ import express from 'express';
 import {
   searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
   getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource, deleteCourse,
-  activateCourse,
+  activateCourse, getPendingCourses, getPendingCourseDetail, approveCourseRevision, rejectCourseRevision
 } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
@@ -11,6 +11,39 @@ import { uploadVideo, upload, uploadDocument } from '../../middlewares/upload.mi
 
 
 const router = express.Router();
+
+// ==================== ADMIN ROUTES ====================
+// Đặt trước các route public để tránh conflict với :slug
+
+router.get(
+  '/admin/pending',
+  verifyToken,
+  checkRole('admin'),
+  getPendingCourses
+);
+
+router.get(
+  '/admin/pending/:revisionId',
+  verifyToken,
+  checkRole('admin'),
+  getPendingCourseDetail
+);
+
+router.post(
+  '/admin/approve/:revisionId',
+  verifyToken,
+  checkRole('admin'),
+  approveCourseRevision
+);
+
+router.post(
+  '/admin/reject/:revisionId',
+  verifyToken,
+  checkRole('admin'),
+  rejectCourseRevision
+);
+
+// ==================== PUBLIC & INSTRUCTOR ROUTES ====================
 
 router.get('/', getCourses);
 router.get('/levels', getLevels);
