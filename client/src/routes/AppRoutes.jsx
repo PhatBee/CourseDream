@@ -8,7 +8,7 @@ import ForgotPassword from "../pages/ForgotPassword";
 import VerifyResetOTP from "../pages/VerifyResetOTP";
 import SetPassword from "../pages/SetPassword";
 import CourseDetail from '../pages/CourseDetail';
-import Header from '../components/Header';
+// import Header from '../components/Header'; // Không dùng trực tiếp ở đây
 import ProfileLayout from '../layouts/ProfileLayout';
 import MyProfile from '../components/profile/MyProfile';
 import SettingsPage from '../pages/SettingsPage';
@@ -31,6 +31,9 @@ import EditCoursePage from "../pages/instructor/EditCourse";
 import BecomeInstructor from "../pages/BecomeInstructor";
 import AdminPendingCourses from "../pages/admin/AdminPendingCourses";
 import AdminPendingCourseDetail from "../pages/admin/AdminPendingCourseDetail";
+import StudentsManagement from "../pages/admin/StudentsManagement";
+import InstructorsManagement from "../pages/admin/InstructorsManagement";
+import CategoriesManagement from "../pages/admin/CategoriesManagement";
 
 export default function AppRoutes() {
 
@@ -99,8 +102,10 @@ export default function AppRoutes() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<div>Manage Students</div>} />
+            <Route path="users" element={<StudentsManagement />} />
+            <Route path="instructors" element={<InstructorsManagement />} />
             <Route path="courses" element={<AdminPendingCourses />} />
+            <Route path="categories" element={<CategoriesManagement />} />
             <Route path="blogs" element={<div>Manage Blogs</div>} />
           </Route>
 

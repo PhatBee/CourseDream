@@ -238,7 +238,7 @@ export const getAllStudents = async (query) => {
 
   // 2. Query DB lấy User
   const students = await User.find(filter)
-    .select('name email avatar phone createdAt isVerified isBlocked')
+    .select('name email avatar phone createdAt isVerified isActive')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
@@ -578,5 +578,81 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
 
   return {
     message: "Khóa học đã bị từ chối. Instructor có thể chỉnh sửa và submit lại."
+  };
+};
+
+
+export const getAllInstructors = async (query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const search = query.search || '';
+  const skip = (page - 1) * limit;
+
+  const filter = { role: 'instructor' };
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const instructors = await User.find(filter)
+    .select('name email avatar phone createdAt isActive bio expertise')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const totalInstructors = await User.countDocuments(filter);
+
+  const instructorsWithStats = await Promise.all(
+    instructors.map(async (inst) => {
+      const coursesCount = await Course.countDocuments({ instructor: inst._id, status: 'published' });
+      const courses = await Course.find({ instructor: inst._id }).select('studentsCount');
+      const totalStudents = courses.reduce((acc, curr) => acc + (curr.studentsCount || 0), 0);
+
+      return {
+        ...inst,
+        stats: {
+          courses: coursesCount,
+          students: totalStudents
+        }
+      };
+    })
+  );
+
+  return {
+    instructors: instructorsWithStats,
+    pagination: {
+      total: totalInstructors,
+      page,
+      limit,
+      totalPages: Math.ceil(totalInstructors / limit)
+    }
+  };
+};
+
+export const toggleBlockUser = async (userId, reason) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('Không tìm thấy người dùng.');
+  if (user.role === 'admin') throw new Error('Không thể khóa Admin.');
+
+  const willBan = user.isActive;
+
+  if (willBan) {
+    if (!reason) throw new Error('Vui lòng cung cấp lý do khóa tài khoản.');
+    user.isActive = false;
+    user.banReason = reason;
+  } else {
+    user.isActive = true;
+    user.banReason = null;
+  }
+
+  await user.save();
+
+  return {
+    message: willBan ? `Đã khóa tài khoản. Lý do: ${reason}` : 'Đã mở khóa tài khoản.',
+    isActive: user.isActive,
+    banReason: user.banReason
   };
 };
