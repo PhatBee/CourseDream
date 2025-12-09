@@ -123,7 +123,6 @@ const CategoriesManagement = () => {
                 <th className="px-6 py-4">Category Name</th>
                 <th className="px-6 py-4">Slug</th>
                 <th className="px-6 py-4 text-center">Courses</th>
-                <th className="px-6 py-4">Created At</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
