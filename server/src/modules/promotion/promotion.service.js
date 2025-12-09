@@ -1,5 +1,5 @@
 // src/modules/promotion/promotion.service.js
-import Course from "../course/course.model.js"; // adjust path nếu cần
+import Course from "../course/course.model.js";
 
 export const applyPromotionLogic = async (promotion, courseId, price, userId) => {
   const now = new Date();
@@ -18,20 +18,30 @@ export const applyPromotionLogic = async (promotion, courseId, price, userId) =>
   const course = await Course.findById(courseId);
   if (!course) throw new Error("Khóa học không tồn tại");
 
-  if (promotion.appliesTo === "category") {
-    // Nếu course có mảng categories
+  if (["category", "category+course"].includes(promotion.appliesTo)) {
     const courseCategories = Array.isArray(course.categories)
       ? course.categories
       : [course.category];
-    const match = courseCategories.some(cat =>
-      cat.equals ? cat.equals(promotion.category) : cat.toString() === promotion.category.toString()
+    const matchCategory = promotion.categories?.some(catId =>
+      courseCategories.some(courseCat =>
+        courseCat.equals ? courseCat.equals(catId) : courseCat.toString() === catId.toString()
+      )
     );
-    if (!match) {
+    if (promotion.appliesTo === "category" && !matchCategory) {
       throw new Error("Mã này không áp dụng cho danh mục của khóa học");
     }
+    if (promotion.appliesTo === "category+course" && !matchCategory) {
+      const matchCourse = promotion.courses?.some(cId => course._id.equals(cId));
+      if (!matchCourse) {
+        throw new Error("Mã này không áp dụng cho danh mục hoặc khóa học này");
+      }
+    }
   }
-  if (promotion.appliesTo === "course" && !course._id.equals(promotion.course)) {
-    throw new Error("Mã này chỉ áp dụng cho một khóa học cụ thể");
+  if (promotion.appliesTo === "course") {
+    const matchCourse = promotion.courses?.some(cId => course._id.equals(cId));
+    if (!matchCourse) {
+      throw new Error("Mã này chỉ áp dụng cho một số khóa học cụ thể");
+    }
   }
 
   // 4. Kiểm tra tổng lượt dùng
@@ -72,7 +82,7 @@ export const applyPromotionLogic = async (promotion, courseId, price, userId) =>
   };
 };
 
-// Các hàm CRUD admin (gọi trực tiếp từ controller)
+// CRUD admin
 export const createPromotion = async (data) => new (await import("../promotion/promotion.model.js")).default(data).save();
 export const updatePromotion = async (id, data) => {
   const Promotion = (await import("../promotion/promotion.model.js")).default;
@@ -80,11 +90,12 @@ export const updatePromotion = async (id, data) => {
   if (!updated) throw new Error("Không tìm thấy mã khuyến mãi");
   return updated;
 };
+// Đổi deletePromotion thành cập nhật trạng thái isActive
 export const deletePromotion = async (id) => {
   const Promotion = (await import("../promotion/promotion.model.js")).default;
-  const result = await Promotion.findByIdAndDelete(id);
-  if (!result) throw new Error("Không tìm thấy mã khuyến mãi");
-  return { message: "Xóa thành công" };
+  const updated = await Promotion.findByIdAndUpdate(id, { isActive: false }, { new: true });
+  if (!updated) throw new Error("Không tìm thấy mã khuyến mãi");
+  return { message: "Đã chuyển mã sang trạng thái không hoạt động", promotion: updated };
 };
 export const getAllPromotions = async () => {
   const Promotion = (await import("../promotion/promotion.model.js")).default;

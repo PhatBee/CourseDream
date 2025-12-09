@@ -3,11 +3,11 @@ import express from "express";
 import { verifyToken } from "../../middlewares/auth.middleware.js";
 import { checkRole } from "../../middlewares/role.middleware.js";
 import {
-  validatePromotionInput,
+  validatePromotionCreate,
+  validatePromotionUpdate,
   checkCodeExists,
   validateAndLoadPromotion,
 } from "../../middlewares/promotion.middleware.js";
-
 import {
   createPromotionCtrl,
   updatePromotionCtrl,
@@ -23,12 +23,12 @@ router.post(
   "/",
   verifyToken,
   checkRole("admin"),
-  validatePromotionInput,
+  validatePromotionCreate,
   checkCodeExists,
   createPromotionCtrl
 );
 
-router.put("/:id", verifyToken, checkRole("admin"), validatePromotionInput, updatePromotionCtrl);
+router.put("/:id", verifyToken, checkRole("admin"), validatePromotionUpdate, updatePromotionCtrl);
 router.delete("/:id", verifyToken, checkRole("admin"), deletePromotionCtrl);
 router.get("/", verifyToken, checkRole("admin"), getAllPromotionsCtrl);
 
