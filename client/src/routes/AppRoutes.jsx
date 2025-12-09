@@ -91,13 +91,13 @@ export default function AppRoutes() {
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
 
-            <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+          </Route>
+        </Route>
+
+         <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
               <Route path="instructor/add-course" element={<AddCoursePage />} />
               <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
             </Route>
-
-          </Route>
-        </Route>
 
         {/* No header Routes */}
         <Route path="/login" element={<Login />} />
