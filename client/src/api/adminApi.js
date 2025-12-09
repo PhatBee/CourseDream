@@ -51,6 +51,15 @@ const toggleBlockUser = (userId, reason) => {
     return axiosClient.patch(`${path}/users/${userId}/toggle-block`, { reason });
 };
 
+const getInstructorApplications = (params) => {
+    return axiosClient.get(`${path}/instructors/applications`, { params });
+};
+
+const reviewInstructorApplication = (id, data) => {
+    // data = { action: 'approve' | 'reject', reason: string }
+    return axiosClient.post(`${path}/instructors/applications/${id}/review`, data);
+}
+
 export const adminApi = {
     getDashboardStats,
     getRevenueAnalytics,
@@ -62,5 +71,7 @@ export const adminApi = {
     rejectCourse,
     getStudents,
     getInstructors,
-    toggleBlockUser
+    toggleBlockUser,
+    getInstructorApplications,
+    reviewInstructorApplication
 };
