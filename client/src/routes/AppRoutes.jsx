@@ -35,6 +35,8 @@ import StudentsManagement from "../pages/admin/StudentsManagement";
 import InstructorsManagement from "../pages/admin/InstructorsManagement";
 import CategoriesManagement from "../pages/admin/CategoriesManagement";
 import InstructorDashboard from "../pages/instructor/InstructorDashboard";
+import InstructorList from "../pages/admin/InstructorList";
+import InstructorApplications from "../pages/admin/InstructorApplications";
 
 export default function AppRoutes() {
 
@@ -105,7 +107,16 @@ export default function AppRoutes() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<StudentsManagement />} />
-            <Route path="instructors" element={<InstructorsManagement />} />
+            <Route path="instructors" element={<InstructorsManagement />}>
+        {/* Redirect mặc định vào list */}
+        <Route index element={<Navigate to="list" replace />} />
+        
+        {/* Tab 1: Danh sách */}
+        <Route path="list" element={<InstructorList />} />
+        
+        {/* Tab 2: Đơn đăng ký */}
+        <Route path="applications" element={<InstructorApplications />} />
+    </Route>
             <Route path="courses" element={<AdminPendingCourses />} />
             <Route path="categories" element={<CategoriesManagement />} />
             <Route path="blogs" element={<div>Manage Blogs</div>} />
