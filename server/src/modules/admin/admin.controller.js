@@ -202,3 +202,32 @@ export const toggleBlockUser = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Get instructor applications
+ * @route   GET /api/admin/instructors/applications
+ */
+export const getInstructorApplications = async (req, res, next) => {
+    try {
+        const result = await adminService.getInstructorApplications(req.query);
+        res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Review application (Approve/Reject)
+ * @route   POST /api/admin/instructors/applications/:id/review
+ */
+export const reviewInstructorApplication = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { action, reason } = req.body; // action: 'approve' | 'reject'
+
+        const result = await adminService.reviewInstructorApplication(id, action, reason);
+        res.status(200).json({ success: true, message: result.message });
+    } catch (error) {
+        next(error);
+    }
+};
