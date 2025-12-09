@@ -37,6 +37,8 @@ import CategoriesManagement from "../pages/admin/CategoriesManagement";
 import InstructorDashboard from "../pages/instructor/InstructorDashboard";
 import InstructorList from "../pages/admin/InstructorList";
 import InstructorApplications from "../pages/admin/InstructorApplications";
+import InstructorInfoEdit from "../components/profile/InstructorInfoEdit";
+import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
 
 export default function AppRoutes() {
 
@@ -71,6 +73,11 @@ export default function AppRoutes() {
               <Route path="edit" element={<EditProfile />} />
               {/* 2b. Tab Security */}
               <Route path="security" element={<ChangePassword />} />
+
+              <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+                  <Route path="instructor-profile" element={<InstructorInfoEdit />} />
+                  <Route path="social-payout" element={<SocialPayoutEdit />} />
+              </Route>
               {/* Khi vào /profile/settings, tự động nhảy sang /edit */}
               <Route index element={<Navigate to="edit" replace />} />
             </Route>

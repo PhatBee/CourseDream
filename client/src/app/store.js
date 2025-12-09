@@ -7,6 +7,7 @@ import learningReducer from "../features/learning/learningSlice";
 import cartReducer from '../features/cart/cartSlice';
 import enrollmentReducer from "../features/enrollment/enrollmentSlice";
 import adminReducer from '../features/admin/adminSlice';
+import instructorReducer from '../features/instructor/instructorSlice'
 
 export const store = configureStore({
   reducer: {
@@ -19,5 +20,6 @@ export const store = configureStore({
     cart: cartReducer,
     enrollment: enrollmentReducer,
     admin: adminReducer,
+    instructor: instructorReducer
   }
 });
