@@ -7,6 +7,8 @@ import Category from '../category/category.model.js';
 import CourseRevision from '../course/courseRevision.model.js';
 import Lecture from '../course/lecture.model.js';
 import Section from '../course/section.model.js';
+import InstructorApplication from '../user/instructorApplication.model.js';
+import InstructorProfile from '../user/InstructorProfile.model.js';
 
 export const getPendingApplications = async () => {
   const applications = await User.find({
@@ -655,4 +657,85 @@ export const toggleBlockUser = async (userId, reason) => {
     isActive: user.isActive,
     banReason: user.banReason
   };
+};
+
+/**
+ * Get list of instructor applications
+ */
+export const getInstructorApplications = async (query) => {
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const status = query.status || 'pending';
+
+    const filter = {};
+    if (status !== 'all') {
+        filter.status = status;
+    }
+
+    const applications = await InstructorApplication.find(filter)
+        .populate('user', 'name email avatar') // Get user info
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    const total = await InstructorApplication.countDocuments(filter);
+
+    return {
+        applications,
+        pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
+    };
+};
+
+/**
+ * Review application (Approve/Reject)
+ */
+export const reviewInstructorApplication = async (applicationId, action, reason) => {
+    const application = await InstructorApplication.findById(applicationId).populate('user');
+    if (!application) throw new Error("Application not found");
+
+    if (application.status !== 'pending') throw new Error("Application has already been processed");
+
+    if (action === 'approve') {
+        // 1. Update Application status
+        application.status = 'approved';
+        await application.save();
+
+        // 2. Update User role
+        const user = application.user;
+        user.role = 'instructor';
+        await user.save();
+
+        // 3. Create Instructor Profile (IMPORTANT)
+        // Check if profile exists to avoid duplicates
+        let profile = await InstructorProfile.findOne({ user: user._id });
+        if (!profile) {
+            await InstructorProfile.create({
+                user: user._id,
+                headline: "New Instructor", // Default headline
+                experience: application.experience,
+                specialties: application.intendedTopics,
+                // You can add more fields mapped from application here
+            });
+        }
+
+        return { message: "Approved successfully. User is now an Instructor." };
+    } 
+    
+    if (action === 'reject') {
+        if (!reason) throw new Error("Rejection reason is required");
+
+        application.status = 'rejected';
+        application.rejectionReason = reason;
+        await application.save();
+
+        return { message: "Application rejected." };
+    }
+
+    throw new Error("Invalid action");
 };

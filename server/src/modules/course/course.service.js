@@ -6,6 +6,7 @@ import Lecture from "./lecture.model.js";
 import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
 import Category from "../category/category.model.js";
+import InstructorProfile from "../user/InstructorProfile.model.js";
 import { uploadToYouTube } from "../../config/youtube.js";
 import { uploadToCloudinary, uploadResourceToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
@@ -48,6 +49,26 @@ export const getCourseDetailsBySlug = async (slug) => {
     const error = new Error("Không tìm thấy khóa học.");
     error.statusCode = 404;
     throw error;
+  }
+
+  // [MỚI] Lấy thông tin chi tiết Instructor Profile
+  if (course.instructor) {
+      const instructorDetails = await InstructorProfile.findOne({ user: course.instructor._id }).lean();
+      
+      // Merge thông tin vào object instructor
+      if (instructorDetails) {
+          course.instructor = {
+              ...course.instructor, // name, avatar, bio (user)
+              headline: instructorDetails.headline,
+              experience: instructorDetails.experience,
+              education: instructorDetails.education,
+              specialties: instructorDetails.specialties,
+              socialLinks: instructorDetails.socialLinks,
+              totalStudents: instructorDetails.totalStudents,
+              totalReviews: instructorDetails.totalReviews,
+              rating: instructorDetails.rating
+          };
+      }
   }
 
   const reviews = await Review.find({ course: course._id })

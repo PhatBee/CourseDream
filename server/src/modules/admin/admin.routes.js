@@ -88,4 +88,18 @@ router.post(
   adminController.rejectCourseRevision
 );
 
+router.get(
+    '/instructors/applications',
+    verifyToken,
+    checkRole('admin'),
+    adminController.getInstructorApplications
+);
+
+router.post(
+    '/instructors/applications/:id/review',
+    verifyToken,
+    checkRole('admin'),
+    adminController.reviewInstructorApplication
+);
+
 export default router;

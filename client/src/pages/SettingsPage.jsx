@@ -1,6 +1,7 @@
 // src/pages/SettingsPage.jsx
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { useSelector } from 'react-redux'; // Import hook
 
 const SettingsTab = ({ to, label }) => {
   return (
@@ -22,6 +23,9 @@ const SettingsTab = ({ to, label }) => {
 };
 
 const SettingsPage = () => {
+  const { user } = useSelector((state) => state.auth); // Lấy user từ Redux
+  const isInstructorOrAdmin = user?.role === 'instructor' || user?.role === 'admin';
+  
   return (
     <div className="space-y-6">
       <h5 className="text-2xl font-bold text-gray-800 text-left">Settings</h5>
@@ -31,8 +35,14 @@ const SettingsPage = () => {
         <ul className="flex flex-wrap -mb-px">
           <SettingsTab to="/profile/settings/edit" label="Edit Profile" />
           <SettingsTab to="/profile/settings/security" label="Security" />
-          {/* <SettingsTab to="/profile/settings/social" label="Social Profiles" />
-          <SettingsTab to="/profile/settings/linked" label="Linked Accounts" />
+          {/* Hiển thị Tab cho Instructor */}
+          {isInstructorOrAdmin && (
+            <>
+                <SettingsTab to="/profile/settings/instructor-profile" label="Instructor Profile" />
+                <SettingsTab to="/profile/settings/social-payout" label="Social & Payout" />
+            </>
+          )}
+          {/*
           <SettingsTab to="/profile/settings/notifications" label="Notifications" /> */}
         </ul>
       </div>
