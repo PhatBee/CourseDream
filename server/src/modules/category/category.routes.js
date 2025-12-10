@@ -6,6 +6,7 @@ import { checkRole } from '../../middlewares/role.middleware.js';
 const router = express.Router();
 
 router.get('/', categoryController.getCategories);
+router.get('/all', categoryController.getAllCategoriesSimple); // New endpoint for dropdowns
 
 router.post('/', verifyToken, checkRole('admin'), categoryController.createCategory);
 router.put('/:id', verifyToken, checkRole('admin'), categoryController.updateCategory);

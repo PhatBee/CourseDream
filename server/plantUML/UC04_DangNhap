@@ -1,0 +1,168 @@
+@startuml
+!theme plain
+
+' Khai báo các thành phần
+actor "User" as User
+boundary "Login Page UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Auth Controller" as Controller
+    participant "Auth Service" as Service
+    entity ":User" as Entity
+    participant "Google API" as Google
+    participant "Facebook Graph" as FB
+
+' === BẮT ĐẦU LUỒNG ===
+User -> UI: Chọn phương thức đăng nhập
+
+alt CASE 1: Đăng nhập Local (Email/Password)
+    User -> UI: Nhập Email & Password \n-> Bấm Login
+    
+    note right of UI
+      API: POST /api/auth/login
+      Body: { email, password }
+    end note
+    UI -> Middleware: Gửi Request
+    activate Middleware
+
+    
+   
+    Middleware -> Controller: login(req, res, next)
+    activate Controller
+    
+    Controller -> Service: login({ email, password })
+    activate Service
+    
+    Service -> Entity: findOne({ email })
+    activate Entity
+    Entity --> Service: Trả về user
+    deactivate Entity
+    
+    alt User Không tồn tại hoặc Sai Pass
+        Service --> Controller: Throw Error 401
+        Controller --> UI: Error: "Email hoặc mật khẩu không đúng"
+    else User Tồn tại
+        ' Logic kiểm tra Active/Verify
+        opt !user.isVerified
+             Service --> Controller: Throw Error 401 ("Chưa kích hoạt")
+        end
+        opt !user.isActive (Banned)
+             Service --> Controller: Throw Error 403 ("Đã bị vô hiệu hóa")
+        end
+        
+        ' Kiểm tra mật khẩu
+        Service -> Service: bcrypt.compare(pass, user.pass)
+        
+        ' Tạo Token (Logic chung bên dưới)
+        Service -> Service: generateTokens(user)
+        Service -> Entity: user.refreshToken = newRefreshToken\nuser.save()
+        activate Entity
+        Entity --> Service: Saved
+        deactivate Entity
+
+        
+        Service --> Controller: Return { user, accessToken, refreshToken }
+        deactivate Service
+    end
+
+else CASE 2: Đăng nhập Google
+    User -> UI: Bấm "Login with Google"\n(Client nhận credential)
+    
+    note right of UI
+      API: POST /api/auth/google
+      Body: { credential }
+    end note
+    UI -> Middleware: Gửi Request
+    
+   
+    Middleware -> Controller: googleLogin(req, res, next)
+    
+    Controller -> Service: googleLogin(credential)
+    activate Service
+    
+    ' Xác thực với Google
+    Service -> Google: verifyIdToken(credential)
+    activate Google
+    Google --> Service: Return Payload (email, name, sub...)
+    deactivate Google
+    
+    ' Logic tìm hoặc tạo User
+    Service -> Entity: findOne({ email })
+    activate Entity
+    Entity --> Service: Trả về user (nếu có)
+    deactivate Entity
+    
+    alt User Tồn tại
+        Service -> Entity: Check & Push to linkedAccounts\nuser.save()
+    else User Mới
+        Service -> Entity: User.create({ email, provider: 'google', ... })
+    end
+    
+    ' Tạo Token
+    Service -> Service: generateTokens(user)
+    Service -> Entity: user.refreshToken = newRefreshToken\nuser.save()
+    activate Entity
+    Entity --> Service: Saved
+    deactivate Entity
+    
+    Service --> Controller: Return { user, accessToken, refreshToken }
+    deactivate Service
+
+else CASE 3: Đăng nhập Facebook
+    User -> UI: Bấm "Login with Facebook"\n(Client nhận fbAccessToken)
+    
+    note right of UI
+      API: POST /api/auth/facebook
+      Body: { accessToken }
+    end note
+
+    UI -> Middleware: Gửi Request
+    
+   
+    Middleware -> Controller:facebookLogin(req, res, next)
+    
+    Controller -> Service: facebookLogin(fbAccessToken)
+    activate Service
+    
+    ' Xác thực với Facebook
+    Service -> FB: axios.get(graph.facebook.../me)
+    activate FB
+    FB --> Service: Return Data (email, name, picture...)
+    deactivate FB
+    
+    ' Logic tìm hoặc tạo User
+    Service -> Entity: findOne({ email })
+    activate Entity
+    Entity --> Service: Trả về user (nếu có)
+    deactivate Entity
+    
+    alt User Tồn tại
+        Service -> Entity: Check & Push to linkedAccounts\nuser.save()
+    else User Mới
+        Service -> Entity: User.create({ email, provider: 'facebook', ... })
+    end
+    
+    ' Tạo Token
+    Service -> Service: generateTokens(user)
+    Service -> Entity: user.refreshToken = newRefreshToken\nuser.save()
+    activate Entity
+    Entity --> Service: Saved
+    deactivate Entity
+    deactivate Middleware
+
+
+    
+    Service --> Controller: Return { user, accessToken, refreshToken }
+    deactivate Service
+
+
+end
+
+' === PHẢN HỒI CHUNG ===
+group Response Handling
+    Controller -> Controller: setCookies(res, accessToken, refreshToken)\n(HttpOnly, Secure)
+    Controller --> UI: Response 200 OK\n{ message, user, accessToken }
+    deactivate Controller
+
+    UI -> User: Chuyển hướng vào trang chủ
+end
+@enduml

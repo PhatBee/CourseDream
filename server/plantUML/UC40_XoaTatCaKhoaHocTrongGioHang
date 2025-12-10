@@ -1,0 +1,86 @@
+@startuml
+!theme plain
+
+' Khai báo các thành phần tham gia
+actor "Student" as User
+boundary "Cart Page UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Cart Controller" as Controller
+    participant "Cart Service" as Service
+    entity ":Cart" as Entity
+
+' Bắt đầu luồng
+User -> UI: Nhấn nút "Xóa tất cả"\n(Clear Cart)
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  DELETE /api/cart/clear
+  Header: Authorization Token
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+' Middleware xử lý
+group Middleware Processing
+    Middleware -> Middleware: verifyToken()\n(Xác thực user)
+    
+    alt Token Invalid
+        Middleware --> UI: Trả về lỗi 401 Unauthorized
+    end
+end group
+
+' Chuyển sang Controller
+Middleware -> Controller: clearCart(req, res)
+activate Controller
+Controller -> Controller: Lấy studentId = req.user._id
+
+' Gọi xuống Service
+Controller -> Service: clearCart(studentId)
+activate Service
+
+' Service: Tìm giỏ hàng
+Service -> Entity: findOne({ student: studentId })
+activate Entity
+Entity --> Service: Trả về cart (hoặc null)
+deactivate Entity
+
+alt Cart Not Found
+    Service --> Controller: Throw Error "Cart not found"
+    Controller --> UI: Response 500/404\n(Failed to clear cart)
+else Cart Found
+    ' Logic xóa toàn bộ item
+    Service -> Service: cart.items = []
+
+    ' Logic tính toán lại Model (về 0)
+    note right of Service
+      Model Logic:
+      cart.calculateTotals()
+      (Total items = 0, Price = 0)
+    end note
+
+    ' Lưu xuống DB
+    Service -> Entity: cart.save()
+    activate Entity
+    Entity --> Service: Success (Saved)
+    deactivate Entity
+
+    ' Trả kết quả về Controller
+    note right of Service
+      Lưu ý: Code hiện tại trả về cart ngay
+      không cần populate (vì giỏ hàng rỗng)
+    end note
+    Service --> Controller: Return empty cart
+    deactivate Service
+
+    ' Controller phản hồi Client
+    Controller --> UI: Response 200 OK (JSON)\n{ success: true, message: "Giỏ hàng đã được xóa", data: cart }
+    deactivate Controller
+    deactivate Middleware
+
+    UI -> User: Làm trống danh sách hiển thị\nCập nhật tổng tiền về 0
+    deactivate UI
+end
+
+@enduml

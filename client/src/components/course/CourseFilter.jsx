@@ -71,7 +71,7 @@ const CourseFilter = ({ onFilterChange }) => {
 
   // Lấy dữ liệu động từ API khi mount
   useEffect(() => {
-    categoryApi.getAllCategories().then(res => setCategories(res.data.data.data || []));
+    categoryApi.getAllCategoriesSimple().then(res => setCategories(res.data?.data || []));
     userApi.getInstructors().then(res => setInstructors(res.data || []));
     courseApi.getLevels().then(res => setLevelsData(res.data || []));
     courseApi.getCourseStats().then(res => {

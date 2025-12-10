@@ -1,0 +1,81 @@
+@startuml
+!theme plain
+autonumber
+
+' Khai báo các thành phần tham gia
+actor "Student" as User
+boundary "Cart UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Cart Controller" as Controller
+    participant "Cart Service" as Service
+    entity ":Cart" as Entity
+
+' Bắt đầu luồng
+User -> UI: Nhấn vào biểu tượng "Giỏ hàng"
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  GET /api/cart
+  Header: Authorization Token
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+' Middleware xử lý
+group Middleware Processing
+    Middleware -> Middleware: verifyToken()\n(Xác thực user)
+    
+    alt Token Invalid
+        Middleware --> UI: Trả về lỗi 401 Unauthorized
+    end
+end group
+
+' Chuyển sang Controller
+Middleware -> Controller: getCart(req, res)
+activate Controller
+Controller -> Controller: Lấy studentId = req.user._id
+
+' Gọi xuống Service
+Controller -> Service: getCart(studentId)
+activate Service
+
+' Service: Truy vấn Database
+note right of Service
+  Query kèm Populate:
+  - items.course
+  - instructor (nested)
+  - categories (nested)
+end note
+
+Service -> Entity: findOne({ student: studentId }).populate(...)
+activate Entity
+Entity --> Service: Trả về cart document (hoặc null)
+deactivate Entity
+
+' Logic xử lý nếu chưa có giỏ hàng
+alt Cart Not Found (null)
+    note right of Service
+      Nếu user chưa có giỏ hàng,
+      tự động tạo mới (Lazy Create)
+    end note
+    Service -> Entity: create({ student: studentId, items: [] })
+    activate Entity
+    Entity --> Service: Trả về new empty cart
+    deactivate Entity
+end
+
+' Trả kết quả về Controller
+Service --> Controller: Return cart object
+deactivate Service
+
+' Controller phản hồi Client
+Controller --> UI: Response 200 OK (JSON)\n{ success: true, data: cart }
+deactivate Controller
+deactivate Middleware
+
+UI -> User: Hiển thị danh sách khóa học\ntrong giỏ hàng
+deactivate UI
+
+@enduml

@@ -1,0 +1,114 @@
+@startuml
+!theme plain
+
+
+' Khai báo các thành phần tham gia
+actor "Student" as User
+boundary "Product Card/Detail UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Cart Controller" as Controller
+    participant "Cart Service" as Service
+    entity ":Course" as CourseEntity
+    entity ":Cart" as CartEntity
+
+' Bắt đầu luồng
+User -> UI: Nhấn nút "Thêm vào giỏ" (icon cart)
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  POST /api/cart/add
+  Body: { courseId }
+  Header: Authorization Token
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+' Middleware xử lý
+group Middleware Processing
+    Middleware -> Middleware: verifyToken()\n(Xác thực user)
+    Middleware -> Middleware: addToCartValidation()\n(Kiểm tra courseId)
+    
+    alt Validation Failed
+        Middleware --> UI: Trả về lỗi 400 Bad Request
+    end
+end group
+
+' Chuyển sang Controller
+Middleware -> Controller: addToCart(req, res)
+activate Controller
+Controller -> Controller: Lấy studentId, courseId
+
+' Gọi xuống Service
+Controller -> Service: addToCart(studentId, courseId)
+activate Service
+
+' === BƯỚC 1: KIỂM TRA COURSE ===
+Service -> CourseEntity: findById(courseId)
+activate CourseEntity
+CourseEntity --> Service: Trả về course document (hoặc null)
+deactivate CourseEntity
+
+alt Course Not Found
+    Service --> Controller: Throw Error "Course not found"
+    Controller --> UI: Response 404 Not Found\n{ message: "Khóa học không tồn tại" }
+else Course Found
+    ' === BƯỚC 2: LẤY HOẶC TẠO CART ===
+    Service -> CartEntity: findOne({ student: studentId })
+    activate CartEntity
+    CartEntity --> Service: Trả về cart (hoặc null)
+    deactivate CartEntity
+
+    alt Cart Not Found (User chưa có giỏ)
+        Service -> Service: cart = new Cart({ student, items: [] })
+    end
+
+    ' === BƯỚC 3: KIỂM TRA TRÙNG LẶP ===
+    Service -> Service: Check existingItem in cart.items
+
+    alt Item Already Exists
+        Service --> Controller: Throw Error "Course already in cart"
+        Controller --> UI: Response 400 Bad Request\n{ message: "Khóa học đã tồn tại..." }
+    else Item New
+        ' === BƯỚC 4: THÊM VÀO GIỎ & TÍNH TOÁN ===
+        Service -> Service: cart.items.push({ courseId, price, ... })
+        
+        note right of Service
+            Logic trong Model:
+            cart.calculateTotals()
+            (Tính lại subtotal, total, discount)
+        end note
+
+        Service -> CartEntity: cart.save()
+        activate CartEntity
+        CartEntity --> Service: Success
+        deactivate CartEntity
+
+        ' === BƯỚC 5: POPULATE DỮ LIỆU TRẢ VỀ ===
+        Service -> CartEntity: findById(cart._id).populate(...)
+        activate CartEntity
+        note right of CartEntity
+            Populate:
+            - items.course (title, price, img...)
+            - instructor (name, avatar)
+            - categories
+        end note
+        CartEntity --> Service: Trả về full cart data
+        deactivate CartEntity
+
+        ' Trả kết quả về Controller
+        Service --> Controller: Return cart
+        deactivate Service
+
+        ' Controller phản hồi Client
+        Controller --> UI: Response 200 OK (JSON)\n{ success: true, message, data: cart }
+        deactivate Controller
+        deactivate Middleware
+
+        UI -> User: Hiển thị thông báo thành công\nCập nhật số lượng trên icon giỏ hàng
+        deactivate UI
+    end
+end
+
+@enduml
