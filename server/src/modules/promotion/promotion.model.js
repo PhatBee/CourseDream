@@ -1,5 +1,6 @@
 // src/modules/promotion/promotion.model.js
 import mongoose from "mongoose";
+import { promotionPreSave } from "./promotion.validation.js";
 
 const promotionSchema = new mongoose.Schema(
   {
@@ -27,22 +28,6 @@ const promotionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Validation trước khi save
-promotionSchema.pre("save", function (next) {
-  if (this.startDate >= this.endDate) {
-    return next(new Error("startDate phải trước endDate"));
-  }
-  if (this.appliesTo === "all") {
-    this.categories = [];
-    this.courses = [];
-  }
-  if (this.appliesTo === "category" && this.categories.length === 0) {
-    return next(new Error("categories là bắt buộc khi appliesTo = category"));
-  }
-  if (this.appliesTo === "course" && this.courses.length === 0) {
-    return next(new Error("courses là bắt buộc khi appliesTo = course"));
-  }
-  next();
-});
+promotionSchema.pre("save", promotionPreSave);
 
 export default mongoose.model("Promotion", promotionSchema);
