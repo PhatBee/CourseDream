@@ -18,7 +18,7 @@ const COURSE_REPORT_REASONS = [
   'Ý khác',
 ];
 
-const CourseHeader = ({ course }) => {
+const CourseHeader = ({ course, reviewCount }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const {
@@ -32,10 +32,8 @@ const CourseHeader = ({ course }) => {
     instructor = {},
     categories = [],
     rating = 0,
-    reviewCount = 0,
     previewUrl = '',
   } = course;
-
   const embedUrl = getEmbedUrl(previewUrl);
   const categoryName = categories[0]?.name || 'Course';
   const dispatch = useDispatch();

@@ -7,10 +7,10 @@ import learningReducer from "../features/learning/learningSlice";
 import cartReducer from '../features/cart/cartSlice';
 import enrollmentReducer from "../features/enrollment/enrollmentSlice";
 import adminReducer from '../features/admin/adminSlice';
+import instructorReducer from '../features/instructor/instructorSlice'
 import reviewReducer from '../features/review/reviewSlice';
 import discussionReducer from '../features/discussion/discussionSlice';
 import reportReducer from '../features/report/reportSlice';
-
 export const store = configureStore({
   reducer: {
     // Add your reducers here
@@ -22,8 +22,8 @@ export const store = configureStore({
     cart: cartReducer,
     enrollment: enrollmentReducer,
     admin: adminReducer,
+    instructor: instructorReducer,
     review: reviewReducer,
     discussion: discussionReducer,
-    report: reportReducer,
-  }
+    report: reportReducer,  }
 });

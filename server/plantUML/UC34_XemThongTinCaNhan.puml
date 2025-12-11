@@ -1,0 +1,75 @@
+@startuml
+!theme plain
+
+' Khai báo các thành phần tham gia
+actor "Student/Instructor" as User
+boundary "Page UI" as UI
+    control "Router & Middleware" as Middleware
+    control "User Controller" as Controller
+    participant "User Service" as Service
+    entity ":User" as Entity
+
+' Bắt đầu luồng
+User -> UI: Truy cập trang\n"My Profile"
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  GET /users/profile
+  Header: Authorization Token
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+' Middleware xử lý
+group Middleware Processing
+    Middleware -> Middleware: verifyToken()\n(Xác thực user & giải mã token)
+    
+    alt Token Invalid / Expired
+        Middleware --> UI: Trả về lỗi 401/403\n(Unauthorized)
+    end
+end group
+
+' Chuyển sang Controller
+Middleware -> Controller: getProfile(req, res, next)
+activate Controller
+Controller -> Controller: Lấy userId từ req.user.id
+
+' Gọi xuống Service
+Controller -> Service: getProfile(userId)
+activate Service
+
+' Service: Truy vấn Database
+Service -> Entity: findById(userId).select(...)
+activate Entity
+note right of Entity
+  Select Fields:
+  - Exclude: otp, otpExpires, refreshToken
+  - Include: password (để check)
+end note
+Entity --> Service: Trả về user document
+deactivate Entity
+
+alt User Not Found
+    Service --> Controller: Throw Error 404
+    Controller --> UI: Trả về lỗi 404 Not Found\n(Message: "Không tìm thấy người dùng")
+else User Found
+    ' Logic xử lý dữ liệu trả về
+    Service -> Service: user.toObject()\n(Chuyển sang object thuần)
+    Service -> Service: userObj.hasPassword = !!user.password\n(Tạo cờ kiểm tra mật khẩu)
+    Service -> Service: delete userObj.password\n(Xóa hash mật khẩu)
+
+    ' Trả kết quả về Controller
+    Service --> Controller: Return userObj
+    deactivate Service
+
+    ' Controller phản hồi Client
+    Controller --> UI: Response 200 OK (JSON)\n{ success: true, data: user }
+    deactivate Controller
+    deactivate Middleware
+
+    UI -> User: Hiển thị thông tin người dùng
+    deactivate UI
+end
+@enduml

@@ -42,8 +42,8 @@ const AddCoursePage = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const res = await categoryApi.getAllCategories();
-                setCategoriesList(res.data?.data || res.data || []);
+                const res = await categoryApi.getAllCategoriesSimple();
+                setCategoriesList(res.data?.data || []);
             } catch (error) {
                 console.error("Failed to load categories", error);
             }

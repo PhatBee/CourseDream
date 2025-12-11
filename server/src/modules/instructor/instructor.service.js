@@ -1,5 +1,6 @@
 import Course from "../course/course.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
+import InstructorProfile from "../user/InstructorProfile.model.js";
 
 /**
  * Lấy thống kê cho instructor
@@ -41,3 +42,28 @@ export const getStatsForInstructor = async (instructorId) => {
     totalStudentsList,  // danh sách học viên unique (để FE xem chi tiết)
   };
 };
+
+/**
+ * Lấy thông tin chi tiết Instructor Profile
+ */
+export const getInstructorProfile = async (userId) => {
+  let profile = await InstructorProfile.findOne({ user: userId });
+  
+  // Nếu chưa có (trường hợp hiếm), tạo mới mặc định
+  if (!profile) {
+    profile = await InstructorProfile.create({ user: userId });
+  }
+  return profile;
+};
+
+/**
+ * Cập nhật Instructor Profile
+ */
+export const updateInstructorProfile = async (userId, data) => {
+  const profile = await InstructorProfile.findOneAndUpdate(
+    { user: userId },
+    { $set: data },
+    { new: true, upsert: true } // Trả về data mới, nếu chưa có thì tạo
+  );
+  return profile;
+};  

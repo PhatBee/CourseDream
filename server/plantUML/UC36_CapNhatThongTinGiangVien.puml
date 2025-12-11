@@ -1,0 +1,69 @@
+@startuml
+!theme plain
+
+' Khai báo các thành phần tham gia
+actor "Instructor" as User
+boundary "Page UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Instructor Controller" as Controller
+    participant "Instructor Service" as Service
+    entity ":InstructorProfile" as Entity
+
+
+' Bắt đầu luồng
+User -> UI: Nhập thông tin Instructor Profile\n hoặc Social & Payout\n(Bấm nút "Lưu thay đổi")
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  PUT /instructor/profile
+  Body (JSON):
+  - website, twitter, linkedin...
+  - paypalEmail (Payout Info)
+end note
+UI -> Middleware: Gửi Request (Header: Authorization Token)
+activate Middleware
+
+' Middleware xử lý
+group Middleware Processing
+    Middleware -> Middleware: verifyToken()\n(Xác thực user)
+    
+    alt Token Invalid
+        Middleware --> UI: Trả về lỗi 401 Unauthorized
+    end
+end group
+
+' Chuyển sang Controller
+Middleware -> Controller: updateProfile(req, res, next)
+activate Controller
+Controller -> Controller: Lấy userId = req.user._id\nLấy body = req.body
+
+' Gọi xuống Service
+Controller -> Service: updateInstructorProfile \n (userId, body)
+activate Service
+
+' Service: Tương tác Database
+note right of Service
+  Sử dụng logic Upsert:
+  Tìm theo userId. Nếu có thì Update.
+  Nếu chưa có thì Create mới.
+end note
+
+Service -> Entity: findOneAndUpdate({ user: userId }, data)\nOptions: { new: true, upsert: true }
+activate Entity
+Entity --> Service: Trả về updatedProfile
+deactivate Entity
+
+' Trả kết quả về Controller
+Service --> Controller: Return profile
+deactivate Service
+
+' Controller phản hồi Client
+Controller --> UI: Response 200 OK (JSON)\n{ success: true, message: "Cập nhật hồ sơ \ngiảng viên thành công", data: profile }
+deactivate Controller
+deactivate Middleware
+
+UI -> User: Hiển thị thông báo\n"Cập nhật hồ sơ giảng viên thành công!"
+deactivate UI
+@enduml
