@@ -2,7 +2,8 @@
 import Report from "../report/report.model.js";
 import Course from "../course/course.model.js";
 import Discussion from "../discussion/discussion.model.js";
-import notificationService from "../notification/notification.service.js"; // ← THAY ĐỔI
+import User from "../auth/auth.model.js";
+import notificationService from "../notification/notification.service.js";
 
 // Helper: lấy instructor từ discussion
 const getInstructorFromDiscussion = async (discussionId) => {
@@ -11,16 +12,17 @@ const getInstructorFromDiscussion = async (discussionId) => {
   return discussion?.course?.instructor;
 };
 
+// 1. Gửi báo cáo khóa học
 export const createReport = async (courseId, reporterId, reason) => {
+  const course = await Course.findById(courseId).populate("instructor", "name email");
   const report = await Report.create({
     course: courseId,
     reporter: reporterId,
+    reportedUser: course?.instructor?._id,
     reason,
   });
 
-  const course = await Course.findById(courseId).populate("instructor", "name email");
-
-  if (course.instructor) {
+  if (course?.instructor) {
     await notificationService.createNotification({
       recipient: course.instructor._id,
       sender: reporterId,
@@ -36,13 +38,14 @@ export const createReport = async (courseId, reporterId, reason) => {
 
 // 2. Báo cáo toàn bộ discussion
 export const createDiscussionReport = async (discussionId, reporterId, reason) => {
-  const discussion = await Discussion.findById(discussionId).select("course");
+  const discussion = await Discussion.findById(discussionId).select("course author");
   if (!discussion) throw new Error("Thảo luận không tồn tại");
 
   const report = await Report.create({
     course: discussion.course,
     discussion: discussionId,
     reporter: reporterId,
+    reportedUser: discussion.author, // người tạo thảo luận
     reason,
   });
 
@@ -65,12 +68,14 @@ export const createDiscussionReport = async (discussionId, reporterId, reason) =
 export const createReplyReport = async (replyId, reporterId, reason) => {
   const discussion = await Discussion.findOne({ "replies._id": replyId });
   if (!discussion) throw new Error("Bình luận không tồn tại");
+  const reply = discussion.replies.id(replyId);
 
   const report = await Report.create({
     course: discussion.course,
     discussion: discussion._id,
     reply: replyId,
     reporter: reporterId,
+    reportedUser: reply?.author, // người viết reply
     reason,
   });
 
@@ -87,4 +92,113 @@ export const createReplyReport = async (replyId, reporterId, reason) => {
   }
 
   return report;
+};
+
+// 4. Lấy danh sách báo cáo, hỗ trợ lọc
+export const getReports = async (filter, page = 1, limit = 20) => {
+  return Report.find(filter)
+    .populate("reporter", "name email")
+    .populate("resolvedBy", "name email")
+    .populate("course", "title")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(Number(limit));
+};
+
+// 5. Xem chi tiết báo cáo, kèm lịch sử vi phạm
+export const getReportDetail = async (id) => {
+  const report = await Report.findById(id)
+    .populate("reporter", "name email")
+    .populate("resolvedBy", "name email")
+    .populate("course", "title instructor slug")
+    .populate("discussion", "content _id replies")
+    .populate("reportedUser", "name email");
+  if (!report) throw { statusCode: 404, message: "Không tìm thấy báo cáo" };
+  let history = [];
+  if (report.reportedUser) {
+    history = await Report.find({
+      reportedUser: report.reportedUser,
+      status: "resolved",
+      _id: { $ne: report._id }
+    });
+  }
+
+  // Nếu là báo cáo reply, lấy nội dung reply từ discussion
+  let replyObj = null;
+  if (report.reply && report.discussion) {
+    // Nếu discussion đã populate replies
+    const discussion = report.discussion;
+    // Nếu replies là undefined, cần truy vấn lại discussion
+    let replies = discussion.replies;
+    if (!replies) {
+      const discussionDoc = await Discussion.findById(discussion._id);
+      replies = discussionDoc?.replies;
+    }
+    if (replies) {
+      replyObj = replies.id(report.reply);
+    }
+  }
+
+  return { report, history, replyObj };
+};
+
+// 6. Xử lý báo cáo (resolved/rejected), ghi lịch sử & thực hiện biện pháp
+export const resolveReport = async (id, status, adminNote, action, adminId) => {
+  const report = await Report.findById(id);
+  if (!report) throw { statusCode: 404, message: "Không tìm thấy báo cáo" };
+  report.status = status;
+  report.resolvedBy = adminId;
+  report.resolvedAt = new Date();
+  report.adminNote = adminNote;
+  report.actions = report.actions || [];
+  if (action) {
+    report.actions.push({
+      action,
+      by: adminId,
+      at: new Date(),
+      note: adminNote
+    });
+    // Thực hiện các biện pháp xử lý
+    if (action === "warn" && report.reportedUser) {
+      await notificationService.createNotification({
+        recipient: report.reportedUser,
+        sender: adminId,
+        type: "warning",
+        title: "Cảnh cáo từ quản trị viên",
+        message: adminNote || "Bạn đã vi phạm quy định hệ thống.",
+        relatedId: report._id,
+      });
+    }
+    if (action === "hide_course" && report.course) {
+      await Course.findByIdAndUpdate(report.course, { status: "hidden" });
+    }
+    if (action === "ban_user" && report.reportedUser) {
+      await User.findByIdAndUpdate(report.reportedUser, { isActive: false, banReason: adminNote });
+    }
+    if (action === "lock_comment") {
+      // Nếu là báo cáo chủ đề thảo luận (ẩn cả chủ đề)
+      if (report.discussion && !report.reply) {
+        await Discussion.findByIdAndUpdate(report.discussion, { isHidden: true });
+      }
+      // Nếu là báo cáo reply (ẩn reply)
+      if (report.discussion && report.reply) {
+        await Discussion.updateOne(
+          { _id: report.discussion, "replies._id": report.reply },
+          { $set: { "replies.$.isHidden": true } }
+        );
+      }
+    }
+    // ...thêm các biện pháp khác nếu cần
+  }
+  await report.save();
+  return report;
+};
+
+export const isSpamReporter = async (userId) => {
+  const rejectedCount = await Report.countDocuments({
+    reporter: userId,
+    status: "rejected",
+    createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+  });
+  return rejectedCount >= 7;
 };

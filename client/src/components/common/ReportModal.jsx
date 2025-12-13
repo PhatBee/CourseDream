@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 const ReportModal = ({ open, onClose, onSubmit, reasons }) => {
   const [reason, setReason] = useState("");
   const [detail, setDetail] = useState("");
+  const { error, loading } = useSelector(state => state.report);
   if (!open) return null;
 
   const handleSend = () => {
@@ -47,11 +49,15 @@ const ReportModal = ({ open, onClose, onSubmit, reasons }) => {
           onChange={e => setDetail(e.target.value)}
           placeholder="Mô tả chi tiết vấn đề bạn muốn báo cáo"
         />
+        {error && (
+          <div className="text-red-500 text-sm mb-2">{error}</div>
+        )}
         <div className="flex justify-end gap-2">
           <button className="px-5 py-2 rounded bg-gray-200 text-base" onClick={onClose}>Hủy</button>
           <button
             className="px-5 py-2 rounded font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-md shadow-rose-200 text-base transition"
             onClick={handleSend}
+            disabled={!!error || loading}
           >
             Gửi
           </button>

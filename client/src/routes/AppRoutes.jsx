@@ -39,6 +39,7 @@ import InstructorList from "../pages/admin/InstructorList";
 import InstructorApplications from "../pages/admin/InstructorApplications";
 import InstructorInfoEdit from "../components/profile/InstructorInfoEdit";
 import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
+import ReportsManagement from "../pages/admin/ReportsManagement";
 
 export default function AppRoutes() {
 
@@ -115,6 +116,7 @@ export default function AppRoutes() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<StudentsManagement />} />
+            <Route path="reports" element={<ReportsManagement />}/>
             <Route path="instructors" element={<InstructorsManagement />}>
         {/* Redirect mặc định vào list */}
         <Route index element={<Navigate to="list" replace />} />

@@ -53,18 +53,28 @@ export const replyToDiscussion = async (discussionId, authorId, content) => {
 
 export const getDiscussionsByCourse = async (courseId, page = 1, limit = 10) => {
   const skip = (page - 1) * limit;
+  // Chỉ lấy thảo luận có isHidden: false (chủ đề hiển thị)
   const [discussions, total] = await Promise.all([
-    Discussion.find({ course: courseId })
+    Discussion.find({ course: courseId, isHidden: false })
       .populate("author", "name avatar")
       .populate("replies.author", "name avatar")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
-    Discussion.countDocuments({ course: courseId })
+    Discussion.countDocuments({ course: courseId, isHidden: false })
   ]);
 
+  // Trong mỗi thảo luận, chỉ lấy reply có isHidden: false (reply hiển thị)
+  const filteredDiscussions = discussions.map(discussion => {
+    const filteredReplies = discussion.replies.filter(reply => reply.isHidden === false);
+    return {
+      ...discussion.toObject(),
+      replies: filteredReplies
+    };
+  });
+
   return {
-    discussions,
+    discussions: filteredDiscussions,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
   };
 };
