@@ -5,7 +5,6 @@ import Spinner from "../../components/common/Spinner";
 import { FaUserCircle, FaFlag } from "react-icons/fa";
 import ReportModal from "../../components/common/ReportModal";
 import toast from "react-hot-toast";
-import reportApi from "../../api/reportApi";
 import Pagination from "../../components/common/Pagination";
 import { sendReport, resetReportState } from "../../features/report/reportSlice";
 
@@ -17,7 +16,7 @@ const DISCUSSION_REPORT_REASONS = [
   "Ý khác"
 ];
 
-const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
+const CourseDiscussion = ({ courseId, user, isEnrolled, isInstructor }) => {
   const dispatch = useDispatch();
   const { discussions, pagination, loading } = useSelector(state => state.discussion);
   const { success, error } = useSelector(state => state.report);
@@ -90,12 +89,14 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
     }));
   };
 
+  const canDiscuss = isEnrolled || isInstructor;
+
   if (loading) return <Spinner />;
 
   return (
     <div className="mt-10">
       <h3 className="text-2xl font-bold mb-6 text-left">Thảo luận khóa học</h3>
-      {!isEnrolled && (
+      {!canDiscuss && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded">
           Bạn cần ghi danh khóa học để tham gia thảo luận.
         </div>
@@ -115,7 +116,7 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
             onChange={e => setNewContent(e.target.value)}
             placeholder="Nhập chủ đề thảo luận của bạn"
             required
-            disabled={!isEnrolled}
+            disabled={!canDiscuss}
             className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-base bg-white disabled:bg-gray-100"
             rows={2}
             style={{ minHeight: 44 }}
@@ -124,7 +125,7 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
             <button
               type="submit"
               className="inline-flex items-center px-6 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-md shadow-rose-200 transition disabled:bg-gray-400"
-              disabled={!isEnrolled || !newContent.trim()}
+              disabled={!canDiscuss || !newContent.trim()}
             >
               Gửi
             </button>
@@ -168,13 +169,22 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
                       <span className="font-semibold text-sm">{reply.author?.name || "Ẩn danh"}</span>
                       <span className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</span>
                       {/* Lá cờ sát ngày tháng năm */}
-                      <button
+                      {/* <button
                         className="ml-2 text-gray-400 hover:text-red-500"
                         title="Báo cáo bình luận"
                         onClick={() => openReportReplyPopup(reply._id)}
                       >
                         <FaFlag />
-                      </button>
+                      </button> */}
+                      {reply.author?._id !== user?._id && (
+                        <button
+                          className="ml-2 text-gray-400 hover:text-red-500"
+                          title="Báo cáo bình luận"
+                          onClick={() => openReportReplyPopup(reply._id)}
+                        >
+                          <FaFlag />
+                        </button>
+                      )}
                     </div>
                     <div className="text-gray-800 text-sm">{reply.content}</div>
                   </div>
@@ -198,28 +208,31 @@ const CourseDiscussion = ({ courseId, user, isEnrolled }) => {
                   value={replyContent[discussion._id] || ""}
                   onChange={e => setReplyContent({ ...replyContent, [discussion._id]: e.target.value })}
                   placeholder="Trả lời thảo luận..."
-                  disabled={!isEnrolled}
+                  disabled={!canDiscuss}
                   className="border border-gray-300 rounded-full px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100"
                 />
                 <button
                   className="inline-flex items-center px-4 py-1.5 rounded-full font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-md shadow-rose-200 transition ml-2 disabled:bg-gray-400"
-                  disabled={!isEnrolled || !replyContent[discussion._id]?.trim()}
+                  disabled={!canDiscuss || !replyContent[discussion._id]?.trim()}
                   type="submit"
                 >
                   Gửi
                 </button>
               </form>
-              {!isEnrolled && (
+              {!canDiscuss && (
                 <div className="text-xs text-yellow-600 mt-1">Bạn cần ghi danh để trả lời thảo luận.</div>
               )}
             </div>
-            <button
-              className="ml-auto text-gray-400 hover:text-red-500"
-              title="Báo cáo thảo luận"
-              onClick={() => openReportPopup(discussion._id)}
-            >
-              <FaFlag />
-            </button>
+            {/* lá cờ báo cáo thảo luận */}
+            {discussion.author?._id !== user?._id && (
+              <button
+                className="ml-auto text-gray-400 hover:text-red-500"
+                title="Báo cáo thảo luận"
+                onClick={() => openReportPopup(discussion._id)}
+              >
+                <FaFlag />
+              </button>
+            )}
           </div>
         ))}
       </div>

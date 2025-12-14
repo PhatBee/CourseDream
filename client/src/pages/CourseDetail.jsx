@@ -35,6 +35,13 @@ const CourseDetail = () => {
   // Xác định user đã ghi danh chưa
   const isEnrolled = enrolledCourseIds?.includes(String(course?._id));
 
+  // Sửa đoạn này:
+  let instructorId = null;
+  if (course && course.instructor) {
+    instructorId = typeof course.instructor === "object" ? course.instructor._id : course.instructor;
+  }
+  const isInstructor = user && instructorId && user._id === String(instructorId);
+
   // Xử lý trạng thái Loading
   if (isLoading || !course) {
     return (
@@ -83,7 +90,12 @@ const CourseDetail = () => {
       </section>
 
       <div className="container mx-auto px-4 max-w-7xl">
-        <CourseDiscussion courseId={course._id} user={user} isEnrolled={isEnrolled} />
+        <CourseDiscussion
+          courseId={course._id}
+          user={user}
+          isEnrolled={isEnrolled}
+          isInstructor={isInstructor}
+        />
       </div>
     </>
   );

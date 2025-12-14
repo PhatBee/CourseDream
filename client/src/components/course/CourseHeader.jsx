@@ -38,6 +38,7 @@ const CourseHeader = ({ course, reviewCount }) => {
   const categoryName = categories[0]?.name || 'Course';
   const dispatch = useDispatch();
   const { success, error } = useSelector(state => state.report);
+  const currentUser = useSelector(state => state.auth.user);
 
   useEffect(() => {
     if (success) {
@@ -157,14 +158,16 @@ const CourseHeader = ({ course, reviewCount }) => {
 
           {/* Nút báo cáo khóa học */}
           <div className="mt-4 flex items-center">
-            <button
-              onClick={() => setReportOpen(true)}
-              className="flex items-center text-sm font-medium text-gray-700 hover:text-red-500"
-              aria-label="Report course"
-            >
-              <FaFlag className="mr-1.5" />
-              Báo cáo khóa học
-            </button>
+            {currentUser?._id !== instructor?._id && (
+              <button
+                onClick={() => setReportOpen(true)}
+                className="flex items-center text-sm font-medium text-gray-700 hover:text-red-500"
+                aria-label="Report course"
+              >
+                <FaFlag className="mr-1.5" />
+                Báo cáo khóa học
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -54,11 +54,19 @@ export const checkEnrollment = async (req, res, next) => {
       course: targetCourseId
     });
 
-    if (!enrollment && req.user.role !== 'admin') {
-        const isInstructor = await Course.findOne({ _id: targetCourseId, instructor: userId });
-        if (!isInstructor) {
-            return res.status(403).json({ message: 'Bạn chưa đăng ký khóa học này.' });
-        }
+    // if (!enrollment && req.user.role !== 'admin') {
+    //     const isInstructor = await Course.findOne({ _id: targetCourseId, instructor: userId });
+    //     if (!isInstructor) {
+    //         return res.status(403).json({ message: 'Bạn chưa đăng ký khóa học này.' });
+    //     }
+    // }
+    // Cho phép admin hoặc instructor của khóa học hoặc học viên đã ghi danh
+    const isInstructor = await Course.findOne({ _id: targetCourseId, instructor: userId });
+
+    console.log("userId:", userId, "targetCourseId:", targetCourseId, "isInstructor:", !!isInstructor, "role:", req.user.role);
+
+    if (!enrollment && req.user.role !== 'admin' && !isInstructor) {
+        return res.status(403).json({ message: 'Bạn chưa đăng ký khóa học này.' });
     }
 
     req.courseId = targetCourseId;

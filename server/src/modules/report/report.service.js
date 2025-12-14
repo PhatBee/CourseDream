@@ -15,6 +15,10 @@ const getInstructorFromDiscussion = async (discussionId) => {
 // 1. Gửi báo cáo khóa học
 export const createReport = async (courseId, reporterId, reason) => {
   const course = await Course.findById(courseId).populate("instructor", "name email");
+  // Ràng buộc: không cho báo cáo khóa học của mình
+  if (course?.instructor?._id?.toString() === reporterId.toString()) {
+    throw new Error("Bạn không thể báo cáo khóa học của chính mình.");
+  }
   const report = await Report.create({
     course: courseId,
     reporter: reporterId,
@@ -40,6 +44,10 @@ export const createReport = async (courseId, reporterId, reason) => {
 export const createDiscussionReport = async (discussionId, reporterId, reason) => {
   const discussion = await Discussion.findById(discussionId).select("course author");
   if (!discussion) throw new Error("Thảo luận không tồn tại");
+  // Ràng buộc: không cho báo cáo thảo luận của mình
+  if (discussion.author?.toString() === reporterId.toString()) {
+    throw new Error("Bạn không thể báo cáo thảo luận của chính mình.");
+  }
 
   const report = await Report.create({
     course: discussion.course,
@@ -69,6 +77,10 @@ export const createReplyReport = async (replyId, reporterId, reason) => {
   const discussion = await Discussion.findOne({ "replies._id": replyId });
   if (!discussion) throw new Error("Bình luận không tồn tại");
   const reply = discussion.replies.id(replyId);
+  // Ràng buộc: không cho báo cáo reply của mình
+  if (reply?.author?.toString() === reporterId.toString()) {
+    throw new Error("Bạn không thể báo cáo bình luận của chính mình.");
+  }
 
   const report = await Report.create({
     course: discussion.course,
