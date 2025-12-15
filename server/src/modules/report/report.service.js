@@ -26,16 +26,18 @@ export const createReport = async (courseId, reporterId, reason) => {
     reason,
   });
 
-  if (course?.instructor) {
-    await notificationService.createNotification({
-      recipient: course.instructor._id,
+  // Gửi thông báo cho tất cả admin
+  const admins = await User.find({ role: "admin" }).select("_id");
+  await Promise.all(admins.map(admin =>
+    notificationService.createNotification({
+      recipient: admin._id,
       sender: reporterId,
       type: "report",
-      title: `Báo cáo mới từ khóa học: ${course.title}`,
-      message: `Học viên báo cáo: "${reason.substring(0, 100)}${reason.length > 100 ? '...' : ''}"`,
+      title: "...", // Tùy loại báo cáo
+      message: `Có một báo cáo mới: "${reason.substring(0, 100)}${reason.length > 100 ? '...' : ''}"`,
       relatedId: report._id,
-    });
-  }
+    })
+  ));
 
   return report;
 };
@@ -57,17 +59,30 @@ export const createDiscussionReport = async (discussionId, reporterId, reason) =
     reason,
   });
 
-  const instructorId = await getInstructorFromDiscussion(discussionId);
-  if (instructorId) {
-    await notificationService.createNotification({
-      recipient: instructorId,
+  // const instructorId = await getInstructorFromDiscussion(discussionId);
+  // if (instructorId) {
+  //   await notificationService.createNotification({
+  //     recipient: instructorId,
+  //     sender: reporterId,
+  //     type: "report",
+  //     title: "Báo cáo thảo luận trong khóa học của bạn",
+  //     message: `Học viên báo cáo chủ đề thảo luận: "${reason.substring(0, 80)}..."`,
+  //     relatedId: report._id,
+  //   });
+  // }
+
+  // Gửi thông báo cho tất cả admin
+  const admins = await User.find({ role: "admin" }).select("_id");
+  await Promise.all(admins.map(admin =>
+    notificationService.createNotification({
+      recipient: admin._id,
       sender: reporterId,
       type: "report",
-      title: "Báo cáo thảo luận trong khóa học của bạn",
-      message: `Học viên báo cáo chủ đề thảo luận: "${reason.substring(0, 80)}..."`,
+      title: "Báo cáo thảo luận mới", // hoặc "Báo cáo bình luận mới"
+      message: `Có một báo cáo thảo luận: "${reason.substring(0, 100)}${reason.length > 100 ? '...' : ''}"`,
       relatedId: report._id,
-    });
-  }
+    })
+  ));
 
   return report;
 };
@@ -91,14 +106,27 @@ export const createReplyReport = async (replyId, reporterId, reason) => {
     reason,
   });
 
-  const instructorId = await getInstructorFromDiscussion(discussion._id);
-  if (instructorId) {
+  // const instructorId = await getInstructorFromDiscussion(discussion._id);
+  // if (instructorId) {
+  //   await notificationService.createNotification({
+  //     recipient: instructorId,
+  //     sender: reporterId,
+  //     type: "report",
+  //     title: "Báo cáo bình luận trong khóa học của bạn",
+  //     message: `Học viên báo cáo một bình luận: "${reason.substring(0, 80)}..."`,
+  //     relatedId: report._id,
+  //   });
+  // }
+
+  // Gửi thông báo cho tất cả admin
+  const admins = await User.find({ role: "admin" }).select("_id");
+  for (const admin of admins) {
     await notificationService.createNotification({
-      recipient: instructorId,
+      recipient: admin._id,
       sender: reporterId,
       type: "report",
-      title: "Báo cáo bình luận trong khóa học của bạn",
-      message: `Học viên báo cáo một bình luận: "${reason.substring(0, 80)}..."`,
+      title: "Báo cáo bình luận mới",
+      message: `Có một báo cáo bình luận: "${reason.substring(0, 100)}${reason.length > 100 ? '...' : ''}"`,
       relatedId: report._id,
     });
   }
@@ -171,16 +199,6 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
       note: adminNote
     });
     // Thực hiện các biện pháp xử lý
-    if (action === "warn" && report.reportedUser) {
-      await notificationService.createNotification({
-        recipient: report.reportedUser,
-        sender: adminId,
-        type: "warning",
-        title: "Cảnh cáo từ quản trị viên",
-        message: adminNote || "Bạn đã vi phạm quy định hệ thống.",
-        relatedId: report._id,
-      });
-    }
     if (action === "hide_course" && report.course) {
       await Course.findByIdAndUpdate(report.course, { status: "hidden" });
     }
@@ -188,11 +206,9 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
       await User.findByIdAndUpdate(report.reportedUser, { isActive: false, banReason: adminNote });
     }
     if (action === "lock_comment") {
-      // Nếu là báo cáo chủ đề thảo luận (ẩn cả chủ đề)
       if (report.discussion && !report.reply) {
         await Discussion.findByIdAndUpdate(report.discussion, { isHidden: true });
       }
-      // Nếu là báo cáo reply (ẩn reply)
       if (report.discussion && report.reply) {
         await Discussion.updateOne(
           { _id: report.discussion, "replies._id": report.reply },
@@ -203,6 +219,31 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
     // ...thêm các biện pháp khác nếu cần
   }
   await report.save();
+
+  // Gửi một thông báo tổng hợp cho người bị báo cáo
+  if ((status === "resolved" || status === "reviewed") && report.reportedUser) {
+    let reportType = "Khóa học";
+    if (report.reply) reportType = "Bình luận";
+    else if (report.discussion) reportType = "Thảo luận";
+
+    // Xác định kết quả xử lý
+    let result = "";
+    if (action === "warn") result = "Kết quả: Bạn bị cảnh cáo.";
+    else if (action === "ban_user") result = "Kết quả: Tài khoản của bạn đã bị khóa.";
+    else if (action === "lock_comment") result = "Kết quả: Bình luận của bạn đã bị xóa.";
+    else if (action === "hide_course") result = "Kết quả: Khóa học đã bị ẩn.";
+    else result = "Kết quả: Báo cáo đã được xử lý.";
+
+    await notificationService.createNotification({
+      recipient: report.reportedUser,
+      sender: adminId,
+      type: "report",
+      title: "Vi phạm",
+      message: `Loại báo cáo: ${reportType}\nHành vi vi phạm: ${adminNote || report.reason}\n${result}`,
+      relatedId: report._id,
+    });
+  }
+
   return report;
 };
 

@@ -3,6 +3,7 @@ import Discussion from "../discussion/discussion.model.js";
 import { getIO } from "../socket/index.js";
 import { sendEmailNotification } from "../../utils/notify.js";
 import User from "../auth/auth.model.js";
+import notificationService from "../notification/notification.service.js";
 
 export const createDiscussion = async (courseId, authorId, content) => {
   return await Discussion.create({ course: courseId, author: authorId, content });
@@ -15,37 +16,23 @@ export const replyToDiscussion = async (discussionId, authorId, content) => {
     { new: true }
   )
     .populate("author", "name email")
-    .populate("replies.author", "name avatar");
+    .populate("replies.author", "name avatar")
+    .populate("course", "slug");
 
   if (discussion.author && discussion.author._id.toString() !== authorId.toString()) {
-    // Sửa ở đây: dùng discussion.replies[...] để lấy tên người trả lời mới nhất
     const latestReply = discussion.replies[discussion.replies.length - 1];
     const replyAuthorName = latestReply.author?.name || "Ai đó";
 
-    getIO().to(`user_${discussion.author._id}`).emit("new_reply", {
-      discussionId,
-      reply: { content, author: { name: replyAuthorName }}
+    // Gửi notification cho author
+    await notificationService.createNotification({
+      recipient: discussion.author._id,
+      sender: authorId,
+      type: "reply",
+      title: "Có trả lời mới trong thảo luận của bạn",
+      message: `${replyAuthorName} đã trả lời: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+      relatedId: discussionId,
+      courseSlug: discussion.course?.slug,
     });
-
-    // await sendEmailNotification({
-    //   recipient: discussion.author._id,
-    //   sender: authorId,
-    //   type: "reply",
-    //   title: "Có trả lời mới trong thảo luận của bạn",
-    //   message: `${replyAuthorName} đã trả lời: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
-    //   relatedId: discussionId
-    // });
-
-        // Lấy email của author để gửi mail
-    const recipientUser = await User.findById(discussion.author._id).select("email name");
-    if (recipientUser?.email) {
-      await sendEmailNotification({
-        to: recipientUser.email,
-        name: recipientUser.name,
-        title: "Có trả lời mới trong thảo luận của bạn",
-        message: `${replyAuthorName} đã trả lời: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`
-      });
-    }
   }
 
   return discussion;

@@ -11,6 +11,7 @@ import instructorReducer from '../features/instructor/instructorSlice'
 import reviewReducer from '../features/review/reviewSlice';
 import discussionReducer from '../features/discussion/discussionSlice';
 import reportReducer from '../features/report/reportSlice';
+import notificationReducer from '../features/notification/notificationSlice';
 export const store = configureStore({
   reducer: {
     // Add your reducers here
@@ -25,5 +26,7 @@ export const store = configureStore({
     instructor: instructorReducer,
     review: reviewReducer,
     discussion: discussionReducer,
-    report: reportReducer,  }
+    report: reportReducer,
+    notification: notificationReducer,
+  },
 });

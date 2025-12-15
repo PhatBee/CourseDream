@@ -141,6 +141,7 @@ const CourseDiscussion = ({ courseId, user, isEnrolled, isInstructor }) => {
         {discussions.map(discussion => (
           <div
             key={discussion._id}
+            id={`discussion-${discussion._id}`}
             className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition group"
           >
             <div className="flex items-center gap-4 mb-2">

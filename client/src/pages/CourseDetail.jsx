@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getCourseDetails, resetCourse } from '../features/course/courseSlice';
 import { fetchMyEnrollments } from "../features/enrollment/enrollmentSlice";
@@ -15,6 +15,8 @@ import CourseDiscussion from '../features/discussion/CourseDiscussion';
 const CourseDetail = () => {
   const { slug } = useParams();
   const dispatch = useDispatch();
+  const location = useLocation();
+  const { discussions } = useSelector((state) => state.discussion);
 
   // Lấy state từ Redux store
   const { course, reviews, reviewCount, isLoading, isError, message } = useSelector(
@@ -31,6 +33,17 @@ const CourseDetail = () => {
       dispatch(resetCourse());
     };
   }, [slug, dispatch]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const discussionId = params.get("discussionId");
+    if (discussionId) {
+      setTimeout(() => {
+        const el = document.getElementById(`discussion-${discussionId}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 500); // delay để đảm bảo discussion đã render
+    }
+  }, [location.search, discussions]);
 
   // Xác định user đã ghi danh chưa
   const isEnrolled = enrolledCourseIds?.includes(String(course?._id));
