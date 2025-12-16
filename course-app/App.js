@@ -1,17 +1,20 @@
-// App.js hoặc RootNavigation
+// App.js
 import React, { useEffect, useState } from 'react';
 import { Provider, useDispatch } from 'react-redux';
-import { store } from './src/app/store.js'; // file store redux của bạn
+import { store } from './src/app/store.js';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
 import { getUser, getToken } from './src/utils/storage';
+import "./global.css"
+
+// Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
-// Import các màn hình khác...
+import HomeScreen from './src/screens/home/HomeScreen';
 
 const Stack = createStackNavigator();
 
-const AppNavigator = () => {
+const MainNavigator = () => {
   const dispatch = useDispatch();
   const [isReady, setIsReady] = useState(false);
 
@@ -21,7 +24,7 @@ const AppNavigator = () => {
         const token = await getToken();
         const user = await getUser();
         if (token && user) {
-          dispatch(setCredentials(user)); // Khôi phục user vào Redux
+          dispatch(setCredentials(user));
         }
       } catch (e) {
         console.log(e);
@@ -32,24 +35,23 @@ const AppNavigator = () => {
     checkLoginStatus();
   }, []);
 
-  if (!isReady) return null; // Hoặc return component Splash Screen
+  if (!isReady) return null; // Hoặc return <LoadingScreen />
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Logic điều hướng: Nếu có user thì có thể set initialRouteName là Home */}
-        <Stack.Screen name="Login" component={LoginScreen} />
-        {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
-        {/* Thêm Register, ForgotPassword... */}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+       {/* Bạn có thể thêm logic điều hướng tùy thuộc vào user đã login chưa tại đây */}
+       <Stack.Screen name="Home" component={HomeScreen} />
+       <Stack.Screen name="Login" component={LoginScreen} />
+    </Stack.Navigator>
   );
 };
 
 export default function App() {
   return (
     <Provider store={store}>
-      <AppNavigator />
+      <NavigationContainer>
+        <MainNavigator />
+      </NavigationContainer>
     </Provider>
   );
 }
