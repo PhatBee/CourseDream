@@ -18,6 +18,16 @@ import VerifyResetOTPScreen from './src/screens/auth/VerifyResetOTPScreen';
 import SetPasswordScreen from './src/screens/auth/SetPasswordScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
 
+// User Screens
+import ProfileScreen from './src/screens/user/ProfileScreen';
+import DashboardScreen from './src/screens/user/DashboardScreen';
+import EditProfileScreen from './src/screens/user/EditProfileScreen';
+import EnrolledCoursesScreen from './src/screens/user/EnrolledCoursesScreen';
+import WishlistScreen from './src/screens/user/WishlistScreen';
+import MyCoursesScreen from './src/screens/instructor/MyCoursesScreen.js';
+import ChangePasswordScreen from './src/screens/user/ChangePasswordScreen';
+import SettingsScreen from './src/screens/user/SettingsScreen';
+
 const Stack = createStackNavigator();
 
 const MainNavigator = () => {
@@ -53,6 +63,16 @@ const MainNavigator = () => {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="VerifyResetOTP" component={VerifyResetOTPScreen} />
       <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
+
+      {/* User Screens */}
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="EnrolledCourses" component={EnrolledCoursesScreen} />
+      <Stack.Screen name="Wishlist" component={WishlistScreen} />
+      <Stack.Screen name="MyCourses" component={MyCoursesScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );
 };
