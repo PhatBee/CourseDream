@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -10,7 +10,9 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { register, reset, setRegistrationEmail } from '../../features/auth/authSlice';
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react-native';
 
 const RegisterScreen = ({ navigation }) => {
     const [formData, setFormData] = useState({
@@ -19,7 +21,33 @@ const RegisterScreen = ({ navigation }) => {
         password: '',
         confirmPassword: '',
     });
-    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const dispatch = useDispatch();
+    const { isLoading, isError, message, isRegisterSuccess } = useSelector(
+        (state) => state.auth
+    );
+
+    // Reset state khi component mount
+    useEffect(() => {
+        dispatch(reset());
+    }, [dispatch]);
+
+    // Xử lý kết quả Register
+    useEffect(() => {
+        if (isError) {
+            Alert.alert('Lỗi', message || 'Đăng ký thất bại');
+            dispatch(reset());
+        }
+
+        // Khi register() thành công (đã gửi OTP)
+        if (isRegisterSuccess && message) {
+            Alert.alert('Thành công', message); // "Mã OTP đã được gửi..."
+            dispatch(reset());
+            navigation.navigate('VerifyOTP'); // Chuyển sang trang nhập OTP
+        }
+    }, [isError, isRegisterSuccess, message, navigation, dispatch]);
 
     const onChange = (name, value) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -34,8 +62,17 @@ const RegisterScreen = ({ navigation }) => {
             return Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp');
         }
 
-        // TODO: Implement register logic
-        Alert.alert('Thông báo', 'Chức năng đăng ký đang được phát triển');
+        if (formData.password.length < 6) {
+            return Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+        }
+
+        // Ghi nhớ email để gửi đi
+        dispatch(setRegistrationEmail(formData.email));
+        dispatch(register({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password
+        }));
     };
 
     return (
@@ -62,7 +99,7 @@ const RegisterScreen = ({ navigation }) => {
                         </TouchableOpacity>
 
                         <Text className="text-[44px] leading-tight font-extrabold text-gray-900 tracking-tight">
-                            Create Account
+                            Create Your Account
                         </Text>
                         <Text className="text-gray-600 mt-2 text-base">
                             Sign up to get started
@@ -126,13 +163,20 @@ const RegisterScreen = ({ navigation }) => {
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.password}
                                     onChangeText={(text) => onChange('password', text)}
-                                    secureTextEntry
+                                    secureTextEntry={!showPassword}
                                     autoCapitalize="none"
                                     editable={!isLoading}
                                 />
-                                <View className="absolute right-3 top-0 bottom-0 justify-center">
-                                    <Lock size={18} color="#9CA3AF" />
-                                </View>
+                                <TouchableOpacity
+                                    className="absolute right-3 top-0 bottom-0 justify-center"
+                                    onPress={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? (
+                                        <Eye size={18} color="#9CA3AF" />
+                                    ) : (
+                                        <EyeOff size={18} color="#9CA3AF" />
+                                    )}
+                                </TouchableOpacity>
                             </View>
                         </View>
 
@@ -148,13 +192,20 @@ const RegisterScreen = ({ navigation }) => {
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.confirmPassword}
                                     onChangeText={(text) => onChange('confirmPassword', text)}
-                                    secureTextEntry
+                                    secureTextEntry={!showConfirmPassword}
                                     autoCapitalize="none"
                                     editable={!isLoading}
                                 />
-                                <View className="absolute right-3 top-0 bottom-0 justify-center">
-                                    <Lock size={18} color="#9CA3AF" />
-                                </View>
+                                <TouchableOpacity
+                                    className="absolute right-3 top-0 bottom-0 justify-center"
+                                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                >
+                                    {showConfirmPassword ? (
+                                        <Eye size={18} color="#9CA3AF" />
+                                    ) : (
+                                        <EyeOff size={18} color="#9CA3AF" />
+                                    )}
+                                </TouchableOpacity>
                             </View>
                         </View>
 

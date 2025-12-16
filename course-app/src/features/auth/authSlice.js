@@ -8,6 +8,9 @@ const initialState = {
     isLoading: false,
     message: '',
     banReason: null,
+    isRegisterSuccess: false, // Cho trang Register
+    isVerifySuccess: false,   // Cho trang VerifyOTP
+    registrationEmail: null,  // Lưu email để dùng ở trang OTP
 };
 
 // ... Các Thunk login, googleLogin, facebookLogin giữ nguyên logic gọi service ...
@@ -23,6 +26,24 @@ export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
             return thunkAPI.rejectWithValue({ message, reason });
         }
 
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const register = createAsyncThunk('auth/register', async (userData, thunkAPI) => {
+    try {
+        return await authService.register(userData);
+    } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const verifyOTP = createAsyncThunk('auth/verifyOTP', async (otpData, thunkAPI) => {
+    try {
+        return await authService.verifyOTP(otpData);
+    } catch (error) {
+        const message = error.response?.data?.message || error.message;
         return thunkAPI.rejectWithValue(message);
     }
 });
@@ -59,10 +80,16 @@ export const authSlice = createSlice({
             state.isError = false;
             state.message = '';
             state.banReason = null;
+            state.isRegisterSuccess = false;
+            state.isVerifySuccess = false;
         },
         // Action đặc biệt để set user từ SecureStore khi mở app
         setCredentials: (state, action) => {
             state.user = action.payload;
+        },
+        // Reducer để set email đăng ký
+        setRegistrationEmail: (state, action) => {
+            state.registrationEmail = action.payload;
         }
     },
     extraReducers: (builder) => {
@@ -87,6 +114,36 @@ export const authSlice = createSlice({
                     state.banReason = null;
                 }
             })
+            // === REGISTER CASES ===
+            .addCase(register.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(register.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isRegisterSuccess = true;
+                state.message = action.payload.message;
+                state.registrationEmail = action.payload.email;
+            })
+            .addCase(register.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            // === VERIFY OTP CASES ===
+            .addCase(verifyOTP.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(verifyOTP.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isVerifySuccess = true;
+                state.message = action.payload.message;
+                state.registrationEmail = null; // Xóa email sau khi xong
+            })
+            .addCase(verifyOTP.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
             // Google & Facebook cases tương tự
             .addCase(googleLogin.fulfilled, (state, action) => {
                 state.isLoading = false;
@@ -104,5 +161,5 @@ export const authSlice = createSlice({
     },
 });
 
-export const { reset, setCredentials } = authSlice.actions;
+export const { reset, setCredentials, setRegistrationEmail } = authSlice.actions;
 export default authSlice.reducer;

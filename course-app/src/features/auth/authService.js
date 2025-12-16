@@ -11,6 +11,18 @@ const login = async (userData) => {
     return response.data;
 };
 
+const register = async (userData) => {
+    const response = await axiosClient.post("/auth/register", userData);
+    // KHÔNG lưu token/user, chỉ trả về response (chứa message và email)
+    return response.data;
+};
+
+const verifyOTP = async (otpData) => {
+    const response = await axiosClient.post("/auth/verify-otp", otpData);
+    // KHÔNG lưu token/user, chỉ trả về response (message thành công)
+    return response.data;
+};
+
 const googleLogin = async (credential) => {
     const response = await axiosClient.post("/auth/google", { credential });
     if (response.data) {
@@ -41,6 +53,8 @@ const logout = async () => {
 
 const authService = {
     login,
+    register,
+    verifyOTP,
     googleLogin,
     facebookLogin,
     logout,

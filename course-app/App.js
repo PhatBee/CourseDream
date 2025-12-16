@@ -11,6 +11,7 @@ import "./global.css"
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import VerifyOTPScreen from './src/screens/auth/VerifyOTPScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
 
@@ -45,6 +46,7 @@ const MainNavigator = () => {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   );
