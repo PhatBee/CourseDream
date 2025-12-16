@@ -204,6 +204,19 @@ export const getMyCourses = async (req, res, next) => {
   }
 };
 
+export const getPopularCourses = async (req, res, next) => {
+  try {
+    const courses = await courseService.getPopularCourses();
+    
+    res.status(200).json({
+      success: true,
+      data: courses
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 /**
  * @desc    Lấy thông tin khóa học để Edit (Instructor Only)
  * @route   GET /api/courses/instructor/edit/:slug

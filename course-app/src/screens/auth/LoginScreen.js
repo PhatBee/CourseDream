@@ -38,7 +38,7 @@ const LoginScreen = ({ navigation }) => {
         }
         if (isSuccess || user) {
             // Navigate to Home
-            navigation.replace("Home"); // Giả sử route chính là Home
+            navigation.replace('MainTabs');
             dispatch(reset());
         }
     }, [isError, isSuccess, user, message, navigation, dispatch]);
