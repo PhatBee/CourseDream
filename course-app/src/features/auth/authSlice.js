@@ -11,6 +11,11 @@ const initialState = {
     isRegisterSuccess: false, // Cho trang Register
     isVerifySuccess: false,   // Cho trang VerifyOTP
     registrationEmail: null,  // Lưu email để dùng ở trang OTP
+    resetEmail: null,         // Lưu email từ Forgot -> Verify
+    resetToken: null,         // Lưu token từ Verify -> SetPassword
+    isForgotSuccess: false,
+    isVerifyResetSuccess: false,
+    isSetPasswordSuccess: false,
 };
 
 // ... Các Thunk login, googleLogin, facebookLogin giữ nguyên logic gọi service ...
@@ -70,6 +75,33 @@ export const logout = createAsyncThunk('auth/logout', async () => {
     await authService.logout();
 });
 
+export const forgotPassword = createAsyncThunk('auth/forgotPassword', async (email, thunkAPI) => {
+    try {
+        return await authService.forgotPassword(email);
+    } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const verifyResetOTP = createAsyncThunk('auth/verifyResetOTP', async (otpData, thunkAPI) => {
+    try {
+        return await authService.verifyResetOTP(otpData);
+    } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const setPassword = createAsyncThunk('auth/setPassword', async (passwordData, thunkAPI) => {
+    try {
+        return await authService.setPassword(passwordData);
+    } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
 export const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -82,6 +114,9 @@ export const authSlice = createSlice({
             state.banReason = null;
             state.isRegisterSuccess = false;
             state.isVerifySuccess = false;
+            state.isForgotSuccess = false;
+            state.isVerifyResetSuccess = false;
+            state.isSetPasswordSuccess = false;
         },
         // Action đặc biệt để set user từ SecureStore khi mở app
         setCredentials: (state, action) => {
@@ -90,6 +125,14 @@ export const authSlice = createSlice({
         // Reducer để set email đăng ký
         setRegistrationEmail: (state, action) => {
             state.registrationEmail = action.payload;
+        },
+        // Reducer mới để xóa state reset (khi hoàn thành)
+        clearReset: (state) => {
+            state.resetEmail = null;
+            state.resetToken = null;
+            state.isForgotSuccess = false;
+            state.isVerifyResetSuccess = false;
+            state.isSetPasswordSuccess = false;
         }
     },
     extraReducers: (builder) => {
@@ -157,9 +200,53 @@ export const authSlice = createSlice({
             })
             .addCase(logout.fulfilled, (state) => {
                 state.user = null;
+            })
+            // === FORGOT PASSWORD CASES ===
+            .addCase(forgotPassword.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(forgotPassword.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isForgotSuccess = true;
+                state.message = action.payload.message;
+                state.resetEmail = action.payload.email;
+            })
+            .addCase(forgotPassword.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            // === VERIFY RESET OTP CASES ===
+            .addCase(verifyResetOTP.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(verifyResetOTP.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isVerifyResetSuccess = true;
+                state.message = action.payload.message;
+                state.resetToken = action.payload.resetToken;
+            })
+            .addCase(verifyResetOTP.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            // === SET PASSWORD CASES ===
+            .addCase(setPassword.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(setPassword.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSetPasswordSuccess = true;
+                state.message = action.payload.message;
+            })
+            .addCase(setPassword.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
             });
     },
 });
 
-export const { reset, setCredentials, setRegistrationEmail } = authSlice.actions;
+export const { reset, setCredentials, setRegistrationEmail, clearReset } = authSlice.actions;
 export default authSlice.reducer;

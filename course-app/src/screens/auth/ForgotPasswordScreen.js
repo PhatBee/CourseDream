@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -10,19 +10,39 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { forgotPassword, reset } from '../../features/auth/authSlice';
 import { Mail, ArrowRight } from 'lucide-react-native';
 
 const ForgotPasswordScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+
+    const dispatch = useDispatch();
+    const { isLoading, isError, message, isForgotSuccess } = useSelector(
+        (state) => state.auth
+    );
+
+    // Xử lý kết quả
+    useEffect(() => {
+        if (isError) {
+            Alert.alert('Lỗi', message || 'Gửi yêu cầu thất bại');
+            dispatch(reset());
+        }
+
+        // Khi forgotPassword() thành công
+        if (isForgotSuccess) {
+            Alert.alert('Thành công', message); // "Mã OTP đã được gửi..."
+            dispatch(reset());
+            navigation.navigate('VerifyResetOTP'); // Chuyển sang trang nhập OTP
+        }
+    }, [isError, isForgotSuccess, message, navigation, dispatch]);
 
     const handleSubmit = () => {
         if (!email) {
             return Alert.alert('Thông báo', 'Vui lòng nhập email');
         }
 
-        // TODO: Implement forgot password logic
-        Alert.alert('Thông báo', 'Chức năng quên mật khẩu đang được phát triển');
+        dispatch(forgotPassword(email));
     };
 
     return (
@@ -92,18 +112,26 @@ const ForgotPasswordScreen = ({ navigation }) => {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Text className="text-white text-lg font-semibold">Send Reset Link</Text>
+                                    <Text className="text-white text-lg font-semibold">Submit</Text>
                                     <ArrowRight size={20} color="#fff" />
                                 </>
                             )}
                         </TouchableOpacity>
                     </View>
 
-                    {/* Info Text */}
+                    {/* Info Box */}
                     <View className="mt-8 p-4 bg-rose-50 rounded-2xl">
                         <Text className="text-gray-700 text-sm text-center">
                             We'll send you an email with instructions to reset your password
                         </Text>
+                    </View>
+
+                    {/* Login Link */}
+                    <View className="flex-row justify-center items-center mt-8">
+                        <Text className="text-sm text-gray-600">Remember Password? </Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <Text className="text-rose-500 text-sm font-medium">Sign In</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>

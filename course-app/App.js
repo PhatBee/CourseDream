@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
 import { getUser, getToken } from './src/utils/storage';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import "./global.css"
 
 // Import Screens
@@ -13,6 +14,8 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
 import VerifyOTPScreen from './src/screens/auth/VerifyOTPScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
+import VerifyResetOTPScreen from './src/screens/auth/VerifyResetOTPScreen';
+import SetPasswordScreen from './src/screens/auth/SetPasswordScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
 
 const Stack = createStackNavigator();
@@ -48,16 +51,20 @@ const MainNavigator = () => {
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="VerifyResetOTP" component={VerifyResetOTPScreen} />
+      <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
     </Stack.Navigator>
   );
 };
 
 export default function App() {
   return (
-    <Provider store={store}>
-      <NavigationContainer>
-        <MainNavigator />
-      </NavigationContainer>
-    </Provider>
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <NavigationContainer>
+          <MainNavigator />
+        </NavigationContainer>
+      </Provider>
+    </SafeAreaProvider>
   );
 }

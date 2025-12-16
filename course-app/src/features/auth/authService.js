@@ -51,6 +51,21 @@ const logout = async () => {
     await removeUser();
 };
 
+const forgotPassword = async (email) => {
+    const response = await axiosClient.post("/auth/forgot-password", { email });
+    return response.data;
+};
+
+const verifyResetOTP = async (otpData) => {
+    const response = await axiosClient.post("/auth/verify-reset-otp", otpData);
+    return response.data; // Sẽ chứa resetToken
+};
+
+const setPassword = async (passwordData) => {
+    const response = await axiosClient.post("/auth/set-password", passwordData);
+    return response.data;
+};
+
 const authService = {
     login,
     register,
@@ -58,6 +73,9 @@ const authService = {
     googleLogin,
     facebookLogin,
     logout,
+    forgotPassword,
+    verifyResetOTP,
+    setPassword,
 };
 
 export default authService;
