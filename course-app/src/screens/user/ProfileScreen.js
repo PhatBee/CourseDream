@@ -54,7 +54,7 @@ const ProfileScreen = ({ navigation }) => {
             section: 'Dashboard',
             items: [
                 { id: 'dashboard', label: 'Dashboard', icon: Grid, screen: 'Dashboard', show: true },
-                { id: 'profile', label: 'My Profile', icon: User, screen: 'EditProfile', show: true },
+                { id: 'profile', label: 'My Profile', icon: User, screen: 'MyProfile', show: true },
                 { id: 'enrolled', label: 'Enrolled Courses', icon: BookOpen, screen: 'EnrolledCourses', show: true },
                 { id: 'wishlist', label: 'Wishlist', icon: Heart, screen: 'Wishlist', show: true },
                 {

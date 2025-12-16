@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Provider, useDispatch } from 'react-redux';
 import { store } from './src/app/store.js';
+import Toast from 'react-native-toast-message';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
@@ -21,6 +22,7 @@ import HomeScreen from './src/screens/home/HomeScreen';
 // User Screens
 import ProfileScreen from './src/screens/user/ProfileScreen';
 import DashboardScreen from './src/screens/user/DashboardScreen';
+import MyProfileScreen from './src/screens/user/MyProfileScreen';
 import EditProfileScreen from './src/screens/user/EditProfileScreen';
 import EnrolledCoursesScreen from './src/screens/user/EnrolledCoursesScreen';
 import WishlistScreen from './src/screens/user/WishlistScreen';
@@ -67,6 +69,7 @@ const MainNavigator = () => {
       {/* User Screens */}
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <Stack.Screen name="MyProfile" component={MyProfileScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="EnrolledCourses" component={EnrolledCoursesScreen} />
       <Stack.Screen name="Wishlist" component={WishlistScreen} />
@@ -84,6 +87,8 @@ export default function App() {
         <NavigationContainer>
           <MainNavigator />
         </NavigationContainer>
+
+        <Toast />
       </Provider>
     </SafeAreaProvider>
   );

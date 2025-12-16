@@ -24,8 +24,6 @@ const ChangePasswordScreen = ({ navigation }) => {
 
     const { isLoading, isError, isSuccess, message, profile } = useSelector((state) => state.user);
 
-    console.log(profile);
-
     const [formData, setFormData] = useState({
         oldPassword: '',
         newPassword: '',
