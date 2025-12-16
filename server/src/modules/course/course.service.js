@@ -89,6 +89,21 @@ export const getCourseDetailsBySlug = async (slug) => {
   };
 };
 
+export const getPopularCourses = async () => {
+
+  const courses = await Course.find({ status: 'published' })
+    .sort({ studentsCount: -1, rating: -1 })
+    .limit(5)
+    .select(
+      "title slug thumbnail price priceDiscount level rating reviewCount instructor categories"
+    )
+    .populate("instructor", "name avatar")
+    .populate("categories", "name")
+    .lean();
+
+  return courses;
+};
+
 export const getAllCourses = async (query) => {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 9;

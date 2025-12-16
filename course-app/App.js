@@ -1,6 +1,6 @@
 // App.js
 import React, { useEffect, useState } from 'react';
-import { Provider, useDispatch } from 'react-redux';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from './src/app/store.js';
 import Toast from 'react-native-toast-message';
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,7 +8,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
 import { getUser, getToken } from './src/utils/storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from './src/utils/toastConfig';
 import "./global.css"
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -18,6 +21,8 @@ import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import VerifyResetOTPScreen from './src/screens/auth/VerifyResetOTPScreen';
 import SetPasswordScreen from './src/screens/auth/SetPasswordScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
+import BottomTabNavigator from './src/navigation/BottomTabNavigator';
+// import CourseDetailScreen from './src/screens/course/CourseDetailScreen';
 
 // User Screens
 import ProfileScreen from './src/screens/user/ProfileScreen';
@@ -35,6 +40,7 @@ const Stack = createStackNavigator();
 const MainNavigator = () => {
   const dispatch = useDispatch();
   const [isReady, setIsReady] = useState(false);
+  const { user } = useSelector(state => state.auth);
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -58,7 +64,10 @@ const MainNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {/* Bạn có thể thêm logic điều hướng tùy thuộc vào user đã login chưa tại đây */}
-      <Stack.Screen name="Home" component={HomeScreen} />
+      if (user) {
+        <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
+
+      }
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
@@ -82,14 +91,13 @@ const MainNavigator = () => {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <Provider store={store}>
+    <Provider store={store}>
+      <SafeAreaProvider>
         <NavigationContainer>
           <MainNavigator />
         </NavigationContainer>
-
-        <Toast />
-      </Provider>
-    </SafeAreaProvider>
+        <Toast config={toastConfig} />
+      </SafeAreaProvider>
+    </Provider>
   );
 }

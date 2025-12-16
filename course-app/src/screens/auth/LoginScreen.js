@@ -63,15 +63,8 @@ const LoginScreen = ({ navigation }) => {
         }
 
         if (isSuccess || user) {
-            Alert.alert('Thành công', 'Đăng nhập thành công!');
-            // Navigate based on role
-            if (user?.role === 'admin') {
-                navigation.replace('AdminDashboard');
-            } else if (user?.role === 'instructor') {
-                navigation.replace('InstructorDashboard');
-            } else {
-                navigation.replace('Home');
-            }
+            // Navigate to Home
+            navigation.replace('MainTabs');
             dispatch(reset());
         }
     }, [isError, isSuccess, user, message, banReason, navigation, dispatch]);
@@ -194,8 +187,8 @@ const LoginScreen = ({ navigation }) => {
                             >
                                 <View
                                     className={`h-4 w-4 rounded border ${rememberMe
-                                            ? 'bg-rose-500 border-rose-500'
-                                            : 'bg-white border-gray-300'
+                                        ? 'bg-rose-500 border-rose-500'
+                                        : 'bg-white border-gray-300'
                                         } items-center justify-center`}
                                 >
                                     {rememberMe && (
