@@ -7,6 +7,7 @@ const initialState = {
     isSuccess: false,
     isLoading: false,
     message: '',
+    banReason: null,
 };
 
 // ... Các Thunk login, googleLogin, facebookLogin giữ nguyên logic gọi service ...
@@ -15,6 +16,13 @@ export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
         return await authService.login(user);
     } catch (error) {
         const message = error.response?.data?.message || error.message;
+        const reason = error.response?.data?.reason;
+
+        // Nếu có banReason, trả về object với cả message và reason
+        if (reason) {
+            return thunkAPI.rejectWithValue({ message, reason });
+        }
+
         return thunkAPI.rejectWithValue(message);
     }
 });
@@ -50,6 +58,7 @@ export const authSlice = createSlice({
             state.isSuccess = false;
             state.isError = false;
             state.message = '';
+            state.banReason = null;
         },
         // Action đặc biệt để set user từ SecureStore khi mở app
         setCredentials: (state, action) => {
@@ -67,8 +76,16 @@ export const authSlice = createSlice({
             .addCase(login.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
-                state.message = action.payload;
                 state.user = null;
+
+                // Xử lý payload có thể là string hoặc object
+                if (typeof action.payload === 'object' && action.payload !== null) {
+                    state.message = action.payload.message || 'Đăng nhập thất bại';
+                    state.banReason = action.payload.reason || null;
+                } else {
+                    state.message = action.payload || 'Đăng nhập thất bại';
+                    state.banReason = null;
+                }
             })
             // Google & Facebook cases tương tự
             .addCase(googleLogin.fulfilled, (state, action) => {

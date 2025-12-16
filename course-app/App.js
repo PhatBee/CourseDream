@@ -10,6 +10,8 @@ import "./global.css"
 
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
+import RegisterScreen from './src/screens/auth/RegisterScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
 
 const Stack = createStackNavigator();
@@ -39,9 +41,11 @@ const MainNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-       {/* Bạn có thể thêm logic điều hướng tùy thuộc vào user đã login chưa tại đây */}
-       <Stack.Screen name="Home" component={HomeScreen} />
-       <Stack.Screen name="Login" component={LoginScreen} />
+      {/* Bạn có thể thêm logic điều hướng tùy thuộc vào user đã login chưa tại đây */}
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   );
 };

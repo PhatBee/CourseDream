@@ -8,12 +8,13 @@ import axiosClient from '../../api/axiosClient';
 import HomeHeader from '../../components/home/HomeHeader';
 import SearchBar from '../../components/home/SearchBar';
 import PromoBanner from '../../components/home/PromoBanner';
+import LoginPromptCard from '../../components/home/LoginPromptCard';
 import CategoryList from '../../components/home/CategoryList';
 import CourseCard from '../../components/common/CourseCard';
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useSelector(state => state.auth);
-  
+
   const [categories, setCategories] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,17 +48,20 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView 
+      <ScrollView
         className="flex-1 px-5 pt-2"
         showsVerticalScrollIndicator={false}
       >
-        
+
         {/* 1. Header & Search */}
-        <HomeHeader user={user} />
+        <HomeHeader user={user} navigation={navigation} />
         <SearchBar />
 
         {/* 2. Banner */}
         <PromoBanner />
+
+        {/* 3. Login Prompt Card - Chỉ hiển thị khi chưa đăng nhập */}
+        {!user && <LoginPromptCard navigation={navigation} />}
 
         {/* Loading State */}
         {loading ? (
@@ -66,21 +70,21 @@ const HomeScreen = ({ navigation }) => {
           </View>
         ) : (
           <>
-            {/* 3. Categories */}
+            {/* 4. Categories */}
             <CategoryList categories={categories} />
 
-            {/* 4. Popular Courses */}
+            {/* 5. Popular Courses */}
             <View className="mb-20">
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-lg font-bold text-gray-900">Popular Courses</Text>
                 <Text className="text-rose-500 text-sm font-medium">See All</Text>
               </View>
-              
+
               {courses.map((course) => (
-                <CourseCard 
-                  key={course._id} 
-                  course={course} 
-                  onPress={() => handleCoursePress(course.slug)} 
+                <CourseCard
+                  key={course._id}
+                  course={course}
+                  onPress={() => handleCoursePress(course.slug)}
                 />
               ))}
             </View>
