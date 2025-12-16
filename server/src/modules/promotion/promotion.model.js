@@ -1,4 +1,3 @@
-// src/modules/promotion/promotion.model.js
 import mongoose from "mongoose";
 import { promotionPreSave } from "./promotion.validation.js";
 
@@ -10,7 +9,7 @@ const promotionSchema = new mongoose.Schema(
     discountValue: { type: Number, required: true, min: 0 },
     appliesTo: { type: String, enum: ["all", "category", "course", "category+course"], required: true },
     categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }], // mảng category
-    courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }],     // mảng course
+    courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }], // mảng course
     minPrice: { type: Number, default: 0, min: 0 },
     maxUsage: { type: Number, default: 0 }, // 0 = không giới hạn
     maxUsagePerUser: { type: Number, default: 0 }, // 0 = không giới hạn
@@ -27,6 +26,9 @@ const promotionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Thêm index cho usersUsed.user để query nhanh
+promotionSchema.index({ "usersUsed.user": 1 });
 
 promotionSchema.pre("save", promotionPreSave);
 

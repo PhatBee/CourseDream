@@ -1,23 +1,32 @@
-// src/modules/promotion/promotion.service.js
 import Course from "../course/course.model.js";
+import Promotion from "./promotion.model.js"; // Import trực tiếp để tránh dynamic import
 
-export const applyPromotionLogic = async (promotion, courseId, price, userId) => {
+// Hàm preview (chỉ tính giá, không trừ lượt)
+export const previewPromotion = async (promotion, courseId, userId) => {
   const now = new Date();
-
-  // 1. Kiểm tra thời gian
+  if (!promotion.isActive) {
+    throw new Error("Mã khuyến mãi không còn hoạt động");
+  }
   if (now < promotion.startDate || now > promotion.endDate) {
     throw new Error("Mã khuyến mãi đã hết hạn hoặc chưa bắt đầu");
   }
 
-  // 2. Kiểm tra giá tối thiểu
+  const course = await Course.findById(courseId);
+  if (!course) throw new Error("Khóa học không tồn tại");
+
+  // Không trust price từ client: Lấy từ DB
+  const price = course.price;
+
   if (price < promotion.minPrice) {
     throw new Error(`Cần mua từ ${promotion.minPrice}đ để dùng mã này`);
   }
 
-  // 3. Kiểm tra áp dụng cho course/category
-  const course = await Course.findById(courseId);
-  if (!course) throw new Error("Khóa học không tồn tại");
+  // Chặn instructor dùng mã cho khóa của mình (nếu có instructor)
+  if (course.instructor && course.instructor.equals(userId)) {
+    throw new Error("Không thể dùng mã cho khóa học của chính bạn");
+  }
 
+  // Kiểm tra áp dụng cho course/category
   if (["category", "category+course"].includes(promotion.appliesTo)) {
     const courseCategories = Array.isArray(course.categories)
       ? course.categories
@@ -44,22 +53,19 @@ export const applyPromotionLogic = async (promotion, courseId, price, userId) =>
     }
   }
 
-  // 4. Kiểm tra tổng lượt dùng
+  // Kiểm tra tổng lượt (chỉ check, không update)
   if (promotion.maxUsage > 0 && promotion.totalUsed >= promotion.maxUsage) {
     throw new Error("Mã khuyến mãi đã hết lượt sử dụng");
   }
 
-  // 5. Kiểm tra lượt dùng của user
+  // Kiểm tra lượt user (chỉ check, không update)
   let userUsage = promotion.usersUsed.find((u) => u.user.equals(userId));
-  if (!userUsage) {
-    userUsage = { user: userId, count: 0 };
-    promotion.usersUsed.push(userUsage);
-  }
-  if (promotion.maxUsagePerUser > 0 && userUsage.count >= promotion.maxUsagePerUser) {
+  const userCount = userUsage ? userUsage.count : 0;
+  if (promotion.maxUsagePerUser > 0 && userCount >= promotion.maxUsagePerUser) {
     throw new Error("Bạn đã dùng hết lượt sử dụng mã này");
   }
 
-  // 6. Tính giá sau giảm
+  // Tính giá sau giảm
   let discountedPrice = price;
   if (promotion.discountType === "percent") {
     discountedPrice = price * (1 - promotion.discountValue / 100);
@@ -68,36 +74,79 @@ export const applyPromotionLogic = async (promotion, courseId, price, userId) =>
   }
   discountedPrice = Math.max(0, Math.round(discountedPrice));
 
-  // 7. Cập nhật lượt dùng
-  promotion.totalUsed += 1;
-  userUsage.count += 1;
-  await promotion.save();
-
   return {
     originalPrice: price,
     discountedPrice,
     discountValue: promotion.discountValue,
     discountType: promotion.discountType,
-    message: "Áp dụng mã khuyến mãi thành công!",
+    promotionId: promotion._id, // Trả về để dùng ở commit
+    message: "Áp dụng mã khuyến mãi thành công (preview)!",
   };
 };
 
-// CRUD admin
-export const createPromotion = async (data) => new (await import("../promotion/promotion.model.js")).default(data).save();
+// Hàm commit (trừ lượt sau payment success, atomic)
+export const commitPromotion = async (promotionId, userId) => {
+  const promotion = await Promotion.findById(promotionId);
+  if (!promotion || !promotion.isActive) {
+    throw new Error("Mã khuyến mãi không tồn tại hoặc không hoạt động");
+  }
+
+  // Atomic update cho totalUsed
+  let updated = await Promotion.findOneAndUpdate(
+    {
+      _id: promotion._id,
+      $or: [
+        { maxUsage: 0 },
+        { totalUsed: { $lt: promotion.maxUsage } }
+      ]
+    },
+    { $inc: { totalUsed: 1 } },
+    { new: true }
+  );
+
+  if (!updated) {
+    throw new Error("Mã đã hết lượt sử dụng hoặc có lỗi");
+  }
+
+  // Atomic update cho usersUsed (sử dụng arrayFilters)
+  updated = await Promotion.findOneAndUpdate(
+    { _id: promotion._id },
+    {
+      $inc: { "usersUsed.$[user].count": 1 }
+    },
+    {
+      new: true,
+      arrayFilters: [{ "user.user": userId }]
+    }
+  );
+
+  // Nếu user chưa tồn tại, thêm mới
+  if (!updated.usersUsed.find(u => u.user.equals(userId))) {
+    updated = await Promotion.findByIdAndUpdate(
+      promotion._id,
+      { $push: { usersUsed: { user: userId, count: 1 } } },
+      { new: true }
+    );
+  }
+
+  return { message: "Đã trừ lượt sử dụng thành công!", promotion: updated };
+};
+
+// CRUD admin (giữ nguyên)
+export const createPromotion = async (data) => new Promotion(data).save();
+
 export const updatePromotion = async (id, data) => {
-  const Promotion = (await import("../promotion/promotion.model.js")).default;
   const updated = await Promotion.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!updated) throw new Error("Không tìm thấy mã khuyến mãi");
   return updated;
 };
-// Đổi deletePromotion thành cập nhật trạng thái isActive
+
 export const deletePromotion = async (id) => {
-  const Promotion = (await import("../promotion/promotion.model.js")).default;
   const updated = await Promotion.findByIdAndUpdate(id, { isActive: false }, { new: true });
   if (!updated) throw new Error("Không tìm thấy mã khuyến mãi");
   return { message: "Đã chuyển mã sang trạng thái không hoạt động", promotion: updated };
 };
+
 export const getAllPromotions = async () => {
-  const Promotion = (await import("../promotion/promotion.model.js")).default;
   return await Promotion.find().sort({ createdAt: -1 });
 };

@@ -40,6 +40,7 @@ import InstructorApplications from "../pages/admin/InstructorApplications";
 import InstructorInfoEdit from "../components/profile/InstructorInfoEdit";
 import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
 import ReportsManagement from "../pages/admin/ReportsManagement";
+import PromotionsManagement from "../pages/admin/PromotionsManagement";
 
 export default function AppRoutes() {
 
@@ -130,6 +131,7 @@ export default function AppRoutes() {
             <Route path="courses" element={<AdminPendingCourses />} />
             <Route path="categories" element={<CategoriesManagement />} />
             <Route path="blogs" element={<div>Manage Blogs</div>} />
+            <Route path="promotions" element={<PromotionsManagement />} />
           </Route>
 
           {/* <Route path="admin/pending-courses" element={<AdminPendingCourses />} /> */}

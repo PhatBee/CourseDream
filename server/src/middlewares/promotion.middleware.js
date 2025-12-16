@@ -1,9 +1,7 @@
 import { body, validationResult } from "express-validator";
 import Promotion from "../modules/promotion/promotion.model.js";
 
-
 // VALIDATE CREATE PROMOTION (ADMIN)
-
 export const validatePromotionCreate = [
   body("code")
     .isString()
@@ -52,9 +50,7 @@ export const validatePromotionCreate = [
   },
 ];
 
-//  VALIDATE UPDATE PROMOTION (ADMIN)
-//  → CHO UPDATE PARTIAL (không bắt buộc đủ fields)
-
+// VALIDATE UPDATE PROMOTION (ADMIN)
 export const validatePromotionUpdate = [
   body("code")
     .optional()
@@ -109,7 +105,6 @@ export const validatePromotionUpdate = [
   },
 ];
 
-
 // CHECK CODE EXISTS (ONLY FOR CREATE)
 export const checkCodeExists = async (req, res, next) => {
   const { code } = req.body;
@@ -122,16 +117,13 @@ export const checkCodeExists = async (req, res, next) => {
   next();
 };
 
-//VALIDATE PROMOTION WHEN USER APPLY CODE
+// VALIDATE PROMOTION WHEN USER APPLY CODE (cho preview)
 export const validateAndLoadPromotion = [
   body("code").isString().notEmpty().withMessage("Vui lòng nhập mã khuyến mãi"),
   body("courseId")
     .isMongoId()
     .withMessage("courseId không hợp lệ"),
-  body("price")
-    .isNumeric()
-    .custom((p) => p >= 0)
-    .withMessage("Giá phải >= 0"),
+  // Loại bỏ price vì lấy từ DB
 
   async (req, res, next) => {
     const errors = validationResult(req);
@@ -142,7 +134,7 @@ export const validateAndLoadPromotion = [
     try {
       const promotion = await Promotion.findOne({
         code: req.body.code.toUpperCase(),
-        isActive: true,
+        isActive: true, // Thêm check isActive ở đây để an toàn
       });
 
       if (!promotion) {

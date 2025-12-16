@@ -12,6 +12,7 @@ import reviewReducer from '../features/review/reviewSlice';
 import discussionReducer from '../features/discussion/discussionSlice';
 import reportReducer from '../features/report/reportSlice';
 import notificationReducer from '../features/notification/notificationSlice';
+import promotionReducer from '../features/promotion/promotionSlice';
 export const store = configureStore({
   reducer: {
     // Add your reducers here
@@ -28,5 +29,6 @@ export const store = configureStore({
     discussion: discussionReducer,
     report: reportReducer,
     notification: notificationReducer,
+    promotion: promotionReducer,
   },
 });
