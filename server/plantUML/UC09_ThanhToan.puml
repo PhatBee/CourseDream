@@ -1,0 +1,105 @@
+@startuml
+!theme plain
+
+
+' Khai báo thành phần
+actor "Student" as User
+    participant "Payment Gateway\n(VNPAY/MoMo/ZaloPay)" as Gateway
+boundary "Return Page UI" as UI
+    control "Payment Controller" as Controller
+    participant "Gateway Service" as GatewayService
+    participant "Payment Service" as PayService
+    participant "Enrollment Service" as EnrollService
+    participant "Cart Service" as CartService
+    
+    ' Khai báo các Entity cụ thể
+    entity ":Payment" as PayEntity
+    entity ":Enrollment" as EnrollEntity
+    entity ":Course" as CourseEntity
+    entity ":Cart" as CartEntity
+
+' === TIẾP NỐI TỪ DIAGRAM 1 ===
+User -> Gateway: Nhập thông tin & Xác nhận thanh toán
+activate Gateway
+
+Gateway -> Gateway: Trừ tiền & Xử lý
+Gateway -> Controller: Redirect Browser (Return URL)\nGET /api/payment/vnpay_return?...params
+deactivate Gateway
+activate Controller
+
+' Validate Chữ ký
+Controller -> GatewayService: verifyReturnUrl(params)
+activate GatewayService
+GatewayService --> Controller: Return { isSuccess, orderId, ... }
+deactivate GatewayService
+
+alt Chữ ký không hợp lệ (Fraud)
+    Controller -> UI: Redirect FE (/payment-failed?reason=ChecksumFailed)
+else Chữ ký hợp lệ
+    
+    alt Thanh toán Thất bại (ResultCode != 0)
+        Controller -> PayService: updatePaymentStatus(orderId, 'failed')
+        activate PayService
+        PayService -> PayEntity: findOneAndUpdate({ orderId }, { status: 'failed' })
+        activate PayEntity
+        PayEntity --> PayService: Updated Payment
+        deactivate PayEntity
+        deactivate PayService
+        
+        Controller -> UI: Redirect FE (/payment-failed)
+    else Thanh toán Thành công (ResultCode == 0)
+        
+        ' 1. Cập nhật Payment -> Success
+        Controller -> PayService: updatePaymentStatus(orderId, 'success')
+        activate PayService
+        PayService -> PayEntity: findOneAndUpdate({ orderId }, { status: 'success' })
+        activate PayEntity
+        PayEntity --> PayService: Trả về payment (kèm courseIds)
+        deactivate PayEntity
+        PayService --> Controller: Return payment
+        deactivate PayService
+
+        ' === 2. LOGIC ENROLLMENT ===
+        Controller -> EnrollService: enrollStudent(studentId, courseIds)
+        activate EnrollService
+        loop Với mỗi courseId
+            EnrollService -> EnrollEntity: findOneAndUpdate({student, course}, {upsert: true})
+            activate EnrollEntity
+            EnrollEntity --> EnrollService: Enrolled
+            deactivate EnrollEntity
+            
+            EnrollService -> CourseEntity: findByIdAndUpdate(courseId, { $inc: { studentsCount: 1 } })
+            activate CourseEntity
+            CourseEntity --> EnrollService: Updated
+            deactivate CourseEntity
+        end
+        EnrollService --> Controller: Success
+        deactivate EnrollService
+
+        ' === 3. XÓA CART ===
+        Controller -> CartService: removeCoursesFromCart(studentId, courseIds)
+        activate CartService
+        CartService -> CartEntity: findOne({ student: studentId })
+        activate CartEntity
+        CartEntity --> CartService: Cart Doc
+        deactivate CartEntity
+        
+        CartService -> CartService: filter items
+        CartService -> CartEntity: cart.save()
+        activate CartEntity
+        CartEntity --> CartService: Saved
+        deactivate CartEntity
+        
+        CartService --> Controller: Success
+        deactivate CartService
+
+        ' Redirect về trang kết quả
+        Controller -> UI: Redirect FE (/payment-success?orderId=...)
+        deactivate Controller
+        activate UI
+        
+        UI -> User: Hiển thị thông báo:\n"Thanh toán thành công!"
+        deactivate UI
+    end
+end
+@enduml

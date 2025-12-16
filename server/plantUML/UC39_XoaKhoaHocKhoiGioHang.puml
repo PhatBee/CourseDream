@@ -1,0 +1,93 @@
+@startuml
+!theme plain
+
+' Khai báo các thành phần tham gia
+actor "Student" as User
+boundary "Cart Page UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Cart Controller" as Controller
+    participant "Cart Service" as Service
+    entity ":Cart" as Entity
+
+' Bắt đầu luồng
+User -> UI: Nhấn nút "Xóa" (icon thùng rác)\ntrên một dòng khóa học
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  DELETE /api/cart/remove/:courseId
+  Header: Authorization Token
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+' Middleware xử lý
+group Middleware Processing
+    Middleware -> Middleware: verifyToken()\n(Xác thực user)
+    Middleware -> Middleware: removeFromCartValidation()\n(Kiểm tra format courseId)
+    
+    alt Validation Failed
+        Middleware --> UI: Trả về lỗi 400 Bad Request
+    end
+end group
+
+' Chuyển sang Controller
+Middleware -> Controller: removeFromCart(req, res)
+activate Controller
+Controller -> Controller: Lấy studentId, courseId
+
+' Gọi xuống Service
+Controller -> Service: removeFromCart(studentId, courseId)
+activate Service
+
+' Service: Tìm giỏ hàng
+Service -> Entity: findOne({ student: studentId })
+activate Entity
+Entity --> Service: Trả về cart (hoặc null)
+deactivate Entity
+
+alt Cart Not Found
+    Service --> Controller: Throw Error "Cart not found"
+    Controller --> UI: Response 404 Not Found\n{ message: "Giỏ hàng không tồn tại" }
+else Cart Found
+    ' Logic xóa item
+    Service -> Service: cart.items.filter(...)\n(Loại bỏ item có courseId tương ứng)
+
+    ' Logic tính toán Model
+    note right of Service
+      Model Logic:
+      cart.calculateTotals()
+      (Tính lại subtotal, total...)
+    end note
+
+    ' Lưu xuống DB
+    Service -> Entity: cart.save()
+    activate Entity
+    Entity --> Service: Success
+    deactivate Entity
+
+    ' Populate dữ liệu trả về
+    Service -> Entity: findById(cart._id).populate(...)
+    activate Entity
+    note right of Entity
+       Populate:
+       - items.course
+       - instructor, categories
+    end note
+    Entity --> Service: Trả về cart (đầy đủ thông tin)
+    deactivate Entity
+
+    ' Trả kết quả về Controller
+    Service --> Controller: Return cart
+    deactivate Service
+
+    ' Controller phản hồi Client
+    Controller --> UI: Response 200 OK (JSON)\n{ success: true, message: "...", data: cart }
+    deactivate Controller
+    deactivate Middleware
+
+    UI -> User: Xóa dòng khóa học khỏi giao diện\nCập nhật lại tổng tiền hiển thị
+    deactivate UI
+end
+@enduml

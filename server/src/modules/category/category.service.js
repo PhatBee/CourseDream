@@ -20,8 +20,8 @@ export const getAllCategories = async (query) => {
 
   const categoriesWithCount = await Promise.all(
     categories.map(async (cat) => {
-      const count = await Course.countDocuments({ 
-        categories: cat._id, 
+      const count = await Course.countDocuments({
+        categories: cat._id,
         status: { $in: ['published'] }
       });
       return { ...cat, courseCount: count };
@@ -45,7 +45,7 @@ export const getAllCategories = async (query) => {
 
 export const createCategory = async (data) => {
   const { name, icon, description } = data;
-  
+
   const slug = slugify(name, { lower: true, strict: true });
 
   const exist = await Category.findOne({ slug });
@@ -66,13 +66,13 @@ export const updateCategory = async (id, data) => {
 
   const category = await Category.findByIdAndUpdate(id, updateFields, { new: true });
   if (!category) throw new Error('Category không tồn tại.');
-  
+
   return category;
 };
 
 export const deleteCategory = async (id) => {
   const count = await Course.countDocuments({ categories: id });
-  
+
   if (count > 0) {
     const error = new Error(`Không thể xóa! Do có khóa học thuộc thể loại này.`);
     error.statusCode = 400;
@@ -83,4 +83,14 @@ export const deleteCategory = async (id) => {
   if (!category) throw new Error('Category không tồn tại.');
 
   return { message: 'Đã xóa Category thành công.' };
+};
+
+// Get all categories without pagination (for dropdowns)
+export const getAllCategoriesSimple = async () => {
+  const categories = await Category.find({})
+    .select('_id name slug icon')
+    .sort({ name: 1 })
+    .lean();
+
+  return categories;
 };

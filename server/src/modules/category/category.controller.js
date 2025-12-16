@@ -51,3 +51,15 @@ export const deleteCategory = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getAllCategoriesSimple = async (req, res, next) => {
+  try {
+    const categories = await categoryService.getAllCategoriesSimple();
+    res.status(200).json({
+      success: true,
+      data: categories
+    });
+  } catch (error) {
+    next(error);
+  }
+};

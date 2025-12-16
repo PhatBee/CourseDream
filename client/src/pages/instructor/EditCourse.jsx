@@ -46,7 +46,7 @@ const EditCoursePage = () => {
         const initData = async () => {
             try {
                 // A. Lấy danh sách Categories
-                const catRes = await categoryApi.getAllCategories();
+                const catRes = await categoryApi.getAllCategoriesSimple();
                 const cats = catRes.data?.data || [];
                 setCategoriesList(cats);
 

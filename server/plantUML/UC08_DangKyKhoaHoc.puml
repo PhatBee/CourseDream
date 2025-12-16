@@ -1,0 +1,126 @@
+@startuml
+!theme plain
+
+
+' Khai báo thành phần
+actor "Student" as User
+boundary "Checkout UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Payment Controller" as Controller
+    participant "Payment Service" as PayService
+    participant "Enrollment Service" as EnrollService
+    participant "Cart Service" as CartService
+    participant "Gateway Service\n(VNPAY/MoMo)" as GatewayService
+    
+    ' Khai báo các Entity cụ thể
+    entity ":Payment" as PayEntity
+    entity ":Enrollment" as EnrollEntity
+    entity ":Course" as CourseEntity
+    entity ":Cart" as CartEntity
+
+' === BẮT ĐẦU LUỒNG ===
+User -> UI: Nhấn "Enroll Now" / "Checkout"\n(Chọn phương thức thanh toán)
+activate UI
+
+alt TRƯỜNG HỢP 1: TỔNG TIỀN = 0 (MIỄN PHÍ)
+    note right of UI
+        API Endpoint:
+        POST /api/payment/create_free_enrollment
+        Body: { courseIds, amount: 0, bankCode... }
+    end note
+    UI -> Middleware: Gửi Request
+    activate Middleware
+    Middleware -> Controller: createFreeEnrollment(req, res)
+    activate Controller
+    
+    ' Validate amount
+    Controller -> Controller: check(amount === 0)
+    
+    ' 1. Tạo Payment Record (Success)
+    Controller -> PayService: createPayment({ ..., status: 'success' })
+    activate PayService
+    PayService -> PayEntity: create(data)
+    activate PayEntity
+    PayEntity --> PayService: Trả về payment doc
+    deactivate PayEntity
+    PayService --> Controller: Return payment
+    deactivate PayService
+
+    ' 2. Thực hiện Enroll
+    Controller -> EnrollService: enrollStudent(studentId, courseIds)
+    activate EnrollService
+    loop Với mỗi courseId
+        EnrollService -> EnrollEntity: findOneAndUpdate({student, course}, {upsert: true})
+        activate EnrollEntity
+        EnrollEntity --> EnrollService: Enrolled
+        deactivate EnrollEntity
+        
+        EnrollService -> CourseEntity: findByIdAndUpdate(courseId, { $inc: { studentsCount: 1 } })
+        activate CourseEntity
+        CourseEntity --> EnrollService: Updated Count
+        deactivate CourseEntity
+    end
+    EnrollService --> Controller: Success
+    deactivate EnrollService
+
+    ' 3. Xóa khỏi giỏ hàng
+    Controller -> CartService: removeCoursesFromCart(studentId, courseIds)
+    activate CartService
+    CartService -> CartEntity: findOne({ student: studentId })
+    activate CartEntity
+    CartEntity --> CartService: Cart Doc
+    deactivate CartEntity
+    
+    CartService -> CartService: filter items != courseIds
+    CartService -> CartEntity: cart.save()
+    activate CartEntity
+    CartEntity --> CartService: Saved
+    deactivate CartEntity
+    
+    CartService --> Controller: Success
+    deactivate CartService
+
+    ' Phản hồi
+    Controller --> UI: Response 200 OK\n{ success: true, message: "Ghi danh thành công" }
+    deactivate Controller
+    
+    UI -> User: Hiển thị thông báo thành công\nChuyển đến trang kết quả
+
+else TRƯỜNG HỢP 2: TỔNG TIỀN > 0 (THANH TOÁN)
+    User -> UI: Chọn Gateway (VNPAY/MoMo/Zalopay)\nBấm "Proceed to Payment"
+    
+    note right of UI
+        API Endpoint:
+        POST /api/payment/create_payment_url
+        Body: { amount, bankCode, courseIds... }
+    end note
+    UI -> Middleware: Gửi Request
+    activate Middleware
+    Middleware -> Controller: createPaymentUrl(req, res)
+    activate Controller
+    
+    ' 1. Tạo Payment Record (Pending)
+    Controller -> PayService: createPayment({ ..., status: 'pending' })
+    activate PayService
+    PayService -> PayEntity: create(data)
+    activate PayEntity
+    PayEntity --> PayService: Trả về payment (Pending)
+    deactivate PayEntity
+    PayService --> Controller: Return payment
+    deactivate PayService
+
+    ' 2. Tạo URL Thanh toán
+    Controller -> GatewayService: createPaymentUrl(data)
+    activate GatewayService
+    GatewayService --> Controller: Return paymentUrl
+    deactivate GatewayService
+
+    ' Trả URL về Client
+    Controller --> UI: Response 200 OK\n{ url: "https://sandbox.vnpayment.vn/..." }
+    deactivate Controller
+    deactivate Middleware
+
+    UI -> User: Redirect window.location = paymentUrl
+    deactivate UI
+end
+@enduml

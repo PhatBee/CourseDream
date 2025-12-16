@@ -1,0 +1,181 @@
+@startuml
+!theme plain
+
+' Khai báo các thành phần
+actor "User" as User
+boundary "Forgot Pass UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Auth Controller" as Controller
+    participant "Auth Service" as Service
+    entity ":User" as Entity
+    participant "Email Service" as Mail
+
+' ==========================================
+' PHASE 1: YÊU CẦU QUÊN MẬT KHẨU (GỬI OTP)
+' ==========================================
+== Phase 1: Request OTP ==
+
+User -> UI: Nhập Email -> Bấm "Gửi mã"
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  POST /api/auth/forgot-password
+  Body: { email }
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+Middleware -> Controller: forgotPassword(req, res, next)
+activate Controller
+Controller -> Service: forgotPassword({ email })
+activate Service
+
+' Tìm User
+Service -> Entity: findOne({ email })
+activate Entity
+Entity --> Service: Trả về user (hoặc null)
+deactivate Entity
+
+alt User Not Found
+    Service --> Controller: Throw Error 404
+    Controller --> UI: Trả về lỗi "Email không tồn tại"
+else User Found
+    ' Logic tạo OTP
+    Service -> Service: otp = generateOTP()
+    Service -> Service: otpExpires = Now + 10 mins
+    
+    Service -> Entity: user.otp = otp\nuser.save()
+    activate Entity
+    Entity --> Service: Saved
+    deactivate Entity
+
+    ' Gửi Email
+    Service -> Mail: sendEmail(user.email, otp...)
+    activate Mail
+    Mail --> Service: Success
+    deactivate Mail
+
+    ' Trả kết quả Phase 1
+    Service --> Controller: Return { email }
+    Controller --> UI: Response 200 OK\n{ message: "Mã OTP đã được gửi..." }
+    deactivate Controller
+    deactivate Middleware
+
+    UI -> User: Chuyển sang màn hình nhập OTP
+    deactivate UI
+end
+
+' ==========================================
+' PHASE 2: XÁC THỰC OTP & NHẬN RESET TOKEN
+' ==========================================
+== Phase 2: Verify OTP & Get Token ==
+
+User -> UI: Kiểm tra Email -> Nhập OTP
+activate UI
+
+note right of UI
+  API Endpoint:
+  POST /api/auth/verify-reset-otp
+  Body: { email, otp }
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+Middleware -> Controller: verifyResetOTP(req, res, next)
+activate Controller
+Controller -> Service: verifyResetOTP({ email, otp })
+
+' Logic Query DB kiểm tra OTP còn hạn
+note right of Service
+  Query: email + otp + otpExpires > Now
+end note
+Service -> Entity: findOne({ email, otp, otpExpires: { $gt: Date.now() } })
+activate Entity
+Entity --> Service: Trả về user (nếu khớp)
+deactivate Entity
+
+alt Invalid OTP or Expired
+    Service --> Controller: Throw Error 400
+    Controller --> UI: Trả về lỗi "OTP không hợp lệ/hết hạn"
+else Valid OTP
+    ' Xóa OTP và Tạo Token Reset
+    Service -> Service: user.otp = null
+    Service -> Entity: user.save()
+    activate Entity
+    Entity --> Service: Saved
+    deactivate Entity
+
+    Service -> Service: resetToken2 = generateToken(user._id)
+    note right of Service
+      Token này dùng để xác thực
+      ở bước đặt lại mật khẩu
+    end note
+
+    ' Trả kết quả Phase 2
+    Service --> Controller: Return { resetToken }
+    Controller --> UI: Response 200 OK\n{ resetToken: "eyJhbGci..." }
+    deactivate Controller
+    deactivate Middleware
+
+    UI -> User: Chuyển sang màn hình nhập Mật khẩu mới
+    deactivate UI
+end
+
+' ==========================================
+' PHASE 3: ĐẶT MẬT KHẨU MỚI
+' ==========================================
+== Phase 3: Set New Password ==
+
+User -> UI: Nhập Mật khẩu mới -> Bấm "Lưu"
+activate UI
+
+note right of UI
+  API Endpoint:
+  POST /api/auth/set-password
+  Body: { resetToken, password }
+end note
+UI -> Middleware: Gửi Request
+activate Middleware
+
+' Middleware Validate Input
+Middleware -> Middleware: validateResetPassword()
+
+Middleware -> Controller: setPassword(req, res, next)
+activate Controller
+Controller -> Service: setPassword({ resetToken, password })
+
+' Xác thực Token
+Service -> Service: jwt.verify(resetToken)
+alt Token Invalid / Expired
+    Service --> Controller: Throw Error 401
+    Controller --> UI: Trả về lỗi Token lỗi
+else Token Valid (Decoded ID)
+    Service -> Entity: findById(decoded.id)
+    activate Entity
+    Entity --> Service: Trả về user
+    deactivate Entity
+
+    alt User Not Found
+        Service --> Controller: Throw Error 404
+    else User Found
+        ' Hash & Update Password
+        Service -> Service: hashPassword(password)
+        Service -> Entity: user.password = hashed\nuser.save()
+        activate Entity
+        Entity --> Service: Saved
+        deactivate Entity
+
+        Service --> Controller: Return Success Message
+        deactivate Service
+        
+        Controller --> UI: Response 200 OK\n{ message: "Đặt lại mật khẩu thành công!" }
+        deactivate Controller
+        deactivate Middleware
+
+        UI -> User: Thông báo thành công\nChuyển về trang Đăng nhập
+        deactivate UI
+    end
+end
+@enduml
