@@ -1,4 +1,4 @@
-// scripts/seed_add_cyber_kill_chain.js
+// scripts/seed_add_figma_mobile_app.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -33,98 +33,155 @@ function slugify(text) {
     // ====== INPUT DATA ======
     const instructorId = '6913f6f74ef370e87cb6d779';
 
-    const title = 'Introduction In Cyber Attack For Beginners';
-    const shortDescription = 'How to Think Like a Hacker with PCAP analysis to anticipate, detect, and defend against cyber threats.';
+    const title = 'Mobile App Design in Figma: From Concept to Prototype';
+    const shortDescription = 'A step-by-step guide to creating your mobile app design in Figma';
 
     const description = `
-In today's evolving threat landscape, understanding how cyberattacks unfold is crucial for building effective defense strategies.
+Figma is a powerful, free web-based design tool perfect for UI/UX design — from wireframing to prototyping mobile apps.
 
-This course takes you on a comprehensive journey through the **Cyber Kill Chain**, a model developed by Lockheed Martin that outlines the stages of a cyberattack — from reconnaissance to exfiltration.
+In this hands-on course, experienced UI/UX designer Željko Milivojević guides you step-by-step through designing a complete mobile app in Figma, from concept to interactive prototype.
 
-You will learn how attackers operate, how vulnerabilities are exploited, and how defenders can detect, respond to, and mitigate these threats.
+You'll master:
+• Differences between iOS & Android design guidelines
+• Creating moodboards & design systems
+• Building wireframes and high-fidelity designs
+• Automating workflows with components & variables
+• Prototyping with interactions & animations
+• Developer handoff & client revisions
+• Latest Figma AI features to speed up your process
 
-Additionally, we dive deep into analyzing PCAP files using Wireshark to uncover network traffic anomalies, identify malicious activities, and improve your incident response skills.
+No prior experience required! Perfect for beginners, marketers, or designers switching to Figma.
 
-What You'll Learn:
-• The 7 stages of the Cyber Kill Chain and real-world attack techniques
-• Passive & Active Reconnaissance + OSINT tools
-• Weaponization, Delivery, Exploitation, Installation, C2, and Actions on Objectives
-• Hands-on PCAP analysis to detect Indicators of Compromise (IoCs)
-• Defensive strategies to break the kill chain at every phase
-
-Whether you're an aspiring cybersecurity professional or a seasoned IT expert, this course equips you with the mindset to think like a hacker — so you can better defend your systems.
-
-By the end, you’ll confidently analyze attacks, detect threats early, and build stronger defenses.
+By the end, you'll confidently design professional mobile apps and build a strong portfolio piece.
 `.trim();
 
-    const topics = ['Cybersecurity', 'Ethical Hacking', 'Mạng', 'Bảo mật', 'Công nghệ thông tin', 'Phần mềm'];
+    const topics = ['Figma', 'Thiết kế ứng dụng Mobile', 'Thiết kế giao diện người dùng', 'Công cụ thiết kế', 'Thiết kế'];
     const includes = [
-      '2,5 giờ video theo yêu cầu',
-      '17 tài nguyên có thể tải xuống',
+      '5 giờ video theo yêu cầu',
+      '1 bài viết',
+      '2 tài nguyên có thể tải xuống',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'Cybersecurity beginners who want to understand attack methodologies and defense strategies.',
-      'SOC Analysts and Blue Team members looking to improve their incident detection skills.',
-      'Networking and IT professionals who want to analyze malicious traffic using PCAP files.',
-      'Students and career changers interested in cybersecurity and ethical hacking.',
+      'Beginner designers with no strong design experience',
+      'Experienced designers wanting to learn Figma workflows',
+      'Online marketers & social media creators needing visuals',
+      'Anyone wanting to design mobile apps from scratch',
     ];
     const requirements = [
-      'Basic understanding of computer networks (TCP/IP, protocols, etc.).',
-      'A computer capable of running Wireshark and virtual machines (e.g., Kali Linux).',
-      'No prior cybersecurity experience needed!',
+      'A computer (Mac or Windows)',
+      'Internet Connection',
+      'No previous design experience is needed',
+      'Figma and Whimsical account (both work on a browser)',
     ];
     const learnOutcomes = [
-      'Hiểu rõ mô hình Cyber Kill Chain và từng giai đoạn tấn công',
-      'Phân tích PCAP file bằng Wireshark để phát hiện IoCs',
-      'Nhận diện kỹ thuật reconnaissance, weaponization, delivery...',
-      'Áp dụng chiến lược phòng thủ để phá vỡ chuỗi tấn công',
-      'Tư duy như hacker để bảo vệ hệ thống hiệu quả hơn',
+      'Sử dụng thành thạo Figma để thiết kế mobile app từ concept đến prototype',
+      'Hiểu sự khác biệt giữa thiết kế iOS và Android',
+      'Xây dựng moodboard, design system và wireframe chuyên nghiệp',
+      'Tạo high-fidelity design và interactive prototype',
+      'Tận dụng Figma AI để tăng tốc workflow',
+      'Handoff design cho developer và xử lý revision từ client',
     ];
 
-    // ====== SECTIONS & LECTURES ======
+    // ====== SECTIONS & LECTURES (12 sections) ======
     const sectionsData = [
       {
-        title: 'Overview about what you will learn in this course',
+        title: 'Introduction',
         lectures: [
-          { title: 'What Will You Learn in This Course?', preview: true, duration: '02:20', url: 'https://dai.ly/x9ujvtc' },
-          { title: 'Understanding My Accent & Why I’m Sharing This Course', preview: true, duration: '00:54', url: 'https://dai.ly/x9ujvte' },
+          { title: 'Introduction and Software recommendation', preview: true, duration: '00:59', url: 'https://dai.ly/x9unnpq' },
+          { title: 'Into the Figma', preview: false, duration: '04:46', url: 'https://dai.ly/x9unnqq' },
         ]
       },
       {
-        title: 'Introduction to Cyber Kill Chain and Reconnaissance Phase',
+        title: 'Getting Started',
         lectures: [
-          { title: 'What is Cyber Kill Chain and Passive Reconnaissance', preview: false, duration: '11:54', url: 'https://dai.ly/x9ujvta' },
-          { title: 'Active Reconnaissance', preview: false, duration: '10:38', url: 'https://dai.ly/x9ujvt8' },
-          { title: 'OSINT Framework', preview: false, duration: '09:59', url: 'https://dai.ly/x9ujvtg' },
+          { title: 'Designing for iOs vs Android', preview: false, duration: '05:33', url: 'https://dai.ly/x9unns6' },
+          { title: 'Creating the project', preview: true, duration: '04:15', url: 'https://dai.ly/x9unnt4' },
+          { title: 'How to study on Udemy effectively', preview: false, duration: '05:29', url: 'https://dai.ly/x9unnu2' },
         ]
       },
       {
-        title: 'Weaponization, Delivery & Exploitation Phases',
+        title: 'Preparation',
         lectures: [
-          { title: 'Difference between Malware, Exploit & Payload', preview: false, duration: '06:48', url: 'https://dai.ly/x9ujvti' },
-          { title: 'What is Weaponization Phase & Techniques?', preview: false, duration: '07:51', url: 'https://dai.ly/x9ujvtm' },
-          { title: 'Delivery Phase', preview: false, duration: '05:08', url: 'https://dai.ly/x9ujwj0' },
-          { title: 'What is Exploitation Phase?', preview: false, duration: '04:08', url: 'https://dai.ly/x9ujwkg' },
-          { title: 'What does a Hacker do After Gaining Access?', preview: false, duration: '08:10', url: 'https://dai.ly/x9ujwl8' },
+          { title: 'Moodboard & Project Direction', preview: false, duration: '08:28', url: 'https://dai.ly/x9unnum' },
+          { title: 'iOS Library', preview: true, duration: '06:33', url: 'https://dai.ly/x9unnwc' },
+          { title: 'Design system', preview: false, duration: '21:20', url: 'https://dai.ly/x9upw3s' },
         ]
       },
       {
-        title: 'Installation, Command & Control and Actions on Objectives Phases',
+        title: 'Wireframes',
         lectures: [
-          { title: 'Installation Phase', preview: true, duration: '11:24', url: 'https://dai.ly/x9unlpk' },
-          { title: 'Command & Control (C2) Phase', preview: false, duration: '09:45', url: 'https://dai.ly/x9unlpq' },
-          { title: 'Actions on Objectives (Exfiltration) Phase', preview: false, duration: '05:01', url: 'https://dai.ly/x9unlpo' },
+          { title: 'Wireframes - Part 1', preview: false, duration: '28:03', url: 'https://dai.ly/x9upw3u' },
+          { title: 'Wireframes - Part 2', preview: false, duration: '30:53', url: 'https://dai.ly/x9upw3w' },
+          { title: 'Wireframes flow', preview: false, duration: '08:10', url: 'https://dai.ly/x9upw42' },
         ]
       },
       {
-        title: 'Analysis PCAP Files on Wireshark',
+        title: 'Design Process',
         lectures: [
-          { title: 'Indicator of Compromise (IOCs)', preview: true, duration: '23:13', url: 'https://dai.ly/x9unlpm' },
-          { title: 'Web Server Attack PCAP File Analysis part (1)', preview: false, duration: '23:51', url: 'https://dai.ly/x9unlps' },
-          { title: 'Web Server Attack PCAP File Analysis part (2)', preview: false, duration: '09:19', url: 'https://dai.ly/x9unlpu' },
-          { title: 'important notes', preview: false, duration: '02:58', url: 'https://dai.ly/x9unlpw' },
+          { title: 'Final Design - Part 1', preview: false, duration: '19:40', url: 'https://dai.ly/x9upw3y' },
+          { title: 'Fun Exercise: creating a Spotify clone', preview: false, duration: '15:48', url: 'https://dai.ly/x9upw40' },
+          { title: 'Final Design - Part 2', preview: false, duration: '28:15', url: 'https://dai.ly/x9upw48' },
+          { title: 'Final Design - Part 3', preview: false, duration: '21:25', url: 'https://dai.ly/x9upw4c' },
+          { title: 'Final Design - Part 4', preview: false, duration: '25:06', url: 'https://dai.ly/x9upzge' },
+        ]
+      },
+      {
+        title: 'Prototype & Handoff',
+        lectures: [
+          { title: 'Prototype & Animations', preview: false, duration: '08:11', url: 'https://dai.ly/x9upw46' },
+          { title: 'Developer handoff & Client revision', preview: false, duration: '03:50', url: 'https://dai.ly/x9upzo8' },
+        ]
+      },
+      {
+        title: 'Overview of Figma AI features',
+        lectures: [
+          { title: 'Interface tour: where to find AI features', preview: false, duration: '01:36', url: 'https://dai.ly/x9uv68k' },
+          { title: 'Figma Make, Figma Slides and Figma Buzz', preview: false, duration: '02:15', url: 'https://dai.ly/x9uv68i' },
+          { title: 'Cleanup & Alignment — AI-Powered & Manual Tools', preview: false, duration: '02:24', url: 'https://dai.ly/x9uv68m' },
+        ]
+      },
+      {
+        title: 'Hands-on demonstration — building with AI',
+        lectures: [
+          { title: 'Real-time project: a simple landing page', preview: false, duration: '01:47', url: 'https://dai.ly/x9uv68o' },
+          { title: 'AI copywriting and UI element generation', preview: false, duration: '01:05', url: 'https://dai.ly/x9uv68q' },
+          { title: 'Iterating and editing with AI suggestions', preview: false, duration: '02:08', url: 'https://dai.ly/x9v420m' },
+          { title: 'AI in the Design Process — Where It Helps, Where It Doesn’t', preview: false, duration: '02:47', url: 'https://dai.ly/x9v420i' },
+        ]
+      },
+      {
+        title: 'Automating repetitive tasks with AI',
+        lectures: [
+          { title: 'Prompt Thinking — How to Talk to AI Like a Designer', preview: false, duration: '03:11', url: 'https://dai.ly/x9v420o' },
+          { title: 'Prompt Recipes — Headlines, Layouts & Visuals', preview: false, duration: '03:16', url: 'https://dai.ly/x9v420k' },
+          { title: 'Prompt Playground — Practice Writing Great AI Prompts', preview: false, duration: '02:07', url: 'https://dai.ly/x9v420q' },
+          { title: 'Helpful AI plugins: Magician, Diagram, Autoname', preview: false, duration: '02:07', url: 'https://dai.ly/x9v420u' },
+        ]
+      },
+      {
+        title: 'Collaboration & handoff with AI',
+        lectures: [
+          { title: 'Final Touches — File Cleanup, Comments & Versionining', preview: false, duration: '02:17', url: 'https://dai.ly/x9v4212' },
+          { title: 'Figma Dev Mode — handoff made smarter', preview: false, duration: '01:59', url: 'https://dai.ly/x9v42b6' },
+          { title: 'Async teamwork tips using Figma AI', preview: false, duration: '01:43', url: 'https://dai.ly/x9v42b2' },
+        ]
+      },
+      {
+        title: 'Case studies & real-world examples',
+        lectures: [
+          { title: 'Workflow with AI: before & after', preview: false, duration: '02:57', url: 'https://dai.ly/x9v42aw' },
+          { title: 'Team-based design: scaling ideas with prompts', preview: false, duration: '03:05', url: 'https://dai.ly/x9v42b0' },
+          { title: 'Figma AI in practice — lessons from real use', preview: false, duration: '02:15', url: 'https://dai.ly/x9v42ay' },
+        ]
+      },
+      {
+        title: 'Final Section',
+        lectures: [
+          { title: 'How to leave a review?', preview: false, duration: '01:49', url: 'https://dai.ly/x9v8uym' },
+          { title: 'How to get a certificate?', preview: false, duration: '01:47', url: 'https://dai.ly/x9v42ie' },
+          { title: 'Final thoughts', preview: false, duration: '00:49', url: 'https://dai.ly/x9v8uuq' },
         ]
       }
     ];
@@ -140,7 +197,7 @@ By the end, you’ll confidently analyze attacks, detect threats early, and buil
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Cybersecurity', 'Ethical Hacking', 'Mạng', 'Bảo mật', 'Công nghệ thông tin', 'Phần mềm'];
+    const categoryNames = ['Figma', 'Thiết kế ứng dụng Mobile', 'Thiết kế giao diện người dùng', 'Công cụ thiết kế', 'Thiết kế'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -165,13 +222,13 @@ By the end, you’ll confidently analyze attacks, detect threats early, and buil
 
     course.title = title;
     course.slug = slug;
-    course.thumbnail = 'https://img-c.udemycdn.com/course/480x270/6525331_92c4_7.jpg?w=640&q=75'; // bạn có thể thay bằng link thumbnail thực tế sau
-    course.previewUrl = ''; // video preview chính
+    course.thumbnail = 'https://img-c.udemycdn.com/course/480x270/5974670_355b.jpg?w=640&q=75'; // Nếu có thumbnail thực tế từ Udemy, thay vào đây
+    course.previewUrl = ''; // video intro preview
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 399000;
-    course.priceDiscount = 299000;
-    course.level = 'beginner';
+    course.price = 409000;
+    course.priceDiscount = 269000;
+    course.level = 'intermediate';
     course.language = 'en';
     course.requirements = requirements;
     course.learnOutcomes = learnOutcomes;
@@ -246,7 +303,7 @@ By the end, you’ll confidently analyze attacks, detect threats early, and buil
     course.sections = sectionIds;
     course.totalLectures = totalLectures;
     course.totalDurationSeconds = totalSeconds;
-    course.totalHours = Number((totalSeconds / 3600).toFixed(2));
+    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~4.82 giờ
 
     await course.save();
 
