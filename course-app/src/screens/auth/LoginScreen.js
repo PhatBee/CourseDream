@@ -120,7 +120,7 @@ const LoginScreen = ({ navigation }) => {
                     {/* Header Section */}
                     <View className="mb-10">
                         <TouchableOpacity
-                            onPress={() => navigation.goBack()}
+                            onPress={() => navigation.goBack() ? navigation.goBack() : navigation.replace('MainTabs')}
                             className="self-end mb-6"
                         >
                             <Text className="text-rose-500 text-base font-medium underline">
