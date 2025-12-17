@@ -1,13 +1,16 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
+
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Star, Heart, ShoppingCart } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
-import { store } from '../../app/store';
 
 // --- SUB-COMPONENT: Footer xử lý logic hiển thị Giá hoặc Nút Học ---
 const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart }) => {
+  if (!price) price = 0;
+  if (!displayPrice) displayPrice = 0;
   // TRƯỜNG HỢP 1: Đã sở hữu khóa học
   if (isEnrolled) {
     return (
@@ -79,7 +82,7 @@ const CourseCard = ({ course }) => {
   const isWishlisted = wishlistItems.some(item => item._id === _id);
 
   // Formatting
-  const imageUrl = thumbnail?.url || thumbnail || 'https://via.placeholder.com/300x200';
+  const imageUrl = thumbnail?.url || thumbnail || defaultCourse;
   const finalPrice = priceDiscount || price;
   const hasDiscount = priceDiscount && priceDiscount < price;
 
@@ -95,7 +98,7 @@ const CourseCard = ({ course }) => {
 
   const handleToggleWishlist = () => {
     // Kiểm tra user đã login chưa
-    const { user } = store.getState().auth;
+    const user = useSelector(state => state.auth.user);
 
     if (!user) {
       // Chưa login, navigate to Login
@@ -112,7 +115,7 @@ const CourseCard = ({ course }) => {
 
   const handleAddToCart = () => {
     // Kiểm tra user đã login chưa
-    const { user } = store.getState().auth;
+    const user = useSelector(state => state.auth.user);
 
     if (!user) {
       // Chưa login, navigate to Login
@@ -131,8 +134,11 @@ const CourseCard = ({ course }) => {
       className="w-60 bg-white rounded-2xl shadow-sm overflow-hidden mr-4 mb-2 border border-gray-100"
     >
       {/* Image Area */}
-      <View>
-        <Image source={{ uri: imageUrl }} className="w-full h-32" resizeMode="cover" />
+      <View className="relative w-full h-32 rounded-xl overflow-hidden bg-gray-100">
+        <Image source={imageUrl}
+          placeholder={require('../../../assets/images/default-course.jpg')}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover" />
 
         {/* Wishlist Heart Button */}
         <TouchableOpacity
@@ -171,7 +177,7 @@ const CourseCard = ({ course }) => {
           <View className="flex-row items-center mb-1">
             <Star size={10} color="#f59e0b" fill="#f59e0b" />
             <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
-            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount})</Text>
+            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount || 0})</Text>
           </View>
         </View>
 

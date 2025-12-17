@@ -49,6 +49,7 @@ const logout = async () => {
     }
     await removeToken();
     await removeUser();
+
 };
 
 const forgotPassword = async (email) => {
