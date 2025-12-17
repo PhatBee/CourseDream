@@ -549,6 +549,17 @@ export const approveRevision = async (revisionId, adminId) => {
     resultCourse = liveCourse;
   }
 
+  // Sau khi duyệt thành công, gửi thông báo cho instructor
+  await notificationService.createNotification({
+    recipient: revision.instructor,
+    sender: adminId,
+    type: "system",
+    title: "Khóa học đã được duyệt",
+    message: `Khóa học "${revision.data.title}" của bạn đã được admin duyệt.`,
+    relatedId: revision._id,
+    courseSlug: revision.data.slug || undefined
+  });
+
   return {
     message: "Khóa học đã được duyệt thành công!",
     course: resultCourse
@@ -577,6 +588,17 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
   revision.status = 'rejected';
   revision.reviewMessage = reviewMessage;
   await revision.save();
+
+  // Gửi thông báo cho instructor khi bị từ chối
+  await notificationService.createNotification({
+    recipient: revision.instructor,
+    sender: adminId,
+    type: "system",
+    title: "Khóa học bị từ chối",
+    message: `Khóa học "${revision.data.title}" của bạn đã bị từ chối. Lý do: ${reviewMessage}`,
+    relatedId: revision._id,
+    courseSlug: revision.data.slug || undefined
+  });
 
   return {
     message: "Khóa học đã bị từ chối. Instructor có thể chỉnh sửa và submit lại."

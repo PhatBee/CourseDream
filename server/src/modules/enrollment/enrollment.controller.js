@@ -12,3 +12,12 @@ export const getMyEnrollments = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getStudentDashboard = async (req, res) => {
+  try {
+    const dashboardData = await enrollmentService.getStudentDashboard(req.user.id);
+    res.status(200).json({ success: true, data: dashboardData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

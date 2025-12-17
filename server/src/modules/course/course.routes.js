@@ -2,7 +2,7 @@ import express from 'express';
 import {
   searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
   getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource, deleteCourse,
-  activateCourse
+  activateCourse, getPopularCourses
 } from './course.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
@@ -22,6 +22,7 @@ router.get('/', getCourses);
 router.get('/levels', getLevels);
 router.get('/stats', getCourseStats);
 router.get("/search", searchCourses);
+router.get('/popular', getPopularCourses);
 
 router.get(
   '/instructor/my-courses',

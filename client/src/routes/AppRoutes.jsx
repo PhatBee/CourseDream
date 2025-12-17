@@ -41,6 +41,7 @@ import InstructorInfoEdit from "../components/profile/InstructorInfoEdit";
 import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
 import ReportsManagement from "../pages/admin/ReportsManagement";
 import PromotionsManagement from "../pages/admin/PromotionsManagement";
+import StudentDashboard from "../pages/StudentDashboard";
 
 export default function AppRoutes() {
 
@@ -65,6 +66,7 @@ export default function AppRoutes() {
 
           {/* Profile Layout */}
           <Route path="/profile" element={<ProfileLayout />}>
+            <Route path="dashboard" element={<StudentDashboard />} />
 
             {/* 1. Trang My Profile (Ảnh 1) */}
             <Route path="my-profile" element={<MyProfile />} />

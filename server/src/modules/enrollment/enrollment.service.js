@@ -1,5 +1,6 @@
 import Enrollment from "./enrollment.model.js";
 import Course from "../course/course.model.js";
+import Progress from "../progress/progress.model.js"
 
 class EnrollmentService {
 
@@ -39,10 +40,46 @@ class EnrollmentService {
         return Enrollment.find({ student: userId })
             .populate({
                 path: "course",
-                select: "title slug thumbnail price instructor",
+                select: "title slug thumbnail price instructor totalLectures totalHours instructor",
                 populate: { path: "instructor", select: "name avatar" }
             })
             .sort({ enrolledAt: -1 });
+    }
+
+    async getStudentDashboard(userId) {
+        // 1. Lấy danh sách ghi danh
+        const enrollments = await Enrollment.find({ student: userId })
+            .populate({
+                path: "course",
+                select: "title slug thumbnail totalLectures totalHours instructor", // Lấy các trường cần cho Dashboard
+                populate: { path: "instructor", select: "name" }
+            })
+            .sort({ enrolledAt: -1 })
+            .lean();
+
+        // 2. Kẹp thêm thông tin Progress
+        const data = await Promise.all(enrollments.map(async (enrollment) => {
+            if (!enrollment.course) return null;
+
+            const progress = await Progress.findOne({ 
+                student: userId, 
+                course: enrollment.course._id 
+            });
+
+            return {
+                _id: enrollment._id, // ID của enrollment
+                enrolledAt: enrollment.enrolledAt,
+                course: enrollment.course,
+                // Object progress được tính toán riêng
+                learningProgress: {
+                    percentage: progress ? progress.percentage : 0,
+                    completedLessons: progress ? progress.completedLectures.length : 0,
+                    totalLessons: enrollment.course.totalLectures || 0
+                }
+            };
+        }));
+
+        return data.filter(item => item !== null);
     }
 }
 

@@ -28,13 +28,28 @@ const CoursePage = () => {
 
   const initialKeyword = searchParams.get("q") || "";
   const initialCategory = searchParams.get("category") ? [searchParams.get("category")] : [];
+  const initialQuery = searchParams.get('q') || '';
 
   const [courses, setCourses] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({
+    q: initialQuery,
+    category: [],
+    instructor: [],
+    price: [],
+    level: []
+  });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const queryInUrl = searchParams.get('q') || '';
+    if (queryInUrl !== filters.q) {
+      setFilters(prev => ({ ...prev, q: queryInUrl }));
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);

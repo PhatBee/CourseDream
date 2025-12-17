@@ -157,21 +157,12 @@ const Header = () => {
                       <ul className="space-y-1 text-sm text-gray-700">
                         <li>
                           <Link
-                            to="/profile"
+                            to="/profile/dashboard"
                             className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
                           >
                             <User className="h-4 w-4 text-rose-500" />
                             My Profile
                           </Link>
-                        </li>
-                        <li>
-                          {/* <Link
-                            to="/orders"
-                            className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
-                          >
-                            <ShoppingCart className="h-4 w-4 text-rose-500" />
-                            Order History
-                          </Link> */}
                         </li>
                         <li className="relative flex items-center">
                           <button

@@ -11,6 +11,8 @@ import { uploadToYouTube } from "../../config/youtube.js";
 import { uploadToCloudinary, uploadResourceToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
+import notificationService from "../notification/notification.service.js";
+import User from "../auth/auth.model.js";
 /**
  * Service: Lấy chi tiết khóa học
  * @param {string} slug - Slug của khóa học
@@ -53,22 +55,22 @@ export const getCourseDetailsBySlug = async (slug) => {
 
   // [MỚI] Lấy thông tin chi tiết Instructor Profile
   if (course.instructor) {
-      const instructorDetails = await InstructorProfile.findOne({ user: course.instructor._id }).lean();
-      
-      // Merge thông tin vào object instructor
-      if (instructorDetails) {
-          course.instructor = {
-              ...course.instructor, // name, avatar, bio (user)
-              headline: instructorDetails.headline,
-              experience: instructorDetails.experience,
-              education: instructorDetails.education,
-              specialties: instructorDetails.specialties,
-              socialLinks: instructorDetails.socialLinks,
-              totalStudents: instructorDetails.totalStudents,
-              totalReviews: instructorDetails.totalReviews,
-              rating: instructorDetails.rating
-          };
-      }
+    const instructorDetails = await InstructorProfile.findOne({ user: course.instructor._id }).lean();
+
+    // Merge thông tin vào object instructor
+    if (instructorDetails) {
+      course.instructor = {
+        ...course.instructor, // name, avatar, bio (user)
+        headline: instructorDetails.headline,
+        experience: instructorDetails.experience,
+        education: instructorDetails.education,
+        specialties: instructorDetails.specialties,
+        socialLinks: instructorDetails.socialLinks,
+        totalStudents: instructorDetails.totalStudents,
+        totalReviews: instructorDetails.totalReviews,
+        rating: instructorDetails.rating
+      };
+    }
   }
 
   const reviews = await Review.find({ course: course._id })
@@ -87,6 +89,21 @@ export const getCourseDetailsBySlug = async (slug) => {
     reviews,
     reviewCount,
   };
+};
+
+export const getPopularCourses = async () => {
+
+  const courses = await Course.find({ status: 'published' })
+    .sort({ studentsCount: -1, rating: -1 })
+    .limit(5)
+    .select(
+      "title slug thumbnail price priceDiscount level rating reviewCount instructor categories"
+    )
+    .populate("instructor", "name avatar")
+    .populate("categories", "name")
+    .lean();
+
+  return courses;
 };
 
 export const getAllCourses = async (query) => {
@@ -569,10 +586,14 @@ export const getInstructorCourses = async (instructorId, query) => {
   standaloneRevisions.forEach(rev => {
     // Chuẩn hóa data từ revision.data ra ngoài để giống cấu trúc Course
     // Giúp Frontend hiển thị thống nhất mà không cần sửa nhiều
+
+    // ✨ QUAN TRỌNG: Dùng _id của revision làm "slug" để frontend có thể route
+    // Khi course chưa publish, không cần slug thật, dùng ID là đủ
+
     mergedList.push({
       _id: rev._id, // Dùng ID của revision
       title: rev.data.title || 'Untitled Course',
-      slug: rev.data.slug,
+      slug: rev._id.toString(), // ✨ Dùng revision ID làm identifier
       thumbnail: rev.data.thumbnail,
       price: rev.data.price || 0,
       priceDiscount: rev.data.priceDiscount,
@@ -744,30 +765,60 @@ export const getCourseForEdit = async (slug, instructorId) => {
   }
 
   // --- TRƯỜNG HỢP 1: Course chưa từng publish (Fresh Draft) ---
-  // Tìm trong Revision xem có slug khớp không (lưu ý tìm trong data.slug)
-  const freshDraft = await CourseRevision.findOne({
-    'data.slug': slug,
-    instructor: instructorId,
-    course: null, // Chưa link tới course nào
-    status: 'draft'
-  }).lean();
+
+  // ✨ LOGIC MỚI: Kiểm tra xem slug có phải là ObjectId không
+  // Nếu là ObjectId -> Tìm revision bằng _id
+  // Nếu không -> Tìm bằng data.slug (legacy support)
+
+  const isObjectId = mongoose.Types.ObjectId.isValid(slug) && slug.length === 24;
+
+  let freshDraft;
+  if (isObjectId) {
+    // Tìm bằng _id của revision
+    freshDraft = await CourseRevision.findOne({
+      _id: slug,
+      instructor: instructorId,
+      course: null,
+      status: 'draft'
+    }).lean();
+  } else {
+    // Tìm bằng slug trong data (legacy)
+    freshDraft = await CourseRevision.findOne({
+      'data.slug': slug,
+      instructor: instructorId,
+      course: null,
+      status: 'draft'
+    }).lean();
+  }
 
   if (freshDraft) {
     return {
       ...freshDraft.data,
       _id: freshDraft._id,
+      revisionId: freshDraft._id, // ✨ Thêm revisionId để frontend gửi lại khi save
       status: 'draft',
       isUpdateMode: false
     };
   }
 
   // Nếu pending (Fresh Pending) -> Chặn
-  const freshPending = await CourseRevision.findOne({
-    'data.slug': slug,
-    instructor: instructorId,
-    course: null,
-    status: 'pending'
-  });
+  let freshPending;
+  if (isObjectId) {
+    freshPending = await CourseRevision.findOne({
+      _id: slug,
+      instructor: instructorId,
+      course: null,
+      status: 'pending'
+    });
+  } else {
+    freshPending = await CourseRevision.findOne({
+      'data.slug': slug,
+      instructor: instructorId,
+      course: null,
+      status: 'pending'
+    });
+  }
+
   if (freshPending) {
     const error = new Error("Khóa học đang chờ duyệt, không thể chỉnh sửa.");
     error.statusCode = 400;
@@ -775,16 +826,28 @@ export const getCourseForEdit = async (slug, instructorId) => {
   }
 
   // Nếu rejected (Fresh Rejected) -> Cho phép edit lại
-  const freshRejected = await CourseRevision.findOne({
-    'data.slug': slug,
-    instructor: instructorId,
-    course: null,
-    status: 'rejected'
-  }).lean();
+  let freshRejected;
+  if (isObjectId) {
+    freshRejected = await CourseRevision.findOne({
+      _id: slug,
+      instructor: instructorId,
+      course: null,
+      status: 'rejected'
+    }).lean();
+  } else {
+    freshRejected = await CourseRevision.findOne({
+      'data.slug': slug,
+      instructor: instructorId,
+      course: null,
+      status: 'rejected'
+    }).lean();
+  }
+
   if (freshRejected) {
     return {
       ...freshRejected.data,
       _id: freshRejected._id,
+      revisionId: freshRejected._id, // ✨ Thêm revisionId để frontend gửi lại khi save
       status: 'rejected',
       reviewMessage: freshRejected.reviewMessage || null,
       isUpdateMode: false
@@ -860,7 +923,7 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
   // 5. Chuẩn bị Data Object cho Revision
   const revisionData = {
     title: courseData.title,
-    slug: courseData.slug, // Slug không đổi khi edit
+    slug: courseData.slug || null, // Slug chỉ có khi course đã publish, fresh draft không cần slug
     thumbnail: thumbnailUrl,
     previewUrl: courseData.previewUrl || '',
     shortDescription: courseData.shortDescription,
@@ -878,6 +941,7 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     categories: finalCategoryIds,
     sections: sectionsStruct
   };
+
 
   // --- [LOGIC VERSION MỚI] ---
   let nextVersion = 1; // Mặc định cho trường hợp 1 (Fresh Draft)
@@ -903,10 +967,15 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
   // Nếu có courseId (Case 2: Update Course Live)
   if (courseData.courseId) {
     filter.course = courseData.courseId;
-  } else {
-    // Case 1: Fresh Draft -> Tìm theo slug
+  } else if (courseData.revisionId) {
+    // ✨ Case 1: Fresh Draft đang edit tiếp -> Tìm theo _id của revision
+    filter._id = courseData.revisionId;
     filter.course = null;
-    filter['data.slug'] = courseData.slug;
+  } else {
+    // ✨ Case 1: Fresh Draft lần đầu tạo -> Không filter gì thêm, sẽ tạo mới
+    filter.course = null;
+    // Không filter theo slug nữa vì fresh draft không có slug
+    // Mỗi lần save draft mới sẽ tạo revision mới (hoặc có thể dùng logic khác)
   }
 
   // Thực hiện Upsert (Tìm thấy thì update, không thì tạo mới)
@@ -922,6 +991,22 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
+
+  // GỬI THÔNG BÁO CHO ADMIN KHI SUBMIT PENDING
+  if (courseData.status === 'pending' && updatedRevision) {
+    const admins = await User.find({ role: 'admin' }).select('_id');
+    for (const admin of admins) {
+      await notificationService.createNotification({
+        recipient: admin._id,
+        sender: instructorId,
+        type: "system",
+        title: "Khóa học mới cần duyệt",
+        message: `Giảng viên vừa gửi khóa học "${revisionData.title}" chờ duyệt.`,
+        relatedId: updatedRevision._id,
+        courseSlug: revisionData.slug || undefined
+      });
+    }
+  }
 
   return updatedRevision;
 };
