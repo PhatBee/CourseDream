@@ -120,7 +120,7 @@ const LoginScreen = ({ navigation }) => {
                     {/* Header Section */}
                     <View className="mb-10">
                         <TouchableOpacity
-                            onPress={() => navigation.goBack()}
+                            onPress={() => navigation.goBack() ? navigation.goBack() : navigation.replace('MainTabs')}
                             className="self-end mb-6"
                         >
                             <Text className="text-rose-500 text-base font-medium underline">
@@ -189,24 +189,7 @@ const LoginScreen = ({ navigation }) => {
                         </View>
 
                         {/* Remember Me & Forgot Password */}
-                        <View className="flex-row items-center justify-between">
-                            <TouchableOpacity
-                                className="flex-row items-center gap-2"
-                                onPress={() => setRememberMe(!rememberMe)}
-                            >
-                                <View
-                                    className={`h-4 w-4 rounded border ${rememberMe
-                                        ? 'bg-rose-500 border-rose-500'
-                                        : 'bg-white border-gray-300'
-                                        } items-center justify-center`}
-                                >
-                                    {rememberMe && (
-                                        <Text className="text-white text-xs font-bold">✓</Text>
-                                    )}
-                                </View>
-                                <Text className="text-gray-700 text-[15px]">Remember Me</Text>
-                            </TouchableOpacity>
-
+                        <View className="flex-row items-center justify-end">
                             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
                                 <Text className="text-rose-500 text-[15px]">Forgot Password?</Text>
                             </TouchableOpacity>

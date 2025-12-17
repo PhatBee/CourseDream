@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
 
 import {
     User,
@@ -27,6 +28,17 @@ import {
 const ProfileScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
+
+    useEffect(() => {
+        if (!user) {
+            navigation.replace('Login');
+        }
+    }, [user, navigation]);
+
+    if (!user) {
+        return null;
+    }
+
 
     const handleLogout = () => {
         Alert.alert(
@@ -96,14 +108,6 @@ const ProfileScreen = ({ navigation }) => {
             </TouchableOpacity>
         );
     };
-
-    if (!user) {
-        return (
-            <SafeAreaView className="flex-1 bg-white items-center justify-center">
-                <Text className="text-gray-600">Loading...</Text>
-            </SafeAreaView>
-        );
-    }
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50">

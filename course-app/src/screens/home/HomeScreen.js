@@ -16,6 +16,7 @@ import PromoBanner from '../../components/home/PromoBanner';
 import CategoryList from '../../components/home/CategoryList';
 import CourseCard from '../../components/common/CourseCard';
 import OngoingCourse from '../../components/home/OngoingCourse';
+import LoginPromptCard from '../../components/home/LoginPromptCard';
 
 const HomeScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -65,7 +66,8 @@ const HomeScreen = ({ navigation }) => {
           <OngoingCourse enrollment={ongoingEnrollment} />
         ) : (
           <View className="px-5">
-            <PromoBanner />
+            <PromoBanner navigation={navigation} />
+            <LoginPromptCard navigation={navigation} />
           </View>
         )}
 
