@@ -1,4 +1,4 @@
-// scripts/seed_add_notion_launch_kit.js
+// scripts/seed_add_cyber_kill_chain.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -33,67 +33,98 @@ function slugify(text) {
     // ====== INPUT DATA ======
     const instructorId = '6913f6f74ef370e87cb6d779';
 
-    const title = 'The Ultimate Notion Course Launch Kit';
-    const shortDescription = 'Launch Your Course with Notion: Design Sales Pages, Dashboards, and Slide Decks for a Seamless Course Experience.';
+    const title = 'Introduction In Cyber Attack For Beginners';
+    const shortDescription = 'How to Think Like a Hacker with PCAP analysis to anticipate, detect, and defend against cyber threats.';
 
     const description = `
-Launching a course can be overwhelming — especially when you're juggling multiple tools and platforms.
+In today's evolving threat landscape, understanding how cyberattacks unfold is crucial for building effective defense strategies.
 
-With **The Ultimate Notion Course Launch Kit**, you can design, organize, and launch your entire course — all inside Notion.
+This course takes you on a comprehensive journey through the **Cyber Kill Chain**, a model developed by Lockheed Martin that outlines the stages of a cyberattack — from reconnaissance to exfiltration.
 
-In this course you’ll learn how to:
-• Build beautiful, high-converting sales pages directly in Notion
-• Create polished course dashboards for a seamless student experience
-• Design stunning, customizable slide decks (perfect for video lessons)
-• Use Notion as your all-in-one launch hub (no more messy tools!)
+You will learn how attackers operate, how vulnerabilities are exploited, and how defenders can detect, respond to, and mitigate these threats.
 
-Includes ready-to-use templates + step-by-step video training.
+Additionally, we dive deep into analyzing PCAP files using Wireshark to uncover network traffic anomalies, identify malicious activities, and improve your incident response skills.
 
-No design skills? No problem! Everything is beginner-friendly and fully customizable to match your brand.
+What You'll Learn:
+• The 7 stages of the Cyber Kill Chain and real-world attack techniques
+• Passive & Active Reconnaissance + OSINT tools
+• Weaponization, Delivery, Exploitation, Installation, C2, and Actions on Objectives
+• Hands-on PCAP analysis to detect Indicators of Compromise (IoCs)
+• Defensive strategies to break the kill chain at every phase
 
-Stop switching between apps. Launch faster, cleaner, and with total confidence — all from one place: Notion.
+Whether you're an aspiring cybersecurity professional or a seasoned IT expert, this course equips you with the mindset to think like a hacker — so you can better defend your systems.
+
+By the end, you’ll confidently analyze attacks, detect threats early, and build stronger defenses.
 `.trim();
 
-    const topics = ['Notion Workspace', 'Marketing'];
+    const topics = ['Cybersecurity', 'Ethical Hacking', 'Mạng', 'Bảo mật', 'Công nghệ thông tin', 'Phần mềm'];
     const includes = [
-      '2 giờ video theo yêu cầu',
+      '2,5 giờ video theo yêu cầu',
+      '17 tài nguyên có thể tải xuống',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'Course creators who want to launch faster using Notion',
-      'Coaches, educators, and creators tired of juggling multiple tools',
-      'Beginners who want a simple, beautiful, all-in-one launch system',
+      'Cybersecurity beginners who want to understand attack methodologies and defense strategies.',
+      'SOC Analysts and Blue Team members looking to improve their incident detection skills.',
+      'Networking and IT professionals who want to analyze malicious traffic using PCAP files.',
+      'Students and career changers interested in cybersecurity and ethical hacking.',
     ];
     const requirements = [
-      'Basic familiarity with Notion is helpful but not required',
-      'No advanced tech skills or special software needed — everything is done within Notion',
-      'Beginners are welcome — this course is designed to be user-friendly for all experience levels',
+      'Basic understanding of computer networks (TCP/IP, protocols, etc.).',
+      'A computer capable of running Wireshark and virtual machines (e.g., Kali Linux).',
+      'No prior cybersecurity experience needed!',
     ];
     const learnOutcomes = [
-      'Thiết kế sales page chuyên nghiệp hoàn toàn trong Notion',
-      'Tạo dashboard khóa học đẹp mắt và dễ sử dụng cho học viên',
-      'Xây dựng slide deck đẹp như Canva nhưng linh hoạt hơn với Notion',
-      'Tổ chức và launch khóa học chỉ với một công cụ duy nhất: Notion',
-      'Tự tin launch khóa học mà không cần biết code hay dùng nhiều app',
+      'Hiểu rõ mô hình Cyber Kill Chain và từng giai đoạn tấn công',
+      'Phân tích PCAP file bằng Wireshark để phát hiện IoCs',
+      'Nhận diện kỹ thuật reconnaissance, weaponization, delivery...',
+      'Áp dụng chiến lược phòng thủ để phá vỡ chuỗi tấn công',
+      'Tư duy như hacker để bảo vệ hệ thống hiệu quả hơn',
     ];
 
-    // ====== SECTIONS & LECTURES (chỉ 1 phần) ======
+    // ====== SECTIONS & LECTURES ======
     const sectionsData = [
       {
-        title: 'The Ultimate Notion Course Launch Kit',
+        title: 'Overview about what you will learn in this course',
         lectures: [
-          { title: 'Welcome on board!', preview: true, duration: '05:09', url: 'https://dai.ly/x9ugt4k' },
-          { title: 'Creating Notion Slides', preview: false, duration: '19:41', url: 'https://dai.ly/x9ugt4i' },
-          { title: 'The Foundation of Clarity', preview: false, duration: '10:18', url: 'https://dai.ly/x9ugt4e' },
-          { title: 'Editing Your Course with Loom', preview: true, duration: '04:59', url: 'https://dai.ly/x9ugt4c' },
-          { title: 'Editing Your Course with CapCut', preview: false, duration: '20:08', url: 'https://dai.ly/x9ugt4g' },
-          { title: 'Sales Page in Notion - Part 1', preview: false, duration: '24:35', url: 'https://dai.ly/x9ugujy' },
-          { title: 'Sales Page in Notion - Part 2', preview: false, duration: '17:16', url: 'https://dai.ly/x9ugv9y' },
-          { title: 'Notion Course Dashboard', preview: false, duration: '09:57', url: 'https://dai.ly/x9ugwji' },
-          { title: 'Flodesk Checkout', preview: false, duration: '09:13', url: 'https://dai.ly/x9ujv1o' },
-          { title: 'Stripe Checkout Alternative', preview: true, duration: '05:10', url: 'https://dai.ly/x9ujuz0' },
-          { title: 'Conclusion', preview: true, duration: '01:33', url: 'https://dai.ly/x9ujuz2' },
+          { title: 'What Will You Learn in This Course?', preview: true, duration: '02:20', url: 'https://dai.ly/x9ujvtc' },
+          { title: 'Understanding My Accent & Why I’m Sharing This Course', preview: true, duration: '00:54', url: 'https://dai.ly/x9ujvte' },
+        ]
+      },
+      {
+        title: 'Introduction to Cyber Kill Chain and Reconnaissance Phase',
+        lectures: [
+          { title: 'What is Cyber Kill Chain and Passive Reconnaissance', preview: false, duration: '11:54', url: 'https://dai.ly/x9ujvta' },
+          { title: 'Active Reconnaissance', preview: false, duration: '10:38', url: 'https://dai.ly/x9ujvt8' },
+          { title: 'OSINT Framework', preview: false, duration: '09:59', url: 'https://dai.ly/x9ujvtg' },
+        ]
+      },
+      {
+        title: 'Weaponization, Delivery & Exploitation Phases',
+        lectures: [
+          { title: 'Difference between Malware, Exploit & Payload', preview: false, duration: '06:48', url: 'https://dai.ly/x9ujvti' },
+          { title: 'What is Weaponization Phase & Techniques?', preview: false, duration: '07:51', url: 'https://dai.ly/x9ujvtm' },
+          { title: 'Delivery Phase', preview: false, duration: '05:08', url: 'https://dai.ly/x9ujwj0' },
+          { title: 'What is Exploitation Phase?', preview: false, duration: '04:08', url: 'https://dai.ly/x9ujwkg' },
+          { title: 'What does a Hacker do After Gaining Access?', preview: false, duration: '08:10', url: 'https://dai.ly/x9ujwl8' },
+        ]
+      },
+      {
+        title: 'Installation, Command & Control and Actions on Objectives Phases',
+        lectures: [
+          { title: 'Installation Phase', preview: true, duration: '11:24', url: 'https://dai.ly/x9unlpk' },
+          { title: 'Command & Control (C2) Phase', preview: false, duration: '09:45', url: 'https://dai.ly/x9unlpq' },
+          { title: 'Actions on Objectives (Exfiltration) Phase', preview: false, duration: '05:01', url: 'https://dai.ly/x9unlpo' },
+        ]
+      },
+      {
+        title: 'Analysis PCAP Files on Wireshark',
+        lectures: [
+          { title: 'Indicator of Compromise (IOCs)', preview: true, duration: '23:13', url: 'https://dai.ly/x9unlpm' },
+          { title: 'Web Server Attack PCAP File Analysis part (1)', preview: false, duration: '23:51', url: 'https://dai.ly/x9unlps' },
+          { title: 'Web Server Attack PCAP File Analysis part (2)', preview: false, duration: '09:19', url: 'https://dai.ly/x9unlpu' },
+          { title: 'important notes', preview: false, duration: '02:58', url: 'https://dai.ly/x9unlpw' },
         ]
       }
     ];
@@ -109,7 +140,7 @@ Stop switching between apps. Launch faster, cleaner, and with total confidence �
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Notion Workspace', 'Marketing'];
+    const categoryNames = ['Cybersecurity', 'Ethical Hacking', 'Mạng', 'Bảo mật', 'Công nghệ thông tin', 'Phần mềm'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -134,12 +165,12 @@ Stop switching between apps. Launch faster, cleaner, and with total confidence �
 
     course.title = title;
     course.slug = slug;
-    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6181677_24a6.jpg'; // thay link thật sau nếu cần
-    course.previewUrl = '';
+    course.thumbnail = 'https://img-c.udemycdn.com/course/480x270/6525331_92c4_7.jpg?w=640&q=75'; // bạn có thể thay bằng link thumbnail thực tế sau
+    course.previewUrl = ''; // video preview chính
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 499000;
-    course.priceDiscount = 199000;
+    course.price = 399000;
+    course.priceDiscount = 299000;
     course.level = 'beginner';
     course.language = 'en';
     course.requirements = requirements;
@@ -215,7 +246,7 @@ Stop switching between apps. Launch faster, cleaner, and with total confidence �
     course.sections = sectionIds;
     course.totalLectures = totalLectures;
     course.totalDurationSeconds = totalSeconds;
-    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~2.12 giờ
+    course.totalHours = Number((totalSeconds / 3600).toFixed(2));
 
     await course.save();
 
