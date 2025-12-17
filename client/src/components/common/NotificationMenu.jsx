@@ -28,6 +28,24 @@ const NotificationMenu = ({ open, onClose }) => {
     if (!notification.read) {
       dispatch(markNotificationAsRead(notification._id));
     }
+
+    // Nếu là thông báo report → chuyển đến tab report
+    if (notification.type === "report") {
+      navigate("/admin/reports"); // Đường dẫn tab Report
+      onClose && onClose();
+      return;
+    }
+
+    // Nếu là thông báo duyệt khóa học (type === "system" và title chứa "Khóa học")
+    if (
+      notification.type === "system" &&
+      notification.title.toLowerCase().includes("khóa học")
+    ) {
+      navigate("/admin/courses"); // Đường dẫn tab Khóa học
+      onClose && onClose();
+      return;
+    }
+
     // Nếu là thông báo reply, chuyển hướng đến detail course và cuộn xuống thảo luận
     if (notification.type === "reply" && notification.relatedId && notification.courseSlug) {
       navigate(`/courses/${notification.courseSlug}?discussionId=${notification.relatedId}`);

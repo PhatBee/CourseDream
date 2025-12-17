@@ -9,6 +9,7 @@ import Lecture from '../course/lecture.model.js';
 import Section from '../course/section.model.js';
 import InstructorApplication from '../user/instructorApplication.model.js';
 import InstructorProfile from '../user/InstructorProfile.model.js';
+import notificationService from "../notification/notification.service.js";
 
 export const getPendingApplications = async () => {
   const applications = await User.find({
