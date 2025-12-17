@@ -7,8 +7,8 @@ const EnrolledCoursesPage = () => {
 
   useEffect(() => {
     enrollmentApi.getMyEnrollments().then(res => {
-      // res.data.enrollments là mảng các enrollment, mỗi cái có .course
-      setCourses(res.data.enrollments.map(e => e.course));
+      // Lọc bỏ enrollment không có course
+      setCourses(res.data.enrollments.map(e => e.course).filter(Boolean));
     });
   }, []);
 
