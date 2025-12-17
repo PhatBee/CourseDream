@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Star, Heart, ShoppingCart } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
+import { store } from '../../app/store';
 
 // --- SUB-COMPONENT: Footer xử lý logic hiển thị Giá hoặc Nút Học ---
 const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart }) => {
@@ -11,11 +12,11 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
   if (isEnrolled) {
     return (
       <View className="mt-2">
-         <View className="bg-emerald-50 px-3 py-2 rounded-lg items-center justify-center border border-emerald-100">
-            <Text className="text-emerald-600 font-bold text-xs uppercase tracking-wider">
-               Already Enrolled
-            </Text>
-         </View>
+        <View className="bg-emerald-50 px-3 py-2 rounded-lg items-center justify-center border border-emerald-100">
+          <Text className="text-emerald-600 font-bold text-xs uppercase tracking-wider">
+            Already Enrolled
+          </Text>
+        </View>
       </View>
     );
   }
@@ -33,17 +34,17 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
               {formatPrice(price)}
             </Text>
             <View className="bg-rose-100 px-1 rounded">
-                <Text className="text-rose-600 text-[10px] font-bold">SALE</Text>
+              <Text className="text-rose-600 text-[10px] font-bold">SALE</Text>
             </View>
           </View>
         )}
       </View>
       {/* Nút giỏ hàng có thể xử lý logic AddToCart tại đây */}
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={onAddToCart}
         className="bg-gray-900 w-8 h-8 rounded-full items-center justify-center active:bg-gray-700"
       >
-          <ShoppingCart size={14} color="white" />
+        <ShoppingCart size={14} color="white" />
       </TouchableOpacity>
     </View>
   );
@@ -81,7 +82,7 @@ const CourseCard = ({ course }) => {
   const imageUrl = thumbnail?.url || thumbnail || 'https://via.placeholder.com/300x200';
   const finalPrice = priceDiscount || price;
   const hasDiscount = priceDiscount && priceDiscount < price;
-  
+
   const formatCurrency = (amount) => {
     if (amount === 0) return 'Free';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -93,6 +94,15 @@ const CourseCard = ({ course }) => {
   };
 
   const handleToggleWishlist = () => {
+    // Kiểm tra user đã login chưa
+    const { user } = store.getState().auth;
+
+    if (!user) {
+      // Chưa login, navigate to Login
+      navigation.navigate('Login');
+      return;
+    }
+
     if (isWishlisted) {
       dispatch(removeFromWishlist(_id));
     } else {
@@ -101,6 +111,15 @@ const CourseCard = ({ course }) => {
   };
 
   const handleAddToCart = () => {
+    // Kiểm tra user đã login chưa
+    const { user } = store.getState().auth;
+
+    if (!user) {
+      // Chưa login, navigate to Login
+      navigation.navigate('Login');
+      return;
+    }
+
     console.log("Add to cart:", _id);
     // Dispatch action add to cart here
   };
@@ -114,17 +133,17 @@ const CourseCard = ({ course }) => {
       {/* Image Area */}
       <View>
         <Image source={{ uri: imageUrl }} className="w-full h-32" resizeMode="cover" />
-        
+
         {/* Wishlist Heart Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleToggleWishlist}
           className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm"
         >
           {/* Đổi màu tim dựa trên trạng thái */}
-          <Heart 
-            size={16} 
-            color={isWishlisted ? "#e11d48" : "#9ca3af"} 
-            fill={isWishlisted ? "#e11d48" : "transparent"} 
+          <Heart
+            size={16}
+            color={isWishlisted ? "#e11d48" : "#9ca3af"}
+            fill={isWishlisted ? "#e11d48" : "transparent"}
           />
         </TouchableOpacity>
 
@@ -141,23 +160,23 @@ const CourseCard = ({ course }) => {
       {/* Content Area */}
       <View className="p-3 justify-between flex-1">
         <View>
-            <Text className="text-gray-900 font-bold text-sm mb-1 leading-5" numberOfLines={2}>
-              {title}
-            </Text>
-            <Text className="text-gray-500 text-xs mb-2" numberOfLines={1}>
-                {instructor?.name || 'Unknown'}
-            </Text>
+          <Text className="text-gray-900 font-bold text-sm mb-1 leading-5" numberOfLines={2}>
+            {title}
+          </Text>
+          <Text className="text-gray-500 text-xs mb-2" numberOfLines={1}>
+            {instructor?.name || 'Unknown'}
+          </Text>
 
-             {/* Rating */}
-            <View className="flex-row items-center mb-1">
-                <Star size={10} color="#f59e0b" fill="#f59e0b" />
-                <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
-                <Text className="text-[10px] text-gray-400 ml-1">({reviewCount})</Text>
-            </View>
+          {/* Rating */}
+          <View className="flex-row items-center mb-1">
+            <Star size={10} color="#f59e0b" fill="#f59e0b" />
+            <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
+            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount})</Text>
+          </View>
         </View>
 
         {/* Footer Component (Price or Enrolled Status) */}
-        <CourseCardFooter 
+        <CourseCardFooter
           isEnrolled={isEnrolled}
           price={price}
           displayPrice={finalPrice}

@@ -91,12 +91,14 @@ const LoginScreen = ({ navigation }) => {
         }
         dispatch(login(formData));
 
-        if (result.type.endsWith('fullfilled')) {
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'MainTabs' }],
-            });
-        }
+        // if (result.type.endsWith('fullfilled')) {
+        //     navigation.reset({
+        //         index: 0,
+        //         routes: [{ name: 'MainTabs' }],
+        //     });
+        // }
+
+
     };
 
     const onChange = (name, value) => {

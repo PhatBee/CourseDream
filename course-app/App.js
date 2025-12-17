@@ -6,8 +6,9 @@ import Toast from 'react-native-toast-message';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
-import { getUser, getToken } from './src/utils/storage';
+import { getUser, getToken, removeToken, removeUser } from './src/utils/storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import axiosClient from './src/api/axiosClient';
 import { toastConfig } from './src/utils/toastConfig';
 import "./global.css"
 
@@ -44,12 +45,29 @@ const MainNavigator = () => {
     const checkLoginStatus = async () => {
       try {
         const token = await getToken();
-        const user = await getUser();
-        if (token && user) {
-          dispatch(setCredentials(user));
+        const storedUser = await getUser();
+
+        if (token && storedUser) {
+          // Verify token với server bằng cách gọi một API đơn giản
+          try {
+            // Thử gọi API để verify token còn hợp lệ không
+            // axiosClient sẽ tự động refresh token nếu cần
+            const response = await axiosClient.get('/users/profile');
+
+            if (response.data) {
+              // Token hợp lệ, set user
+              dispatch(setCredentials(storedUser));
+            }
+          } catch (error) {
+            // Token không hợp lệ hoặc hết hạn
+            console.log('Token invalid or expired, clearing storage');
+            await removeToken();
+            await removeUser();
+            // User sẽ ở trạng thái guest
+          }
         }
       } catch (e) {
-        console.log(e);
+        console.log('Error checking login status:', e);
       } finally {
         setIsReady(true);
       }
