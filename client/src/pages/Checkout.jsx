@@ -63,15 +63,27 @@ export default function Checkout() {
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
     // Tính tổng giá đã giảm (nếu có priceDiscount)
     const subtotalDiscount = items.reduce((sum, item) => sum + (item.priceDiscount ?? item.price), 0);
-    // Nếu có mã giảm giá (preview), lấy giá sau giảm, nếu không thì lấy subtotalDiscount
-    const displayedPrice = preview ? preview.discountedPrice : subtotalDiscount;
+    //  Giá trị giảm từ mã khuyến mãi (nếu có)
+    let promotionDiscount = 0;
+    if (preview && preview.discountType === "percent") {
+    promotionDiscount = subtotalDiscount * (preview.discountValue / 100);
+    } else if (preview && preview.discountType === "fixed") {
+    promotionDiscount = preview.discountValue;
+    }
+    // 3. Số tiền sau khi áp dụng mã giảm giá
+    let amountAfterPromo = subtotalDiscount - promotionDiscount;
+    if (amountAfterPromo < 0) amountAfterPromo = 0;
     // Tính discount (giảm giá so với giá gốc)
-    const discount = subtotal - displayedPrice;
+    const discount = subtotal - amountAfterPromo;
     // Nếu displayedPrice = 0 thì tax = 0, ngược lại tính 10%
-    const tax = displayedPrice > 0 ? Math.round(displayedPrice * 0.1) : 0;
+    const tax = amountAfterPromo > 0 ? Math.round(amountAfterPromo * 0.1) : 0;
     // Tổng cuối cùng
-    const finalTotal = displayedPrice + tax;
+    let finalTotal = amountAfterPromo + tax;
 
+        // Làm tròn lên 1000 nếu > 0 và < 1000
+    if (finalTotal > 0 && finalTotal < 1000) {
+        finalTotal = 1000;
+    }
     // --- LOGIC 1 & 2: Xử lý hiển thị phương thức thanh toán ---
 
     const isFreeOrder = finalTotal === 0;
@@ -519,7 +531,6 @@ export default function Checkout() {
                                 {preview && (
                                     <div className="mt-2 text-green-600">
                                         Đã áp dụng mã <b>{selectedPromotion}</b>!<br />
-                                        Giá sau giảm: <b>{preview.discountedPrice.toLocaleString("vi-VN")}₫</b>
                                         {preview.discountValue > 0 && (
                                             <span className="ml-2 text-xs text-gray-500">
                                                 (Đã giảm {preview.discountValue.toLocaleString("vi-VN")}
