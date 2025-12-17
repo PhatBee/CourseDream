@@ -77,6 +77,9 @@ const CourseCard = ({ course }) => {
     slug
   } = course;
 
+  const user = useSelector(state => state.auth.user);
+
+
   // Logic kiểm tra trạng thái
   const isEnrolled = enrolledCourseIds.includes(_id);
   const isWishlisted = wishlistItems.some(item => item._id === _id);
@@ -98,7 +101,6 @@ const CourseCard = ({ course }) => {
 
   const handleToggleWishlist = () => {
     // Kiểm tra user đã login chưa
-    const user = useSelector(state => state.auth.user);
 
     if (!user) {
       // Chưa login, navigate to Login
@@ -114,8 +116,6 @@ const CourseCard = ({ course }) => {
   };
 
   const handleAddToCart = () => {
-    // Kiểm tra user đã login chưa
-    const user = useSelector(state => state.auth.user);
 
     if (!user) {
       // Chưa login, navigate to Login
