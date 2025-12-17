@@ -6,7 +6,6 @@ import CourseListHeader from '../components/course/CourseListHeader';
 import CourseList from '../components/course/CourseList';
 import Pagination from '../components/common/Pagination';
 import Spinner from '../components/common/Spinner';
-import { useSearchParams } from 'react-router-dom';
 
 const buildParams = (filters, currentPage) => {
   const params = new URLSearchParams();
@@ -35,7 +34,7 @@ const CoursePage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
-    q: initialQuery,
+    q: initialKeyword,
     category: [],
     instructor: [],
     price: [],

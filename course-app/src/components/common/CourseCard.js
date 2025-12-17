@@ -82,7 +82,7 @@ const CourseCard = ({ course }) => {
   const isWishlisted = wishlistItems.some(item => item._id === _id);
 
   // Formatting
-  const imageUrl = thumbnail?.url || thumbnail || defaultCourse;
+  const imageUrl = thumbnail?.url || thumbnail;
   const finalPrice = priceDiscount || price;
   const hasDiscount = priceDiscount && priceDiscount < price;
 
@@ -154,7 +154,7 @@ const CourseCard = ({ course }) => {
         </TouchableOpacity>
 
         {/* Category Badge */}
-        {categories?.[0] && (
+        {categories && categories?.[0] && (
           <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
             <Text className="text-white text-[10px] font-medium" numberOfLines={1}>
               {categories[0].name}
@@ -177,7 +177,7 @@ const CourseCard = ({ course }) => {
           <View className="flex-row items-center mb-1">
             <Star size={10} color="#f59e0b" fill="#f59e0b" />
             <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
-            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount || 0})</Text>
+            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount ? reviewCount : 0})</Text>
           </View>
         </View>
 
