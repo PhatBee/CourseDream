@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bell } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import defaultAvatar from '../../assets/img/icons/apple-icon.png';
+import NotificationMenu from '../common/NotificationMenu';
 
 const AdminHeader = ({ user }) => {
     const location = useLocation();
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const unreadCount = useSelector(state => state.notification.unreadCount);
 
     const getPageTitle = () => {
         const path = location.pathname;
@@ -28,10 +32,22 @@ const AdminHeader = ({ user }) => {
       <div className="flex items-center gap-5">
 
         {/* Notification */}
-        <button className="relative p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
-        </button>
+        <div className="relative">
+          <button
+            className="relative p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+            onClick={() => setNotificationOpen(v => !v)}
+            type="button"
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+            )}
+          </button>
+          <NotificationMenu
+            open={notificationOpen}
+            onClose={() => setNotificationOpen(false)}
+          />
+        </div>
 
         {/* Divider */}
         <div className="h-8 w-[1px] bg-gray-200 mx-1"></div>

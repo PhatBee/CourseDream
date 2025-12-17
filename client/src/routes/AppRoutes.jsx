@@ -40,6 +40,8 @@ import InstructorApplications from "../pages/admin/InstructorApplications";
 import InstructorInfoEdit from "../components/profile/InstructorInfoEdit";
 import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
 import StudentDashboard from "../pages/StudentDashboard";
+import ReportsManagement from "../pages/admin/ReportsManagement";
+import PromotionsManagement from "../pages/admin/PromotionsManagement";
 
 export default function AppRoutes() {
 
@@ -77,8 +79,8 @@ export default function AppRoutes() {
               <Route path="security" element={<ChangePassword />} />
 
               <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
-                  <Route path="instructor-profile" element={<InstructorInfoEdit />} />
-                  <Route path="social-payout" element={<SocialPayoutEdit />} />
+                <Route path="instructor-profile" element={<InstructorInfoEdit />} />
+                <Route path="social-payout" element={<SocialPayoutEdit />} />
               </Route>
               {/* Khi vào /profile/settings, tự động nhảy sang /edit */}
               <Route index element={<Navigate to="edit" replace />} />
@@ -89,17 +91,18 @@ export default function AppRoutes() {
               <Route path="instructor/courses" element={<InstructorCourses />} />
               <Route path="instructor/dashboard" element={<InstructorDashboard />} />
             </Route>
-
+            <Route path="/profile/dashboard" element={<InstructorDashboard />} />
+            {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
 
           </Route>
         </Route>
 
-         <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
-              <Route path="instructor/add-course" element={<AddCoursePage />} />
-              <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
-            </Route>
+        <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+          <Route path="instructor/add-course" element={<AddCoursePage />} />
+          <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
+        </Route>
 
         {/* No header Routes */}
         <Route path="/login" element={<Login />} />
@@ -116,19 +119,21 @@ export default function AppRoutes() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<StudentsManagement />} />
+            <Route path="reports" element={<ReportsManagement />} />
             <Route path="instructors" element={<InstructorsManagement />}>
-        {/* Redirect mặc định vào list */}
-        <Route index element={<Navigate to="list" replace />} />
-        
-        {/* Tab 1: Danh sách */}
-        <Route path="list" element={<InstructorList />} />
-        
-        {/* Tab 2: Đơn đăng ký */}
-        <Route path="applications" element={<InstructorApplications />} />
-    </Route>
+              {/* Redirect mặc định vào list */}
+              <Route index element={<Navigate to="list" replace />} />
+
+              {/* Tab 1: Danh sách */}
+              <Route path="list" element={<InstructorList />} />
+
+              {/* Tab 2: Đơn đăng ký */}
+              <Route path="applications" element={<InstructorApplications />} />
+            </Route>
             <Route path="courses" element={<AdminPendingCourses />} />
             <Route path="categories" element={<CategoriesManagement />} />
             <Route path="blogs" element={<div>Manage Blogs</div>} />
+            <Route path="promotions" element={<PromotionsManagement />} />
           </Route>
 
           {/* <Route path="admin/pending-courses" element={<AdminPendingCourses />} /> */}

@@ -1,24 +1,28 @@
 // src/components/course/ReviewForm.js
 import React, { useState } from 'react';
-import { postReview } from '../../api/reviewApi';
-import StarRating from '../common/StarRating';
+import { useDispatch } from 'react-redux';
+import { addReview, fetchReviews } from './reviewSlice';
+import StarRating from '../../components/common/StarRating';
 import toast from 'react-hot-toast';
 
 const ReviewForm = ({ courseId, onReviewSuccess }) => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await postReview(courseId, { rating, comment });
+      await dispatch(addReview({ courseId, data: { rating, comment } })).unwrap();
       setComment('');
+      toast.success('Đánh giá thành công!');
+      // Gọi lại fetchReviews để cập nhật danh sách đánh giá
+      dispatch(fetchReviews(courseId));
       if (onReviewSuccess) onReviewSuccess();
-      toast.success('Đánh giá thành công!'); // Sử dụng toast thay cho alert
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra'); // Sử dụng toast cho lỗi
+    } catch {
+      toast.error('Gửi đánh giá thất bại!');
     }
     setLoading(false);
   };
@@ -38,6 +42,7 @@ const ReviewForm = ({ courseId, onReviewSuccess }) => {
             value={comment}
             onChange={e => setComment(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Nhận xét của bạn"
             required
           ></textarea>
         </div>
@@ -45,7 +50,7 @@ const ReviewForm = ({ courseId, onReviewSuccess }) => {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex justify-center px-6 py-2 border border-transparent rounded-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg group"
           >
             {loading ? 'Đang gửi...' : 'Gửi đánh giá'}
           </button>

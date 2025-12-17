@@ -20,7 +20,7 @@ const CategoriesSection = () => {
         <div className="flex flex-wrap justify-start gap-6">
           {displayCategories.map((cat) => (
             <Link 
-              to={`/courses?category=${cat.slug || cat._id}`} 
+              to={`/courses?category=${cat._id}`} 
               key={cat._id} 
               className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:border-rose-200 cursor-pointer transition-all duration-300 min-w-[220px] group"
             >
