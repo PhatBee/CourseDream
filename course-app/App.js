@@ -8,10 +8,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
 import { getUser, getToken } from './src/utils/storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
 import { toastConfig } from './src/utils/toastConfig';
 import "./global.css"
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -64,11 +62,10 @@ const MainNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {/* Bạn có thể thêm logic điều hướng tùy thuộc vào user đã login chưa tại đây */}
-      if (user) {
-        <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-
-      }
+      <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Home" component={HomeScreen} />
+
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -76,6 +73,7 @@ const MainNavigator = () => {
       <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
 
       {/* User Screens */}
+
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="MyProfile" component={MyProfileScreen} />

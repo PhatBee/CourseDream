@@ -90,6 +90,13 @@ const LoginScreen = ({ navigation }) => {
             return Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ thông tin');
         }
         dispatch(login(formData));
+
+        if (result.type.endsWith('fullfilled')) {
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs' }],
+            });
+        }
     };
 
     const onChange = (name, value) => {

@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Bell, LogIn } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const HomeHeader = ({ user, navigation }) => {
+const HomeHeader = ({ user }) => {
+  const navigation = useNavigation();
   return (
     <View className="flex-row justify-between items-center mb-6">
       <View>
