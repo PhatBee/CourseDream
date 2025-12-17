@@ -10,6 +10,10 @@ const enrollmentApi = {
   getMyEnrollments: () => {
     return axiosClient.get(`${path}/me`);
   },
+
+  getStudentDashboard: () => {
+    return axiosClient.get(`${path}/dashboard`);
+  },
 };
 
 export default enrollmentApi;

@@ -24,6 +24,19 @@ export const fetchMyEnrollments = createAsyncThunk(
   }
 );
 
+export const fetchStudentDashboard = createAsyncThunk(
+  'enrollment/fetchDashboard',
+  async (_, thunkAPI) => {
+    try {
+      const response = await enrollmentApi.getStudentDashboard();
+      return response.data.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message);
+    }
+  }
+);
+
+
 const enrollmentSlice = createSlice({
   name: 'enrollment',
   initialState,
@@ -32,6 +45,7 @@ const enrollmentSlice = createSlice({
     resetEnrollment: (state) => {
       state.items = [];
       state.enrolledCourseIds = [];
+      state.dashboardCourses = [];
       state.isLoading = false;
       state.isError = false;
       state.message = '';
@@ -58,6 +72,18 @@ const enrollmentSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+      })
+
+      .addCase(fetchStudentDashboard.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchStudentDashboard.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.dashboardCourses = action.payload;
+      })
+      .addCase(fetchStudentDashboard.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
       });
   },
 });

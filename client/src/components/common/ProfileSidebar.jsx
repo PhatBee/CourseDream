@@ -4,16 +4,12 @@ import { Grid, User, Settings, LogOut, Heart, BookOpen, Book } from 'lucide-reac
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 
-const SidebarLink = ({ to, icon, label }) => {
-  const location = useLocation();
-  // Kiểm tra active chính xác hơn (bao gồm cả sub-route)
-  const isActive = location.pathname === to || location.pathname.startsWith(to + '/');
-
+const SidebarLink = ({ to, icon, label, exact = false }) => {
   return (
     <li>
       <NavLink
         to={to}
-        end={to === '/profile'} // Chỉ exact match với trang profile gốc
+        end={exact} 
         className={({ isActive }) => `
           flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200
           ${isActive
@@ -22,10 +18,14 @@ const SidebarLink = ({ to, icon, label }) => {
           }
         `}
       >
-        <span className={isActive ? "text-rose-500" : "text-gray-400"}>
-          {icon}
-        </span>
-        <span className="ml-3">{label}</span>
+        {({ isActive }) => (
+          <>
+            <span className={isActive ? "text-rose-500" : "text-gray-400"}>
+              {icon}
+            </span>
+            <span className="ml-3">{label}</span>
+          </>
+        )}
       </NavLink>
     </li>
   );
@@ -50,7 +50,7 @@ const ProfileSidebar = () => {
         </h6>
         <ul className="space-y-1">
           <SidebarLink to="/profile/dashboard" icon={<Grid size={20} />} label="Dashboard" />
-          <SidebarLink to="/profile" icon={<User size={20} />} label="My Profile" />
+          <SidebarLink to="/profile/my-profile" icon={<User size={20} />} label="My Profile" />
           <SidebarLink to="/profile/enrolled-courses" icon={<BookOpen size={20} />} label="Enrolled Courses" />
           <SidebarLink to="/profile/wishlist" icon={<Heart size={20} />} label="Wishlist" />
 

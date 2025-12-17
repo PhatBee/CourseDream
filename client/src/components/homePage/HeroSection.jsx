@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, ArrowRight, Star, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const HeroSection = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+  e.preventDefault();
+
+  navigate(`/courses?q=${encodeURIComponent(searchTerm)}`);
+};
   return (
     // Đổi nền sang tông Rose/Red nhẹ
     <section className="relative bg-gradient-to-br from-rose-50 via-white to-orange-50 py-20 lg:py-28 overflow-hidden">
@@ -30,21 +39,25 @@ const HeroSection = () => {
             </p>
             
             {/* Search Form */}
-            <div className="bg-white p-2 rounded-lg shadow-xl shadow-rose-100/50 max-w-lg border border-gray-100">
-              <form className="flex items-center gap-2">
-                <div className="flex items-center flex-1 px-3">
-                  <Search className="w-5 h-5 text-gray-400 mr-2" />
-                  <input 
-                    type="text" 
-                    placeholder="Search courses..." 
-                    className="w-full p-2 focus:outline-none text-gray-700 placeholder-gray-400 bg-transparent" 
-                  />
-                </div>
-                <button className="bg-rose-600 hover:bg-rose-700 text-white p-3 rounded-md transition-colors shadow-lg shadow-rose-200">
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </form>
-            </div>
+            <form onSubmit={handleSearch} className="relative max-w-lg">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input 
+                type="text" 
+                className="block w-full pl-11 pr-4 py-4 border-2 border-rose-100 rounded-2xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all shadow-sm" 
+                placeholder="What do you want to learn today?" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button 
+                type="submit"
+                className="absolute inset-y-2 right-2 px-6 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 transition-colors shadow-md flex items-center gap-2 group"
+              >
+                Search
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </form>
 
              {/* Trust Stats (Căn trái) */}
              <div className="pt-4">

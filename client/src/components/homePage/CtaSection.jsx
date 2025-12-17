@@ -53,7 +53,7 @@ const CtaSection = () => {
              </ul>
              
              <div>
-                <Link to="/become-instructor" className="inline-flex items-center gap-2 bg-rose-600 text-white px-8 py-4 rounded-full font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
+                <Link to="profile/become-instructor" className="inline-flex items-center gap-2 bg-rose-600 text-white px-8 py-4 rounded-full font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
                   Register as Instructor <ArrowRight className="w-5 h-5" />
                 </Link>
              </div>
