@@ -31,6 +31,8 @@ const CourseCardAllCourse = React.memo(({ course }) => {
     slug
   } = course;
 
+  const categoryName = categories?.[0]?.name || 'General';
+
   const isEnrolled = enrolledCourseIds.includes(_id);
   const isWishlisted = wishlistItems.some(item => item._id === _id);
   const inCart = cartItems.some(item => item.course._id === _id);
@@ -92,19 +94,11 @@ const CourseCardAllCourse = React.memo(({ course }) => {
           />
         </TouchableOpacity>
         {/* Category Badge */}
-        {categories && categories[0] && (
-          <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
-            <Text className="text-white text-[10px] font-medium" numberOfLines={1}>
-              {categories[0].name}
-            </Text>
-          </View>
-        ) || (
-            <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
-              <Text className="text-white text-[10px] font-medium" numberOfLines={1}>
-                General
-              </Text>
-            </View>
-          )}
+        <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
+          <Text className="text-white text-[10px] font-medium" numberOfLines={1}>
+            {categoryName}
+          </Text>
+        </View>
       </View>
       {/* Content */}
       <View className="p-3 flex-1">
