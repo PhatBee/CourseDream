@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ChevronLeft } from 'lucide-react-native';
 
 // Import Actions & Components
-import { fetchLearningCourse, setCurrentLecture, toggleLecture } from '../../features/learning/learningSlice'; //
+import { fetchLearningCourse, setCurrentLecture, toggleLecture, resetLearning } from '../../features/learning/learningSlice'; //
 import VideoPlayer from '../../components/learning/VideoPlayer';
 import LearningTabs from '../../components/learning/LearningTabs';
 import CurriculumList from '../../components/learning/CurriculumList';
@@ -30,6 +30,10 @@ const LearningScreen = ({ route, navigation }) => {
     if (slug) {
       dispatch(fetchLearningCourse(slug));
     }
+
+    return () => {
+      dispatch(resetLearning());
+    };
   }, [dispatch, slug]);
 
   const handleLecturePress = (lecture) => {
