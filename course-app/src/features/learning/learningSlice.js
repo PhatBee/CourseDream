@@ -9,6 +9,7 @@ const initialState = {
   currentLecture: null,   // Bài học đang xem
   isLoading: false,
   isError: false,
+  progressMap: {}, // <--- Thêm dòng này
 };
 
 // Thunk: Lấy toàn bộ dữ liệu khóa học + Tiến độ
@@ -43,6 +44,22 @@ export const toggleLecture = createAsyncThunk(
         text2: "Không thể cập nhật tiến độ học tập"
       });
       return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thunk: Lấy progress cho 1 khóa học (trả về {slug, percentage})
+export const fetchCourseProgress = createAsyncThunk(
+  'learning/fetchCourseProgress',
+  async (courseSlug, thunkAPI) => {
+    try {
+      const res = await learningApi.getProgress(courseSlug);
+      return {
+        slug: courseSlug,
+        percentage: res.data?.data?.percentage ?? 0
+      };
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ slug: courseSlug, error: error.message });
     }
   }
 );
@@ -86,6 +103,10 @@ export const learningSlice = createSlice({
       .addCase(toggleLecture.fulfilled, (state, action) => {
         // Cập nhật lại progress state
         state.progress = action.payload; 
+      })
+      .addCase(fetchCourseProgress.fulfilled, (state, action) => {
+        const { slug, percentage } = action.payload;
+        state.progressMap[slug] = percentage;
       });
   },
 });

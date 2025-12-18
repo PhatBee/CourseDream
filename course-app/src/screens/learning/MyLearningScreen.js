@@ -6,18 +6,17 @@ import { fetchMyEnrollments } from '../../features/enrollment/enrollmentSlice';
 import ProgressBar from '../../components/common/ProgressBar';
 import CourseFilter from '../../components/common/CourseFilter';
 import { getAllCategoriesSimple } from '../../features/categories/categorySlice'; // Thêm dòng này
-import axiosClient from '../../api/axiosClient';
 import { Image } from 'expo-image';
+import { fetchCourseProgress } from '../../features/learning/learningSlice'; // Thêm dòng này
 
 const MyLearningScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { items: enrollments = [], isLoading, isError, message } = useSelector(state => state.enrollment);
   const { items: categories = [] } = useSelector(state => state.categories);
-
+  const progressMap = useSelector(state => state.learning.progressMap); 
   // State filter
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [progressMap, setProgressMap] = useState({});
 
   // Lấy đủ danh mục khi mount
   useEffect(() => {
@@ -30,24 +29,15 @@ const MyLearningScreen = ({ navigation }) => {
 
   // Fetch progress cho từng course
   useEffect(() => {
-    const fetchAllProgress = async () => {
-      const newMap = {};
-      await Promise.all(
-        enrollments.map(async (enrollment) => {
-          const course = enrollment.course;
-          if (!course || !course.slug) return;
-          try {
-            const res = await axiosClient.get(`/progress/${course.slug}`);
-            newMap[course.slug] = res.data.data?.percentage ?? 0;
-          } catch {
-            newMap[course.slug] = 0;
-          }
-        })
-      );
-      setProgressMap(newMap);
-    };
-    if (enrollments.length > 0) fetchAllProgress();
-  }, [enrollments]);
+    if (enrollments.length > 0) {
+      enrollments.forEach(enrollment => {
+        const course = enrollment.course;
+        if (course && course.slug) {
+          dispatch(fetchCourseProgress(course.slug));
+        }
+      });
+    }
+  }, [enrollments, dispatch]);
 
   // Lọc enrollments theo search và category (lọc client)
   const filteredEnrollments = useMemo(() => {
