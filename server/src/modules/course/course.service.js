@@ -147,7 +147,7 @@ export const getAllCourses = async (query) => {
 
 export const getLearningDetails = async (slug, userId) => {
   const course = await Course.findOne({ slug })
-    .select("title slug sections totalLectures thumbnail instructor")
+    .select("title slug sections totalLectures thumbnail instructor shortDescription description")
     .populate({
       path: "sections",
       select: "title order",
