@@ -113,8 +113,13 @@ export const getAllCourses = async (query) => {
 
   const filter = { status: "published" };
   if (query.category) {
+    filter.categories = { $in: Array.isArray(query.category) ? query.category : [query.category] };
   }
 
+  if (query.search) {
+    filter.title = { $regex: query.search, $options: 'i' };
+  }
+  
   const courses = await Course.find(filter)
     .select(
       "title slug thumbnail price priceDiscount level rating reviewCount instructor categories"

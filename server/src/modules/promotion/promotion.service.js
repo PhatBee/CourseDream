@@ -15,7 +15,7 @@ export const previewPromotion = async (promotion, courseId, userId) => {
   if (!course) throw new Error("Khóa học không tồn tại");
 
   // Không trust price từ client: Lấy từ DB
-  const price = course.price;
+  const price = course.priceDiscount;
 
   if (price < promotion.minPrice) {
     throw new Error(`Cần mua từ ${promotion.minPrice}đ để dùng mã này`);

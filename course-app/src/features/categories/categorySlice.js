@@ -51,6 +51,18 @@ export const deleteCategory = createAsyncThunk(
   }
 );
 
+export const getAllCategoriesSimple = createAsyncThunk(
+  'categories/getAllSimple',
+  async (_, thunkAPI) => {
+    try {
+      const response = await categoryService.getAllCategoriesSimple();
+      return response; // response là mảng category
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
 const categorySlice = createSlice({
   name: 'categories',
   initialState: {
@@ -90,6 +102,17 @@ const categorySlice = createSlice({
       // Delete
       .addCase(deleteCategory.fulfilled, (state, action) => {
         state.items = state.items.filter(c => c._id !== action.payload);
+      })
+
+      // Get All Categories Simple
+      .addCase(getAllCategoriesSimple.pending, (state) => { state.isLoading = true; })
+      .addCase(getAllCategoriesSimple.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(getAllCategoriesSimple.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });

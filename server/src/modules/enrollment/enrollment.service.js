@@ -40,8 +40,11 @@ class EnrollmentService {
         return Enrollment.find({ student: userId })
             .populate({
                 path: "course",
-                select: "title slug thumbnail price instructor totalLectures totalHours instructor",
-                populate: { path: "instructor", select: "name avatar" }
+                select: "title slug thumbnail price instructor totalLectures totalHours categories", // Thêm categories
+                populate: [
+                    { path: "instructor", select: "name avatar" },
+                    { path: "categories", select: "name slug" } // Populate categories
+                ]
             })
             .sort({ enrolledAt: -1 });
     }
