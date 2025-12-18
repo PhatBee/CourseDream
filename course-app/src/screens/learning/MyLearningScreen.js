@@ -33,7 +33,7 @@ const MyLearningScreen = ({ navigation }) => {
       const newMap = {};
       await Promise.all(
         enrollments.map(async (enrollment) => {
-          const course = enrollment.course;
+          const course = enrollment?.course;
           if (!course || !course.slug) return;
           try {
             const res = await axiosClient.get(`/progress/${course.slug}`);
@@ -51,7 +51,7 @@ const MyLearningScreen = ({ navigation }) => {
   // Lọc enrollments theo search và category (lọc client)
   const filteredEnrollments = useMemo(() => {
     return enrollments.filter(enrollment => {
-      const course = enrollment.course;
+      const course = enrollment?.course;
       if (!course) return false;
       // Lọc theo category
       if (
@@ -106,13 +106,13 @@ const MyLearningScreen = ({ navigation }) => {
           keyExtractor={item => item._id}
           contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => {
-            const course = item.course;
+            const course = item?.course;
             if (!course) return null;
             const progress = progressMap[course.slug] ?? 0;
             return (
               <TouchableOpacity
                 className="mb-5 flex-row bg-gray-50 rounded-xl shadow-sm p-3"
-                onPress={() => navigation.navigate('LearningDetail', { courseSlug: course.slug })}
+                onPress={() => navigation.navigate('Learning', { slug: course.slug })}
                 activeOpacity={0.9}
               >
                 <Image
