@@ -8,6 +8,7 @@ import CourseFilter from '../../components/common/CourseFilter';
 import { getAllCategoriesSimple } from '../../features/categories/categorySlice'; // Thêm dòng này
 import axiosClient from '../../api/axiosClient';
 import { useFocusEffect } from '@react-navigation/native';
+import { Image } from 'expo-image';
 
 const MyLearningScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -28,7 +29,7 @@ const MyLearningScreen = ({ navigation }) => {
 
   const fetchProgressData = useCallback(async (currentEnrollments) => {
     if (!currentEnrollments || currentEnrollments.length === 0) return;
-    
+
     const newMap = {};
     await Promise.all(
       currentEnrollments.map(async (enrollment) => {
@@ -53,9 +54,9 @@ const MyLearningScreen = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-        if(enrollments.length > 0) {
-            fetchProgressData(enrollments);
-        }
+      if (enrollments.length > 0) {
+        fetchProgressData(enrollments);
+      }
     }, [enrollments, fetchProgressData])
   );
 
@@ -80,6 +81,15 @@ const MyLearningScreen = ({ navigation }) => {
       return true;
     });
   }, [enrollments, search, selectedCategory]);
+
+  const getImageSource = (thumbnail) => {
+    if (!thumbnail || (typeof thumbnail === 'string' && thumbnail.trim() === '')) {
+      return require('../../../assets/images/default-course.jpg');
+    }
+    if (typeof thumbnail === 'string') return { uri: thumbnail };
+    if (typeof thumbnail === 'object' && thumbnail.url) return { uri: thumbnail.url };
+    return require('../../../assets/images/default-course.jpg');
+  };
 
   if (isLoading) {
     return (
@@ -130,21 +140,22 @@ const MyLearningScreen = ({ navigation }) => {
                 activeOpacity={0.7}
               >
                 <Image
-                  source={course.thumbnail?.url ? { uri: course.thumbnail.url } : require('../../../assets/images/default-course.jpg')}
-                  className="w-20 h-20 rounded-lg mr-3 bg-gray-200"
-                  resizeMode="cover"
+                  source={getImageSource(course.thumbnail)}
+                  placeholder={require('../../../assets/images/default-course.jpg')}
+                  style={{ width: 80, height: 80, borderRadius: 12, marginRight: 12, backgroundColor: '#e5e7eb' }}
+                  contentFit="cover"
                   transition={500}
                 />
                 <View className="flex-1 ml-3 justify-between py-1">
                   <View>
                     <Text className="font-bold text-base text-gray-900 leading-5 mb-1" numberOfLines={2}>
-                        {course.title}
+                      {course.title}
                     </Text>
                     <Text className="text-xs text-gray-500" numberOfLines={1}>
-                        {course.instructor?.name || 'Instructor'}
+                      {course.instructor?.name || 'Instructor'}
                     </Text>
                   </View>
-                  
+
                   <View>
                     <ProgressBar progress={displayProgress} showText={true} />
                   </View>
