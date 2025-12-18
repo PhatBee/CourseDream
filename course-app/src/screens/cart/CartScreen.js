@@ -138,7 +138,10 @@ const CartScreen = ({ navigation }) => {
             <Text className="text-xl font-bold text-blue-600">{total.toLocaleString()} đ</Text>
           </View>
         </View>
-        <TouchableOpacity className="bg-rose-500 py-3 rounded-lg mb-2" onPress={() => {/* điều hướng thanh toán */}}>
+        <TouchableOpacity
+          className="bg-rose-500 py-3 rounded-lg mb-2"
+          onPress={() => navigation.navigate('Checkout')}
+        >
           <Text className="text-white text-center font-bold">Thanh toán</Text>
         </TouchableOpacity>
       </View>

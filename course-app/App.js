@@ -36,6 +36,7 @@ import SettingsScreen from './src/screens/user/SettingsScreen';
 import LearningScreen from './src/screens/learning/LearningScreen';
 import InstructorProfileScreen from './src/screens/user/InstructorProfileScreen';
 import CartScreen from './src/screens/cart/CartScreen.js';
+import CheckoutScreen from './src/screens/cart/CheckoutScreen.js';
 
 import CourseDetailScreen from './src/screens/course/CourseDetailScreen.js';
 
@@ -108,6 +109,7 @@ const MainNavigator = () => {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="CartScreen" component={CartScreen} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} />
 
       <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <Stack.Screen name="Learning" component={LearningScreen} options={{ headerShown: false }} />

@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { getCart, removeFromCart, clearCart } from "../features/cart/cartSlice";
-import cartService from "../features/cart/cartService";
 import { toast } from "react-hot-toast";
 import { Trash2, ShoppingBag, ArrowLeft, Star } from "lucide-react";
 import Spinner from "../components/common/Spinner";
