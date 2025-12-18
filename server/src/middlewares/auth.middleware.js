@@ -4,7 +4,7 @@ import { verifyToken as verifyJWT } from "../utils/jwt.utils.js";
 
 export const verifyToken = async (req, res, next) => {
   try {
-    // 1 Lấy token từ cookie hoặc header
+    // 1. Lấy token từ cookie hoặc header
     let token = req.cookies.accessToken;
 
     if (!token) {
@@ -15,27 +15,51 @@ export const verifyToken = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ message: "Access denied, no token provided" });
+      return res.status(401).json({
+        message: "Access denied, no token provided",
+        code: "NO_TOKEN"
+      });
     }
-    console.log("🔑 Token nhận được:", token);
 
-
-    // Xác minh token
+    // 2. Xác minh token
     const decoded = verifyJWT(token);
-    console.log("📌 decoded token:", decoded);
 
-
-    // Tìm user trong DB
+    // 3. Tìm user trong DB
     const user = await User.findById(decoded.id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        code: "USER_NOT_FOUND"
+      });
+    }
 
-    // Gắn user vào request để route có thể dùng
+    // 4. Gắn user vào request để route có thể dùng
     req.user = user;
 
-    // Cho phép đi tiếp
+    // 5. Cho phép đi tiếp
     next();
   } catch (err) {
     console.error("Auth Middleware Error:", err.message);
-    return res.status(401).json({ message: "Invalid or expired token" });
+
+    // Phân biệt loại lỗi
+    if (err.name === 'TokenExpiredError') {
+      // Token hết hạn - client nên refresh
+      return res.status(401).json({
+        message: "Access token expired",
+        code: "TOKEN_EXPIRED"
+      });
+    } else if (err.name === 'JsonWebTokenError') {
+      // Token không hợp lệ
+      return res.status(401).json({
+        message: "Invalid token",
+        code: "INVALID_TOKEN"
+      });
+    } else {
+      // Lỗi khác
+      return res.status(401).json({
+        message: "Authentication failed",
+        code: "AUTH_FAILED"
+      });
+    }
   }
 };

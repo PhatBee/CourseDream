@@ -9,23 +9,22 @@ const initialState = {
   currentLecture: null,   // Bài học đang xem
   isLoading: false,
   isError: false,
-  progressMap: {}, // <--- Thêm dòng này
 };
 
 // Thunk: Lấy toàn bộ dữ liệu khóa học + Tiến độ
 export const fetchLearningCourse = createAsyncThunk(
-    'learning/fetchCourse',
-    async (slug, thunkAPI) => {
-        try {
-            const response = await learningApi.getCourseContent(slug);
+  'learning/fetchCourse',
+  async (slug, thunkAPI) => {
+    try {
+      const response = await learningApi.getCourseContent(slug);
 
-            if (response.course) return response;
+      if (response.course) return response;
 
-            if (response.data && response.data.course) return response.data;
+      if (response.data && response.data.course) return response.data;
 
-            return response.data?.data || {};
-        } catch (error) {
-            return thunkAPI.rejectWithValue(error.message);
+      return response.data?.data || {};
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
     }
   }
 );
@@ -47,19 +46,15 @@ export const toggleLecture = createAsyncThunk(
     }
   }
 );
-
-// Thunk: Lấy progress cho 1 khóa học (trả về {slug, percentage})
-export const fetchCourseProgress = createAsyncThunk(
-  'learning/fetchCourseProgress',
-  async (courseSlug, thunkAPI) => {
+// Thunk: Lấy tiến độ học tập
+export const fetchProgressData = createAsyncThunk(
+  'learning/fetchProgress',
+  async (slug, thunkAPI) => {
     try {
-      const res = await learningApi.getProgress(courseSlug);
-      return {
-        slug: courseSlug,
-        percentage: res.data?.data?.percentage ?? 0
-      };
+      const response = await learningApi.getProgress(slug);
+      return response.data.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue({ slug: courseSlug, error: error.message });
+      return thunkAPI.rejectWithValue(error.message);
     }
   }
 );
@@ -73,10 +68,10 @@ export const learningSlice = createSlice({
       state.currentLecture = action.payload;
     },
     resetLearning: (state) => {
-        state.course = null;
-        state.progress = null;
-        state.currentLecture = null;
-        state.sections = [];
+      state.course = null;
+      state.progress = null;
+      state.currentLecture = null;
+      state.sections = [];
     }
   },
   extraReducers: (builder) => {
@@ -92,8 +87,8 @@ export const learningSlice = createSlice({
 
         // Mặc định chọn bài đầu tiên nếu chưa chọn
         if (!state.currentLecture && state.sections.length > 0) {
-           const firstLecture = state.sections[0].lectures?.[0];
-           if (firstLecture) state.currentLecture = firstLecture;
+          const firstLecture = state.sections[0].lectures?.[0];
+          if (firstLecture) state.currentLecture = firstLecture;
         }
       })
       .addCase(fetchLearningCourse.rejected, (state, action) => {
@@ -102,12 +97,19 @@ export const learningSlice = createSlice({
       })
       .addCase(toggleLecture.fulfilled, (state, action) => {
         // Cập nhật lại progress state
-        state.progress = action.payload; 
+        state.progress = action.payload;
       })
-      .addCase(fetchCourseProgress.fulfilled, (state, action) => {
-        const { slug, percentage } = action.payload;
-        state.progressMap[slug] = percentage;
-      });
+      .addCase(fetchProgressData.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchProgressData.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.progress = action.payload;
+      })
+      .addCase(fetchProgressData.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+      })
   },
 });
 

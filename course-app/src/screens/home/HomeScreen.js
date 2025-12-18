@@ -1,8 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
-import { ScrollView, View, ActivityIndicator, Text, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useEffect, useCallback, useMemo } from 'react';
+import { ScrollView, View, Text, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 // Actions
 import { getCategories } from '../../features/categories/categorySlice';
@@ -31,8 +31,26 @@ const HomeScreen = ({ navigation }) => {
   const { items: enrollments, isLoading: enrollLoading } = useSelector(state => state.enrollment);
 
   const isLoading = catLoading || courseLoading || enrollLoading;
+  const latestEnrollment = useMemo(() => {
+    if (!enrollments || enrollments.length === 0) return null;
 
-  const ongoingEnrollment = enrollments.length > 0 ? enrollments[0] : null;
+    const sorted = [...enrollments].sort((a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+
+    return sorted[0];
+  }, [enrollments]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        dispatch(fetchMyEnrollments());
+        dispatch(getWishlist());
+      }
+    }, [dispatch, user])
+  );
 
   const loadData = useCallback(() => {
     dispatch(getCategories());
@@ -58,20 +76,20 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView
         className="flex-1 pt-2"
+        edges={['top', 'left', 'right']}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={loadData} colors={['#e11d48']} />
         }
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
         <View className="px-5">
           <HomeHeader user={user} />
           <SearchBar onSearch={handleSearch} />
         </View>
 
-        {/* Nếu chưa có khóa học đang học -> Hiện Banner quảng cáo */}
-        {/* Nếu ĐÃ có khóa học -> Hiện thẻ Ongoing Course để nhắc học */}
-        {ongoingEnrollment && user ? (
-          <OngoingCourse enrollment={ongoingEnrollment} />
+        {user && latestEnrollment ? (
+          <OngoingCourse enrollment={latestEnrollment} />
         ) : (
           <View className="px-5">
             <PromoBanner navigation={navigation} />
