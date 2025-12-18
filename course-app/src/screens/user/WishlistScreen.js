@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,7 +27,7 @@ const WishlistScreen = ({ navigation }) => {
       {/* Danh sách khóa học */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <Text>Đang tải...</Text>
+          <ActivityIndicator size="large" color="#e11d48" />
         </View>
       ) : (
         <FlatList
