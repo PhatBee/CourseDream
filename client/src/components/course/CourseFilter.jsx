@@ -54,10 +54,15 @@ const levels = [
   { label: "All Levels", value: "alllevels" }
 ];
 
-const CourseFilter = ({ onFilterChange }) => {
+const CourseFilter = ({
+  onFilterChange,
+  initialKeyword = "",
+  initialCategory = [],
+  // ...other props...
+}) => {
   // State cho filter
-  const [keyword, setKeyword] = useState("");
-  const [category, setCategory] = useState([]); // array for checkbox
+  const [keyword, setKeyword] = useState(initialKeyword);
+  const [category, setCategory] = useState(initialCategory); // array for checkbox
   const [instructor, setInstructor] = useState([]); // array for checkbox
   const [price, setPrice] = useState([]);
   const [level, setLevel] = useState([]); // array for checkbox

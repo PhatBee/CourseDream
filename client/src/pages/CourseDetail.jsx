@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getCourseDetails, resetCourse } from '../features/course/courseSlice';
 import { fetchMyEnrollments } from "../features/enrollment/enrollmentSlice";
@@ -10,11 +10,13 @@ import CourseHeader from '../components/course/CourseHeader';
 import CourseSidebar from '../components/course/CourseSidebar';
 import CourseContent from '../components/course/CourseContent';
 import Spinner from '../components/common/Spinner';
-import CourseDiscussion from '../components/course/CourseDiscussion';
+import CourseDiscussion from '../features/discussion/CourseDiscussion';
 
 const CourseDetail = () => {
   const { slug } = useParams();
   const dispatch = useDispatch();
+  const location = useLocation();
+  const { discussions } = useSelector((state) => state.discussion);
 
   // Lấy state từ Redux store
   const { course, reviews, reviewCount, isLoading, isError, message } = useSelector(
@@ -32,8 +34,26 @@ const CourseDetail = () => {
     };
   }, [slug, dispatch]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const discussionId = params.get("discussionId");
+    if (discussionId) {
+      setTimeout(() => {
+        const el = document.getElementById(`discussion-${discussionId}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 500); // delay để đảm bảo discussion đã render
+    }
+  }, [location.search, discussions]);
+
   // Xác định user đã ghi danh chưa
   const isEnrolled = enrolledCourseIds?.includes(String(course?._id));
+
+  // Sửa đoạn này:
+  let instructorId = null;
+  if (course && course.instructor) {
+    instructorId = typeof course.instructor === "object" ? course.instructor._id : course.instructor;
+  }
+  const isInstructor = user && instructorId && user._id === String(instructorId);
 
   // Xử lý trạng thái Loading
   if (isLoading || !course) {
@@ -83,7 +103,12 @@ const CourseDetail = () => {
       </section>
 
       <div className="container mx-auto px-4 max-w-7xl">
-        <CourseDiscussion courseId={course._id} user={user} isEnrolled={isEnrolled} />
+        <CourseDiscussion
+          courseId={course._id}
+          user={user}
+          isEnrolled={isEnrolled}
+          isInstructor={isInstructor}
+        />
       </div>
     </>
   );

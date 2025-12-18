@@ -7,6 +7,7 @@ import cartService from "../features/cart/cartService";
 import paymentService from "../features/payment/paymentService";
 import { ShoppingBag, ArrowLeft, Trash2, CreditCard, Wallet, Gift, CheckCircle } from "lucide-react";
 import Spinner from "../components/common/Spinner";
+import { fetchAvailablePromotions, previewPromotionThunk, clearPreview } from "../features/promotion/promotionSlice";
 
 const formatPrice = (price) => {
     // Ép kiểu về số để đảm bảo so sánh đúng
@@ -21,6 +22,8 @@ export default function Checkout() {
     const location = useLocation();
     const { user } = useSelector((state) => state.auth);
     const { items: cartItems, totalItems: cartTotalItems, totalPrice: cartTotalPrice, isLoading } = useSelector((state) => state.cart);
+    const { available, availableLoading } = useSelector((state) => state.promotion);
+    const { preview, previewLoading, previewError } = useSelector((state) => state.promotion);
 
     const [selectedMethod, setSelectedMethod] = useState("vnpay");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -40,21 +43,47 @@ export default function Checkout() {
 
     const totalItems = isDirectCheckout ? 1 : cartTotalItems;
 
-    let totalPrice
-    if (isDirectCheckout && directCourse) {
-        // Nếu có priceDiscount thì dùng, nếu không dùng price, ép về Number
-        totalPrice = Number(directCourse.priceDiscount ?? directCourse.price ?? 0);
-    } else {
-        totalPrice = Number(cartTotalPrice);
-    }
+    // let totalPrice
+    // if (isDirectCheckout && directCourse) {
+    //     // Nếu có priceDiscount thì dùng, nếu không dùng price, ép về Number
+    //     totalPrice = Number(directCourse.priceDiscount ?? directCourse.price ?? 0);
+    // } else {
+    //     totalPrice = Number(cartTotalPrice);
+    // }
 
     // --- LOGIC TÍNH TOÁN GIÁ ---
-    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-    const discount = subtotal - totalPrice;
-    // Nếu totalPrice = 0 thì tax = 0, ngược lại tính 10%
-    const tax = totalPrice > 0 ? Math.round(totalPrice * 0.1) : 0;
-    const finalTotal = totalPrice + tax;
+    // const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    // const discount = subtotal - totalPrice;
+    // // Nếu totalPrice = 0 thì tax = 0, ngược lại tính 10%
+    // const tax = totalPrice > 0 ? Math.round(totalPrice * 0.1) : 0;
+    // const finalTotal = totalPrice + tax;
 
+     // --- LOGIC TÍNH TOÁN GIÁ ---
+    // Tính tổng giá gốc (chưa giảm)
+    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    // Tính tổng giá đã giảm (nếu có priceDiscount)
+    const subtotalDiscount = items.reduce((sum, item) => sum + (item.priceDiscount ?? item.price), 0);
+    //  Giá trị giảm từ mã khuyến mãi (nếu có)
+    let promotionDiscount = 0;
+    if (preview && preview.discountType === "percent") {
+    promotionDiscount = subtotalDiscount * (preview.discountValue / 100);
+    } else if (preview && preview.discountType === "fixed") {
+    promotionDiscount = preview.discountValue;
+    }
+    // 3. Số tiền sau khi áp dụng mã giảm giá
+    let amountAfterPromo = subtotalDiscount - promotionDiscount;
+    if (amountAfterPromo < 0) amountAfterPromo = 0;
+    // Tính discount (giảm giá so với giá gốc)
+    const discount = subtotal - amountAfterPromo;
+    // Nếu displayedPrice = 0 thì tax = 0, ngược lại tính 10%
+    const tax = amountAfterPromo > 0 ? Math.round(amountAfterPromo * 0.1) : 0;
+    // Tổng cuối cùng
+    let finalTotal = amountAfterPromo + tax;
+
+        // Làm tròn lên 1000 nếu > 0 và < 1000
+    if (finalTotal > 0 && finalTotal < 1000) {
+        finalTotal = 1000;
+    }
     // --- LOGIC 1 & 2: Xử lý hiển thị phương thức thanh toán ---
 
     const isFreeOrder = finalTotal === 0;
@@ -80,6 +109,15 @@ export default function Checkout() {
             navigate("/cart");
         }
     }, [items, isLoading, navigate, isDirectCheckout]);
+
+    // Lấy courseIds từ cart hoặc direct checkout
+    const courseIds = isDirectCheckout && directCourse
+        ? [directCourse._id]
+        : items.map(item => item.course._id);
+
+    useEffect(() => {
+        dispatch(fetchAvailablePromotions(courseIds));
+    }, [dispatch, courseIds.join(",")]);
 
     // Xử lý Ghi danh miễn phí
     const handleFreeEnrollment = async () => {
@@ -179,6 +217,19 @@ export default function Checkout() {
             toast.error(error.response?.data?.message || "Lỗi khi xử lý thanh toán");
             setIsProcessing(false);
         }
+    };
+
+    // Khi user chọn mã
+    const [selectedPromotion, setSelectedPromotion] = useState(null);
+
+    const handleSelectPromotion = (promo) => {
+        setSelectedPromotion(promo.code);
+        dispatch(previewPromotionThunk({ code: promo.code, courseId: courseIds[0] }));
+    };
+
+    const handleRemovePromotion = () => {
+        setSelectedPromotion(null);
+        dispatch(clearPreview());
     };
 
     if (!user) {
@@ -449,6 +500,48 @@ export default function Checkout() {
                                         </span>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Promo Code Section */}
+                            <div className="my-4">
+                                <label className="block text-sm font-medium mb-1">Chọn mã giảm giá</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {availableLoading && <span>Đang tải...</span>}
+                                    {available.map((promo) => (
+                                        <button
+                                            key={promo._id}
+                                            className={`px-3 py-2 rounded border ${selectedPromotion === promo.code ? "bg-rose-600 text-white border-rose-600" : "bg-white border-gray-300 text-gray-700"} hover:bg-rose-50 transition`}
+                                            onClick={() => handleSelectPromotion(promo)}
+                                            type="button"
+                                            disabled={previewLoading}
+                                        >
+                                            <b>{promo.code}</b> - {promo.discountType === "percent" ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString("vi-VN")}₫`}
+                                        </button>
+                                    ))}
+                                    {selectedPromotion && (
+                                        <button
+                                            className="px-3 py-2 rounded border bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                            onClick={handleRemovePromotion}
+                                            type="button"
+                                        >
+                                            Bỏ mã
+                                        </button>
+                                    )}
+                                </div>
+                                {preview && (
+                                    <div className="mt-2 text-green-600">
+                                        Đã áp dụng mã <b>{selectedPromotion}</b>!<br />
+                                        {preview.discountValue > 0 && (
+                                            <span className="ml-2 text-xs text-gray-500">
+                                                (Đã giảm {preview.discountValue.toLocaleString("vi-VN")}
+                                                {preview.discountType === "percent" ? "%" : "₫"})
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                                {previewError && (
+                                    <div className="mt-2 text-red-600">{previewError}</div>
+                                )}
                             </div>
 
                             {/* Info */}

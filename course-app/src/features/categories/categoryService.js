@@ -5,6 +5,11 @@ const getAllCategories = async (params) => {
   return response.data;
 };
 
+const getAllCategoriesSimple = async () => {
+  const response = await categoryApi.getAllCategoriesSimple();
+  return response.data.data; // chỉ trả về mảng category
+};
+
 const createCategory = async (data) => {
   const response = await categoryApi.createCategory(data);
   return response.data;
@@ -22,6 +27,7 @@ const deleteCategory = async (id) => {
 
 const categoryService = {
   getAllCategories,
+  getAllCategoriesSimple, 
   createCategory,
   updateCategory,
   deleteCategory

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 import StarRating from '../common/StarRating';
@@ -7,7 +8,7 @@ import ReportModal from '../common/ReportModal';
 import { FaPlay, FaFlag } from 'react-icons/fa';
 import { HiOutlineBookOpen, HiOutlineClock, HiOutlineUsers } from 'react-icons/hi';
 import { getEmbedUrl } from '../../utils/videoUtils.js';
-import reportApi from '../../api/reportApi';
+import { sendReport, resetReportState } from "../../features/report/reportSlice";
 
 const COURSE_REPORT_REASONS = [
   'Nội dung khóa học không phù hợp - Có hại, bạo lực, thù hận hoặc tội phạm',
@@ -35,16 +36,34 @@ const CourseHeader = ({ course, reviewCount }) => {
   } = course;
   const embedUrl = getEmbedUrl(previewUrl);
   const categoryName = categories[0]?.name || 'Course';
+  const dispatch = useDispatch();
+  const { success, error } = useSelector(state => state.report);
+  const currentUser = useSelector(state => state.auth.user);
+
+  useEffect(() => {
+    if (success) {
+      toast.success("Báo cáo của bạn đã được gửi!");
+      dispatch(resetReportState());
+      setReportOpen(false);
+    }
+    if (error) {
+      toast.error(error);
+      dispatch(resetReportState());
+    }
+  }, [success, error, dispatch]);
+
   const handlePlayClick = () => {
     if (embedUrl) {
       setIsPlaying(true);
     }
   };
 
-  const handleReportSubmit = async (reason, detail) => {
-    await reportApi.reportCourse(course._id, reason + (detail ? `\n${detail}` : ''));
-    setReportOpen(false);
-    toast.success("Báo cáo của bạn đã được gửi!");
+  const handleReportSubmit = (reason, detail) => {
+    dispatch(sendReport({
+      type: "course",
+      targetId: course._id,
+      reason: reason + (detail ? `\n${detail}` : "")
+    }));
   };
 
   return (
@@ -139,14 +158,16 @@ const CourseHeader = ({ course, reviewCount }) => {
 
           {/* Nút báo cáo khóa học */}
           <div className="mt-4 flex items-center">
-            <button
-              onClick={() => setReportOpen(true)}
-              className="flex items-center text-sm font-medium text-gray-700 hover:text-red-500"
-              aria-label="Report course"
-            >
-              <FaFlag className="mr-1.5" />
-              Báo cáo khóa học
-            </button>
+            {currentUser?._id !== instructor?._id && (
+              <button
+                onClick={() => setReportOpen(true)}
+                className="flex items-center text-sm font-medium text-gray-700 hover:text-red-500"
+                aria-label="Report course"
+              >
+                <FaFlag className="mr-1.5" />
+                Báo cáo khóa học
+              </button>
+            )}
           </div>
         </div>
       </div>

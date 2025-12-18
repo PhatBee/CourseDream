@@ -139,7 +139,7 @@ const AdminPendingCourseDetail = () => {
         const result = await dispatch(adminApproveCourse(revisionId));
         if (result.type.endsWith('/fulfilled')) {
             setShowApproveModal(false);
-            navigate('/admin/pending-courses');
+            navigate('/admin/courses');
         }
     };
 
@@ -149,7 +149,7 @@ const AdminPendingCourseDetail = () => {
         const result = await dispatch(adminRejectCourse({ revisionId, reviewMessage: rejectMessage }));
         if (result.type.endsWith('/fulfilled')) {
             setShowRejectModal(false);
-            navigate('/admin/pending-courses');
+            navigate('/admin/courses');
         }
     };
 

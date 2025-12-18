@@ -1,7 +1,8 @@
 import express from "express";
 import { verifyToken } from "../../middlewares/auth.middleware.js";
 import { checkEnrollment } from "../../middlewares/enrollment.middleware.js";
-import { postReport, postDiscussionReport, postReplyReport } from "../report/report.controller.js";
+import { checkRole } from '../../middlewares/role.middleware.js';
+import { postReport, postDiscussionReport, postReplyReport, adminGetReports,adminGetReportDetail,adminResolveReport } from "../report/report.controller.js";
 
 const router = express.Router();
 
@@ -11,5 +12,10 @@ router.post("/discussion/:discussionId", verifyToken, checkEnrollment, postDiscu
 
 // Báo cáo reply cụ thể
 router.post("/reply/:replyId", verifyToken, checkEnrollment, postReplyReport);
+
+// Route cho admin
+router.get("/admin/reports", verifyToken, checkRole("admin"), adminGetReports);
+router.get("/admin/reports/:id", verifyToken, checkRole("admin"), adminGetReportDetail);
+router.put("/admin/reports/:id", verifyToken, checkRole("admin"), adminResolveReport);
 
 export default router;

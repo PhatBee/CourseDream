@@ -6,7 +6,7 @@ const CategoryList = ({ categories }) => {
     <TouchableOpacity className="items-center mr-5">
       <View className="w-16 h-16 bg-white rounded-full items-center justify-center border border-gray-100 shadow-sm mb-2">
         {/* Nếu có icon URL thì dùng Image, tạm thời dùng Text emoji */}
-        <Text className="text-2xl">{item.icon || '💻'}</Text>
+        <Text className="text-2xl">{`${item.icon || '💻'}`}</Text>
       </View>
       <Text className="text-xs font-medium text-gray-600">{item.name}</Text>
     </TouchableOpacity>
@@ -20,8 +20,8 @@ const CategoryList = ({ categories }) => {
           <Text className="text-rose-500 text-sm font-medium">See All</Text>
         </TouchableOpacity>
       </View>
-      
-      <FlatList 
+
+      <FlatList
         data={categories}
         renderItem={renderItem}
         keyExtractor={item => item._id}

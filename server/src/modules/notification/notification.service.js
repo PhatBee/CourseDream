@@ -5,7 +5,7 @@ import User from "../auth/auth.model.js";
 
 class NotificationService {
   // Tạo thông báo + gửi realtime + email
-  async createNotification({ recipient, sender, type, title, message, relatedId }) {
+  async createNotification({ recipient, sender, type, title, message, relatedId, courseSlug }) {
     const notification = await Notification.create({
       recipient,
       sender,
@@ -13,6 +13,7 @@ class NotificationService {
       title,
       message,
       relatedId,
+      courseSlug, 
     });
 
     // Populate để frontend nhận được thông tin sender
@@ -33,12 +34,12 @@ class NotificationService {
     // 2. Gửi email (tùy chọn)
     const recipientUser = await User.findById(recipient).select("email name");
     if (recipientUser?.email) {
-      await sendEmailNotification({
+      sendEmailNotification({
         to: recipientUser.email,
         name: recipientUser.name,
         title,
         message,
-      });
+      }).catch(console.error); // Không await
     }
 
     return notification;

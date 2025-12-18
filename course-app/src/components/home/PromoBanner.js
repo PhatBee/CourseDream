@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 
-const PromoBanner = () => {
+const PromoBanner = ({ navigation }) => {
   return (
     <View className="bg-rose-500 rounded-2xl p-5 mb-8 relative overflow-hidden shadow-lg shadow-rose-200">
       {/* Background decoration */}
@@ -13,7 +13,7 @@ const PromoBanner = () => {
         <Text className="text-rose-100 text-xs mb-4 leading-5">
           Join our pro courses today and start your journey!
         </Text>
-        <TouchableOpacity className="bg-white self-start px-5 py-2.5 rounded-lg shadow-sm">
+        <TouchableOpacity className="bg-white self-start px-5 py-2.5 rounded-lg shadow-sm" onPress={() => navigation.navigate('Login')}>
           <Text className="text-rose-600 font-bold text-xs">Enroll Now</Text>
         </TouchableOpacity>
       </View>

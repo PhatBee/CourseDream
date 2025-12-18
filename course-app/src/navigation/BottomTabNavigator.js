@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeScreen from '../screens/home/HomeScreen';
 import CoursesScreen from '../screens/course/CoursesScreen';
 import MyLearningScreen from '../screens/learning/MyLearningScreen';
-import ProfileScreen from '../screens/profile/ProfileScreen';
+import ProfileScreen from '../screens/user/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -28,7 +28,7 @@ const BottomTabNavigator = () => {
                     borderTopColor: '#f3f4f6',
                     height: 60 + (insets.bottom > 0 ? insets.bottom : 10),
                     paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
-                    
+
                     paddingTop: 10,
                 },
                 tabBarLabelStyle: {

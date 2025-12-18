@@ -11,6 +11,8 @@ import { uploadToYouTube } from "../../config/youtube.js";
 import { uploadToCloudinary, uploadResourceToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
+import notificationService from "../notification/notification.service.js";
+import User from "../auth/auth.model.js";
 /**
  * Service: Lấy chi tiết khóa học
  * @param {string} slug - Slug của khóa học
@@ -111,8 +113,13 @@ export const getAllCourses = async (query) => {
 
   const filter = { status: "published" };
   if (query.category) {
+    filter.categories = { $in: Array.isArray(query.category) ? query.category : [query.category] };
   }
 
+  if (query.search) {
+    filter.title = { $regex: query.search, $options: 'i' };
+  }
+  
   const courses = await Course.find(filter)
     .select(
       "title slug thumbnail price priceDiscount level rating reviewCount instructor categories"
@@ -591,7 +598,7 @@ export const getInstructorCourses = async (instructorId, query) => {
     mergedList.push({
       _id: rev._id, // Dùng ID của revision
       title: rev.data.title || 'Untitled Course',
-      slug: rev._id.toString(), // ✨ Dùng revision ID làm identifier
+      slug: rev.data.slug, // ✨ Dùng slug thật từ revision.data (có timestamp, unique)
       thumbnail: rev.data.thumbnail,
       price: rev.data.price || 0,
       priceDiscount: rev.data.priceDiscount,
@@ -764,15 +771,14 @@ export const getCourseForEdit = async (slug, instructorId) => {
 
   // --- TRƯỜNG HỢP 1: Course chưa từng publish (Fresh Draft) ---
 
-  // ✨ LOGIC MỚI: Kiểm tra xem slug có phải là ObjectId không
-  // Nếu là ObjectId -> Tìm revision bằng _id
-  // Nếu không -> Tìm bằng data.slug (legacy support)
+  // ✨ LOGIC: Tìm revision bằng slug (ưu tiên) hoặc _id (fallback cho legacy)
+  // Slug format: "ten-khoa-hoc-1234567890" (có timestamp)
 
   const isObjectId = mongoose.Types.ObjectId.isValid(slug) && slug.length === 24;
 
   let freshDraft;
   if (isObjectId) {
-    // Tìm bằng _id của revision
+    // Fallback: Tìm bằng _id của revision (legacy support)
     freshDraft = await CourseRevision.findOne({
       _id: slug,
       instructor: instructorId,
@@ -780,7 +786,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
       status: 'draft'
     }).lean();
   } else {
-    // Tìm bằng slug trong data (legacy)
+    // ✨ Tìm bằng slug trong data.slug (cách chính thức)
     freshDraft = await CourseRevision.findOne({
       'data.slug': slug,
       instructor: instructorId,
@@ -918,10 +924,44 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     }))
   }));
 
-  // 5. Chuẩn bị Data Object cho Revision
+  // 5. Xử lý Slug theo logic mới
+  let finalSlug;
+
+  if (courseData.courseId) {
+    // CASE 2 & 3: Edit course đã publish -> Giữ nguyên slug của course gốc
+    const liveCourse = await Course.findById(courseData.courseId).select('slug');
+    if (liveCourse) {
+      finalSlug = liveCourse.slug; // Slug không đổi
+    } else {
+      // Fallback nếu không tìm thấy course (không nên xảy ra)
+      finalSlug = courseData.slug || slugify(courseData.title, { lower: true, strict: true });
+    }
+  } else {
+    // CASE 1: Fresh draft (chưa từng publish)
+
+    if (courseData.revisionId) {
+      // ✨ Đang edit draft có sẵn -> Kiểm tra xem có cần update slug không
+      const existingRevision = await CourseRevision.findById(courseData.revisionId).select('data.slug data.title');
+
+      if (existingRevision && existingRevision.data.title === courseData.title) {
+        // Title không đổi -> Giữ nguyên slug cũ
+        finalSlug = existingRevision.data.slug;
+      } else {
+        // Title đã đổi -> Tạo slug mới với timestamp để unique
+        const baseSlug = slugify(courseData.title, { lower: true, strict: true });
+        finalSlug = `${baseSlug}-${Date.now()}`;
+      }
+    } else {
+      // ✨ Tạo draft mới lần đầu -> Tạo slug unique với timestamp
+      const baseSlug = slugify(courseData.title, { lower: true, strict: true });
+      finalSlug = `${baseSlug}-${Date.now()}`;
+    }
+  }
+
+  // 6. Chuẩn bị Data Object cho Revision
   const revisionData = {
     title: courseData.title,
-    slug: courseData.slug || null, // Slug chỉ có khi course đã publish, fresh draft không cần slug
+    slug: finalSlug, // Slug được xử lý theo logic trên
     thumbnail: thumbnailUrl,
     previewUrl: courseData.previewUrl || '',
     shortDescription: courseData.shortDescription,
@@ -989,6 +1029,22 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
+
+  // GỬI THÔNG BÁO CHO ADMIN KHI SUBMIT PENDING
+  if (courseData.status === 'pending' && updatedRevision) {
+    const admins = await User.find({ role: 'admin' }).select('_id');
+    for (const admin of admins) {
+      await notificationService.createNotification({
+        recipient: admin._id,
+        sender: instructorId,
+        type: "system",
+        title: "Khóa học mới cần duyệt",
+        message: `Giảng viên vừa gửi khóa học "${revisionData.title}" chờ duyệt.`,
+        relatedId: updatedRevision._id,
+        courseSlug: revisionData.slug || undefined
+      });
+    }
+  }
 
   return updatedRevision;
 };

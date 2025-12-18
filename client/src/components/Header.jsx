@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import logo from "../assets/img/auth/logo.svg";
 import avatarDefault from "../assets/img/auth/logo.svg";
+import NotificationMenu from "./common/NotificationMenu";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -21,8 +22,10 @@ const Header = () => {
 
   // Lấy totalItems từ cart slice
   const { totalItems } = useSelector((state) => state.cart);
+  const unreadCount = useSelector((state) => state.notification.unreadCount);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
   // Load giỏ hàng khi user đăng nhập
   useEffect(() => {
@@ -161,29 +164,31 @@ const Header = () => {
                             My Profile
                           </Link>
                         </li>
-                        {/* <li>
-                          <Link
-                            to="/orders"
-                            className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
-                          >
-                            <ShoppingCart className="h-4 w-4 text-rose-500" />
-                            Order History
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/messages"
-                            className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-50"
+                        <li className="relative flex items-center">
+                          <button
+                            onClick={() => setNotificationOpen((v) => !v)}
+                            className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-50 w-full"
+                            type="button"
                           >
                             <span className="flex items-center gap-2">
                               <MessageSquare className="h-4 w-4 text-rose-500" />
                               Messages
                             </span>
-                            <span className="text-xs bg-rose-500 text-white px-1.5 rounded-full">
-                              2
-                            </span>
-                          </Link>
-                        </li> */}
+                            {unreadCount > 0 && (
+                              <span className="text-xs bg-rose-500 text-white px-1.5 rounded-full">
+                                {unreadCount}
+                              </span>
+                            )}
+                          </button>
+                          {/* Menu lệch phải */}
+                          <div className="relative">
+                            <NotificationMenu
+                              open={notificationOpen}
+                              onClose={() => setNotificationOpen(false)}
+                              position="right"
+                            />
+                          </div>
+                        </li>
                         <li>
                           <Link
                             to="/profile/settings/edit"
