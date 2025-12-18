@@ -33,6 +33,7 @@ import WishlistScreen from './src/screens/user/WishlistScreen';
 import MyCoursesScreen from './src/screens/instructor/MyCoursesScreen.js';
 import ChangePasswordScreen from './src/screens/user/ChangePasswordScreen';
 import SettingsScreen from './src/screens/user/SettingsScreen';
+import LearningScreen from './src/screens/learning/LearningScreen';
 
 const Stack = createStackNavigator();
 
@@ -101,6 +102,7 @@ const MainNavigator = () => {
       <Stack.Screen name="MyCourses" component={MyCoursesScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="Learning" component={LearningScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

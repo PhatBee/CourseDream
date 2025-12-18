@@ -132,6 +132,10 @@ const CourseCard = ({ course }) => {
       onPress={handlePress}
       activeOpacity={0.9}
       className="w-60 bg-white rounded-2xl shadow-sm overflow-hidden mr-4 mb-2 border border-gray-100"
+      style={{
+        elevation: 3,
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+      }}
     >
       {/* Image Area */}
       <View className="relative w-full h-32 rounded-xl overflow-hidden bg-gray-100">
