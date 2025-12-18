@@ -1,14 +1,16 @@
 import React from 'react';
 import { Image } from 'expo-image';
+import Toast from 'react-native-toast-message';
 
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Star, Heart, ShoppingCart } from 'lucide-react-native';
-import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
+import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
+import { useSelector, useDispatch } from 'react-redux';
 
 // --- SUB-COMPONENT: Footer xử lý logic hiển thị Giá hoặc Nút Học ---
-const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart }) => {
+const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart, inCart }) => {
   if (!price) price = 0;
   if (!displayPrice) displayPrice = 0;
   // TRƯỜNG HỢP 1: Đã sở hữu khóa học
@@ -47,7 +49,7 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
         onPress={onAddToCart}
         className="bg-gray-900 w-8 h-8 rounded-full items-center justify-center active:bg-gray-700"
       >
-        <ShoppingCart size={14} color="white" />
+        <ShoppingCart size={14} color={inCart ? "#e11d48" : "white"} />
       </TouchableOpacity>
     </View>
   );
@@ -61,6 +63,7 @@ const CourseCard = ({ course }) => {
   // Lấy danh sách ID đã mua và Wishlist từ Redux
   const { enrolledCourseIds } = useSelector(state => state.enrollment);
   const { items: wishlistItems } = useSelector(state => state.wishlist);
+  const { items: cartItems } = useSelector(state => state.cart);
 
   if (!course) return null;
 
@@ -83,6 +86,7 @@ const CourseCard = ({ course }) => {
   // Logic kiểm tra trạng thái
   const isEnrolled = enrolledCourseIds.includes(_id);
   const isWishlisted = wishlistItems.some(item => item._id === _id);
+  const inCart = cartItems.some(item => item.course._id === _id);
 
   // Formatting
   const imageUrl = thumbnail?.url || thumbnail;
@@ -116,15 +120,28 @@ const CourseCard = ({ course }) => {
   };
 
   const handleAddToCart = () => {
-
     if (!user) {
-      // Chưa login, navigate to Login
       navigation.navigate('Login');
       return;
     }
 
-    console.log("Add to cart:", _id);
-    // Dispatch action add to cart here
+    if (inCart) {
+      dispatch(removeFromCart(_id)).then(() => {
+        Toast.show({
+          type: 'success',
+          text1: 'Đã xóa khỏi giỏ hàng',
+          position: 'top',
+        });
+      });
+    } else {
+      dispatch(addToCart(_id)).then(() => {
+        Toast.show({
+          type: 'success',
+          text1: 'Đã thêm vào giỏ hàng',
+          position: 'top',
+        });
+      });
+    }
   };
 
   return (
@@ -189,6 +206,7 @@ const CourseCard = ({ course }) => {
           hasDiscount={hasDiscount}
           formatPrice={formatCurrency}
           onAddToCart={handleAddToCart}
+          inCart={inCart} // <-- THÊM DÒNG NÀY
         />
 
       </View>

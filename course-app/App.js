@@ -34,6 +34,7 @@ import MyCoursesScreen from './src/screens/instructor/MyCoursesScreen.js';
 import ChangePasswordScreen from './src/screens/user/ChangePasswordScreen';
 import SettingsScreen from './src/screens/user/SettingsScreen';
 import InstructorProfileScreen from './src/screens/user/InstructorProfileScreen';
+import CartScreen from './src/screens/cart/CartScreen.js';
 
 const Stack = createStackNavigator();
 
@@ -103,6 +104,7 @@ const MainNavigator = () => {
       <Stack.Screen name="InstructorProfile" component={InstructorProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="CartScreen" component={CartScreen} />
     </Stack.Navigator>
   );
 };

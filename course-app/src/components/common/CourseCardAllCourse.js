@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import { Star, Heart, ShoppingCart } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
+import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
+import Toast from 'react-native-toast-message';
 
-const CourseCardAllCourse = ({ course }) => {
+const CourseCardAllCourse = React.memo(({ course }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { enrolledCourseIds } = useSelector(state => state.enrollment);
   const { items: wishlistItems } = useSelector(state => state.wishlist);
+  const { items: cartItems } = useSelector(state => state.cart);
   const user = useSelector(state => state.auth.user);
 
   if (!course) return null;
@@ -30,6 +33,7 @@ const CourseCardAllCourse = ({ course }) => {
 
   const isEnrolled = enrolledCourseIds.includes(_id);
   const isWishlisted = wishlistItems.some(item => item._id === _id);
+  const inCart = cartItems.some(item => item.course._id === _id);
   const imageUrl = thumbnail?.url || thumbnail;
   const finalPrice = priceDiscount || price;
   const hasDiscount = priceDiscount && priceDiscount < price;
@@ -39,21 +43,28 @@ const CourseCardAllCourse = ({ course }) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
-  const handlePress = () => {
-    navigation.navigate('CourseDetail', { slug: slug, courseId: _id });
-  };
+  const handlePress = useCallback(() => {
+    navigation.navigate('CourseDetail', { slug, courseId: _id });
+  }, [navigation, slug, _id]);
 
-  const handleToggleWishlist = () => {
-    if (!user) {
-      navigation.navigate('Login');
-      return;
-    }
-    if (isWishlisted) {
-      dispatch(removeFromWishlist(_id));
+  const handleToggleWishlist = useCallback(() => {
+    if (!user) return navigation.navigate('Login');
+    if (isWishlisted) dispatch(removeFromWishlist(_id));
+    else dispatch(addToWishlist(_id));
+  }, [user, isWishlisted, dispatch, navigation, _id]);
+
+  const handleCart = useCallback(() => {
+    if (!user) return navigation.navigate('Login');
+    if (inCart) {
+      dispatch(removeFromCart(_id)).then(() => {
+        Toast.show({ type: 'success', text1: 'Đã xóa khỏi giỏ hàng', position: 'top' });
+      });
     } else {
-      dispatch(addToWishlist(_id));
+      dispatch(addToCart(_id)).then(() => {
+        Toast.show({ type: 'success', text1: 'Đã thêm vào giỏ hàng', position: 'top' });
+      });
     }
-  };
+  }, [user, inCart, dispatch, navigation, _id]);
 
   return (
     <TouchableOpacity
@@ -128,18 +139,15 @@ const CourseCardAllCourse = ({ course }) => {
             </View>
             <TouchableOpacity
               className="bg-gray-900 w-7 h-7 rounded-full items-center justify-center active:bg-gray-700"
-              onPress={() => {
-                if (!user) return navigation.navigate('Login');
-                // TODO: Add to cart logic here
-              }}
+              onPress={handleCart}
             >
-              <ShoppingCart size={13} color="white" />
+              <ShoppingCart size={13} color={inCart ? "#e11d48" : "white"} />
             </TouchableOpacity>
           </View>
         )}
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 export default CourseCardAllCourse;
