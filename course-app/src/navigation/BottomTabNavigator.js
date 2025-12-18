@@ -20,8 +20,7 @@ const BottomTabNavigator = () => {
         <Tab.Navigator
             screenOptions={{
                 headerShown: false,
-                tabBarShowLabel: true, // Hiển thị chữ bên dưới icon
-                tabBarActiveTintColor: '#e11d48', // Màu hồng (Rose-600) khi active
+                tabBarActiveTintColor: '#e11d48',
                 tabBarInactiveTintColor: '#9ca3af',
                 tabBarStyle: {
                     backgroundColor: '#ffffff',
@@ -29,13 +28,7 @@ const BottomTabNavigator = () => {
                     borderTopColor: '#f3f4f6',
                     height: 60 + (insets.bottom > 0 ? insets.bottom : 10),
                     paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
-
                     paddingTop: 10,
-                },
-                tabBarLabelStyle: {
-                    fontSize: 12,
-                    fontWeight: '500',
-                    marginBottom: insets.bottom > 0 ? 0 : 5,
                 },
             }}
         >
