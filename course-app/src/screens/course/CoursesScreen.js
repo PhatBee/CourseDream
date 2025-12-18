@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, FlatList, ActivityIndicator, Text } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute } from '@react-navigation/native';
 
 import CourseCardAllCourse from '../../components/common/CourseCardAllCourse';
 import CourseFilter from '../../components/common/CourseFilter';
@@ -13,6 +14,7 @@ const CoursesScreen = () => {
   const dispatch = useDispatch();
   const { items: courses = [], isLoading, isError, message } = useSelector(state => state.course);
   const { items: categories = [] } = useSelector(state => state.categories);
+  const route = useRoute();
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -38,6 +40,17 @@ const CoursesScreen = () => {
     }));
     setSearch(value); // cập nhật lại search để giữ input đồng bộ
   };
+
+  // Khi nhận params từ navigation (từ HomeScreen)
+  useEffect(() => {
+    if (route.params?.search) {
+      setSearch(route.params.search); // Đẩy từ khóa lên thanh search
+      dispatch(getAllCourses({
+        search: route.params.search,
+        category: selectedCategory,
+      }));
+    }
+  }, [route.params?.search]);
 
   if (isLoading) {
     return (

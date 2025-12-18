@@ -2,6 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { ScrollView, View, ActivityIndicator, Text, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 
 // Actions
 import { getCategories } from '../../features/categories/categorySlice';
@@ -20,6 +21,7 @@ import LoginPromptCard from '../../components/home/LoginPromptCard';
 
 const HomeScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const nav = useNavigation();
 
   const { user } = useSelector(state => state.auth);
 
@@ -46,6 +48,12 @@ const HomeScreen = ({ navigation }) => {
     loadData();
   }, [loadData]);
 
+  const handleSearch = (keyword) => {
+    if (keyword) {
+      nav.navigate('CoursesTab', { search: keyword });
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView
@@ -57,7 +65,7 @@ const HomeScreen = ({ navigation }) => {
       >
         <View className="px-5">
           <HomeHeader user={user} />
-          <SearchBar />
+          <SearchBar onSearch={handleSearch} />
         </View>
 
         {/* Nếu chưa có khóa học đang học -> Hiện Banner quảng cáo */}

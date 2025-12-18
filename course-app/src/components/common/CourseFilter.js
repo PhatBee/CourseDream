@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { Search } from 'lucide-react-native';
 
@@ -8,9 +8,15 @@ const CourseFilter = ({
   categories = [],
   selectedCategory,
   setSelectedCategory,
-  onSearch, // nhận prop mới
+  onSearch,
 }) => {
   const [inputValue, setInputValue] = useState(search);
+
+  // Đồng bộ inputValue với prop search khi search thay đổi từ ngoài vào
+  useEffect(() => {
+    setInputValue(search);
+  }, [search]);
+
   const data = [{ _id: '', name: 'Tất cả' }, ...categories];
 
   const handleSearch = () => {
