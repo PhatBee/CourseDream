@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchMyEnrollments } from '../../features/enrollment/enrollmentSlice';
