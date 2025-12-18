@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CourseCardAllCourse from '../../components/common/CourseCardAllCourse';
 import CourseFilter from '../../components/common/CourseFilter';
 import { getAllCourses } from '../../features/course/courseSlice';
+import { getAllCategoriesSimple } from '../../features/categories/categorySlice'; // Thêm dòng này
 import styles from './CoursesScreen.styles';
 
 const CoursesScreen = () => {
@@ -15,6 +16,11 @@ const CoursesScreen = () => {
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+
+  // Lấy đủ danh mục khi mount
+  useEffect(() => {
+    dispatch(getAllCategoriesSimple());
+  }, [dispatch]);
 
   // Fetch courses khi đổi category
   useEffect(() => {
@@ -56,10 +62,10 @@ const CoursesScreen = () => {
       <CourseFilter
         search={search}
         setSearch={setSearch}
-        categories={categories}
+        categories={categories} // Đã luôn đủ danh mục
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
-        onSearch={handleSearch} // truyền hàm này xuống
+        onSearch={handleSearch}
       />
       {courses.length === 0 ? (
         <View style={styles.center}>
