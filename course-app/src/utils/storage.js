@@ -25,3 +25,7 @@ export const getUser = async () => {
 export const removeUser = async () => {
     await SecureStore.deleteItemAsync('user');
 };
+
+export const saveToken = async (token) => {
+    await SecureStore.setItemAsync('accessToken', token);
+};
