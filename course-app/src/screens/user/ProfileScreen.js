@@ -81,6 +81,7 @@ const ProfileScreen = ({ navigation }) => {
         {
             section: 'Account Settings',
             items: [
+                { id: 'instructor-profile', label: 'Instructor Profile', icon: User, screen: 'InstructorProfile', show: user?.role === 'instructor' || user?.role === 'admin' },
                 { id: 'change-password', label: 'Change Password', icon: Lock, screen: 'ChangePassword', show: true },
                 { id: 'settings', label: 'Settings', icon: Settings, screen: 'Settings', show: true },
             ],
