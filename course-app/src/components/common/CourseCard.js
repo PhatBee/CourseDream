@@ -177,7 +177,14 @@ const CourseCard = ({ course }) => {
               {categories[0].name}
             </Text>
           </View>
-        )}
+        ) ||
+          (
+            <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
+              <Text className="text-white text-[10px] font-medium" numberOfLines={1}>
+                General
+              </Text>
+            </View>
+          )}
       </View>
 
       {/* Content Area */}
