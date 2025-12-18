@@ -25,6 +25,7 @@ const PaymentSchema = new mongoose.Schema({
   // Metadata
   ipAddr: String, // IP address của khách hàng
   locale: { type: String, default: "vn" }, // Ngôn ngữ
+  platform: { type: String, enum: ["web", "mobile"], default: "web" }, // Platform
 }, { timestamps: true });
 
 export default mongoose.model("Payment", PaymentSchema);

@@ -9,7 +9,7 @@ import moment from 'moment';
 
 export const createPaymentUrl = async (req, res) => {
     try {
-        const { amount, bankCode, language, courseIds } = req.body;
+        const { amount, bankCode, language, courseIds, platform } = req.body;
         // Lấy IP thật của user (quan trọng với VNPAY)
         const ipAddr = req.headers['x-forwarded-for'] ||
             req.connection.remoteAddress ||
@@ -30,7 +30,8 @@ export const createPaymentUrl = async (req, res) => {
             orderInfo,
             ipAddr,
             locale: language,
-            status: 'pending'
+            status: 'pending',
+            platform // Store platform if needed in model, otherwise just for URL generation
         });
 
         // 2. Tạo URL VNPAY
@@ -40,7 +41,8 @@ export const createPaymentUrl = async (req, res) => {
             orderInfo,
             ipAddr,
             bankCode,
-            language
+            language,
+            platform // Pass platform to service
         });
 
         res.status(200).json({ paymentUrl });

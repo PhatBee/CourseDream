@@ -28,13 +28,19 @@ function sortObject(obj) {
  * Tạo URL thanh toán
  */
 export const createPaymentUrl = async (data) => {
-    const { amount, orderId, orderInfo, ipAddr, bankCode, language = 'vn' } = data;
+    const { amount, orderId, orderInfo, ipAddr, bankCode, language = 'vn', platform = "web" } = data;
 
     const tmnCode = process.env.VNPAY_TMNCODE;
     const secretKey = process.env.VNPAY_HASHSECRET;
     const vnpUrl = process.env.VNPAY_URL;
     // URL Frontend nhận kết quả quay về
-    const returnUrl = process.env.VNPAY_RETURN_URL;
+    let returnUrl = "";
+
+    if (platform === "web") {
+        returnUrl = process.env.VNPAY_RETURN_URL;
+    } else if (platform === "mobile") {
+        returnUrl = process.env.VNPAY_RETURN_URL_MOBILE;
+    }
 
     const date = new Date();
     const createDate = moment(date).format('YYYYMMDDHHmmss');
