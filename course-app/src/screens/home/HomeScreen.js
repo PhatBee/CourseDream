@@ -31,14 +31,13 @@ const HomeScreen = ({ navigation }) => {
   const { items: enrollments, isLoading: enrollLoading } = useSelector(state => state.enrollment);
 
   const isLoading = catLoading || courseLoading || enrollLoading;
-
   const latestEnrollment = useMemo(() => {
     if (!enrollments || enrollments.length === 0) return null;
-    
+
     const sorted = [...enrollments].sort((a, b) => {
-        const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
-        const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
-        return dateB - dateA;
+      const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
     });
 
     return sorted[0];
