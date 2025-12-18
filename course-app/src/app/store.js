@@ -9,6 +9,9 @@ import enrollmentReducer from '../features/enrollment/enrollmentSlice';
 import wishlistReducer from '../features/wishlist/wishlistSlice';
 import learningReducer from '../features/learning/learningSlice'
 import cartReducer from '../features/cart/cartSlice';
+import reviewReducer from '../features/review/reviewSlice';
+import discussionReducer from '../features/discussion/discussionSlice';
+import reportReducer from '../features/report/reportSlice';
 
 export const store = configureStore({
         reducer: {
@@ -22,5 +25,8 @@ export const store = configureStore({
                 instructor: instructorReducer,
                 cart: cartReducer,
                 learning: learningReducer,
+                review: reviewReducer,
+                discussion: discussionReducer,
+                report: reportReducer,
         }
 });

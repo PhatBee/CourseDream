@@ -93,7 +93,7 @@ export const wishlistSlice = createSlice({
       })
       
       // Add to Wishlist
-      .addCase(addToWishlist.fulfilled, (action) => {
+      .addCase(addToWishlist.fulfilled, (state,action) => {
         Toast.show({
           type: 'success',
           text1: 'Thành công',
