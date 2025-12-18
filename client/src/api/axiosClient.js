@@ -5,13 +5,8 @@ const axiosClient = axios.create({
   withCredentials: true, // Enable sending cookies
 });
 
-// Request interceptor (Optional: if you still want to attach token manually, but with cookies it's not needed for the main token)
-// However, if you have other headers, keep them here.
+// Request interceptor
 axiosClient.interceptors.request.use((config) => {
-  // const token = localStorage.getItem("accessToken"); // No longer using localStorage for token
-  // if (token) {
-  //   config.headers.Authorization = `Bearer ${token}`;
-  // }
   return config;
 });
 
@@ -35,46 +30,74 @@ axiosClient.interceptors.response.use(
       '/auth/set-password'
     ];
 
+    // Danh sách các endpoint public (guest có thể truy cập)
+    const publicEndpoints = [
+      '/courses',
+      '/categories',
+      '/search',
+      '/instructors',
+      '/stats'
+    ];
+
     // Kiểm tra xem có phải public endpoint không
-    const isPublicEndpoint = publicAuthEndpoints.some(endpoint =>
+    const isPublicAuthEndpoint = publicAuthEndpoints.some(endpoint =>
+      originalRequest.url?.includes(endpoint)
+    );
+
+    // Kiểm tra xem có phải public data endpoint không
+    const isPublicDataEndpoint = publicEndpoints.some(endpoint =>
       originalRequest.url?.includes(endpoint)
     );
 
     // Kiểm tra xem có phải refresh-token endpoint không (tránh infinite loop)
     const isRefreshEndpoint = originalRequest.url?.includes('/auth/refresh-token');
 
-    // Nếu lỗi 401, chưa retry, không phải public endpoint, và không phải refresh endpoint
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !isPublicEndpoint &&
-      !isRefreshEndpoint
-    ) {
-      originalRequest._retry = true;
+    // Nếu lỗi 401
+    if (error.response?.status === 401) {
+      // Nếu là public data endpoint -> Không cần xử lý, trả về lỗi bình thường
+      if (isPublicDataEndpoint) {
+        return Promise.reject(error);
+      }
 
-      try {
-        console.log('🔄 Token expired, attempting to refresh...');
+      // Nếu chưa retry, không phải public auth endpoint, và không phải refresh endpoint
+      if (
+        !originalRequest._retry &&
+        !isPublicAuthEndpoint &&
+        !isRefreshEndpoint
+      ) {
+        originalRequest._retry = true;
 
-        // Gọi API refresh token
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
-          {},
-          { withCredentials: true }
-        );
+        try {
+          console.log('🔄 Token expired, attempting to refresh...');
 
-        console.log('✅ Token refreshed successfully');
+          // Gọi API refresh token
+          const response = await axios.post(
+            `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+            {},
+            { withCredentials: true }
+          );
 
-        // Retry request ban đầu
-        return axiosClient(originalRequest);
-      } catch (refreshError) {
-        // Nếu refresh thất bại (refresh token hết hạn hoặc không hợp lệ)
-        console.error('❌ Refresh token failed:', refreshError.response?.data || refreshError.message);
+          console.log('✅ Token refreshed successfully');
 
-        // Clear user data và redirect về login
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+          // Retry request ban đầu
+          return axiosClient(originalRequest);
+        } catch (refreshError) {
+          // Nếu refresh thất bại (refresh token hết hạn hoặc không hợp lệ)
+          console.error('❌ Refresh token failed:', refreshError.response?.data || refreshError.message);
 
-        return Promise.reject(refreshError);
+          // Chỉ clear và redirect nếu user đã từng login (có user trong localStorage)
+          const hasUser = localStorage.getItem('user');
+          if (hasUser) {
+            localStorage.removeItem('user');
+            // Chỉ redirect nếu không phải trang public
+            if (!window.location.pathname.includes('/courses') &&
+              !window.location.pathname.includes('/login')) {
+              window.location.href = '/login';
+            }
+          }
+
+          return Promise.reject(refreshError);
+        }
       }
     }
 
