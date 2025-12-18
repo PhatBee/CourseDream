@@ -77,7 +77,7 @@ const EditProfileScreen = ({ navigation }) => {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images, // Corrected from legacy constant
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
@@ -99,7 +99,7 @@ const EditProfileScreen = ({ navigation }) => {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: () => {
-                        setAvatarUri('https://i.pravatar.cc/150?img=3');
+                        setAvatarUri(null); // Clear URI
                         setDeleteAvatar(true);
                     },
                 },
@@ -114,23 +114,26 @@ const EditProfileScreen = ({ navigation }) => {
 
         const data = new FormData();
         data.append('name', formData.name);
-        data.append('bio', formData.bio);
-        data.append('phone', formData.phone);
+        data.append('bio', formData.bio || "");
+        data.append('phone', formData.phone || "");
 
         if (deleteAvatar) {
             data.append('deleteAvatar', 'true');
-        } else if (avatarUri && avatarUri.startsWith('file://')) {
-            // New image selected
+        } else if (avatarUri && !avatarUri.startsWith('http')) {
+            // Only append if it's a new local file (not an existing HTTP URL)
+            const uri = Platform.OS === "android" ? avatarUri : avatarUri.replace("file://", "");
             const filename = avatarUri.split('/').pop();
             const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : 'image/jpeg';
+            const type = match ? `image/${match[1]}` : `image/jpeg`;
 
             data.append('avatar', {
-                uri: avatarUri,
+                uri: avatarUri, // Keep original URI for RN
                 name: filename,
                 type,
             });
         }
+
+        console.log("Submitting formData:", data);
 
         dispatch(updateProfile(data));
     };

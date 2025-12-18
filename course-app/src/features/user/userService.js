@@ -6,7 +6,13 @@ const getProfile = async () => {
 };
 
 const updateProfile = async (profileData) => {
-    const response = await axiosClient.put("/users/profile", profileData);
+    const config = {};
+    if (profileData instanceof FormData) {
+        config.headers = {
+            "Content-Type": "multipart/form-data",
+        };
+    }
+    const response = await axiosClient.put("/users/profile", profileData, config);
     return response.data;
 };
 
