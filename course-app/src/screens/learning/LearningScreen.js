@@ -20,9 +20,9 @@ const LearningScreen = ({ route, navigation }) => {
   );
 
   const handleToggleComplete = async (lectureId) => {
-    await dispatch(toggleLecture({ 
-        courseSlug: slug,
-        lectureId: lectureId 
+    await dispatch(toggleLecture({
+      courseSlug: slug,
+      lectureId: lectureId
     }));
   };
 
@@ -47,56 +47,62 @@ const LearningScreen = ({ route, navigation }) => {
   return (
     <View className="flex-1 bg-white">
       <StatusBar barStyle="light-content" backgroundColor="black" />
-      
+
       {/* 1. VIDEO PLAYER AREA */}
       <View>
         {/* Custom Back Button overlay */}
-        <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            className="absolute top-12 left-4 z-10 bg-black/50 p-2 rounded-full"
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          className="absolute top-12 left-4 z-10 bg-black/50 p-2 rounded-full"
         >
-            <ChevronLeft size={24} color="white" />
+          <ChevronLeft size={24} color="white" />
         </TouchableOpacity>
 
-        <VideoPlayer 
-            currentLecture={currentLecture} 
-            thumbnail={course.thumbnail}
+        <VideoPlayer
+          currentLecture={currentLecture}
+          thumbnail={course.thumbnail}
+          onComplete={() => {
+            const isCompleted = progress?.completedLectures?.includes(currentLecture?._id);
+            if (!isCompleted) {
+              handleToggleComplete(currentLecture?._id);
+            }
+          }}
         />
       </View>
 
       {/* 2. COURSE INFO & TABS */}
       <View className="flex-1">
         <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Title Section */}
-            <View className="p-5 pb-2">
-                <Text className="text-xl font-bold text-gray-900 leading-7 mb-1">
-                    {course.title}
-                </Text>
-                <Text className="text-gray-500 text-xs">
-                    {course.instructor?.name || 'Instructor'}
-                </Text>
+          {/* Title Section */}
+          <View className="p-5 pb-2">
+            <Text className="text-xl font-bold text-gray-900 leading-7 mb-1">
+              {course.title}
+            </Text>
+            <Text className="text-gray-500 text-xs">
+              {course.instructor?.name || 'Instructor'}
+            </Text>
+          </View>
+
+          {/* Tab Selector */}
+          <LearningTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+          {/* 3. CONTENT AREA */}
+          {activeTab === 'Lectures' ? (
+            <CurriculumList
+              sections={sections}
+              currentLecture={currentLecture}
+              completedLectures={progress?.completedLectures || []}
+              onLecturePress={handleLecturePress}
+              onToggleComplete={handleToggleComplete}
+            />
+          ) : (
+            <View className="p-5">
+              <Text className="text-base font-bold mb-2">About this course</Text>
+              <Text className="text-gray-600 leading-5">
+                {course.description || 'No description available.'}
+              </Text>
             </View>
-
-            {/* Tab Selector */}
-            <LearningTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
-            {/* 3. CONTENT AREA */}
-            {activeTab === 'Lectures' ? (
-                <CurriculumList 
-                    sections={sections} 
-                    currentLecture={currentLecture}
-                    completedLectures={progress?.completedLectures || []}
-                    onLecturePress={handleLecturePress}
-                    onToggleComplete={handleToggleComplete}
-                />
-            ) : (
-                <View className="p-5">
-                    <Text className="text-base font-bold mb-2">About this course</Text>
-                    <Text className="text-gray-600 leading-5">
-                        {course.description || 'No description available.'}
-                    </Text>
-                </View>
-            )}
+          )}
         </ScrollView>
       </View>
     </View>

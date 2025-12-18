@@ -6,14 +6,25 @@
 export const getVideoSource = (url) => {
   if (!url) return { type: 'native', uri: null };
 
+  // Kiểm tra Dailymotion
+  const dailymotionMatch = url.match(
+    /(?:dailymotion\.com\/(?:video\/|embed\/video\/)|dai\.ly\/)([^"&?\/ ]+)/
+  );
+  if (dailymotionMatch && dailymotionMatch[1]) {
+    return {
+      type: 'webview',
+      uri: `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}?autoplay=0`
+    };
+  }
+
   // 1. Kiểm tra YouTube
   const youtubeMatch = url.match(
     /(?:youtube\.com\/(?:[^\/]+\/.+\/|watch\?v=)|youtu\.be\/)([^"&?\/ ]{11})/
   );
   if (youtubeMatch && youtubeMatch[1]) {
     return {
-      type: 'webview',
-      uri: `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=0&rel=0&showinfo=0&controls=1&modestbranding=1&playsinline=1`
+      type: 'youtube',
+      videoId: youtubeMatch[1]
     };
   }
 
