@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { ScrollView, View, ActivityIndicator, Text, RefreshControl } from 'react-native';
+import { ScrollView, View, ActivityIndicator, Text, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
@@ -88,7 +88,9 @@ const HomeScreen = ({ navigation }) => {
         <View className="mb-20">
           <View className="flex-row justify-between items-center mb-4 px-5">
             <Text className="text-lg font-bold text-gray-900">Popular Courses</Text>
-            <Text className="text-rose-500 text-sm font-medium">See All</Text>
+            <TouchableOpacity onPress={() => nav.navigate('CoursesTab', { clearSearch: true })}>
+              <Text className="text-rose-500 text-sm font-medium">See All</Text>
+            </TouchableOpacity>
           </View>
 
           <ScrollView

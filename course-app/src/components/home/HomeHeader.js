@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Bell, LogIn } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import CartIcon from '../common/CartIcon';
 
 const HomeHeader = ({ user }) => {
   const navigation = useNavigation();
@@ -17,6 +18,7 @@ const HomeHeader = ({ user }) => {
       {user ? (
         // User đã đăng nhập - Hiển thị notification và avatar
         <View className="flex-row items-center gap-3">
+          <CartIcon />
           <TouchableOpacity className="p-2 bg-white rounded-full border border-gray-100 shadow-sm relative">
             <Bell size={24} color="#6b7280" />
             <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />

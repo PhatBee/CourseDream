@@ -9,6 +9,7 @@ import HomeScreen from '../screens/home/HomeScreen';
 import CoursesScreen from '../screens/course/CoursesScreen';
 import MyLearningScreen from '../screens/learning/MyLearningScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
+import CartScreen from '../screens/cart/CartScreen';
 
 const Tab = createBottomTabNavigator();
 
