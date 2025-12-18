@@ -31,19 +31,38 @@ axiosClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // Skip auto-refresh for auth endpoints
-        const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+        // Danh sách các endpoint KHÔNG cần refresh (public endpoints)
+        const publicAuthEndpoints = [
+            '/auth/login',
+            '/auth/register',
+            '/auth/verify-otp',
+            '/auth/google',
+            '/auth/facebook',
+            '/auth/forgot-password',
+            '/auth/verify-reset-otp',
+            '/auth/set-password'
+        ];
 
-        // If error is 401 and we haven't retried yet and NOT an auth endpoint
+        // Kiểm tra xem có phải public endpoint không
+        const isPublicEndpoint = publicAuthEndpoints.some(endpoint =>
+            originalRequest.url?.includes(endpoint)
+        );
+
+        // Kiểm tra xem có phải refresh-token endpoint không (tránh infinite loop)
+        const isRefreshEndpoint = originalRequest.url?.includes('/auth/refresh-token');
+
+        // Nếu lỗi 401, chưa retry, không phải public endpoint, và không phải refresh endpoint
         if (
-            error.response &&
-            error.response.status === 401 &&
+            error.response?.status === 401 &&
             !originalRequest._retry &&
-            !isAuthEndpoint
+            !isPublicEndpoint &&
+            !isRefreshEndpoint
         ) {
             originalRequest._retry = true;
 
             try {
+                console.log('🔄 Token expired, attempting to refresh...');
+
                 // Get current token
                 const currentToken = await getToken();
 
@@ -63,6 +82,8 @@ axiosClient.interceptors.response.use(
                     }
                 );
 
+                console.log('✅ Token refreshed successfully');
+
                 // Save new access token
                 const newAccessToken = response.data.accessToken;
                 await saveToken(newAccessToken);
@@ -74,7 +95,7 @@ axiosClient.interceptors.response.use(
                 return axiosClient(originalRequest);
             } catch (refreshError) {
                 // If refresh fails, logout user
-                console.error('Refresh token failed:', refreshError);
+                console.error('❌ Refresh token failed:', refreshError.response?.data || refreshError.message);
 
                 // Clear storage
                 await removeToken();

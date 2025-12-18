@@ -23,29 +23,57 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Skip auto-refresh for auth endpoints (login, register, etc.)
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+    // Danh sách các endpoint KHÔNG cần refresh (public endpoints)
+    const publicAuthEndpoints = [
+      '/auth/login',
+      '/auth/register',
+      '/auth/verify-otp',
+      '/auth/google',
+      '/auth/facebook',
+      '/auth/forgot-password',
+      '/auth/verify-reset-otp',
+      '/auth/set-password'
+    ];
 
-    // If error is 401 and we haven't retried yet and NOT an auth endpoint
-    if (error.response && error.response.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    // Kiểm tra xem có phải public endpoint không
+    const isPublicEndpoint = publicAuthEndpoints.some(endpoint =>
+      originalRequest.url?.includes(endpoint)
+    );
+
+    // Kiểm tra xem có phải refresh-token endpoint không (tránh infinite loop)
+    const isRefreshEndpoint = originalRequest.url?.includes('/auth/refresh-token');
+
+    // Nếu lỗi 401, chưa retry, không phải public endpoint, và không phải refresh endpoint
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isPublicEndpoint &&
+      !isRefreshEndpoint
+    ) {
       originalRequest._retry = true;
 
       try {
-        // Call refresh token API
-        // Note: We use a new axios instance to avoid infinite loops if this request also fails
-        await axios.post(
+        console.log('🔄 Token expired, attempting to refresh...');
+
+        // Gọi API refresh token
+        const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
           {},
           { withCredentials: true }
         );
 
-        // If successful, retry the original request
+        console.log('✅ Token refreshed successfully');
+
+        // Retry request ban đầu
         return axiosClient(originalRequest);
       } catch (refreshError) {
-        // If refresh fails (e.g., refresh token expired), logout user
-        console.error("Refresh token failed:", refreshError);
-        localStorage.removeItem("user");
-        window.location.href = "/login"; // Redirect to login
+        // Nếu refresh thất bại (refresh token hết hạn hoặc không hợp lệ)
+        console.error('❌ Refresh token failed:', refreshError.response?.data || refreshError.message);
+
+        // Clear user data và redirect về login
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+
         return Promise.reject(refreshError);
       }
     }
