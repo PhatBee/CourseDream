@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchMyEnrollments } from '../../features/enrollment/enrollmentSlice';
@@ -7,6 +7,7 @@ import ProgressBar from '../../components/common/ProgressBar';
 import CourseFilter from '../../components/common/CourseFilter';
 import { getAllCategoriesSimple } from '../../features/categories/categorySlice'; // Thêm dòng này
 import axiosClient from '../../api/axiosClient';
+import { Image } from 'expo-image';
 
 const MyLearningScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -70,6 +71,15 @@ const MyLearningScreen = ({ navigation }) => {
     });
   }, [enrollments, search, selectedCategory]);
 
+  const getImageSource = (thumbnail) => {
+    if (!thumbnail || (typeof thumbnail === 'string' && thumbnail.trim() === '')) {
+      return require('../../../assets/images/default-course.jpg');
+    }
+    if (typeof thumbnail === 'string') return { uri: thumbnail };
+    if (typeof thumbnail === 'object' && thumbnail.url) return { uri: thumbnail.url };
+    return require('../../../assets/images/default-course.jpg');
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -116,9 +126,10 @@ const MyLearningScreen = ({ navigation }) => {
                 activeOpacity={0.9}
               >
                 <Image
-                  source={course.thumbnail?.url ? { uri: course.thumbnail.url } : require('../../../assets/images/default-course.jpg')}
-                  className="w-20 h-20 rounded-lg mr-3 bg-gray-200"
-                  resizeMode="cover"
+                  source={getImageSource(course.thumbnail)}
+                  placeholder={require('../../../assets/images/default-course.jpg')}
+                  style={{ width: 80, height: 80, borderRadius: 12, marginRight: 12, backgroundColor: '#e5e7eb' }}
+                  contentFit="cover"
                 />
                 <View className="flex-1 justify-between">
                   <Text className="font-bold text-base text-gray-900 mb-1" numberOfLines={2}>{course.title}</Text>
