@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import DiscussionMobile from '../../components/course/DiscussionMobile';
@@ -25,12 +25,8 @@ const DiscussionScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={80}
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <DiscussionMobile courseId={courseId} isEnrolled={isEnrolled} user={user} />
-        </ScrollView>
+        {/* Bỏ ScrollView ở đây */}
+        <DiscussionMobile courseId={courseId} isEnrolled={isEnrolled} user={user} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

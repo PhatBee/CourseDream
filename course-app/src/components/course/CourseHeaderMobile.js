@@ -7,6 +7,7 @@ import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishl
 import Toast from 'react-native-toast-message';
 import ReportModalMobile from '../common/ReportModalMobile';
 import { Image } from 'expo-image';
+import { useNavigation } from '@react-navigation/native';
 
 const formatCurrency = (amount) => {
   if (!amount || amount === 0) return 'Free';
@@ -20,6 +21,7 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
   const { items: wishlistItems } = useSelector(state => state.wishlist);
   const { items: cartItems } = useSelector(state => state.cart);
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const [reportVisible, setReportVisible] = useState(false);
 
   const isWishlisted = wishlistItems.some(item => item._id === course._id);
@@ -112,11 +114,14 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
             </TouchableOpacity>
           </>
         ) : (
-          <View className="bg-emerald-50 px-3 py-2 rounded-lg items-center justify-center border border-emerald-100 mb-2">
-            <Text className="text-emerald-600 font-bold text-xs uppercase tracking-wider">
-              Đã ghi danh
+          <TouchableOpacity
+            className="bg-rose-500 px-3 py-3 rounded-lg items-center justify-center mb-2"
+            onPress={() => navigation.navigate('Learning', { slug: course.slug })}
+          >
+            <Text className="text-white font-bold text-base">
+              Go to Course
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
         <View className="flex-row gap-3 mt-2">
           <TouchableOpacity onPress={handleWishlist} className="bg-gray-100 p-2 rounded-full">

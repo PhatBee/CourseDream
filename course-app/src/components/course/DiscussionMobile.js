@@ -5,8 +5,10 @@ import { fetchDiscussions, addDiscussion, replyDiscussion, resetDiscussionState 
 import Toast from 'react-native-toast-message';
 import ReportModalMobile from '../common/ReportModalMobile';
 import { Flag } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Thêm dòng này
 
 const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
+  const insets = useSafeAreaInsets(); // Lấy thông tin vùng an toàn
   const dispatch = useDispatch();
   const { discussions, loading, pagination } = useSelector(state => state.discussion);
   const [newContent, setNewContent] = useState('');
@@ -52,7 +54,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
   );
 
   return (
-    <View className="px-4 mb-8">
+    <View className="px-4 flex-1">
       <Text className="text-lg font-bold mb-2">Thảo luận khóa học</Text>
       {!canDiscuss && (
         <View className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
@@ -140,9 +142,11 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
           </View>
         )}
         ListEmptyComponent={<Text className="text-gray-500 text-center mt-4">Chưa có thảo luận nào.</Text>}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom, // Thêm padding dưới theo vùng an toàn
+        }}
       />
-      {/* Phân trang nếu muốn */}
-      {/* ... */}
+
       <ReportModalMobile
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
