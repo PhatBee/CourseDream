@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { Home, Compass, BookOpen, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -44,10 +44,12 @@ const BottomTabNavigator = () => {
                 name="HomeTab"
                 component={HomeScreen}
                 options={{
-                    tabBarLabel: 'Home',
-                    tabBarIcon: ({ color, size }) => (
-                        <Home size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            Home
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <Home size={24} color={color} />,
                 }}
             />
 
@@ -56,10 +58,12 @@ const BottomTabNavigator = () => {
                 name="CoursesTab"
                 component={CoursesScreen}
                 options={{
-                    tabBarLabel: 'Courses',
-                    tabBarIcon: ({ color, size }) => (
-                        <Compass size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            Courses
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <Compass size={24} color={color} />,
                 }}
             />
 
@@ -68,10 +72,12 @@ const BottomTabNavigator = () => {
                 name="MyLearningTab"
                 component={MyLearningScreen}
                 options={{
-                    tabBarLabel: 'My Learning',
-                    tabBarIcon: ({ color, size }) => (
-                        <BookOpen size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            My Learning
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
                 }}
             />
 
@@ -80,10 +86,12 @@ const BottomTabNavigator = () => {
                 name="ProfileTab"
                 component={ProfileScreen}
                 options={{
-                    tabBarLabel: 'Profile',
-                    tabBarIcon: ({ color, size }) => (
-                        <User size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            Profile
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <User size={24} color={color} />,
                 }}
             />
         </Tab.Navigator>
