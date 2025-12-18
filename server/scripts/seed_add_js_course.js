@@ -1,4 +1,4 @@
-// scripts/seed_add_notion_launch_kit.js
+// scripts/seed_add_figma_mobile_app.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -33,67 +33,155 @@ function slugify(text) {
     // ====== INPUT DATA ======
     const instructorId = '6913f6f74ef370e87cb6d779';
 
-    const title = 'The Ultimate Notion Course Launch Kit';
-    const shortDescription = 'Launch Your Course with Notion: Design Sales Pages, Dashboards, and Slide Decks for a Seamless Course Experience.';
+    const title = 'Mobile App Design in Figma: From Concept to Prototype';
+    const shortDescription = 'A step-by-step guide to creating your mobile app design in Figma';
 
     const description = `
-Launching a course can be overwhelming — especially when you're juggling multiple tools and platforms.
+Figma is a powerful, free web-based design tool perfect for UI/UX design — from wireframing to prototyping mobile apps.
 
-With **The Ultimate Notion Course Launch Kit**, you can design, organize, and launch your entire course — all inside Notion.
+In this hands-on course, experienced UI/UX designer Željko Milivojević guides you step-by-step through designing a complete mobile app in Figma, from concept to interactive prototype.
 
-In this course you’ll learn how to:
-• Build beautiful, high-converting sales pages directly in Notion
-• Create polished course dashboards for a seamless student experience
-• Design stunning, customizable slide decks (perfect for video lessons)
-• Use Notion as your all-in-one launch hub (no more messy tools!)
+You'll master:
+• Differences between iOS & Android design guidelines
+• Creating moodboards & design systems
+• Building wireframes and high-fidelity designs
+• Automating workflows with components & variables
+• Prototyping with interactions & animations
+• Developer handoff & client revisions
+• Latest Figma AI features to speed up your process
 
-Includes ready-to-use templates + step-by-step video training.
+No prior experience required! Perfect for beginners, marketers, or designers switching to Figma.
 
-No design skills? No problem! Everything is beginner-friendly and fully customizable to match your brand.
-
-Stop switching between apps. Launch faster, cleaner, and with total confidence — all from one place: Notion.
+By the end, you'll confidently design professional mobile apps and build a strong portfolio piece.
 `.trim();
 
-    const topics = ['Notion Workspace', 'Marketing'];
+    const topics = ['Figma', 'Thiết kế ứng dụng Mobile', 'Thiết kế giao diện người dùng', 'Công cụ thiết kế', 'Thiết kế'];
     const includes = [
-      '2 giờ video theo yêu cầu',
+      '5 giờ video theo yêu cầu',
+      '1 bài viết',
+      '2 tài nguyên có thể tải xuống',
       'Truy cập trên thiết bị di động và TV',
       'Quyền truy cập đầy đủ suốt đời',
     ];
     const audience = [
-      'Course creators who want to launch faster using Notion',
-      'Coaches, educators, and creators tired of juggling multiple tools',
-      'Beginners who want a simple, beautiful, all-in-one launch system',
+      'Beginner designers with no strong design experience',
+      'Experienced designers wanting to learn Figma workflows',
+      'Online marketers & social media creators needing visuals',
+      'Anyone wanting to design mobile apps from scratch',
     ];
     const requirements = [
-      'Basic familiarity with Notion is helpful but not required',
-      'No advanced tech skills or special software needed — everything is done within Notion',
-      'Beginners are welcome — this course is designed to be user-friendly for all experience levels',
+      'A computer (Mac or Windows)',
+      'Internet Connection',
+      'No previous design experience is needed',
+      'Figma and Whimsical account (both work on a browser)',
     ];
     const learnOutcomes = [
-      'Thiết kế sales page chuyên nghiệp hoàn toàn trong Notion',
-      'Tạo dashboard khóa học đẹp mắt và dễ sử dụng cho học viên',
-      'Xây dựng slide deck đẹp như Canva nhưng linh hoạt hơn với Notion',
-      'Tổ chức và launch khóa học chỉ với một công cụ duy nhất: Notion',
-      'Tự tin launch khóa học mà không cần biết code hay dùng nhiều app',
+      'Sử dụng thành thạo Figma để thiết kế mobile app từ concept đến prototype',
+      'Hiểu sự khác biệt giữa thiết kế iOS và Android',
+      'Xây dựng moodboard, design system và wireframe chuyên nghiệp',
+      'Tạo high-fidelity design và interactive prototype',
+      'Tận dụng Figma AI để tăng tốc workflow',
+      'Handoff design cho developer và xử lý revision từ client',
     ];
 
-    // ====== SECTIONS & LECTURES (chỉ 1 phần) ======
+    // ====== SECTIONS & LECTURES (12 sections) ======
     const sectionsData = [
       {
-        title: 'The Ultimate Notion Course Launch Kit',
+        title: 'Introduction',
         lectures: [
-          { title: 'Welcome on board!', preview: true, duration: '05:09', url: 'https://dai.ly/x9ugt4k' },
-          { title: 'Creating Notion Slides', preview: false, duration: '19:41', url: 'https://dai.ly/x9ugt4i' },
-          { title: 'The Foundation of Clarity', preview: false, duration: '10:18', url: 'https://dai.ly/x9ugt4e' },
-          { title: 'Editing Your Course with Loom', preview: true, duration: '04:59', url: 'https://dai.ly/x9ugt4c' },
-          { title: 'Editing Your Course with CapCut', preview: false, duration: '20:08', url: 'https://dai.ly/x9ugt4g' },
-          { title: 'Sales Page in Notion - Part 1', preview: false, duration: '24:35', url: 'https://dai.ly/x9ugujy' },
-          { title: 'Sales Page in Notion - Part 2', preview: false, duration: '17:16', url: 'https://dai.ly/x9ugv9y' },
-          { title: 'Notion Course Dashboard', preview: false, duration: '09:57', url: 'https://dai.ly/x9ugwji' },
-          { title: 'Flodesk Checkout', preview: false, duration: '09:13', url: 'https://dai.ly/x9ujv1o' },
-          { title: 'Stripe Checkout Alternative', preview: true, duration: '05:10', url: 'https://dai.ly/x9ujuz0' },
-          { title: 'Conclusion', preview: true, duration: '01:33', url: 'https://dai.ly/x9ujuz2' },
+          { title: 'Introduction and Software recommendation', preview: true, duration: '00:59', url: 'https://dai.ly/x9unnpq' },
+          { title: 'Into the Figma', preview: false, duration: '04:46', url: 'https://dai.ly/x9unnqq' },
+        ]
+      },
+      {
+        title: 'Getting Started',
+        lectures: [
+          { title: 'Designing for iOs vs Android', preview: false, duration: '05:33', url: 'https://dai.ly/x9unns6' },
+          { title: 'Creating the project', preview: true, duration: '04:15', url: 'https://dai.ly/x9unnt4' },
+          { title: 'How to study on Udemy effectively', preview: false, duration: '05:29', url: 'https://dai.ly/x9unnu2' },
+        ]
+      },
+      {
+        title: 'Preparation',
+        lectures: [
+          { title: 'Moodboard & Project Direction', preview: false, duration: '08:28', url: 'https://dai.ly/x9unnum' },
+          { title: 'iOS Library', preview: true, duration: '06:33', url: 'https://dai.ly/x9unnwc' },
+          { title: 'Design system', preview: false, duration: '21:20', url: 'https://dai.ly/x9upw3s' },
+        ]
+      },
+      {
+        title: 'Wireframes',
+        lectures: [
+          { title: 'Wireframes - Part 1', preview: false, duration: '28:03', url: 'https://dai.ly/x9upw3u' },
+          { title: 'Wireframes - Part 2', preview: false, duration: '30:53', url: 'https://dai.ly/x9upw3w' },
+          { title: 'Wireframes flow', preview: false, duration: '08:10', url: 'https://dai.ly/x9upw42' },
+        ]
+      },
+      {
+        title: 'Design Process',
+        lectures: [
+          { title: 'Final Design - Part 1', preview: false, duration: '19:40', url: 'https://dai.ly/x9upw3y' },
+          { title: 'Fun Exercise: creating a Spotify clone', preview: false, duration: '15:48', url: 'https://dai.ly/x9upw40' },
+          { title: 'Final Design - Part 2', preview: false, duration: '28:15', url: 'https://dai.ly/x9upw48' },
+          { title: 'Final Design - Part 3', preview: false, duration: '21:25', url: 'https://dai.ly/x9upw4c' },
+          { title: 'Final Design - Part 4', preview: false, duration: '25:06', url: 'https://dai.ly/x9upzge' },
+        ]
+      },
+      {
+        title: 'Prototype & Handoff',
+        lectures: [
+          { title: 'Prototype & Animations', preview: false, duration: '08:11', url: 'https://dai.ly/x9upw46' },
+          { title: 'Developer handoff & Client revision', preview: false, duration: '03:50', url: 'https://dai.ly/x9upzo8' },
+        ]
+      },
+      {
+        title: 'Overview of Figma AI features',
+        lectures: [
+          { title: 'Interface tour: where to find AI features', preview: false, duration: '01:36', url: 'https://dai.ly/x9uv68k' },
+          { title: 'Figma Make, Figma Slides and Figma Buzz', preview: false, duration: '02:15', url: 'https://dai.ly/x9uv68i' },
+          { title: 'Cleanup & Alignment — AI-Powered & Manual Tools', preview: false, duration: '02:24', url: 'https://dai.ly/x9uv68m' },
+        ]
+      },
+      {
+        title: 'Hands-on demonstration — building with AI',
+        lectures: [
+          { title: 'Real-time project: a simple landing page', preview: false, duration: '01:47', url: 'https://dai.ly/x9uv68o' },
+          { title: 'AI copywriting and UI element generation', preview: false, duration: '01:05', url: 'https://dai.ly/x9uv68q' },
+          { title: 'Iterating and editing with AI suggestions', preview: false, duration: '02:08', url: 'https://dai.ly/x9v420m' },
+          { title: 'AI in the Design Process — Where It Helps, Where It Doesn’t', preview: false, duration: '02:47', url: 'https://dai.ly/x9v420i' },
+        ]
+      },
+      {
+        title: 'Automating repetitive tasks with AI',
+        lectures: [
+          { title: 'Prompt Thinking — How to Talk to AI Like a Designer', preview: false, duration: '03:11', url: 'https://dai.ly/x9v420o' },
+          { title: 'Prompt Recipes — Headlines, Layouts & Visuals', preview: false, duration: '03:16', url: 'https://dai.ly/x9v420k' },
+          { title: 'Prompt Playground — Practice Writing Great AI Prompts', preview: false, duration: '02:07', url: 'https://dai.ly/x9v420q' },
+          { title: 'Helpful AI plugins: Magician, Diagram, Autoname', preview: false, duration: '02:07', url: 'https://dai.ly/x9v420u' },
+        ]
+      },
+      {
+        title: 'Collaboration & handoff with AI',
+        lectures: [
+          { title: 'Final Touches — File Cleanup, Comments & Versionining', preview: false, duration: '02:17', url: 'https://dai.ly/x9v4212' },
+          { title: 'Figma Dev Mode — handoff made smarter', preview: false, duration: '01:59', url: 'https://dai.ly/x9v42b6' },
+          { title: 'Async teamwork tips using Figma AI', preview: false, duration: '01:43', url: 'https://dai.ly/x9v42b2' },
+        ]
+      },
+      {
+        title: 'Case studies & real-world examples',
+        lectures: [
+          { title: 'Workflow with AI: before & after', preview: false, duration: '02:57', url: 'https://dai.ly/x9v42aw' },
+          { title: 'Team-based design: scaling ideas with prompts', preview: false, duration: '03:05', url: 'https://dai.ly/x9v42b0' },
+          { title: 'Figma AI in practice — lessons from real use', preview: false, duration: '02:15', url: 'https://dai.ly/x9v42ay' },
+        ]
+      },
+      {
+        title: 'Final Section',
+        lectures: [
+          { title: 'How to leave a review?', preview: false, duration: '01:49', url: 'https://dai.ly/x9v8uym' },
+          { title: 'How to get a certificate?', preview: false, duration: '01:47', url: 'https://dai.ly/x9v42ie' },
+          { title: 'Final thoughts', preview: false, duration: '00:49', url: 'https://dai.ly/x9v8uuq' },
         ]
       }
     ];
@@ -109,7 +197,7 @@ Stop switching between apps. Launch faster, cleaner, and with total confidence �
     };
 
     // ====== Ensure categories ======
-    const categoryNames = ['Notion Workspace', 'Marketing'];
+    const categoryNames = ['Figma', 'Thiết kế ứng dụng Mobile', 'Thiết kế giao diện người dùng', 'Công cụ thiết kế', 'Thiết kế'];
     const categoryIds = [];
     for (const name of categoryNames) {
       const slug = slugify(name);
@@ -134,13 +222,13 @@ Stop switching between apps. Launch faster, cleaner, and with total confidence �
 
     course.title = title;
     course.slug = slug;
-    course.thumbnail = 'https://img-c.udemycdn.com/course/750x422/6181677_24a6.jpg'; // thay link thật sau nếu cần
-    course.previewUrl = '';
+    course.thumbnail = 'https://img-c.udemycdn.com/course/480x270/5974670_355b.jpg?w=640&q=75'; // Nếu có thumbnail thực tế từ Udemy, thay vào đây
+    course.previewUrl = ''; // video intro preview
     course.description = description;
     course.shortDescription = shortDescription;
-    course.price = 499000;
-    course.priceDiscount = 199000;
-    course.level = 'beginner';
+    course.price = 409000;
+    course.priceDiscount = 269000;
+    course.level = 'intermediate';
     course.language = 'en';
     course.requirements = requirements;
     course.learnOutcomes = learnOutcomes;
@@ -215,7 +303,7 @@ Stop switching between apps. Launch faster, cleaner, and with total confidence �
     course.sections = sectionIds;
     course.totalLectures = totalLectures;
     course.totalDurationSeconds = totalSeconds;
-    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~2.12 giờ
+    course.totalHours = Number((totalSeconds / 3600).toFixed(2)); // ~4.82 giờ
 
     await course.save();
 

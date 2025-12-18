@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { Home, Compass, BookOpen, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,8 +20,7 @@ const BottomTabNavigator = () => {
         <Tab.Navigator
             screenOptions={{
                 headerShown: false,
-                tabBarShowLabel: true, // Hiển thị chữ bên dưới icon
-                tabBarActiveTintColor: '#e11d48', // Màu hồng (Rose-600) khi active
+                tabBarActiveTintColor: '#e11d48',
                 tabBarInactiveTintColor: '#9ca3af',
                 tabBarStyle: {
                     backgroundColor: '#ffffff',
@@ -29,13 +28,7 @@ const BottomTabNavigator = () => {
                     borderTopColor: '#f3f4f6',
                     height: 60 + (insets.bottom > 0 ? insets.bottom : 10),
                     paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
-
                     paddingTop: 10,
-                },
-                tabBarLabelStyle: {
-                    fontSize: 12,
-                    fontWeight: '500',
-                    marginBottom: insets.bottom > 0 ? 0 : 5,
                 },
             }}
         >
@@ -44,10 +37,12 @@ const BottomTabNavigator = () => {
                 name="HomeTab"
                 component={HomeScreen}
                 options={{
-                    tabBarLabel: 'Home',
-                    tabBarIcon: ({ color, size }) => (
-                        <Home size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            Home
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <Home size={24} color={color} />,
                 }}
             />
 
@@ -56,10 +51,12 @@ const BottomTabNavigator = () => {
                 name="CoursesTab"
                 component={CoursesScreen}
                 options={{
-                    tabBarLabel: 'Courses',
-                    tabBarIcon: ({ color, size }) => (
-                        <Compass size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            Courses
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <Compass size={24} color={color} />,
                 }}
             />
 
@@ -68,10 +65,12 @@ const BottomTabNavigator = () => {
                 name="MyLearningTab"
                 component={MyLearningScreen}
                 options={{
-                    tabBarLabel: 'My Learning',
-                    tabBarIcon: ({ color, size }) => (
-                        <BookOpen size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            My Learning
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
                 }}
             />
 
@@ -80,10 +79,12 @@ const BottomTabNavigator = () => {
                 name="ProfileTab"
                 component={ProfileScreen}
                 options={{
-                    tabBarLabel: 'Profile',
-                    tabBarIcon: ({ color, size }) => (
-                        <User size={24} color={color} />
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>
+                            Profile
+                        </Text>
                     ),
+                    tabBarIcon: ({ color }) => <User size={24} color={color} />,
                 }}
             />
         </Tab.Navigator>

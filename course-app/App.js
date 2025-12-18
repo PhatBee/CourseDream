@@ -33,7 +33,8 @@ import WishlistScreen from './src/screens/user/WishlistScreen';
 import MyCoursesScreen from './src/screens/instructor/MyCoursesScreen.js';
 import ChangePasswordScreen from './src/screens/user/ChangePasswordScreen';
 import SettingsScreen from './src/screens/user/SettingsScreen';
-import CartScreen from './src/screens/cart/CartScreen.js';  
+import InstructorProfileScreen from './src/screens/user/InstructorProfileScreen';
+import CartScreen from './src/screens/cart/CartScreen.js';
 
 const Stack = createStackNavigator();
 
@@ -100,6 +101,7 @@ const MainNavigator = () => {
       <Stack.Screen name="EnrolledCourses" component={EnrolledCoursesScreen} />
       <Stack.Screen name="Wishlist" component={WishlistScreen} />
       <Stack.Screen name="MyCourses" component={MyCoursesScreen} />
+      <Stack.Screen name="InstructorProfile" component={InstructorProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="CartScreen" component={CartScreen} />

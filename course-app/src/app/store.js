@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from '../features/auth/authSlice';
 import userReducer from '../features/user/userSlice';
+import instructorReducer from '../features/instructor/instructorSlice';
 
 import categoryReducer from '../features/categories/categorySlice';
 import courseReducer from '../features/course/courseSlice';
@@ -17,6 +18,7 @@ export const store = configureStore({
         enrollment: enrollmentReducer,
         wishlist: wishlistReducer,
         user: userReducer,
+        instructor: instructorReducer,
         cart: cartReducer,
     }
 });
