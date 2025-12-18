@@ -119,10 +119,10 @@ export const getAllCourses = async (query) => {
   if (query.search) {
     filter.title = { $regex: query.search, $options: 'i' };
   }
-  
+
   const courses = await Course.find(filter)
     .select(
-      "title slug thumbnail price priceDiscount level rating reviewCount instructor categories"
+      "title slug thumbnail price priceDiscount level rating instructor categories"
     )
     .populate("instructor", "name avatar")
     .populate("categories", "name slug")
@@ -131,11 +131,20 @@ export const getAllCourses = async (query) => {
     .limit(limit)
     .lean();
 
+  // Thêm reviewCount cho mỗi course
+  const coursesWithReviewCount = await Promise.all(
+    courses.map(async (course) => {
+      const reviewCount = await Review.countDocuments({ course: course._id });
+      course.reviewCount = reviewCount;
+      return course;
+    })
+  );
+
   const totalCourses = await Course.countDocuments(filter);
   const totalPages = Math.ceil(totalCourses / limit);
 
   return {
-    courses,
+    courses: coursesWithReviewCount,
     pagination: {
       total: totalCourses,
       page,
@@ -276,7 +285,16 @@ export const searchCourses = async (query) => {
         .lean(),
     ]);
 
-    return { total, page, limit, courses };
+    // Thêm reviewCount cho mỗi course
+    const coursesWithReviewCount = await Promise.all(
+      courses.map(async (course) => {
+        const reviewCount = await Review.countDocuments({ course: course._id });
+        course.reviewCount = reviewCount ? reviewCount : 0;
+        return course;
+      })
+    );
+
+    return { total, page, limit, courses: coursesWithReviewCount };
   } catch (err) {
     console.error("Error in searchCourses:", err);
     throw err;
