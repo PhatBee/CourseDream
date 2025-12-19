@@ -3,10 +3,11 @@ import authService from './authService';
 
 // Lấy thông tin user từ localStorage (nếu có) khi tải lại trang
 const user = JSON.parse(localStorage.getItem('user'));
+const savedViewMode = localStorage.getItem('viewMode');
 
 const initialState = {
   user: user ? user : null,
-  viewMode: user?.role === 'instructor' ? 'instructor' : 'student',
+  viewMode: savedViewMode || (user?.role === 'instructor' ? 'instructor' : 'student'),
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -223,13 +224,6 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    toggleViewMode: (state) => {
-      state.viewMode = state.viewMode === 'student' ? 'instructor' : 'student';
-    },
-    setInitialViewMode: (state, action) => {
-      state.viewMode = action.payload;
-    },
-
     // Dùng để reset state khi cần (ví dụ: sau khi gặp lỗi)
     reset: (state) => {
       state.isLoading = false;
@@ -260,7 +254,12 @@ export const authSlice = createSlice({
     // Thêm reducer để set email
     setRegistrationEmail: (state, action) => {
       state.registrationEmail = action.payload;
-    }
+    },
+    toggleViewMode: (state) => {
+      const newMode = state.viewMode === 'student' ? 'instructor' : 'student';
+      state.viewMode = newMode;
+      localStorage.setItem('viewMode', newMode);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -278,7 +277,9 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user; // Lấy user từ payload
-        state.viewMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
+        const defaultMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
+        state.viewMode = defaultMode;
+        localStorage.setItem('viewMode', defaultMode);
       })
       // Xử lý khi 'login' thất bại (rejected)
       .addCase(login.rejected, (state, action) => {
@@ -298,6 +299,7 @@ export const authSlice = createSlice({
         state.isSuccess = false;
         state.isError = false;
         state.message = '';
+        localStorage.removeItem('viewMode');
       })
       // === REGISTER CASES ===
       .addCase(register.pending, (state) => {
@@ -339,7 +341,9 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user;
-        state.viewMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
+        const defaultMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
+        state.viewMode = defaultMode;
+        localStorage.setItem('viewMode', defaultMode);
       })
       .addCase(googleLogin.rejected, (state, action) => {
         state.isLoading = false;
@@ -355,7 +359,9 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user;
-        state.viewMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
+        const defaultMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
+        state.viewMode = defaultMode;
+        localStorage.setItem('viewMode', defaultMode);
       })
       .addCase(facebookLogin.rejected, (state, action) => {
         state.isLoading = false;
