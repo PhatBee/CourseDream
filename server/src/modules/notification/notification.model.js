@@ -9,7 +9,8 @@ const NotificationSchema = new mongoose.Schema({
   message: { type: String, required: true },
   relatedId: mongoose.Schema.Types.ObjectId,
   courseSlug: { type: String },
-  read: { type: Boolean, default: false }
+  read: { type: Boolean, default: false },
+  replyId: { type: mongoose.Schema.Types.ObjectId },
 }, { timestamps: true });
 
 NotificationSchema.index({ recipient: 1, createdAt: -1 });

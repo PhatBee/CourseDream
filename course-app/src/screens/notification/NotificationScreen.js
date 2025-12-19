@@ -20,7 +20,7 @@ const NotificationScreen = () => {
     if (notification.type === 'reply' && notification.relatedId && notification.courseSlug) {
       navigation.navigate('DiscussionScreen', {
         courseSlug: notification.courseSlug, // truyền slug thay vì courseId
-        highlightReplyId: notification.relatedId,
+        highlightReplyId: notification.replyId, // truyền replyId để cuộn đến
       });
     }
     // ...xử lý các loại khác nếu cần
