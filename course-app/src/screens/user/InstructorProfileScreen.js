@@ -123,28 +123,29 @@ const InstructorProfileScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
                 className="flex-1"
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                {/* Header */}
-                <View className="flex-row items-center px-6 py-4 border-b border-gray-100">
-                    <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-                        <ArrowLeft size={24} color="#000" />
-                    </TouchableOpacity>
-                    <View>
-                        <Text className="text-xl font-bold">Instructor Profile</Text>
-                        <Text className="text-sm text-gray-500">Manage your profile</Text>
-                    </View>
-                </View>
-
                 <ScrollView
                     className="flex-1"
-                    contentContainerStyle={{ flexGrow: 1 }}
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
+                    {/* Header */}
+                    <View className="flex-row items-center px-6 py-4 border-b border-gray-100">
+                        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+                            <ArrowLeft size={24} color="#000" />
+                        </TouchableOpacity>
+                        <View>
+                            <Text className="text-xl font-bold">Instructor Profile</Text>
+                            <Text className="text-sm text-gray-500">Manage your profile</Text>
+                        </View>
+                    </View>
+
                     <View className="px-6 py-6 space-y-8">
                         {/* Professional Info Section */}
                         <View>

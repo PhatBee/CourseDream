@@ -149,25 +149,26 @@ const EditProfileScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
                 className="flex-1"
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                {/* Header */}
-                <View className="flex-row items-center px-6 py-4 border-b border-gray-100">
-                    <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-                        <ArrowLeft size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text className="text-xl font-bold">Edit Profile</Text>
-                </View>
-
                 <ScrollView
                     className="flex-1"
-                    contentContainerStyle={{ flexGrow: 1 }}
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
+                    {/* Header */}
+                    <View className="flex-row items-center px-6 py-4 border-b border-gray-100">
+                        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+                            <ArrowLeft size={24} color="#000" />
+                        </TouchableOpacity>
+                        <Text className="text-xl font-bold">Edit Profile</Text>
+                    </View>
+
                     <View className="px-6 py-6">
                         {/* Avatar Section */}
                         <View className="items-center mb-8">
