@@ -156,6 +156,7 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
           onClose={() => setReportVisible(false)}
           type="course"
           targetId={course._id}
+          isEnrolled={isEnrolled}
         />
       </View>
     </View>

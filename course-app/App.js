@@ -11,6 +11,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import axiosClient from './src/api/axiosClient';
 import { toastConfig } from './src/utils/toastConfig';
 import "./global.css"
+import { getCart } from './src/features/cart/cartSlice';
+import io from 'socket.io-client';
+import { fetchNotifications } from './src/features/notification/notificationSlice';
 
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -42,8 +45,11 @@ import PaymentResultScreen from './src/screens/payment/PaymentResultScreen.js';
 
 import CourseDetailScreen from './src/screens/course/CourseDetailScreen.js';
 import DiscussionScreen from './src/screens/discussion/DiscussionScreen';
+import NotificationScreen from './src/screens/notification/NotificationScreen';
 
 const Stack = createStackNavigator();
+
+const SOCKET_URL = 'http://192.168.1.27:5000'; // Đổi thành URL backend của bạn
 
 const MainNavigator = () => {
   const dispatch = useDispatch();
@@ -84,6 +90,41 @@ const MainNavigator = () => {
     checkLoginStatus();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      dispatch(getCart());
+    }
+  }, [user, dispatch]);
+
+  useEffect(() => {
+    let socket;
+    if (user) {
+      socket = io(SOCKET_URL, {
+        query: { userId: user._id }
+      });
+
+      socket.on('connect', () => {
+        console.log('Socket connected:', socket.id);
+      });
+      socket.on('disconnect', () => {
+        console.log('Socket disconnected');
+      });
+
+      socket.on(`user_${user._id}`, (data) => {
+        console.log('Socket event user_', data);
+        dispatch(fetchNotifications());
+      });
+
+      socket.on('new_notification', (data) => {
+        console.log('Socket event new_notification', data);
+        dispatch(fetchNotifications());
+      });
+    }
+    return () => {
+      if (socket) socket.disconnect();
+    };
+  }, [user, dispatch]);
+
   if (!isReady) return null; // Hoặc return <LoadingScreen />
 
   return (
@@ -119,6 +160,7 @@ const MainNavigator = () => {
       <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <Stack.Screen name="Learning" component={LearningScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DiscussionScreen" component={DiscussionScreen} />
+      <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
     </Stack.Navigator>
   );
 };

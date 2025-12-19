@@ -32,6 +32,7 @@ export const replyToDiscussion = async (discussionId, authorId, content) => {
       message: `${replyAuthorName} đã trả lời: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
       relatedId: discussionId,
       courseSlug: discussion.course?.slug,
+      replyId: latestReply._id,
     });
   }
 

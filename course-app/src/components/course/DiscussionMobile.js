@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDiscussions, addDiscussion, replyDiscussion, resetDiscussionState } from '../../features/discussion/discussionSlice';
@@ -7,20 +7,50 @@ import ReportModalMobile from '../common/ReportModalMobile';
 import { Flag } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Thêm dòng này
 
-const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
+const DiscussionMobile = ({ courseId, isEnrolled, user, highlightReplyId: propHighlightReplyId }) => {
   const insets = useSafeAreaInsets(); // Lấy thông tin vùng an toàn
   const dispatch = useDispatch();
-  const { discussions, loading, pagination } = useSelector(state => state.discussion);
+  const { discussions, loading } = useSelector(state => state.discussion);
   const [newContent, setNewContent] = useState('');
   const [replyContent, setReplyContent] = useState({});
   const [page, setPage] = useState(1);
   const [reportVisible, setReportVisible] = useState(false);
   const [reportType, setReportType] = useState('');
   const [reportTargetId, setReportTargetId] = useState('');
+  const flatListRef = useRef(null);
+  const [pendingScrollIdx, setPendingScrollIdx] = useState(null);
+  const [highlightReplyId, setHighlightReplyId] = useState(propHighlightReplyId);
 
   useEffect(() => {
-    if (courseId) dispatch(fetchDiscussions({ courseId, page, limit: 10 }));
-  }, [courseId, page, dispatch]);
+    if (courseId) {
+      dispatch(fetchDiscussions({ courseId }));
+    }
+  }, [courseId, dispatch]);
+
+  // Khi propHighlightReplyId thay đổi (từ NotificationScreen), cập nhật state
+  useEffect(() => {
+    setHighlightReplyId(propHighlightReplyId);
+  }, [propHighlightReplyId]);
+
+  // Khi discussions hoặc highlightReplyId thay đổi, xác định discussion chứa reply cần highlight
+  useEffect(() => {
+    if (highlightReplyId && discussions.length > 0) {
+      const idx = discussions.findIndex(d =>
+        d.replies?.some(r => r._id === highlightReplyId)
+      );
+      if (idx !== -1) setPendingScrollIdx(idx);
+    }
+  }, [highlightReplyId, discussions]);
+
+  // Scroll khi FlatList render xong
+  const handleContentSizeChange = () => {
+    if (pendingScrollIdx !== null && flatListRef.current) {
+      setTimeout(() => {
+        flatListRef.current.scrollToIndex({ index: pendingScrollIdx, animated: true });
+        setPendingScrollIdx(null);
+      }, 100);
+    }
+  };
 
   const handleCreateDiscussion = async () => {
     if (!newContent.trim()) return;
@@ -35,7 +65,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
     if (!replyContent[discussionId]?.trim()) return;
     await dispatch(replyDiscussion({ discussionId, content: replyContent[discussionId] }));
     setReplyContent({ ...replyContent, [discussionId]: '' });
-    dispatch(fetchDiscussions({ courseId, page, limit: 10 }));
+    dispatch(fetchDiscussions({ courseId }));
     Toast.show({ type: 'success', text1: 'Đã gửi trả lời!' });
   };
 
@@ -53,6 +83,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
     </View>
   );
 
+  // BỎ BỌC TouchableWithoutFeedback, chỉ render View
   return (
     <View className="px-4 flex-1">
       <Text className="text-lg font-bold mb-2">Thảo luận khóa học</Text>
@@ -81,6 +112,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
       </View>
       {/* Danh sách thảo luận */}
       <FlatList
+        ref={flatListRef}
         data={discussions}
         keyExtractor={item => item._id}
         renderItem={({ item }) => (
@@ -101,25 +133,32 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
             </View>
             <Text className="text-gray-800 mb-2">{item.content}</Text>
             {/* Replies */}
-            {item.replies?.map((reply, idx) => (
-              <View key={idx} className="ml-4 mb-2 bg-gray-50 rounded p-2 flex-row items-center">
-                <View className="flex-1">
-                  <Text className="font-semibold text-sm">{reply.author?.name || 'Ẩn danh'}</Text>
-                  <Text className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</Text>
-                  <Text className="text-gray-700">{reply.content}</Text>
+            {item.replies?.map((reply, idx) => {
+              const isHighlight = reply._id === highlightReplyId;
+              return (
+                <View
+                  key={reply._id}
+                  className={`ml-4 mb-2 rounded p-2 flex-row items-center ${isHighlight ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-50'}`}
+                  style={isHighlight ? { shadowColor: '#FFD700', shadowOpacity: 0.5, shadowRadius: 4 } : {}}
+                >
+                  <View className="flex-1">
+                    <Text className="font-semibold text-sm">{reply.author?.name || 'Ẩn danh'}</Text>
+                    <Text className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</Text>
+                    <Text className="text-gray-700">{reply.content}</Text>
+                  </View>
+                  {/* Lá cờ báo cáo reply */}
+                  {user?._id && reply.author?._id !== user._id && (
+                    <TouchableOpacity
+                      onPress={() => openReport('reply', reply._id)}
+                      className="ml-2"
+                      accessibilityLabel="Báo cáo bình luận"
+                    >
+                      <Flag size={15} color="#e11d48" />
+                    </TouchableOpacity>
+                  )}
                 </View>
-                {/* Lá cờ báo cáo reply */}
-                {user?._id && reply.author?._id !== user._id && (
-                  <TouchableOpacity
-                    onPress={() => openReport('reply', reply._id)}
-                    className="ml-2"
-                    accessibilityLabel="Báo cáo bình luận"
-                  >
-                    <Flag size={15} color="#e11d48" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
+              );
+            })}
             {/* Ô nhập trả lời */}
             {canDiscuss && (
               <View className="flex-row items-center mt-2">
@@ -129,6 +168,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
                   value={replyContent[item._id] || ''}
                   onChangeText={text => setReplyContent({ ...replyContent, [item._id]: text })}
                   multiline
+                  onFocus={() => setHighlightReplyId(null)} // Bỏ highlight khi focus vào input
                 />
                 <TouchableOpacity
                   className="ml-2 bg-rose-500 px-3 py-1.5 rounded-lg"
@@ -143,8 +183,10 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
         )}
         ListEmptyComponent={<Text className="text-gray-500 text-center mt-4">Chưa có thảo luận nào.</Text>}
         contentContainerStyle={{
-          paddingBottom: insets.bottom, // Thêm padding dưới theo vùng an toàn
+          paddingBottom: insets.bottom + 24, // Thêm padding dưới theo vùng an toàn
         }}
+        onContentSizeChange={handleContentSizeChange}
+        keyboardShouldPersistTaps="handled" // THÊM DÒNG NÀY
       />
 
       <ReportModalMobile
@@ -152,6 +194,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
         onClose={() => setReportVisible(false)}
         type={reportType}
         targetId={reportTargetId}
+        isEnrolled={isEnrolled} // <-- THÊM DÒNG NÀY
       />
     </View>
   );

@@ -85,6 +85,9 @@ const CourseDetailScreen = () => {
           <CourseAccordionMobile sections={course.sections} />
           <InstructorBioMobile instructor={course.instructor} />
           <ReviewListMobile reviews={reviewList} />
+          <ReviewFormMobile courseId={course._id} isEnrolled={isEnrolled} />
+
+          {/* Nút chuyển sang trang thảo luận */}
           {/* Only show review form if user is logged in */}
           {user ? (
             <ReviewFormMobile courseId={course._id} />
@@ -105,16 +108,11 @@ const CourseDetailScreen = () => {
           <View className="px-4 mb-8">
             <TouchableOpacity
               className="bg-blue-500 py-3 rounded-lg"
-              onPress={() => {
-                if (!user) {
-                  navigation.navigate('Login');
-                  return;
-                }
-                navigation.navigate('DiscussionScreen', {
-                  courseId: course._id,
-                  isEnrolled,
-                });
-              }}
+              onPress={() => navigation.navigate('DiscussionScreen', {
+                courseId: course._id,
+                courseSlug: course.slug,
+                isEnrolled,
+              })}
             >
               <Text className="text-white text-center font-bold text-base">Thảo luận khóa học</Text>
             </TouchableOpacity>

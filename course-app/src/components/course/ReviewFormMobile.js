@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addReview, fetchReviews, resetReviewState } from '../../features/review/reviewSlice';
 import Toast from 'react-native-toast-message';
 
-const ReviewFormMobile = ({ courseId }) => {
+const ReviewFormMobile = ({ courseId, isEnrolled }) => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const dispatch = useDispatch();
@@ -22,6 +22,15 @@ const ReviewFormMobile = ({ courseId }) => {
     dispatch(resetReviewState());
     Toast.show({ type: 'success', text1: 'Đánh giá thành công!' });
   };
+
+  if (!isEnrolled) {
+    return (
+      <View className="px-4 mb-4">
+        <Text className="text-lg font-bold mb-2">Đánh giá khóa học</Text>
+        <Text className="text-yellow-600">Bạn cần ghi danh khóa học để đánh giá.</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="px-4 mb-4">

@@ -9,9 +9,11 @@ import { getAllCategoriesSimple } from '../../features/categories/categorySlice'
 import axiosClient from '../../api/axiosClient';
 import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
+import { useNavigation } from '@react-navigation/native';
 
 const MyLearningScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const user = useSelector(state => state.auth.user); // THÊM DÒNG NÀY
   const { items: enrollments = [], isLoading, isError, message } = useSelector(state => state.enrollment);
   const { items: categories = [] } = useSelector(state => state.categories);
 
@@ -104,6 +106,20 @@ const MyLearningScreen = ({ navigation }) => {
       <View className="flex-1 justify-center items-center">
         <Text className="text-red-500">{message || 'Đã xảy ra lỗi'}</Text>
       </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+        <Text className="text-lg font-bold mb-3">Bạn cần đăng nhập để xem khóa học đã ghi danh.</Text>
+        <TouchableOpacity
+          className="bg-rose-500 px-6 py-3 rounded-lg"
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text className="text-white font-bold">Đăng nhập</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
     );
   }
 

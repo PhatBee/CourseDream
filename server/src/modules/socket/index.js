@@ -8,17 +8,12 @@ export const initSocket = (server) => {
   });
 
   io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) return next(new Error("Authentication error"));
-
-    // Verify token như verifyToken middleware
-    try {
-      const user = jwt.verify(token, process.env.JWT_SECRET);
-      socket.user = user;
-      next();
-    } catch (err) {
-      next(new Error("Token invalid"));
-    }
+    // Lấy userId từ query (do frontend truyền qua query)
+    const userId = socket.handshake.query.userId;
+    if (!userId) return next(new Error("Authentication error"));
+    // Gán userId vào socket để dùng sau
+    socket.user = { _id: userId };
+    next();
   });
 
   io.on("connection", (socket) => {

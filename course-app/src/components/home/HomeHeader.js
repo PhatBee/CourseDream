@@ -2,10 +2,13 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Bell, LogIn } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import CartIcon from '../common/CartIcon';
 
 const HomeHeader = ({ user }) => {
   const navigation = useNavigation();
+  const unreadCount = useSelector(state => state.notification.unreadCount); // Lấy trực tiếp từ redux
+
   return (
     <View className="flex-row justify-between items-center mb-6">
       <View>
@@ -19,9 +22,15 @@ const HomeHeader = ({ user }) => {
         // User đã đăng nhập - Hiển thị notification và avatar
         <View className="flex-row items-center gap-3">
           <CartIcon />
-          <TouchableOpacity className="p-2 bg-white rounded-full border border-gray-100 shadow-sm relative">
+          <TouchableOpacity
+            className="p-2 bg-white rounded-full border border-gray-100 shadow-sm relative"
+            onPress={() => navigation.navigate('NotificationScreen')}
+          >
             <Bell size={24} color="#6b7280" />
-            <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />
+            {/* Badge nếu có */}
+            {user && unreadCount > 0 && (
+              <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
