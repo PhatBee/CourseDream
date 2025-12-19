@@ -41,6 +41,7 @@ import PaymentWebViewScreen from './src/screens/payment/PaymentWebViewScreen.js'
 import PaymentResultScreen from './src/screens/payment/PaymentResultScreen.js';
 
 import CourseDetailScreen from './src/screens/course/CourseDetailScreen.js';
+import DiscussionScreen from './src/screens/discussion/DiscussionScreen';
 
 const Stack = createStackNavigator();
 
@@ -117,6 +118,7 @@ const MainNavigator = () => {
 
       <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <Stack.Screen name="Learning" component={LearningScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DiscussionScreen" component={DiscussionScreen} />
     </Stack.Navigator>
   );
 };
