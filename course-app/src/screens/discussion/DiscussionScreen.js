@@ -11,19 +11,20 @@ import { fetchMyEnrollments } from '../../features/enrollment/enrollmentSlice';
 const DiscussionScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { courseSlug, highlightReplyId } = route.params || {};
+  const { courseId: paramCourseId, courseSlug, highlightReplyId } = route.params || {};
   const dispatch = useDispatch();
 
-  const [courseId, setCourseId] = useState(null);
-  const [loadingCourse, setLoadingCourse] = useState(true);
+  const [courseId, setCourseId] = useState(paramCourseId || null);
+  const [loadingCourse, setLoadingCourse] = useState(!paramCourseId);
 
   useEffect(() => {
     dispatch(fetchMyEnrollments());
   }, [dispatch]);
 
   useEffect(() => {
-    const fetchCourseId = async () => {
-      if (courseSlug) {
+    // Nếu chưa có courseId nhưng có slug thì fetch từ slug
+    if (!courseId && courseSlug) {
+      const fetchCourseId = async () => {
         try {
           const res = await courseApi.getDetailsBySlug(courseSlug);
           setCourseId(res.data?.data?.course?._id);
@@ -32,10 +33,12 @@ const DiscussionScreen = () => {
         } finally {
           setLoadingCourse(false);
         }
-      }
-    };
-    fetchCourseId();
-  }, [courseSlug]);
+      };
+      fetchCourseId();
+    } else {
+      setLoadingCourse(false);
+    }
+  }, [courseId, courseSlug]);
 
   const user = useSelector(state => state.auth.user);
   const enrolledCourseIds = useSelector(state => state.enrollment.enrolledCourseIds);

@@ -11,7 +11,7 @@ const REPORT_REASONS = [
   "Ý khác"
 ];
 
-const ReportModalMobile = ({ visible, onClose, type, targetId }) => {
+const ReportModalMobile = ({ visible, onClose, type, targetId, isEnrolled }) => {
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
   const dispatch = useDispatch();
@@ -28,6 +28,10 @@ const ReportModalMobile = ({ visible, onClose, type, targetId }) => {
   }, [success, onClose, dispatch]);
 
   const handleSend = async () => {
+    if (!isEnrolled) {
+      Toast.show({ type: 'error', text1: 'Bạn cần ghi danh để sử dụng chức năng báo cáo.' });
+      return;
+    }
     if (!reason || (reason + detail).trim().length < 10) {
       Toast.show({ type: 'error', text1: 'Vui lòng chọn lý do và nhập tối thiểu 10 ký tự!' });
       return;

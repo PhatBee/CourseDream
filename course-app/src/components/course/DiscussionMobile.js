@@ -17,11 +17,12 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
   const [reportVisible, setReportVisible] = useState(false);
   const [reportType, setReportType] = useState('');
   const [reportTargetId, setReportTargetId] = useState('');
-  const [highlightedReplyId, setHighlightedReplyId] = useState(null);
 
   useEffect(() => {
-    if (courseId) dispatch(fetchDiscussions({ courseId, page, limit: 10 }));
-  }, [courseId, page, dispatch]);
+    if (courseId) {
+      dispatch(fetchDiscussions({ courseId }));
+    }
+  }, [courseId, dispatch]);
 
   const handleCreateDiscussion = async () => {
     if (!newContent.trim()) return;
@@ -36,7 +37,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
     if (!replyContent[discussionId]?.trim()) return;
     await dispatch(replyDiscussion({ discussionId, content: replyContent[discussionId] }));
     setReplyContent({ ...replyContent, [discussionId]: '' });
-    dispatch(fetchDiscussions({ courseId, page, limit: 10 }));
+    dispatch(fetchDiscussions({ courseId }));
     Toast.show({ type: 'success', text1: 'Đã gửi trả lời!' });
   };
 
@@ -102,36 +103,25 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
             </View>
             <Text className="text-gray-800 mb-2">{item.content}</Text>
             {/* Replies */}
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => setHighlightedReplyId(null)}
-              style={{ flex: 1 }}
-            >
-              {item.replies?.map((reply, idx) => (
-                <View
-                  key={idx}
-                  className={`ml-4 mb-2 bg-gray-50 rounded p-2 flex-row items-center ${
-                    highlightedReplyId === reply._id ? 'border-2 border-rose-500' : ''
-                  }`}
-                >
-                  <View className="flex-1">
-                    <Text className="font-semibold text-sm">{reply.author?.name || 'Ẩn danh'}</Text>
-                    <Text className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</Text>
-                    <Text className="text-gray-700">{reply.content}</Text>
-                  </View>
-                  {/* Lá cờ báo cáo reply */}
-                  {user?._id && reply.author?._id !== user._id && (
-                    <TouchableOpacity
-                      onPress={() => openReport('reply', reply._id)}
-                      className="ml-2"
-                      accessibilityLabel="Báo cáo bình luận"
-                    >
-                      <Flag size={15} color="#e11d48" />
-                    </TouchableOpacity>
-                  )}
+            {item.replies?.map((reply, idx) => (
+              <View key={idx} className="ml-4 mb-2 bg-gray-50 rounded p-2 flex-row items-center">
+                <View className="flex-1">
+                  <Text className="font-semibold text-sm">{reply.author?.name || 'Ẩn danh'}</Text>
+                  <Text className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</Text>
+                  <Text className="text-gray-700">{reply.content}</Text>
                 </View>
-              ))}
-            </TouchableOpacity>
+                {/* Lá cờ báo cáo reply */}
+                {user?._id && reply.author?._id !== user._id && (
+                  <TouchableOpacity
+                    onPress={() => openReport('reply', reply._id)}
+                    className="ml-2"
+                    accessibilityLabel="Báo cáo bình luận"
+                  >
+                    <Flag size={15} color="#e11d48" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
             {/* Ô nhập trả lời */}
             {canDiscuss && (
               <View className="flex-row items-center mt-2">
@@ -164,6 +154,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
         onClose={() => setReportVisible(false)}
         type={reportType}
         targetId={reportTargetId}
+        isEnrolled={isEnrolled}
       />
     </View>
   );

@@ -75,7 +75,7 @@ const CourseDetailScreen = () => {
           <CourseAccordionMobile sections={course.sections} />
           <InstructorBioMobile instructor={course.instructor} />
           <ReviewListMobile reviews={reviewList} />
-          <ReviewFormMobile courseId={course._id} />
+          <ReviewFormMobile courseId={course._id} isEnrolled={isEnrolled} />
 
           {/* Nút chuyển sang trang thảo luận */}
           <View className="px-4 mb-8">
@@ -83,6 +83,7 @@ const CourseDetailScreen = () => {
               className="bg-blue-500 py-3 rounded-lg"
               onPress={() => navigation.navigate('DiscussionScreen', {
                 courseId: course._id,
+                courseSlug: course.slug,
                 isEnrolled,
               })}
             >
