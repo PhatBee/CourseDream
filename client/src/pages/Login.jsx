@@ -30,7 +30,7 @@ const Login = () => {
     useEffect(() => {
         if (isError && banReason) {
             setShowBanModal(true);
-        
+
             dispatch(reset());
             return;
         }
@@ -42,7 +42,7 @@ const Login = () => {
             if (isSuccess) toast.success("Đăng nhập thành công");
 
             if (user?.role === "admin") navigate("/admin/dashboard");
-            else if (user?.role === "instructor") navigate("/instructor/dashboard");
+            else if (user?.role === "instructor") navigate("/profile/dashboard");
             else navigate("/");
         }
     }, [user, isError, isSuccess, message, banReason, navigate, dispatch]);

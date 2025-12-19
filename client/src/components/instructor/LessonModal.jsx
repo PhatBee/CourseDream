@@ -141,14 +141,43 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
 
                     <div className="flex gap-6">
                         <div className="flex-1">
-                            <label className="block text-sm font-bold mb-1 text-gray-700">Duration (seconds)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={lesson.duration}
-                                onChange={(e) => setLesson({ ...lesson, duration: e.target.value })}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            <label className="block text-sm font-bold mb-1 text-gray-700">Duration</label>
+                            <div className="flex gap-2 items-center">
+                                <div className="flex-1">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="999"
+                                        value={Math.floor((lesson.duration || 0) / 60)}
+                                        onChange={(e) => {
+                                            const minutes = parseInt(e.target.value) || 0;
+                                            const seconds = (lesson.duration || 0) % 60;
+                                            setLesson({ ...lesson, duration: minutes * 60 + seconds });
+                                        }}
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+                                        placeholder="0"
+                                    />
+                                    <span className="text-xs text-gray-500 mt-1 block text-center">Minutes</span>
+                                </div>
+                                <span className="text-2xl font-bold text-gray-400 pb-5">:</span>
+                                <div className="flex-1">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="59"
+                                        value={(lesson.duration || 0) % 60}
+                                        onChange={(e) => {
+                                            const seconds = Math.min(parseInt(e.target.value) || 0, 59);
+                                            const minutes = Math.floor((lesson.duration || 0) / 60);
+                                            setLesson({ ...lesson, duration: minutes * 60 + seconds });
+                                        }}
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+                                        placeholder="0"
+                                    />
+                                    <span className="text-xs text-gray-500 mt-1 block text-center">Seconds</span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">Total: {lesson.duration || 0} seconds ({Math.floor((lesson.duration || 0) / 60)}:{String((lesson.duration || 0) % 60).padStart(2, '0')})</p>
                         </div>
                         <div className="flex-1 flex items-center pt-6">
                             <input

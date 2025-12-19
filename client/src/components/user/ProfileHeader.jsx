@@ -56,7 +56,7 @@ const ProfileHeader = () => {
           ) : (
             // Nút "Instructor Dashboard" (nền đỏ)
             <Link
-              to="/instructor/dashboard" // Route cho instructor
+              to="/profile/dashboard" // Route cho instructor
               className="px-4 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
             >
               Instructor Dashboard
