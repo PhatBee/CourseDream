@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import DiscussionMobile from '../../components/course/DiscussionMobile';
@@ -47,26 +47,27 @@ const DiscussionScreen = () => {
   const isEnrolled = courseId && enrolledCourseIds?.includes(String(courseId));
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center px-6 py-4 border-b border-gray-100">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-          <ArrowLeft size={24} color="#000" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold">Thảo luận khóa học</Text>
-      </View>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={80}
-      >
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // Điều chỉnh nếu có header
+    >
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-row items-center px-6 py-4 border-b border-gray-100">
+          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+            <ArrowLeft size={24} color="#000" />
+          </TouchableOpacity>
+          <Text className="text-xl font-bold">Thảo luận khóa học</Text>
+        </View>
+        {/* BỎ KeyboardAvoidingView, chỉ render DiscussionMobile */}
         <DiscussionMobile
           courseId={courseId}
           isEnrolled={isEnrolled}
           user={user}
           highlightReplyId={highlightReplyId}
         />
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 

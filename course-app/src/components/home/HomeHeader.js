@@ -2,10 +2,13 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Bell, LogIn } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import CartIcon from '../common/CartIcon';
 
-const HomeHeader = ({ user, unreadCount = 0 }) => {
+const HomeHeader = ({ user }) => {
   const navigation = useNavigation();
+  const unreadCount = useSelector(state => state.notification.unreadCount); // Lấy trực tiếp từ redux
+
   return (
     <View className="flex-row justify-between items-center mb-6">
       <View>

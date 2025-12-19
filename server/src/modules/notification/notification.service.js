@@ -30,6 +30,8 @@ class NotificationService {
       relatedId: notification.relatedId,
       createdAt: notification.createdAt,
       read: false,
+      courseSlug: notification.courseSlug,
+      replyId: notification.replyId,
     });
 
     // 2. Gửi email (tùy chọn)
