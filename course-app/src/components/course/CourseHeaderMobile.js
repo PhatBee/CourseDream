@@ -107,7 +107,21 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
             <TouchableOpacity className="bg-rose-500 py-3 rounded-lg mb-2" onPress={handleAddToCart}>
               <Text className="text-white text-center font-bold">{inCart ? 'Đã trong giỏ hàng' : 'Thêm vào giỏ hàng'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="bg-blue-500 py-3 rounded-lg mb-2" onPress={() => Toast.show({ type: 'info', text1: 'Chức năng ghi danh sẽ bổ sung!' })}>
+            <TouchableOpacity
+              className="bg-blue-500 py-3 rounded-lg mb-2"
+              onPress={() => {
+                if (!user) {
+                  Toast.show({ type: 'info', text1: 'Vui lòng đăng nhập để ghi danh' });
+                  navigation.navigate('Login');
+                  return;
+                }
+                // Navigate to Checkout with direct checkout
+                navigation.navigate('Checkout', {
+                  directCheckout: true,
+                  course: course
+                });
+              }}
+            >
               <Text className="text-white text-center font-bold">Ghi danh ngay</Text>
             </TouchableOpacity>
           </>

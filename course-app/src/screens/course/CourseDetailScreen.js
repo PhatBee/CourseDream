@@ -30,9 +30,12 @@ const CourseDetailScreen = () => {
 
   useEffect(() => {
     if (slug) dispatch(getCourseDetails(slug));
-    dispatch(fetchMyEnrollments());
+    // Only fetch enrollments if user is logged in
+    if (user) {
+      dispatch(fetchMyEnrollments());
+    }
     return () => dispatch(resetCourse());
-  }, [slug, dispatch]);
+  }, [slug, user, dispatch]);
 
   useEffect(() => {
     if (course?._id) dispatch(fetchReviews(course._id));
@@ -49,22 +52,29 @@ const CourseDetailScreen = () => {
 
   if (isError) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-red-500">{message || 'Không thể tải khóa học.'}</Text>
+      <View className="flex-1 justify-center items-center px-4">
+        <Text className="text-red-500 text-center mb-4">{message || 'Không thể tải khóa học.'}</Text>
+        <TouchableOpacity
+          className="bg-rose-500 px-6 py-3 rounded-lg"
+          onPress={() => navigation.goBack()}
+        >
+          <Text className="text-white font-bold">Quay lại</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  const isEnrolled = enrolledCourseIds?.includes(String(course?._id));
+  const isEnrolled = user && enrolledCourseIds?.includes(String(course?._id));
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingTop: 0 }}
+          contentContainerStyle={{ flexGrow: 1, paddingTop: 0, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -75,16 +85,36 @@ const CourseDetailScreen = () => {
           <CourseAccordionMobile sections={course.sections} />
           <InstructorBioMobile instructor={course.instructor} />
           <ReviewListMobile reviews={reviewList} />
-          <ReviewFormMobile courseId={course._id} />
+          {/* Only show review form if user is logged in */}
+          {user ? (
+            <ReviewFormMobile courseId={course._id} />
+          ) : (
+            <View className="px-4 mb-6">
+              <View className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <TouchableOpacity
+                  className="bg-rose-500 py-2 rounded-lg"
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  <Text className="text-white text-center font-semibold">Đánh giá</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
 
-          {/* Nút chuyển sang trang thảo luận */}
+          {/* Discussion button */}
           <View className="px-4 mb-8">
             <TouchableOpacity
               className="bg-blue-500 py-3 rounded-lg"
-              onPress={() => navigation.navigate('DiscussionScreen', {
-                courseId: course._id,
-                isEnrolled,
-              })}
+              onPress={() => {
+                if (!user) {
+                  navigation.navigate('Login');
+                  return;
+                }
+                navigation.navigate('DiscussionScreen', {
+                  courseId: course._id,
+                  isEnrolled,
+                });
+              }}
             >
               <Text className="text-white text-center font-bold text-base">Thảo luận khóa học</Text>
             </TouchableOpacity>

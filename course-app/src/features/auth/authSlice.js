@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from './authService';
 import { clearWishlistState } from '../wishlist/wishlistSlice';
 import { resetEnrollment } from '../enrollment/enrollmentSlice';
+import { resetCart } from '../cart/cartSlice';
 
 const initialState = {
     user: null, // Khởi tạo null, sẽ load ở App.js
@@ -78,6 +79,8 @@ export const logout = createAsyncThunk('auth/logout', async (_, { dispatch }) =>
 
     dispatch(resetEnrollment());
     dispatch(clearWishlistState());
+    dispatch(resetCart());
+
 });
 
 export const forgotPassword = createAsyncThunk('auth/forgotPassword', async (email, thunkAPI) => {

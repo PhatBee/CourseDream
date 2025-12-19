@@ -48,7 +48,16 @@ export const clearCart = createAsyncThunk('cart/clearCart', async (_, thunkAPI) 
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
-  reducers: {},
+  reducers: {
+    resetCart: (state) => {
+      state.items = [];
+      state.totalItems = 0;
+      state.total = 0;
+      state.isLoading = false;
+      state.isError = false;
+      state.message = '';
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getCart.pending, (state) => { state.isLoading = true; })
@@ -68,4 +77,5 @@ const cartSlice = createSlice({
   }
 });
 
+export const { resetCart } = cartSlice.actions;
 export default cartSlice.reducer;
