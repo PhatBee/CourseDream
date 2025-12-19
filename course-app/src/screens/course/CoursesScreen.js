@@ -32,7 +32,7 @@ const CoursesScreen = () => {
       search,
       category: selectedCategory,
       page: currentPage,
-      limit: 9,
+      limit: 8,
     }));
   }, [dispatch, selectedCategory, currentPage]);
 
@@ -44,7 +44,7 @@ const CoursesScreen = () => {
       search: value,
       category: selectedCategory,
       page: 1,
-      limit: 9,
+      limit: 8,
     }));
   };
 
@@ -68,7 +68,7 @@ const CoursesScreen = () => {
         search: route.params.search,
         category: selectedCategory,
         page: 1,
-        limit: 9,
+        limit: 8,
       }));
     }
     // Nếu có clearSearch thì reset search và filter
@@ -80,7 +80,7 @@ const CoursesScreen = () => {
         search: '',
         category: '',
         page: 1,
-        limit: 9,
+        limit: 8,
       }));
       // Xóa params sau khi dùng để tránh lặp lại khi back
       route.params.clearSearch = false;

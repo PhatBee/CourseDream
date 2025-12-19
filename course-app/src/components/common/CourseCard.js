@@ -11,8 +11,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 // --- SUB-COMPONENT: Footer xử lý logic hiển thị Giá hoặc Nút Học ---
 const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart, inCart }) => {
-  if (!price) price = 0;
-  if (!displayPrice) displayPrice = 0;
+
   // TRƯỜNG HỢP 1: Đã sở hữu khóa học
   if (isEnrolled) {
     return (
@@ -28,7 +27,11 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
   return (
     <View className="flex-row items-center justify-between mt-auto pt-2">
       <View>
-        <Text className="text-rose-600 font-extrabold text-base">{formatPrice(displayPrice)}</Text>
+        {price === 0 || displayPrice === 0 ? (
+          <Text className="text-rose-600 font-extrabold text-xs">Free</Text>
+        ) : (
+          <Text className="text-rose-600 font-extrabold text-base">{formatPrice(displayPrice)}</Text>
+        )}
         {hasDiscount && (
           <View className="flex-row items-center">
             <Text className="text-gray-400 text-xs line-through mr-1">{formatPrice(price)}</Text>
@@ -87,11 +90,11 @@ const CourseCard = ({ course }) => {
 
   // Formatting
   const imageUrl = thumbnail?.url || thumbnail;
-  const finalPrice = priceDiscount || price;
-  const hasDiscount = priceDiscount && priceDiscount < price;
+  const finalPrice = priceDiscount !== undefined && priceDiscount !== null ? priceDiscount : price;
+  const hasDiscount = priceDiscount !== undefined && priceDiscount !== null && priceDiscount < price;
 
   const formatCurrency = (amount) => {
-    if (amount === 0) return 'Free';
+    if (!amount || amount === 0 || isNaN(amount)) return 'Free';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 

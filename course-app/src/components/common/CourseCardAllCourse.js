@@ -33,15 +33,16 @@ const CourseCardAllCourse = React.memo(({ course }) => {
 
   const categoryName = categories?.[0]?.name || 'General';
 
+
   const isEnrolled = enrolledCourseIds.includes(_id);
   const isWishlisted = wishlistItems.some(item => item._id === _id);
   const inCart = cartItems.some(item => item.course._id === _id);
   const imageUrl = thumbnail?.url || thumbnail;
-  const finalPrice = priceDiscount || price;
-  const hasDiscount = priceDiscount && priceDiscount < price;
+  const finalPrice = priceDiscount !== undefined && priceDiscount !== null ? priceDiscount : price;
+  const hasDiscount = priceDiscount !== undefined && priceDiscount !== null && priceDiscount < price;
 
   const formatCurrency = (amount) => {
-    if (!amount || amount === 0) return 'Free';
+    if (!amount || amount === 0 || isNaN(amount)) return "Free";
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
@@ -95,19 +96,13 @@ const CourseCardAllCourse = React.memo(({ course }) => {
         </TouchableOpacity>
         {/* Category Badge */}
         <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
-          <Text className="text-white text-[10px] font-medium" numberOfLines={1}>
-            {categoryName}
-          </Text>
+          <Text className="text-white text-[10px] font-medium" numberOfLines={1}>{categoryName}</Text>
         </View>
       </View>
       {/* Content */}
       <View className="p-3 flex-1">
-        <Text className="text-gray-900 font-bold text-xs mb-1 leading-5" numberOfLines={2}>
-          {title}
-        </Text>
-        <Text className="text-gray-500 text-[11px] mb-1" numberOfLines={1}>
-          {instructor?.name || 'Unknown'}
-        </Text>
+        <Text className="text-gray-900 font-bold text-xs mb-1 leading-5" numberOfLines={2}>{title}</Text>
+        <Text className="text-gray-500 text-[11px] mb-1" numberOfLines={1}>{instructor?.name || 'Unknown'}</Text>
         <View className="flex-row items-center mb-1">
           <Star size={10} color="#f59e0b" fill="#f59e0b" />
           <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
@@ -116,21 +111,19 @@ const CourseCardAllCourse = React.memo(({ course }) => {
         {/* Giá hoặc trạng thái đã ghi danh */}
         {isEnrolled ? (
           <View className="bg-emerald-50 px-2 py-1 rounded-lg items-center justify-center border border-emerald-100 mt-1">
-            <Text className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">
-              Đã ghi danh
-            </Text>
+            <Text className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Đã ghi danh</Text>
           </View>
         ) : (
           <View className="flex-row items-center justify-between mt-1">
             <View>
-              <Text className="text-rose-600 font-extrabold text-xs">
-                {formatCurrency(finalPrice)}
-              </Text>
+              {finalPrice === 0 || price === 0 ? (
+                <Text className="text-rose-600 font-extrabold text-xs">Free</Text>
+              ) : (
+                <Text className="text-rose-600 font-extrabold text-xs">{formatCurrency(finalPrice)}</Text>
+              )}
               {hasDiscount && (
                 <View className="flex-row items-center">
-                  <Text className="text-gray-400 text-[10px] line-through mr-1">
-                    {formatCurrency(price)}
-                  </Text>
+                  <Text className="text-gray-400 text-[10px] line-through mr-1">{formatCurrency(price)}</Text>
                   <View className="bg-rose-100 px-1 rounded">
                     <Text className="text-rose-600 text-[9px] font-bold">SALE</Text>
                   </View>
