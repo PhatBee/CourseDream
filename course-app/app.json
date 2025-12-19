@@ -21,6 +21,9 @@
         "foregroundImage": "./assets/icons/apple-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.phatbee.courseapp",
+      "versionCode": 1,
+      "version": "1.0.0",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -31,6 +34,11 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-video"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8f990215-9aa2-4f60-895c-a82d64e0eb34"
+      }
+    }
   }
 }

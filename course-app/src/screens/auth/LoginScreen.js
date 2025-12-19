@@ -15,7 +15,7 @@ import { login, googleLogin, facebookLogin, reset } from '../../features/auth/au
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
-import { GOOGLE_CLIENT_ID, FACEBOOK_APP_ID } from '../../utils/config';
+import { GOOGLE_CLIENT_ID, FACEBOOK_APP_ID, EXPO_CLIENT_ID } from '../../utils/config';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
 
 // Cần thiết cho web browser auth session
@@ -33,7 +33,8 @@ const LoginScreen = ({ navigation }) => {
 
     // --- GOOGLE SETUP ---
     const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-        clientId: GOOGLE_CLIENT_ID,
+        androidClientId: GOOGLE_CLIENT_ID,
+        expoClientId: EXPO_CLIENT_ID,
     });
 
     // --- FACEBOOK SETUP ---
@@ -73,6 +74,7 @@ const LoginScreen = ({ navigation }) => {
     useEffect(() => {
         if (response?.type === 'success') {
             const { id_token } = response.params;
+            console.log(id_token);
             dispatch(googleLogin(id_token));
         }
     }, [response, dispatch]);
