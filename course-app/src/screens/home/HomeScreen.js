@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { ScrollView, View, Text, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
@@ -31,17 +31,8 @@ const HomeScreen = ({ navigation }) => {
   const { items: enrollments, isLoading: enrollLoading } = useSelector(state => state.enrollment);
 
   const isLoading = catLoading || courseLoading || enrollLoading;
-  const latestEnrollment = useMemo(() => {
-    if (!enrollments || enrollments.length === 0) return null;
-
-    const sorted = [...enrollments].sort((a, b) => {
-      const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
-      const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
-      return dateB - dateA;
-    });
-
-    return sorted[0];
-  }, [enrollments]);
+  
+  const ongoing = enrollments?.[0] || null;
 
   useFocusEffect(
     useCallback(() => {
@@ -88,8 +79,8 @@ const HomeScreen = ({ navigation }) => {
           <SearchBar onSearch={handleSearch} />
         </View>
 
-        {user && latestEnrollment ? (
-          <OngoingCourse enrollment={latestEnrollment} />
+        {user && ongoing ? (
+          <OngoingCourse enrollment={ongoing} />
         ) : (
           <View className="px-5">
             <PromoBanner navigation={navigation} />
