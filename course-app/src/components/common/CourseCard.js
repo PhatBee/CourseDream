@@ -18,9 +18,7 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
     return (
       <View className="mt-2">
         <View className="bg-emerald-50 px-3 py-2 rounded-lg items-center justify-center border border-emerald-100">
-          <Text className="text-emerald-600 font-bold text-xs uppercase tracking-wider">
-            Already Enrolled
-          </Text>
+          <Text className="text-emerald-600 font-bold text-xs uppercase tracking-wider">Already Enrolled</Text>
         </View>
       </View>
     );
@@ -30,14 +28,10 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
   return (
     <View className="flex-row items-center justify-between mt-auto pt-2">
       <View>
-        <Text className="text-rose-600 font-extrabold text-base">
-          {formatPrice(displayPrice)}
-        </Text>
+        <Text className="text-rose-600 font-extrabold text-base">{formatPrice(displayPrice)}</Text>
         {hasDiscount && (
           <View className="flex-row items-center">
-            <Text className="text-gray-400 text-xs line-through mr-1">
-              {formatPrice(price)}
-            </Text>
+            <Text className="text-gray-400 text-xs line-through mr-1">{formatPrice(price)}</Text>
             <View className="bg-rose-100 px-1 rounded">
               <Text className="text-rose-600 text-[10px] font-bold">SALE</Text>
             </View>
@@ -179,27 +173,21 @@ const CourseCard = ({ course }) => {
 
         {/* Category Badge */}
         <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
-          <Text className="text-white text-[10px] font-medium" numberOfLines={1}>
-            {categoryName}
-          </Text>
+          <Text className="text-white text-[10px] font-medium" numberOfLines={1}>{categoryName}</Text>
         </View>
       </View>
 
       {/* Content Area */}
       <View className="p-3 justify-between flex-1">
         <View>
-          <Text className="text-gray-900 font-bold text-sm mb-1 leading-5" numberOfLines={2}>
-            {title}
-          </Text>
-          <Text className="text-gray-500 text-xs mb-2" numberOfLines={1}>
-            {instructor?.name || 'Unknown'}
-          </Text>
+          <Text className="text-gray-900 font-bold text-sm mb-1 leading-5" numberOfLines={2}>{title}</Text>
+          <Text className="text-gray-500 text-xs mb-2" numberOfLines={1}>{instructor?.name || 'Unknown'}</Text>
 
           {/* Rating */}
           <View className="flex-row items-center mb-1">
             <Star size={10} color="#f59e0b" fill="#f59e0b" />
             <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
-            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount ? reviewCount : 0})</Text>
+            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount || 0})</Text>
           </View>
         </View>
 

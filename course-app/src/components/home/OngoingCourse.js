@@ -90,14 +90,14 @@ const OngoingCourse = ({ enrollment }) => {
             <Text className="text-xs text-gray-500 font-medium">
               {completedCount} / {totalCount} Lessons
             </Text>
-            <Text className="text-xs text-rose-500 font-bold">{Math.round(percentage)}%</Text>
+            <Text className="text-xs text-rose-500 font-bold">{Math.round(percentage || 0)}%</Text>
           </View>
 
           {/* Progress Bar */}
           <View className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
             <View
               className="h-full bg-rose-500 rounded-full"
-              style={{ width: `${Math.min(percentage, 100)}%` }}
+              style={{ width: `${Math.min(percentage || 0, 100)}%` }}
             />
           </View>
         </View>
