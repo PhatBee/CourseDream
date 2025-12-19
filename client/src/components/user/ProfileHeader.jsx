@@ -7,7 +7,7 @@ const ProfileHeader = () => {
   if (!user) return null;
 
   return (
-    <div className="p-5 mb-5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-800 text-white relative overflow-hidden shadow-lg">
+    <div className="p-5 mb-5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-800 text-white relative overflow-hidden shadow-lg text-left">
       <img
         // src="https://www.buyandship.today/contents/uploads/2023/09/footer-chiikawa-1024x414.jpeg" 
         className="absolute top-0 left-0 w-full h-full object-cover opacity-20"
@@ -20,7 +20,7 @@ const ProfileHeader = () => {
         <div className="flex items-center">
           <div className="relative mr-4 flex-shrink-0">
             <img
-              src={user.avatar}
+              src={user.avatar || "/src/assets/img/icons/apple-icon.png"}
               alt="Avatar"
               className="w-20 h-20 rounded-full border-2 border-white object-cover"
             />

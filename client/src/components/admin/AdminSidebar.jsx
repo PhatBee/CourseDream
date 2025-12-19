@@ -19,7 +19,7 @@ const AdminSidebar = () => {
         { path: '/admin/categories', icon: <BookOpen size={20} />, label: 'Categories' },
         { path: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
         { path: '/admin/reports', icon: <BarChart2 size={20} />, label: 'Reports' },
-        { path: '/admin/messages', icon: <MessageSquare size={20} />, label: 'Messages' },
+        // { path: '/admin/messages', icon: <MessageSquare size={20} />, label: 'Messages' },
         { path: '/admin/promotions', icon: <Tag size={20} />, label: 'Promotions' },
     ];
 
@@ -59,12 +59,12 @@ const AdminSidebar = () => {
 
                 {/* Settings & Logout */}
                 <ul className="space-y-1 px-3">
-                    <li>
+                    {/* <li>
                         <NavLink to="/admin/settings" className="flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
                             <Settings size={20} />
                             <span className="ml-3">Settings</span>
                         </NavLink>
-                    </li>
+                    </li> */}
                     <li>
                         <button
                             onClick={() => dispatch(logout())}
