@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import axiosClient from './src/api/axiosClient';
 import { toastConfig } from './src/utils/toastConfig';
 import "./global.css"
+import { getCart } from './src/features/cart/cartSlice';
 
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -81,6 +82,12 @@ const MainNavigator = () => {
     };
     checkLoginStatus();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(getCart());
+    }
+  }, [user, dispatch]);
 
   if (!isReady) return null; // Hoặc return <LoadingScreen />
 
