@@ -1,17 +1,4 @@
-import { getStatsForInstructor, getInstructorProfile, updateInstructorProfile } from "./instructor.service.js";
-
-/**
- * GET /api/instructor/stats
- */
-export const getInstructorStats = async (req, res, next) => {
-  try {
-    const instructorId = req.user._id;
-    const stats = await getStatsForInstructor(instructorId);
-    res.json(stats);
-  } catch (err) {
-    next(err);
-  }
-};
+import { getInstructorProfile, updateInstructorProfile, getInstructorDashboardStats } from "./instructor.service.js";
 
 /**
  * GET /api/instructor/profile
@@ -32,6 +19,19 @@ export const updateProfile = async (req, res, next) => {
   try {
     const updatedProfile = await updateInstructorProfile(req.user._id, req.body);
     res.json({ success: true, message: "Cập nhật hồ sơ giảng viên thành công!", data: updatedProfile });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/instructor/dashboard
+ */
+export const getInstructorDashboard = async (req, res, next) => {
+  try {
+    const instructorId = req.user._id;
+    const stats = await getInstructorDashboardStats(instructorId);
+    res.json(stats);
   } catch (err) {
     next(err);
   }

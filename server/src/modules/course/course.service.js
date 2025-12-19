@@ -760,7 +760,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
         duration: lec.duration,
         order: lec.order,
         isPreviewFree: lec.isPreviewFree,
-        resources: lec.resources.map(res => ({
+        resources: lec.resources?.map(res => ({
           title: res.title,
           url: res.url,
           type: res.type

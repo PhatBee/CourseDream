@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Grid, User, Settings, LogOut, Heart, BookOpen, Book, PlusCircle } from 'lucide-react';
+import { LayoutDashboard, Grid, User, Settings, LogOut, Heart, BookOpen, Book, PlusCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 
@@ -42,14 +42,19 @@ const ProfileSidebar = () => {
     navigate("/login");
   };
 
+  const dashboardLink = viewMode === 'instructor' 
+    ? "/profile/instructor/dashboard" 
+    : "/profile/dashboard";
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sticky top-24 text-left">
       <div className="mb-6">
         <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">
-          Dashboard
+          Menu
         </h6>
         <ul className="space-y-1">
-          <SidebarLink to="/profile/dashboard" icon={<Grid size={20} />} label="Dashboard" />
+          <SidebarLink to={dashboardLink} icon={<LayoutDashboard size={20} />} label="Dashboard" exact />
+          
           <SidebarLink to="/profile/my-profile" icon={<User size={20} />} label="My Profile" />
 
           {/* Chế độ xem của Học sinh */}

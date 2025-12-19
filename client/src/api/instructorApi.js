@@ -6,6 +6,10 @@ export const getInstructorStats = () => {
   return axiosClient.get("/instructor/stats");
 };
 
+ const getInstructorDashboardStats = () => {
+  return axiosClient.get("/instructor/dashboard");
+};
+
 // [MỚI] Lấy thông tin profile
 const getInstructorProfile = () => {
   return axiosClient.get(`${path}/profile`);
@@ -19,5 +23,6 @@ const updateInstructorProfile = (data) => {
 export const instructorApi = {
     getInstructorStats,
     getInstructorProfile,
-    updateInstructorProfile
+    updateInstructorProfile,
+    getInstructorDashboardStats
 };

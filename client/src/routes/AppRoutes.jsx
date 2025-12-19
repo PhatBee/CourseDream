@@ -87,11 +87,11 @@ export default function AppRoutes() {
             </Route>
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
+            
             <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
               <Route path="instructor/courses" element={<InstructorCourses />} />
               <Route path="instructor/dashboard" element={<InstructorDashboard />} />
             </Route>
-            <Route path="/profile/dashboard" element={<InstructorDashboard />} />
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
@@ -112,7 +112,6 @@ export default function AppRoutes() {
         <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/profile/become-instructor" element={<BecomeInstructor />} />
-
 
         <Route element={<PrivateRoute allowedRoles={['admin']} />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -139,12 +138,7 @@ export default function AppRoutes() {
           {/* <Route path="admin/pending-courses" element={<AdminPendingCourses />} /> */}
           <Route path="admin/pending-courses/:revisionId" element={<AdminPendingCourseDetail />} />
         </Route>
-
-
-
       </Routes>
-
-
     </BrowserRouter>
   );
 }

@@ -9,6 +9,18 @@ const ProfileHeader = () => {
   const navigate = useNavigate();
   if (!user) return null;
 
+  const handleToggle = () => {
+  const nextMode = viewMode === 'student' ? 'instructor' : 'student';
+  
+  dispatch(toggleViewMode());
+
+  if (nextMode === 'instructor') {
+    navigate("/profile/instructor/dashboard");
+  } else {
+    navigate("/profile/dashboard");
+  }
+};
+
   return (
     <div className="p-5 mb-5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-800 text-white relative overflow-hidden shadow-lg text-left">
       <img
@@ -44,17 +56,14 @@ const ProfileHeader = () => {
             </Link>
           ) : (
             <button
-              onClick={() => {
-                dispatch(toggleViewMode());
-                navigate(0);
-              }}
+              onClick={handleToggle}
               className={`px-4 py-2 rounded-full text-sm font-bold transition-all shadow-md bg-white text-gray-800 ${
                 viewMode === 'student'
                 ? 'border border-emerald-400 hover:bg-emerald-50' 
                 : 'border border-rose-400 hover:bg-rose-50'
               }`}
             >
-              {viewMode === 'student' ? 'Instructor' : 'Student'} Dashboard
+              Switch to {viewMode === 'student' ? 'Instructor' : 'Student'} Dashboard
             </button>
           )}
         </div>

@@ -43,7 +43,7 @@ const Login = () => {
             if (isSuccess) toast.success("Đăng nhập thành công");
 
             if (user?.role === "admin") navigate("/admin/dashboard");
-            else if (user?.role === "instructor") navigate("/profile/dashboard");
+            else if (user?.role === "instructor") navigate("/profile/instructor/dashboard");
             else navigate("/");
         }
     }, [user, isError, isSuccess, message, banReason, navigate, dispatch]);

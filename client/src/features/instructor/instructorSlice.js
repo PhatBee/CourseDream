@@ -38,9 +38,25 @@ export const updateInstructorData = createAsyncThunk(
   }
 );
 
+export const fetchDashboardStats = createAsyncThunk(
+  'instructor/fetchDashboardStats',
+  async (_, thunkAPI) => {
+    try {
+      const response = await instructorApi.getInstructorDashboardStats();
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 const instructorSlice = createSlice({
   name: 'instructor',
-  initialState,
+  initialState: {
+    dashboardData: null,
+    isLoading: false,
+  },
   reducers: {
     resetInstructorState: (state) => {
       state.isLoading = false;
@@ -76,6 +92,19 @@ const instructorSlice = createSlice({
         state.instructorProfile = action.payload.data; // Cập nhật lại state mới nhất
       })
       .addCase(updateInstructorData.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+
+      .addCase(fetchDashboardStats.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchDashboardStats.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.dashboardData = action.payload;
+      })
+      .addCase(fetchDashboardStats.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
