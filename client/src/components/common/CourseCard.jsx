@@ -3,13 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Star, ShoppingCart, User } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
-import { addToCart } from '../../features/cart/cartSlice';
+import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
 import { toast } from 'react-toastify';
 
 const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist, viewMode = 'grid' }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
+  const { items: cartItems } = useSelector((state) => state.cart);
   const navigate = useNavigate();
   const { enrolledCourseIds } = useSelector((state) => state.enrollment);
 
@@ -29,6 +30,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
   const categoryName = categories[0]?.name || 'General';
   const instructorName = instructor?.name || 'Instructor';
   const isEnrolled = enrolledCourseIds?.includes(_id);
+  const isInCart = cartItems?.some(item => item.course._id === _id);
 
   const formatPrice = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -45,8 +47,8 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
     navigate(`/login?returnUrl=${returnUrl}&action=${action}`);
   };
 
-  // Hàm xử lý thêm vào giỏ hàng
-  const handleAddToCart = (e) => {
+  // Hàm xử lý toggle giỏ hàng
+  const handleToggleCart = (e) => {
     e.preventDefault();
 
     if (!user) {
@@ -55,7 +57,11 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
       return;
     }
 
-    dispatch(addToCart(_id));
+    if (isInCart) {
+      dispatch(removeFromCart(_id));
+    } else {
+      dispatch(addToCart(_id));
+    }
   };
 
   const handleHeartClick = (e) => {
@@ -176,11 +182,14 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
               ) : (
                 <>
                   <button
-                    onClick={handleAddToCart}
-                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                    title="Add to Cart"
+                    onClick={handleToggleCart}  // ← Changed
+                    className={`p-2 rounded-full transition-colors ${isInCart
+                      ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'  // ← Filled state
+                      : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                      }`}
+                    title={isInCart ? "Remove from Cart" : "Add to Cart"}
                   >
-                    <ShoppingCart size={20} />
+                    <ShoppingCart size={20} className={isInCart ? "fill-current" : ""} />
                   </button>
 
                   <button
@@ -273,11 +282,14 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
             ) : (
               <>
                 <button
-                  onClick={handleAddToCart}
-                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                  title="Add to Cart"
+                  onClick={handleToggleCart}  // ← Changed
+                  className={`p-2.5 rounded-full transition-colors ${isInCart
+                      ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'
+                      : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                    }`}
+                  title={isInCart ? "Remove from Cart" : "Add to Cart"}
                 >
-                  <ShoppingCart size={22} />
+                  <ShoppingCart size={22} className={isInCart ? "fill-current" : ""} />
                 </button>
 
                 <button

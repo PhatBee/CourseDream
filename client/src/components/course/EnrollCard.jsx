@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Share2, ShoppingCart, PlayCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
-import { addToCart } from '../../features/cart/cartSlice';
+import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
 import ShareModal from '../common/ShareModal';
 import { toast } from 'react-hot-toast';
 
@@ -24,10 +24,13 @@ const EnrollCard = ({ course }) => {
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const { enrolledCourseIds } = useSelector((state) => state.enrollment);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const { items: cartItems } = useSelector((state) => state.cart);
 
   const { _id, title, price = 0, priceDiscount = 0, slug } = course;
   const discountPercentage = countPercentage(price, priceDiscount);
   const isEnrolled = enrolledCourseIds.includes(_id);
+  const isInCart = cartItems?.some(item => item.course._id === _id);
+
 
   const isInWishlist = wishlistItems.some(item => item._id === _id);
 
@@ -39,12 +42,17 @@ const EnrollCard = ({ course }) => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleToggleCart = () => {
     if (!user) {
       toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng");
       return;
     }
-    dispatch(addToCart(_id));
+
+    if (isInCart) {
+      dispatch(removeFromCart(_id));
+    } else {
+      dispatch(addToCart(_id));
+    }
   };
 
   const handleEnrollNow = () => {
@@ -62,7 +70,7 @@ const EnrollCard = ({ course }) => {
   };
 
   const handleGoToCourse = () => {
-    navigate(`/courses/${slug}/overview`); 
+    navigate(`/courses/${slug}/overview`);
   };
 
   const shareUrl = window.location.origin + '/courses/' + slug;
@@ -124,11 +132,14 @@ const EnrollCard = ({ course }) => {
             <>
               {/* Add to Cart Button - Primary CTA */}
               <button
-                onClick={handleAddToCart}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group"
+                onClick={handleToggleCart}
+                className={`w-full font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group ${isInCart
+                  ? 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                  }`}
               >
-                <ShoppingCart size={20} className="group-hover:scale-110 transition-transform" />
-                Add to Cart
+                <ShoppingCart size={20} className={`group-hover:scale-110 transition-transform ${isInCart ? 'fill-current' : ''}`} />
+                {isInCart ? 'Remove from Cart' : 'Add to Cart'}
               </button>
               {/* Enroll Now Button - Secondary CTA */}
               <button
