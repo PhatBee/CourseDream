@@ -73,15 +73,14 @@ const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
       <ScrollView
         className="flex-1 pt-2"
-        edges={['top', 'left', 'right']}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={loadData} colors={['#e11d48']} />
         }
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View className="px-5">
           <HomeHeader user={user} />
