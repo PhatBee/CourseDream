@@ -10,8 +10,8 @@ export const createPaymentUrl = async (data) => {
     const partnerCode = process.env.MOMO_PARTNER_CODE;
     const accessKey = process.env.MOMO_ACCESS_KEY;
     const secretKey = process.env.MOMO_SECRET_KEY;
-    const redirectUrl = process.env.MOMO_RETURN_URL;
-    const ipnUrl = process.env.MOMO_IPN_URL || redirectUrl; // Sandbox local thường không có IPN, dùng tạm url dummy
+    const redirectUrl = process.env.MOMO_RETURN_URL; // Backend return URL
+    const ipnUrl = process.env.MOMO_IPN_URL || redirectUrl; // Sandbox không có IPN
     const requestType = "payWithMethod";
     const extraData = ""; // Pass empty string if not used
     const requestId = orderId;

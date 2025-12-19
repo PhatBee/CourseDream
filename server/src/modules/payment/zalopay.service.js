@@ -8,18 +8,24 @@ const config = {
     key2: process.env.ZALOPAY_KEY2,
     endpoint: process.env.ZALOPAY_ENDPOINT,
     query_endpoint: process.env.ZALOPAY_QUERY_ENDPOINT,
-    return_url: process.env.ZALOPAY_RETURN
+    return_url: process.env.ZALOPAY_RETURN_URL, // Backend return URL
+    return_frontend_url_mobile: process.env.MOBILE_RETURN_URL, // Frontend return URL
+    return_frontend_url_web: process.env.WEB_RETURN_URL // Frontend return URL
 };
 
 /**
  * Tạo URL thanh toán ZaloPay
  */
 export const createPaymentUrl = async (data) => {
-    const { amount, orderInfo, items, bankCode } = data;
+    const { amount, orderInfo, items, bankCode, platform } = data;
+
+    const return_url = platform === 'mobile'
+        ? config.return_frontend_url_mobile
+        : config.return_frontend_url_web;
 
     const embed_data = {
         // Quan trọng: Redirect về frontend kèm theo mã giao dịch để query
-        redirecturl: `${config.return_url}?app_trans_id=${data.app_trans_id}`
+        redirecturl: `${return_url}?app_trans_id=${data.app_trans_id}`
     };
 
     const order = {
@@ -32,7 +38,7 @@ export const createPaymentUrl = async (data) => {
         amount: amount,
         description: orderInfo,
         bank_code: bankCode || "",
-        callback_url: "" // Sandbox local không dùng callback
+        callback_url: process.env.ZALOPAY_RETURN_URL  // Sandbox local không dùng callback   
     };
 
     // Tạo chữ ký: app_id|app_trans_id|app_user|amount|app_time|embed_data|item

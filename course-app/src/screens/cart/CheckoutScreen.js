@@ -141,29 +141,30 @@ const CheckoutScreen = ({ navigation, route }) => {
                     amount: finalTotal,
                     orderInfo: orderInfo,
                     courseIds: courseIds,
+                    platform: 'mobile', // Thêm platform
                 });
             } else if (selectedMethod === 'momo') {
                 paymentData = await paymentService.createMomoPayment({
                     amount: finalTotal,
                     orderInfo: orderInfo,
                     courseIds: courseIds,
+                    platform: 'mobile',
                 });
             } else if (selectedMethod === 'zalopay') {
                 paymentData = await paymentService.createZaloPayPayment({
                     amount: finalTotal,
                     orderInfo: orderInfo,
                     courseIds: courseIds,
+                    platform: 'mobile',
                 });
             }
 
             if (paymentData && paymentData.paymentUrl) {
-                // Open payment URL in browser
-                const supported = await Linking.canOpenURL(paymentData.paymentUrl);
-                if (supported) {
-                    await Linking.openURL(paymentData.paymentUrl);
-                } else {
-                    Alert.alert('Error', 'Không thể mở liên kết thanh toán');
-                }
+                // Navigate to WebView screen instead of opening external browser
+                navigation.navigate('PaymentWebView', {
+                    paymentUrl: paymentData.paymentUrl,
+                    paymentMethod: selectedMethod,
+                });
             } else {
                 Alert.alert('Error', 'Lỗi khi tạo liên kết thanh toán');
             }

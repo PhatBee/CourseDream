@@ -58,7 +58,7 @@ export default function Checkout() {
     // const tax = totalPrice > 0 ? Math.round(totalPrice * 0.1) : 0;
     // const finalTotal = totalPrice + tax;
 
-     // --- LOGIC TÍNH TOÁN GIÁ ---
+    // --- LOGIC TÍNH TOÁN GIÁ ---
     // Tính tổng giá gốc (chưa giảm)
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
     // Tính tổng giá đã giảm (nếu có priceDiscount)
@@ -66,9 +66,9 @@ export default function Checkout() {
     //  Giá trị giảm từ mã khuyến mãi (nếu có)
     let promotionDiscount = 0;
     if (preview && preview.discountType === "percent") {
-    promotionDiscount = subtotalDiscount * (preview.discountValue / 100);
+        promotionDiscount = subtotalDiscount * (preview.discountValue / 100);
     } else if (preview && preview.discountType === "fixed") {
-    promotionDiscount = preview.discountValue;
+        promotionDiscount = preview.discountValue;
     }
     // 3. Số tiền sau khi áp dụng mã giảm giá
     let amountAfterPromo = subtotalDiscount - promotionDiscount;
@@ -80,7 +80,7 @@ export default function Checkout() {
     // Tổng cuối cùng
     let finalTotal = amountAfterPromo + tax;
 
-        // Làm tròn lên 1000 nếu > 0 và < 1000
+    // Làm tròn lên 1000 nếu > 0 và < 1000
     if (finalTotal > 0 && finalTotal < 1000) {
         finalTotal = 1000;
     }
@@ -181,15 +181,17 @@ export default function Checkout() {
                 paymentData = await paymentService.createVNPayPayment({
                     amount: finalTotal,
                     orderInfo: orderInfo,
-                    courseIds: courseIds
+                    courseIds: courseIds,
+                    platform: 'web'
                 });
             } else if (selectedMethod === 'momo') {
                 // === LOGIC MOMO ===
                 toast.loading("Đang chuyển hướng đến MoMo...");
                 paymentData = await paymentService.createMomoPayment({
                     amount: finalTotal,
-                    orderInfo: orderInfo, // Lưu ý không dấu tiếng Việt càng tốt
-                    courseIds: courseIds
+                    orderInfo: orderInfo,
+                    courseIds: courseIds,
+                    platform: 'web'
                 });
             } else if (selectedMethod === 'zalopay') {
                 // === LOGIC ZALOPAY ===
@@ -197,7 +199,8 @@ export default function Checkout() {
                 paymentData = await paymentService.createZaloPayPayment({
                     amount: finalTotal,
                     orderInfo: orderInfo,
-                    courseIds: courseIds
+                    courseIds: courseIds,
+                    platform: 'web'
                 });
             } else {
                 toast("Phương thức thanh toán này đang bảo trì");

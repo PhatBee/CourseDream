@@ -7,9 +7,19 @@ import * as zalopayService from './zalopay.service.js';
 import enrollmentService from '../enrollment/enrollment.service.js';
 import moment from 'moment';
 
+// Helper function to build redirect URL based on platform
+const buildRedirectUrl = (platform, queryParams) => {
+    const baseUrl = platform === 'mobile'
+        ? process.env.MOBILE_RETURN_URL
+        : process.env.WEB_RETURN_URL;
+
+    const queryString = new URLSearchParams(queryParams).toString();
+    return `${baseUrl}?${queryString}`;
+};
+
 export const createPaymentUrl = async (req, res) => {
     try {
-        const { amount, bankCode, language, courseIds, platform } = req.body;
+        const { amount, bankCode, language, courseIds, platform = 'web' } = req.body;
         // Lấy IP thật của user (quan trọng với VNPAY)
         const ipAddr = req.headers['x-forwarded-for'] ||
             req.connection.remoteAddress ||
@@ -30,8 +40,9 @@ export const createPaymentUrl = async (req, res) => {
             orderInfo,
             ipAddr,
             locale: language,
+            method: 'vnpay',
             status: 'pending',
-            platform // Store platform if needed in model, otherwise just for URL generation
+            platform // Store platform in DB
         });
 
         // 2. Tạo URL VNPAY
@@ -41,8 +52,7 @@ export const createPaymentUrl = async (req, res) => {
             orderInfo,
             ipAddr,
             bankCode,
-            language,
-            platform // Pass platform to service
+            language
         });
 
         res.status(200).json({ paymentUrl });
@@ -63,52 +73,72 @@ export const vnpayReturn = async (req, res) => {
         // Tìm payment trong DB
         const payment = await paymentService.getPaymentByOrderId(orderId);
         if (!payment) {
-            return res.status(404).json({ success: false, message: 'Payment not found' });
+            // Redirect về client với lỗi
+            const redirectUrl = buildRedirectUrl(payment?.platform || 'web', {
+                success: 'false',
+                message: 'Payment not found',
+                method: 'vnpay'
+            });
+            return res.redirect(redirectUrl);
         }
 
         if (verifyResult.isSuccess) {
             // Kiểm tra xem đơn hàng đã xử lý chưa để tránh xử lý trùng
-            if (payment.status === 'success') {
-                return res.status(200).json({ success: true, message: 'Payment already processed', data: payment });
+            if (payment.status !== 'success') {
+                // 2. Cập nhật trạng thái Payment -> Success
+                await paymentService.updatePaymentStatus(orderId, 'success', {
+                    transactionNo: vnp_Params['vnp_TransactionNo'],
+                    bankCode: vnp_Params['vnp_BankCode'],
+                    payDate: vnp_Params['vnp_PayDate'],
+                    responseCode: vnp_Params['vnp_ResponseCode']
+                });
+
+                // 3. === ENROLL KHÓA HỌC ===
+                // (Enroll student vào danh sách course trong payment)
+                await enrollmentService.enrollStudent(payment.student, payment.courses);
+
+                // 4. === XÓA GIỎ HÀNG ===
+                // (Chỉ xóa những course đã thanh toán khỏi giỏ hàng)
+                const paidCourseIds = payment.courses.map(c => c._id.toString());
+                await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
             }
 
-            // 2. Cập nhật trạng thái Payment -> Success
-            const updatedPayment = await paymentService.updatePaymentStatus(orderId, 'success', {
-                transactionNo: vnp_Params['vnp_TransactionNo'],
-                bankCode: vnp_Params['vnp_BankCode'],
-                payDate: vnp_Params['vnp_PayDate'],
+            // Redirect về client với thành công
+            const redirectUrl = buildRedirectUrl(payment.platform, {
+                success: 'true',
+                message: 'Thanh toán thành công',
+                method: 'vnpay',
+                orderId: orderId,
+                amount: payment.amount,
                 responseCode: vnp_Params['vnp_ResponseCode']
             });
-
-            // 3. === ENROLL KHÓA HỌC ===
-            // (Enroll student vào danh sách course trong payment)
-            await enrollmentService.enrollStudent(payment.student, payment.courses);
-
-            // 4. === XÓA GIỎ HÀNG ===
-            // (Chỉ xóa những course đã thanh toán khỏi giỏ hàng)
-            const paidCourseIds = payment.courses.map(c => c._id.toString());
-            await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
-
-            res.status(200).json({
-                success: true,
-                message: 'Thanh toán thành công',
-                data: updatedPayment
-            });
+            return res.redirect(redirectUrl);
         } else {
             // Thanh toán thất bại hoặc lỗi checksum
             await paymentService.updatePaymentStatus(orderId, 'failed', {
                 responseCode: vnp_Params['vnp_ResponseCode']
             });
 
-            res.status(400).json({
-                success: false,
+            // Redirect về client với thất bại
+            const redirectUrl = buildRedirectUrl(payment.platform, {
+                success: 'false',
                 message: 'Thanh toán thất bại hoặc chữ ký không hợp lệ',
-                data: vnp_Params
+                method: 'vnpay',
+                orderId: orderId,
+                responseCode: vnp_Params['vnp_ResponseCode']
             });
+            return res.redirect(redirectUrl);
         }
     } catch (error) {
         console.error('VNPAY return error:', error);
-        res.status(500).json({ success: false, message: 'Lỗi xử lý kết quả thanh toán', error: error.message });
+        // Redirect về client với lỗi
+        const redirectUrl = buildRedirectUrl('web', {
+            success: 'false',
+            message: 'Lỗi xử lý kết quả thanh toán',
+            method: 'vnpay',
+            responseCode: '99'
+        });
+        return res.redirect(redirectUrl);
     }
 };
 
@@ -118,7 +148,7 @@ export const vnpayReturn = async (req, res) => {
  */
 export const createMomoPaymentUrl = async (req, res) => {
     try {
-        const { amount, language, courseIds } = req.body;
+        const { amount, language, courseIds, platform = 'web' } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         // Tạo mã đơn hàng unique (Momo yêu cầu unique requestId và orderId)
@@ -135,8 +165,9 @@ export const createMomoPaymentUrl = async (req, res) => {
             orderInfo,
             ipAddr,
             locale: language,
-            method: 'momo', // Đánh dấu là MOMO
-            status: 'pending'
+            method: 'momo',
+            status: 'pending',
+            platform // Store platform in DB
         });
 
         // 2. Tạo URL MoMo
@@ -171,33 +202,43 @@ export const momoReturn = async (req, res) => {
         // Tìm payment trong DB
         const payment = await paymentService.getPaymentByOrderId(orderId);
         if (!payment) {
-            return res.status(404).json({ success: false, message: 'Payment not found' });
+            // Redirect về client với lỗi
+            const redirectUrl = buildRedirectUrl(payment?.platform || 'web', {
+                success: 'false',
+                message: 'Payment not found',
+                method: 'momo'
+            });
+            return res.redirect(redirectUrl);
         }
 
         if (verifyResult.isSuccess) {
-            if (payment.status === 'success') {
-                return res.status(200).json({ success: true, message: 'Payment already processed' });
+            if (payment.status !== 'success') {
+                // 2. Cập nhật trạng thái Payment -> Success
+                await paymentService.updatePaymentStatus(orderId, 'success', {
+                    transactionNo: momo_Params['transId'],
+                    responseCode: momo_Params['resultCode'],
+                    transactionStatus: momo_Params['message'],
+                    payDate: new Date()
+                });
+
+                // 3. Enroll Khóa học
+                await enrollmentService.enrollStudent(payment.student, payment.courses);
+
+                // 4. Xóa Giỏ hàng
+                const paidCourseIds = payment.courses.map(c => c._id.toString());
+                await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
             }
 
-            // 2. Cập nhật trạng thái Payment -> Success
-            await paymentService.updatePaymentStatus(orderId, 'success', {
-                transactionNo: momo_Params['transId'],
+            // Redirect về client với thành công
+            const redirectUrl = buildRedirectUrl(payment.platform, {
+                success: 'true',
+                message: 'Thanh toán MoMo thành công',
+                method: 'momo',
+                orderId: orderId,
+                amount: payment.amount,
                 responseCode: momo_Params['resultCode'],
-                transactionStatus: momo_Params['message'],
-                payDate: new Date()
             });
-
-            // 3. Enroll Khóa học
-            await enrollmentService.enrollStudent(payment.student, payment.courses);
-
-            // 4. Xóa Giỏ hàng
-            const paidCourseIds = payment.courses.map(c => c._id.toString());
-            await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
-
-            res.status(200).json({
-                success: true,
-                message: 'Thanh toán MoMo thành công'
-            });
+            return res.redirect(redirectUrl);
         } else {
             // Thanh toán thất bại
             await paymentService.updatePaymentStatus(orderId, 'failed', {
@@ -205,15 +246,26 @@ export const momoReturn = async (req, res) => {
                 transactionStatus: momo_Params['message']
             });
 
-            res.status(400).json({
-                success: false,
+            // Redirect về client với thất bại
+            const redirectUrl = buildRedirectUrl(payment.platform, {
+                success: 'false',
                 message: 'Thanh toán MoMo thất bại',
-                data: momo_Params
+                method: 'momo',
+                orderId: orderId,
+                responseCode: momo_Params['resultCode'],
             });
+            return res.redirect(redirectUrl);
         }
     } catch (error) {
         console.error('MoMo return error:', error);
-        res.status(500).json({ success: false, message: 'Lỗi xử lý MoMo return', error: error.message });
+        // Redirect về client với lỗi
+        const redirectUrl = buildRedirectUrl('web', {
+            success: 'false',
+            message: 'Lỗi xử lý MoMo return',
+            method: 'momo',
+            responseCode: '99'
+        });
+        return res.redirect(redirectUrl);
     }
 };
 
@@ -222,7 +274,7 @@ export const momoReturn = async (req, res) => {
  */
 export const createZaloPayPaymentUrl = async (req, res) => {
     try {
-        const { amount, courseIds } = req.body;
+        const { amount, courseIds, platform = 'web' } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         // Tạo mã giao dịch theo format ZaloPay yêu cầu: YYMMDD_xxxx
@@ -244,7 +296,8 @@ export const createZaloPayPaymentUrl = async (req, res) => {
             orderInfo,
             ipAddr,
             method: 'zalopay',
-            status: 'pending'
+            status: 'pending',
+            platform // Store platform in DB
         });
 
         // 2. Gọi ZaloPay
@@ -252,7 +305,8 @@ export const createZaloPayPaymentUrl = async (req, res) => {
             app_trans_id,
             amount,
             orderInfo,
-            items: [] // Có thể truyền danh sách course nếu muốn
+            items: [], // Có thể truyền danh sách course nếu muốn,
+            platform
         });
 
         if (result.return_code === 1) {
@@ -275,53 +329,74 @@ export const zalopayReturn = async (req, res) => {
     try {
         const { app_trans_id } = req.query;
 
-        // 1. Query trực tiếp sang ZaloPay để kiểm tra trạng thái
-        const queryResult = await zalopayService.queryOrderStatus(app_trans_id);
-
         // Tìm đơn hàng trong DB
         const payment = await paymentService.getPaymentByOrderId(app_trans_id);
         if (!payment) {
-            return res.status(404).json({ success: false, message: 'Payment not found' });
+            // Redirect về client với lỗi
+            const redirectUrl = buildRedirectUrl(payment?.platform || 'web', {
+                success: 'false',
+                message: 'Payment not found',
+                method: 'zalopay'
+            });
+            return res.redirect(redirectUrl);
         }
 
+        // 1. Query trực tiếp sang ZaloPay để kiểm tra trạng thái
+        const queryResult = await zalopayService.queryOrderStatus(app_trans_id);
+
+        console.log('ZaloPay Query Result:', queryResult);
+
         if (queryResult.isSuccess) {
-            if (payment.status === 'success') {
-                return res.status(200).json({ success: true, message: 'Payment already processed' });
+            if (payment.status !== 'success') {
+                // 2. Update DB -> Success
+                await paymentService.updatePaymentStatus(app_trans_id, 'success', {
+                    transactionStatus: queryResult.message,
+                    payDate: new Date()
+                });
+
+                // 3. Enroll Course
+                await enrollmentService.enrollStudent(payment.student, payment.courses);
+
+                // 4. Clear Cart
+                const paidCourseIds = payment.courses.map(c => c._id.toString());
+                await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
             }
 
-            // 2. Update DB -> Success
-            await paymentService.updatePaymentStatus(app_trans_id, 'success', {
-                transactionStatus: queryResult.message,
-                payDate: new Date()
+            // Redirect về client với thành công
+            const redirectUrl = buildRedirectUrl(payment.platform, {
+                success: 'true',
+                message: 'Thanh toán ZaloPay thành công',
+                method: 'zalopay',
+                orderId: app_trans_id,
+                amount: payment.amount,
+
             });
-
-            // 3. Enroll Course
-            await enrollmentService.enrollStudent(payment.student, payment.courses);
-
-            // 4. Clear Cart
-            const paidCourseIds = payment.courses.map(c => c._id.toString());
-            await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
-
-            res.status(200).json({
-                success: true,
-                message: 'Thanh toán ZaloPay thành công'
-            });
+            return res.redirect(redirectUrl);
         } else {
             // Thanh toán thất bại hoặc đang xử lý
             await paymentService.updatePaymentStatus(app_trans_id, 'failed', {
                 transactionStatus: queryResult.message
             });
 
-            res.status(400).json({
-                success: false,
-                message: 'Thanh toán thất bại hoặc chưa hoàn tất',
-                detail: queryResult.message
+            // Redirect về client với thất bại
+            const redirectUrl = buildRedirectUrl(payment.platform, {
+                success: 'false',
+                message: queryResult.message,
+                method: 'zalopay',
+                orderId: app_trans_id
             });
+            return res.redirect(redirectUrl);
         }
 
     } catch (error) {
         console.error('ZaloPay return error:', error);
-        res.status(500).json({ success: false, message: 'Lỗi xử lý ZaloPay return', error: error.message });
+        // Redirect về client với lỗi
+        const redirectUrl = buildRedirectUrl('web', {
+            success: 'false',
+            message: 'Lỗi xử lý ZaloPay return',
+            method: 'zalopay'
+        });
+        return res.redirect(redirectUrl);
     }
 };
 

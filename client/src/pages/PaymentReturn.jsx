@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { CheckCircle, XCircle, Home, BookOpen } from 'lucide-react';
-import paymentService from '../features/payment/paymentService';
 import { getCart } from '../features/cart/cartSlice'; // Import action lấy lại giỏ hàng
 
 const PaymentReturn = () => {
@@ -13,29 +12,32 @@ const PaymentReturn = () => {
     const [message, setMessage] = useState('Đang xử lý kết quả thanh toán...');
 
     useEffect(() => {
-        const verifyPayment = async () => {
+        const processPaymentResult = async () => {
             try {
-                // Lấy query string từ URL (VD: ?vnp_Amount=...&vnp_ResponseCode=...)
-                const searchParams = location.search;
+                // Lấy query params từ URL
+                const searchParams = new URLSearchParams(location.search);
 
-                if (!searchParams) {
+                const success = searchParams.get('success');
+                const message = searchParams.get('message');
+                const method = searchParams.get('method');
+                const orderId = searchParams.get('orderId');
+                const amount = searchParams.get('amount');
+
+                if (!success) {
                     setStatus('failed');
                     setMessage('Không tìm thấy thông tin giao dịch.');
                     return;
                 }
 
-                // Gọi API Backend xác thực
-                const res = await paymentService.verifyPayment(searchParams);
-
-                if (res.success) {
+                if (success === 'true') {
                     setStatus('success');
-                    setMessage('Thanh toán thành công! Bạn đã sở hữu khóa học.');
+                    setMessage(message || 'Thanh toán thành công! Bạn đã sở hữu khóa học.');
 
-                    // CẬP NHẬT GIỎ HÀNG: Gọi getCart để Redux cập nhật lại số lượng (về 0 hoặc giảm đi)
+                    // CẬP NHẬT GIỎ HÀNG: Gọi getCart để Redux cập nhật lại số lượng
                     dispatch(getCart());
                 } else {
                     setStatus('failed');
-                    setMessage(res.message || 'Giao dịch thất bại.');
+                    setMessage(message || 'Giao dịch thất bại.');
                 }
             } catch (error) {
                 console.error(error);
@@ -45,7 +47,7 @@ const PaymentReturn = () => {
         };
 
         // Chạy 1 lần khi mount
-        verifyPayment();
+        processPaymentResult();
     }, [location, dispatch]);
 
     return (

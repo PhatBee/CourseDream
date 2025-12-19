@@ -37,6 +37,8 @@ import LearningScreen from './src/screens/learning/LearningScreen';
 import InstructorProfileScreen from './src/screens/user/InstructorProfileScreen';
 import CartScreen from './src/screens/cart/CartScreen.js';
 import CheckoutScreen from './src/screens/cart/CheckoutScreen.js';
+import PaymentWebViewScreen from './src/screens/payment/PaymentWebViewScreen.js';
+import PaymentResultScreen from './src/screens/payment/PaymentResultScreen.js';
 
 import CourseDetailScreen from './src/screens/course/CourseDetailScreen.js';
 
@@ -110,6 +112,8 @@ const MainNavigator = () => {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="CartScreen" component={CartScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="PaymentWebView" component={PaymentWebViewScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PaymentResult" component={PaymentResultScreen} options={{ headerShown: false }} />
 
       <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <Stack.Screen name="Learning" component={LearningScreen} options={{ headerShown: false }} />
@@ -118,10 +122,20 @@ const MainNavigator = () => {
 };
 
 export default function App() {
+  // Deep Linking Configuration
+  const linking = {
+    prefixes: ['courseapp://'],
+    config: {
+      screens: {
+        PaymentResult: 'payment/result',
+      },
+    },
+  };
+
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <MainNavigator />
         </NavigationContainer>
         <Toast config={toastConfig} />
