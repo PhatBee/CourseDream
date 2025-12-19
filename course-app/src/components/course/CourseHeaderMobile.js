@@ -105,9 +105,7 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
         {!isEnrolled ? (
           <>
             <TouchableOpacity className="bg-rose-500 py-3 rounded-lg mb-2" onPress={handleAddToCart}>
-              <Text className="text-white text-center font-bold">
-                {inCart ? 'Đã trong giỏ hàng' : 'Thêm vào giỏ hàng'}
-              </Text>
+              <Text className="text-white text-center font-bold">{inCart ? 'Đã trong giỏ hàng' : 'Thêm vào giỏ hàng'}</Text>
             </TouchableOpacity>
             <TouchableOpacity className="bg-blue-500 py-3 rounded-lg mb-2" onPress={() => Toast.show({ type: 'info', text1: 'Chức năng ghi danh sẽ bổ sung!' })}>
               <Text className="text-white text-center font-bold">Ghi danh ngay</Text>
@@ -118,9 +116,7 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
             className="bg-rose-500 px-3 py-3 rounded-lg items-center justify-center mb-2"
             onPress={() => navigation.navigate('Learning', { slug: course.slug })}
           >
-            <Text className="text-white font-bold text-base">
-              Go to Course
-            </Text>
+            <Text className="text-white font-bold text-base">Go to Course</Text>
           </TouchableOpacity>
         )}
         <View className="flex-row gap-3 mt-2">
