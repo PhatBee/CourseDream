@@ -39,6 +39,7 @@ import CartScreen from './src/screens/cart/CartScreen.js';
 
 import CourseDetailScreen from './src/screens/course/CourseDetailScreen.js';
 import DiscussionScreen from './src/screens/discussion/DiscussionScreen';
+import NotificationScreen from './src/screens/notification/NotificationScreen';
 
 const Stack = createStackNavigator();
 
@@ -113,6 +114,7 @@ const MainNavigator = () => {
       <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <Stack.Screen name="Learning" component={LearningScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DiscussionScreen" component={DiscussionScreen} />
+      <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
     </Stack.Navigator>
   );
 };

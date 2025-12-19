@@ -17,6 +17,7 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
   const [reportVisible, setReportVisible] = useState(false);
   const [reportType, setReportType] = useState('');
   const [reportTargetId, setReportTargetId] = useState('');
+  const [highlightedReplyId, setHighlightedReplyId] = useState(null);
 
   useEffect(() => {
     if (courseId) dispatch(fetchDiscussions({ courseId, page, limit: 10 }));
@@ -101,25 +102,36 @@ const DiscussionMobile = ({ courseId, isEnrolled, user }) => {
             </View>
             <Text className="text-gray-800 mb-2">{item.content}</Text>
             {/* Replies */}
-            {item.replies?.map((reply, idx) => (
-              <View key={idx} className="ml-4 mb-2 bg-gray-50 rounded p-2 flex-row items-center">
-                <View className="flex-1">
-                  <Text className="font-semibold text-sm">{reply.author?.name || 'Ẩn danh'}</Text>
-                  <Text className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</Text>
-                  <Text className="text-gray-700">{reply.content}</Text>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => setHighlightedReplyId(null)}
+              style={{ flex: 1 }}
+            >
+              {item.replies?.map((reply, idx) => (
+                <View
+                  key={idx}
+                  className={`ml-4 mb-2 bg-gray-50 rounded p-2 flex-row items-center ${
+                    highlightedReplyId === reply._id ? 'border-2 border-rose-500' : ''
+                  }`}
+                >
+                  <View className="flex-1">
+                    <Text className="font-semibold text-sm">{reply.author?.name || 'Ẩn danh'}</Text>
+                    <Text className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</Text>
+                    <Text className="text-gray-700">{reply.content}</Text>
+                  </View>
+                  {/* Lá cờ báo cáo reply */}
+                  {user?._id && reply.author?._id !== user._id && (
+                    <TouchableOpacity
+                      onPress={() => openReport('reply', reply._id)}
+                      className="ml-2"
+                      accessibilityLabel="Báo cáo bình luận"
+                    >
+                      <Flag size={15} color="#e11d48" />
+                    </TouchableOpacity>
+                  )}
                 </View>
-                {/* Lá cờ báo cáo reply */}
-                {user?._id && reply.author?._id !== user._id && (
-                  <TouchableOpacity
-                    onPress={() => openReport('reply', reply._id)}
-                    className="ml-2"
-                    accessibilityLabel="Báo cáo bình luận"
-                  >
-                    <Flag size={15} color="#e11d48" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
+              ))}
+            </TouchableOpacity>
             {/* Ô nhập trả lời */}
             {canDiscuss && (
               <View className="flex-row items-center mt-2">
