@@ -21,16 +21,16 @@ const StatBadge = ({ icon, label, value, color }) => (
 const StudentDashboard = () => {
   const dispatch = useDispatch();
 
+  const { dashboardCourses, isLoading } = useSelector((state) => state.enrollment);
+  const { user } = useSelector((state) => state.auth);
+
   useEffect(() => {
     dispatch(fetchStudentDashboard());
   }, [dispatch]);
 
-  const { dashboardCourses, isLoading } = useSelector((state) => state.enrollment); // Cần đảm bảo slice có state này
-  const { user } = useSelector((state) => state.auth);
-
-  const enrolledCourses = dashboardCourses
+  const enrolledCourses = dashboardCourses;
   console.log(enrolledCourses)
-  
+
 
   if (isLoading) {
     return <div className="flex h-64 justify-center items-center"><Spinner /></div>;

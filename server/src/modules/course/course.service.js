@@ -177,6 +177,11 @@ export const getLearningDetails = async (slug, userId) => {
     throw error;
   }
 
+  await Enrollment.findOneAndUpdate(
+    { student: userId, course: course._id },
+    { lastViewedAt: new Date() }
+  );
+
   let progress = await Progress.findOne({
     student: userId,
     course: course._id,

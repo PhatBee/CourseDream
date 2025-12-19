@@ -17,8 +17,10 @@ const OngoingCourse = ({ enrollment }) => {
 
   useFocusEffect(
     useCallback(() => {
-      dispatch(fetchProgressData(enrollment.course.slug));
-    }, [dispatch, enrollment])
+      if (enrollment?.course?.slug) {
+        dispatch(fetchProgressData(enrollment.course.slug));
+      }
+    }, [dispatch, enrollment?.course?.slug])
   );
 
   if (!enrollment || !enrollment.course) return null;
@@ -32,9 +34,9 @@ const OngoingCourse = ({ enrollment }) => {
   const percentage = progress?.percentage ?? calculatedPercentage;
 
   const handleContinue = () => {
-    navigation.navigate('Learning', {
-      slug: course.slug
-    });
+    if (course.slug) {
+        navigation.navigate('Learning', { slug: course.slug });
+    }
   };
 
   const handleSeeAll = () => {

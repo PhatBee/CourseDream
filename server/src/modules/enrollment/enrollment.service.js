@@ -46,7 +46,7 @@ class EnrollmentService {
                     { path: "categories", select: "name slug" } // Populate categories
                 ]
             })
-            .sort({ enrolledAt: -1 });
+            .sort({ lastViewedAt: -1, enrolledAt: -1 });
     }
 
     async getStudentDashboard(userId) {
@@ -57,7 +57,7 @@ class EnrollmentService {
                 select: "title slug thumbnail totalLectures totalHours instructor", // Lấy các trường cần cho Dashboard
                 populate: { path: "instructor", select: "name" }
             })
-            .sort({ enrolledAt: -1 })
+            .sort({ lastViewedAt: -1, enrolledAt: -1 })
             .lean();
 
         // 2. Kẹp thêm thông tin Progress
