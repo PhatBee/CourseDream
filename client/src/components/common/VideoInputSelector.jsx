@@ -27,7 +27,7 @@ const VideoInputSelector = ({ type, urlValue, onTypeChange, onUrlChange, onFileC
                     type="text"
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     placeholder="e.g. https://www.youtube.com/watch?v=..."
-                    value={urlValue}
+                    value={urlValue || ''}
                     onChange={(e) => onUrlChange(e.target.value)}
                 />
             </div>

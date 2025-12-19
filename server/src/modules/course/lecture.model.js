@@ -1,5 +1,11 @@
 import mongoose from 'mongoose';
 
+const ResourceSchema = new mongoose.Schema({
+  title: String,
+  url: String,
+  type: { type: String, enum: ['link', 'file'], default: 'link' }
+}, { _id: false });
+
 const LectureSchema = new mongoose.Schema({
   title: String,
   videoUrl: String,
@@ -8,13 +14,9 @@ const LectureSchema = new mongoose.Schema({
   order: Number,
   isPreviewFree: { type: Boolean, default: false },
 
-  resources: [
-    {
-      title: String,
-      url: String,
-      type: String
-    }
-  ]
+  resources: [ResourceSchema]
 }, { timestamps: true });
+
+
 
 export default mongoose.model('Lecture', LectureSchema);

@@ -22,8 +22,50 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
 
     useEffect(() => {
         if (initialData) {
+            // Parse resources if they are JSON strings
+            let parsedResources = [];
+            if (initialData.resources && Array.isArray(initialData.resources)) {
+                parsedResources = initialData.resources
+                    .map((resource) => {
+                        try {
+                            // If resource is already an object, return it
+                            if (typeof resource === 'object' && resource !== null) {
+                                return resource;
+                            }
+
+                            // If resource is a string, try to parse it
+                            if (typeof resource === 'string') {
+                                // Clean up the string
+                                const cleanedString = resource
+                                    .replace(/\n/g, '')
+                                    .replace(/\s+/g, ' ')
+                                    .trim();
+
+                                // Try to parse as JSON
+                                try {
+                                    return JSON.parse(cleanedString);
+                                } catch {
+                                    // If JSON parse fails, try eval
+                                    // eslint-disable-next-line no-eval
+                                    return eval(`(${cleanedString})`);
+                                }
+                            }
+
+                            return null;
+                        } catch (error) {
+                            console.error('Failed to parse resource:', error);
+                            return null;
+                        }
+                    })
+                    .filter(Boolean); // Remove null values
+            }
+
             // Nếu đang edit, fill dữ liệu cũ (nhớ reset videoFile để tránh lỗi)
-            setLesson({ ...initialData, videoFile: null });
+            setLesson({
+                ...initialData,
+                videoFile: null,
+                resources: parsedResources
+            });
         } else {
             // Reset form nếu add new
             setLesson({
@@ -229,17 +271,17 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
                             {/* Resource List */}
                             {lesson.resources.length > 0 && (
                                 <div className="mt-4 space-y-2">
-                                    {lesson.resources.map((res, idx) => (
+                                    {lesson.resources.filter(res => res && res.title).map((res, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded border shadow-sm">
                                             <div className="flex items-center gap-2 overflow-hidden">
-                                                <div className={`p-1.5 rounded-full ${res.type === 'file' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                                                    {res.type === 'file' ? <FileText size={14} /> : <LinkIcon size={14} />}
+                                                <div className={`p-1.5 rounded-full ${res?.type === 'file' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                    {res?.type === 'file' ? <FileText size={14} /> : <LinkIcon size={14} />}
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-medium truncate">{res.title}</span>
                                                     {/* Hiển thị tên file nếu chưa có URL */}
                                                     <span className="text-xs text-gray-400 truncate max-w-[200px]">
-                                                        {res.type === 'file' && res.file ? `File: ${res.file.name}` : <Link target="_blank" to={res.url}>{res.url}</Link>}
+                                                        {res?.type === 'file' && res?.file ? `File: ${res.file.name}` : <Link target="_blank" to={res?.url || '#'}>{res?.url || 'No URL'}</Link>}
                                                     </span>
 
                                                 </div>
