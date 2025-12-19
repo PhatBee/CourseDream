@@ -75,9 +75,7 @@ const CoursesScreen = () => {
   if (isError) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: 'red' }}>
-          {message || 'Đã xảy ra lỗi'}
-        </Text>
+        <Text style={{ color: 'red' }}>{message || 'Đã xảy ra lỗi'}</Text>
       </View>
     );
   }
