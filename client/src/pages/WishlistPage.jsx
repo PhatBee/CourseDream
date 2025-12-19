@@ -7,7 +7,7 @@ import RemoveModal from '../components/common/RemoveModal';
 import { Trash2, HeartOff } from 'lucide-react';
 import Spinner from '../components/common/Spinner';
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 9;
 
 const WishlistPage = () => {
     const dispatch = useDispatch();
@@ -71,7 +71,7 @@ const WishlistPage = () => {
             {/* Content */}
             {displayItems.length > 0 ? (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
                         {displayItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((course) => {
                             const isLiked = reduxItems.some(item => item._id === course._id);
                             return (

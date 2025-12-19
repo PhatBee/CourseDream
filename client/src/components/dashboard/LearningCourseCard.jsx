@@ -15,7 +15,7 @@ const LearningCourseCard = ({ enrollment }) => {
       {/* 1. Thumbnail */}
       <div className="w-full md:w-64 h-40 md:h-auto relative flex-shrink-0">
         <img 
-          src={course.thumbnail || 'https://via.placeholder.com/300x200'} 
+          src={course.thumbnail || '/default-course.svg'} 
           alt={course.title} 
           className="w-full h-full object-cover"
         />

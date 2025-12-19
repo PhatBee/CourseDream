@@ -7,7 +7,8 @@ import {
   ShoppingCart,
   User,
   LogOut,
-  MessageSquare,
+  Bell,
+  Heart,
   Settings,
   FileText,
 } from "lucide-react";
@@ -102,7 +103,31 @@ const Header = () => {
               </>
             ) : (
               <>
-                {/* 🛒 Cart */}
+                <div className="relative">
+                  <button
+                    onClick={() => setNotificationOpen((v) => !v)}
+                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50"
+                  >
+                    <Bell className="h-5 w-5 text-gray-700" />
+
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-1 -top-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                    {notificationOpen && (  
+                      <div className="absolute top-full right-0 mt-2 z-50">
+                        <NotificationMenu
+                          open={notificationOpen}
+                          onClose={() => setNotificationOpen(false)}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  { }
                 <Link
                   to="/cart"
                   className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50"
@@ -164,30 +189,14 @@ const Header = () => {
                             My Profile
                           </Link>
                         </li>
-                        <li className="relative flex items-center">
-                          <button
-                            onClick={() => setNotificationOpen((v) => !v)}
-                            className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-50 w-full"
-                            type="button"
+                        <li>
+                          <Link
+                            to="/profile/wishlist"
+                            className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
                           >
-                            <span className="flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4 text-rose-500" />
-                              Messages
-                            </span>
-                            {unreadCount > 0 && (
-                              <span className="text-xs bg-rose-500 text-white px-1.5 rounded-full">
-                                {unreadCount}
-                              </span>
-                            )}
-                          </button>
-                          {/* Menu lệch phải */}
-                          <div className="relative">
-                            <NotificationMenu
-                              open={notificationOpen}
-                              onClose={() => setNotificationOpen(false)}
-                              position="right"
-                            />
-                          </div>
+                            <Heart className="h-4 w-4 text-rose-500" />
+                            Wishlist
+                          </Link>
                         </li>
                         <li>
                           <Link
