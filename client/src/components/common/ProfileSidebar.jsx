@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Grid, User, Settings, LogOut, Heart, BookOpen, Book } from 'lucide-react';
+import { Grid, User, Settings, LogOut, Heart, BookOpen, Book, PlusCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 
@@ -34,7 +34,7 @@ const SidebarLink = ({ to, icon, label, exact = false }) => {
 const ProfileSidebar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+  const { user, viewMode } = useSelector((state) => state.auth);
 
   const handleLogout = async (e) => {
     e.preventDefault();
@@ -51,13 +51,19 @@ const ProfileSidebar = () => {
         <ul className="space-y-1">
           <SidebarLink to="/profile/dashboard" icon={<Grid size={20} />} label="Dashboard" />
           <SidebarLink to="/profile/my-profile" icon={<User size={20} />} label="My Profile" />
-          <SidebarLink to="/profile/enrolled-courses" icon={<BookOpen size={20} />} label="Enrolled Courses" />
-          <SidebarLink to="/profile/wishlist" icon={<Heart size={20} />} label="Wishlist" />
 
-          {/* Chỉ hiển thị Add Course nếu là Instructor hoặc Admin */}
-          {(user?.role === 'instructor' || user?.role === 'admin') && (
+          {/* Chế độ xem của Học sinh */}
+          {viewMode === 'student' && (
             <>
-              <SidebarLink to="/profile/instructor/courses" icon={<Book size={20} />} label=" My Courses" />
+              <SidebarLink to="/profile/enrolled-courses" icon={<BookOpen size={20} />} label="Enrolled Courses" />
+              <SidebarLink to="/profile/wishlist" icon={<Heart size={20} />} label="Wishlist" />
+            </>
+          )}
+
+          {/* Chế độ xem của Giảng viên */}
+          {viewMode === 'instructor' && (
+            <>
+              <SidebarLink to="/profile/instructor/courses" icon={<Book size={20} />} label="My Courses" />
             </>
           )}
         </ul>

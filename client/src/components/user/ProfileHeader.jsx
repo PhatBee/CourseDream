@@ -1,9 +1,12 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { toggleViewMode } from '../../features/auth/authSlice';
 
 const ProfileHeader = () => {
-  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const { user, viewMode } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
   if (!user) return null;
 
   return (
@@ -18,49 +21,41 @@ const ProfileHeader = () => {
 
         {/* Cột trái: Thông tin User */}
         <div className="flex items-center">
-          <div className="relative mr-4 flex-shrink-0">
-            <img
-              src={user.avatar || "/src/assets/img/icons/apple-icon.png"}
-              alt="Avatar"
-              className="w-20 h-20 rounded-full border-2 border-white object-cover"
-            />
-            {/* (Bạn có thể thêm icon "verify tick" ở đây) */}
-          </div>
+          <img
+            src={user.avatar || "/src/assets/img/icons/apple-icon.png"}
+            className="w-20 h-20 rounded-full border-2 border-white object-cover mr-4"
+          />
           <div>
             <h5 className="text-white text-xl font-bold">{user.name}</h5>
-            <p className="text-white capitalize">{user.role}</p>
+            <p className="text-white opacity-80 capitalize">
+              {viewMode}
+            </p>
           </div>
         </div>
 
-        {/* Cột phải: Nút bấm (Logic theo role) */}
-        <div className="flex items-center gap-2">
-          {/* Add course for instructor */}
-          {user.role === 'instructor' || user.role === 'admin' && (
-            <Link
-              to="/instructor/add-course"
-              className="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
-            >
-              Add Course
-            </Link>
-          )}
-
-
+        {/* Cột phải: Logic chuyển đổi */}
+        <div className="flex items-center gap-3">
           {user.role === 'student' ? (
-            // Nút "Become an Instructor" (nền trắng)
             <Link
-              to="/profile/become-instructor" // Route này sẽ gọi API
-              className="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
+              to="/profile/become-instructor"
+              className="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-bold hover:bg-gray-100 transition-all"
             >
               Become an Instructor
             </Link>
           ) : (
-            // Nút "Instructor Dashboard" (nền đỏ)
-            <Link
-              to="/profile/dashboard" // Route cho instructor
-              className="px-4 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
+            <button
+              onClick={() => {
+                dispatch(toggleViewMode());
+                navigate(0);
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-bold transition-all shadow-md bg-white text-gray-800 ${
+                viewMode === 'student'
+                ? 'border border-emerald-400 hover:bg-emerald-50' 
+                : 'border border-rose-400 hover:bg-rose-50'
+              }`}
             >
-              Instructor Dashboard
-            </Link>
+              {viewMode === 'student' ? 'Instructor' : 'Student'} Dashboard
+            </button>
           )}
         </div>
 

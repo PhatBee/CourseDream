@@ -6,6 +6,7 @@ const user = JSON.parse(localStorage.getItem('user'));
 
 const initialState = {
   user: user ? user : null,
+  viewMode: user?.role === 'instructor' ? 'instructor' : 'student',
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -222,6 +223,13 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    toggleViewMode: (state) => {
+      state.viewMode = state.viewMode === 'student' ? 'instructor' : 'student';
+    },
+    setInitialViewMode: (state, action) => {
+      state.viewMode = action.payload;
+    },
+
     // Dùng để reset state khi cần (ví dụ: sau khi gặp lỗi)
     reset: (state) => {
       state.isLoading = false;
@@ -270,6 +278,7 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user; // Lấy user từ payload
+        state.viewMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
       })
       // Xử lý khi 'login' thất bại (rejected)
       .addCase(login.rejected, (state, action) => {
@@ -330,6 +339,7 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user;
+        state.viewMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
       })
       .addCase(googleLogin.rejected, (state, action) => {
         state.isLoading = false;
@@ -345,6 +355,7 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload.user;
+        state.viewMode = action.payload.user.role === 'instructor' ? 'instructor' : 'student';
       })
       .addCase(facebookLogin.rejected, (state, action) => {
         state.isLoading = false;
@@ -455,5 +466,5 @@ export const authSlice = createSlice({
   },
 });
 
-export const { reset, setRegistrationEmail, clearReset, clearStatus } = authSlice.actions;
+export const { reset, setRegistrationEmail, clearReset, clearStatus, toggleViewMode } = authSlice.actions;
 export default authSlice.reducer;
