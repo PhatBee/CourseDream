@@ -13,6 +13,7 @@ import discussionReducer from '../features/discussion/discussionSlice';
 import reportReducer from '../features/report/reportSlice';
 import notificationReducer from '../features/notification/notificationSlice';
 import promotionReducer from '../features/promotion/promotionSlice';
+import userReducer from '../features/user/userSlice';
 export const store = configureStore({
   reducer: {
     // Add your reducers here
@@ -30,5 +31,6 @@ export const store = configureStore({
     report: reportReducer,
     notification: notificationReducer,
     promotion: promotionReducer,
+    user: userReducer,
   },
 });
