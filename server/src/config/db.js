@@ -1,47 +1,43 @@
 import mongoose from "mongoose";
 
+// Sử dụng biến global để giữ kết nối không bị khởi tạo lại nhiều lần
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-  try {
-    // Tắt buffering để tránh lỗi timeout khi connection chưa sẵn sàng
-    mongoose.set('bufferCommands', false);
 
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      // Tăng thời gian chờ cho production
-      serverSelectionTimeoutMS: 60000, // 60 giây để chọn server
-      socketTimeoutMS: 75000, // 75 giây timeout cho socket operations
-      connectTimeoutMS: 60000, // 60 giây timeout cho initial connection
-
-      // Connection pooling để tối ưu performance
-      maxPoolSize: 10, // Số connection tối đa trong pool
-      minPoolSize: 2, // Số connection tối thiểu
-
-      // Retry logic
-      retryWrites: true,
-      retryReads: true,
-
-      // Heartbeat để duy trì connection
-      heartbeatFrequencyMS: 10000, // Check connection mỗi 10 giây
-    });
-
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
-
-    // Event listeners để monitor connection
-    mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      console.log('✅ MongoDB reconnected');
-    });
-
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1); // Dừng server nếu kết nối thất bại
+  if (cached.conn) {
+    return cached.conn;
   }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 60000,
+      socketTimeoutMS: 75000,
+      maxPoolSize: 10, // Bản Free của Atlas giới hạn kết nối thấp, nên để 10 là vừa
+      minPoolSize: 2,
+    };
+
+    // Quan trọng: Không sử dụng process.exit(1) trong Vercel
+    cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
+      console.log("✅ MongoDB connected");
+      return mongoose;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    console.error("❌ MongoDB connection error:", e.message);
+    throw e; // Để Vercel ghi nhận lỗi thay vì crash process
+  }
+
+  return cached.conn;
 };
 
 export default connectDB;
