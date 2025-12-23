@@ -6,6 +6,8 @@ const connectDB = async () => {
       // Các option dưới là mặc định từ Mongoose v7 nên không cần nữa
       // useNewUrlParser: true,
       // useUnifiedTopology: true,
+      // Tăng thời gian chờ
+      serverSelectionTimeoutMS: 60000,
     });
 
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
