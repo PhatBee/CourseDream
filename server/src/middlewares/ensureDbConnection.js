@@ -1,48 +1,49 @@
 import mongoose from 'mongoose';
+import connectDB from '../config/db.js'; // Import file chứa hàm connectDB của bạn
 
-/**
- * Middleware để đảm bảo MongoDB đã kết nối trước khi xử lý request
- * Tránh lỗi "buffering timed out" khi query được gọi trước khi connection sẵn sàng
- */
 const ensureDbConnection = async (req, res, next) => {
-    // Kiểm tra trạng thái connection
     const state = mongoose.connection.readyState;
 
-    // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-    if (state === 1) {
-        // Connection đã sẵn sàng
-        return next();
-    }
-
-    if (state === 2) {
-        // Đang connecting, đợi connection hoàn tất
+    // Nếu chưa kết nối (state = 0), hãy thử kết nối ngay lập tức
+    if (state === 0) {
+        console.log('Database not connected. Attempting to connect...');
         try {
-            await Promise.race([
-                // Đợi connection event
-                new Promise((resolve) => {
-                    mongoose.connection.once('connected', resolve);
-                }),
-                // Timeout sau 5 giây
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Connection timeout')), 5000)
-                )
-            ]);
-
-            return next();
+            await connectDB();
         } catch (error) {
-            console.error('Database connection timeout:', error);
             return res.status(503).json({
                 success: false,
-                message: 'Database is still connecting. Please try again in a moment.'
+                message: 'Database connection failed.',
+                error: error.message
             });
         }
     }
 
-    // Disconnected hoặc disconnecting
-    console.error('Database not connected. State:', state);
+    // Nếu đang trong quá trình kết nối (state = 2)
+    if (mongoose.connection.readyState === 2) {
+        try {
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => reject(new Error('Timeout')), 5000);
+                mongoose.connection.once('connected', () => {
+                    clearTimeout(timeout);
+                    resolve();
+                });
+            });
+            return next();
+        } catch (error) {
+            return res.status(503).json({
+                success: false,
+                message: 'Database connection timeout.'
+            });
+        }
+    }
+
+    if (mongoose.connection.readyState === 1) {
+        return next();
+    }
+
     return res.status(503).json({
         success: false,
-        message: 'Database connection is not available. Please try again later.'
+        message: `Database state is ${mongoose.connection.readyState}. Please try again.`
     });
 };
 
