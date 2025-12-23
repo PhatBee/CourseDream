@@ -28,7 +28,7 @@ import ensureDbConnection from "./middlewares/ensureDbConnection.js";
 const app = express();
 
 // CORS CONFIG
-const allowedOrigins = ["http://localhost:5173"];
+const allowedOrigins = ["http://localhost:5173", "https://course-dream-react.vercel.app"];
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
