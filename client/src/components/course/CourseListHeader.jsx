@@ -28,12 +28,12 @@ const CourseListHeader = ({ totalCourses, viewMode, setViewMode }) => {
         </div>
 
         {/* Sort Dropdown */}
-        <select className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-100 cursor-pointer hover:border-rose-300 transition-colors">
+        {/* <select className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-100 cursor-pointer hover:border-rose-300 transition-colors">
           <option>Newly Published</option>
           <option>Price: Low to High</option>
           <option>Price: High to Low</option>
           <option>Rating: High to Low</option>
-        </select>
+        </select> */}
 
         {/* Search Input (Optional - as seen in screenshot) */}
         {/* <div className="relative hidden md:block">
