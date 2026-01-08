@@ -71,7 +71,7 @@ const Header = () => {
             >
               Courses
             </NavLink>
-            <NavLink
+            {/* <NavLink
               to="/blog"
               className={({ isActive }) =>
                 `hover:text-rose-600 ${isActive ? "text-rose-600" : "text-gray-700"
@@ -79,7 +79,7 @@ const Header = () => {
               }
             >
               Blog
-            </NavLink>
+            </NavLink> */}
           </nav>
 
           {/* Right: Auth / User */}
