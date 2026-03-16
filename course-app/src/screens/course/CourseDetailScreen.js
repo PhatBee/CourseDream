@@ -107,14 +107,14 @@ const CourseDetailScreen = () => {
           {/* Discussion button */}
           <View className="px-4 mb-8">
             <TouchableOpacity
-              className="bg-blue-500 py-3 rounded-lg"
+              className="bg-rose-800 py-3 rounded-xl flex-row items-center justify-center gap-2"
               onPress={() => navigation.navigate('DiscussionScreen', {
                 courseId: course._id,
                 courseSlug: course.slug,
                 isEnrolled,
               })}
             >
-              <Text className="text-white text-center font-bold text-base">Thảo luận khóa học</Text>
+              <Text className="text-white text-center font-bold text-base">💬 Thảo luận khóa học</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

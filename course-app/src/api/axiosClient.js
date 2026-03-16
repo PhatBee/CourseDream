@@ -2,7 +2,6 @@ import axios from "axios";
 import { API_URL } from "../utils/config";
 import { getToken, saveToken, removeToken, removeUser } from "../utils/storage";
 import { store } from "../app/store";
-import { logout } from "../features/auth/authSlice";
 
 const axiosClient = axios.create({
     baseURL: API_URL,
@@ -101,8 +100,12 @@ axiosClient.interceptors.response.use(
                 await removeToken();
                 await removeUser();
 
-                // Dispatch logout action
-                store.dispatch(logout());
+                // Dispatch logout action (dùng action type string để tránh require cycle)
+                store.dispatch({ type: 'auth/logout/fulfilled' });
+                // Clear các slice liên quan
+                store.dispatch({ type: 'wishlist/clearWishlistState' });
+                store.dispatch({ type: 'cart/resetCart' });
+                store.dispatch({ type: 'enrollment/resetEnrollment' });
 
                 return Promise.reject(refreshError);
             }

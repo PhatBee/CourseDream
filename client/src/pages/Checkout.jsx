@@ -281,7 +281,7 @@ export default function Checkout() {
           <p className="text-gray-600 mb-4">Bạn cần đăng nhập để thanh toán</p>
           <Link
             to="/login"
-            className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-block px-6 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors"
           >
             Đăng nhập
           </Link>
@@ -330,7 +330,7 @@ export default function Checkout() {
           {isDirectCheckout && directCourse ? (
             <Link
               to={`/courses/${directCourse.slug}`}
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 text-rose-600 hover:text-rose-700 transition-colors"
             >
               <ArrowLeft size={18} />
               Quay lại trang khóa học
@@ -338,7 +338,7 @@ export default function Checkout() {
           ) : (
             <Link
               to="/cart"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 text-rose-600 hover:text-rose-700 transition-colors"
             >
               <ArrowLeft size={18} />
               Quay lại giỏ hàng
@@ -387,7 +387,7 @@ export default function Checkout() {
               /* UI CHO ĐƠN HÀNG CÓ PHÍ */
               <div className="bg-white p-6 rounded-xl shadow-md border">
                 <div className="flex items-center gap-2 mb-6">
-                  <Wallet className="w-6 h-6 text-blue-600" />
+                  <Wallet className="w-6 h-6 text-rose-600" />
                   <h2 className="text-xl font-semibold text-gray-800">
                     Phương thức thanh toán
                   </h2>
@@ -411,13 +411,13 @@ export default function Checkout() {
                       className={`p-4 border-2 rounded-xl transition-all duration-200 relative
                                                 ${
                                                   selectedMethod === method.id
-                                                    ? "border-blue-500 bg-blue-50 shadow-md"
+                                                    ? "border-rose-500 bg-rose-50 shadow-md"
                                                     : "border-gray-200"
                                                 }
                                                 ${
                                                   method.disabled
                                                     ? "opacity-50 cursor-not-allowed bg-gray-50 grayscale"
-                                                    : "hover:border-blue-300 cursor-pointer"
+                                                    : "hover:border-rose-300 cursor-pointer"
                                                 }
                                             `}
                     >
@@ -439,8 +439,8 @@ export default function Checkout() {
                 </div>
 
                 {/* Payment Info */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-rose-800">
                     <strong>🔒 Bảo mật:</strong> Thông tin thanh toán của bạn
                     được mã hóa và bảo mật tuyệt đối.
                   </p>
@@ -450,7 +450,7 @@ export default function Checkout() {
                 <button
                   onClick={handlePayment}
                   disabled={items.length === 0}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-semibold py-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <Spinner size="sm" color="white" />
@@ -512,7 +512,7 @@ export default function Checkout() {
                         <p className="font-medium text-sm text-gray-800 line-clamp-2 mb-1">
                           {course.title}
                         </p>
-                        <p className="text-blue-600 font-semibold">
+                        <p className="text-rose-600 font-semibold">
                           {formatPrice(item.priceDiscount)}
                         </p>
                         {item.price > item.priceDiscount && (
@@ -562,7 +562,7 @@ export default function Checkout() {
                     <span className="text-lg font-bold text-gray-800">
                       Tổng thanh toán
                     </span>
-                    <span className="text-2xl font-bold text-blue-600">
+                    <span className="text-2xl font-bold text-rose-600">
                       {formatPrice(finalTotal)}
                     </span>
                   </div>
