@@ -60,9 +60,9 @@ export default function AppRoutes() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment/return" element={<PaymentReturn />} />
 
-          {/* Learning Page */}
+        {/* Learning Page — có header riêng, KHÔNG bọc bởi MainLayout */}
+          {/* => Chuyển xuống dưới ngoài MainLayout */}
           <Route path="/courses/:slug/overview" element={<OverviewPage />} />
-          <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
 
           {/* Profile Layout */}
           <Route path="/profile" element={<ProfileLayout />}>
@@ -112,6 +112,9 @@ export default function AppRoutes() {
         <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/profile/become-instructor" element={<BecomeInstructor />} />
+
+        {/* LearningPage: có header tự quản lý, không bọc MainLayout */}
+        <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
 
         <Route element={<PrivateRoute allowedRoles={['admin']} />}>
           <Route path="/admin" element={<AdminLayout />}>

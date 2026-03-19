@@ -62,18 +62,19 @@ export const learningSlice = createSlice({
     builder
       .addCase(fetchLearningCourse.pending, (state) => {
         state.isLoading = true;
+        // Reset currentLecture khi bắt đầu fetch mới
+        // → tránh lecture cũ từ session trước bị giữ lại
+        state.currentLecture = null;
       })
       .addCase(fetchLearningCourse.fulfilled, (state, action) => {
         state.isLoading = false;
         state.course = action.payload.course;
         state.sections = action.payload.course.sections || [];
         state.progress = action.payload.progress;
-
-        // Mặc định chọn bài đầu tiên nếu chưa chọn
-        if (!state.currentLecture && state.sections.length > 0) {
-           const firstLecture = state.sections[0].lectures?.[0];
-           if (firstLecture) state.currentLecture = firstLecture;
-        }
+        // Không set currentLecture ở đây.
+        // LearningPage sẽ tự set từ lectureId trên URL (useEffect bên dưới).
+        // OverviewPage không cần currentLecture.
+        state.currentLecture = null;
       })
       .addCase(fetchLearningCourse.rejected, (state, action) => {
         state.isLoading = false;

@@ -6,6 +6,8 @@
 @layer base {
   html, body {
     @apply text-gray-800 bg-white antialiased;
+    /* Learning page cần full-height, không có overflow ẩn */
+    min-height: 100%;
   }
 
   /* Không override màu link bằng tay */
@@ -42,8 +44,8 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
@@ -54,6 +56,32 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #d1d5db; /* gray-300 */
+}
+
+/* ============================================================
+   LEARNING PAGE — layout fix
+   ============================================================ */
+
+/*
+ * Đảm bảo trang học chiếm đúng 100dvh và không bị
+ * ảnh hưởng bởi các global overflow:
+ */
+.learning-page-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  /* z-index cao để đảm bảo hiển thị đúng nếu có element cha */
+  z-index: 50;
+}
+
+/* Video.js: luôn giữ tỷ lệ 16:9, không bị kéo dãn */
+.video-js.vjs-fluid {
+  padding-top: 56.25% !important; /* 16:9 */
+}
+
+/* Đảm bảo video-js player không overflow container */
+[data-vjs-player] {
+  overflow: hidden;
 }
 
 /* ============================================================
