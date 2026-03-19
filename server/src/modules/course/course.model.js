@@ -1,6 +1,4 @@
 import mongoose from 'mongoose';
-import Category from '../category/category.model.js';
-import Section from './section.model.js';
 
 const CourseSchema = new mongoose.Schema({
   title: String,
@@ -12,31 +10,23 @@ const CourseSchema = new mongoose.Schema({
   includes: [String],
   audience: [String],
   description: String,
-  price: {
-    type: Number,
-    default: 0
-  },
+  price: { type: Number, default: 0 },
   priceDiscount: {
     type: Number,
-    default: function () {
-      return this.price;
-    },
+    default: function () { return this.price; },
     validate: {
-      validator: function (val) {
-        return val <= this.price;
-      },
-      message: "Discount price cannot be higher than original price!"
+      validator: function (val) { return val <= this.price; },
+      message: 'Discount price cannot be higher than original price!'
     }
   },
-  level: { type: String, enum: ["beginner", "intermediate", "advanced", "alllevels"] },
+  level: { type: String, enum: ['beginner', 'intermediate', 'advanced', 'alllevels'] },
   language: String,
   requirements: [String],
   learnOutcomes: [String],
 
-  instructor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
-
-  sections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Section" }],
+  instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+  sections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Section' }],
 
   rating: { type: Number, default: 0 },
   studentsCount: { type: Number, default: 0 },
@@ -44,13 +34,31 @@ const CourseSchema = new mongoose.Schema({
   totalHours: { type: Number, default: 0 },
   totalDurationSeconds: { type: Number, default: 0 },
 
+  /**
+   * Trạng thái nghiệp vụ (theo plan_2.md):
+   * - draft       : Mới tạo, chưa submit
+   * - pending     : Đang chờ admin duyệt
+   * - published   : Đã publish (live)
+   * - unpublished : Giảng viên hoặc Admin ẩn khỏi marketplace, học viên cũ vẫn truy cập được
+   * - hidden      : Ẩn tạm thời (giảng viên tự ẩn, chưa có học viên)
+   * - archived    : Lưu trữ (đã có học viên, không nhận đăng ký mới)
+   * - suspended   : Bị đình chỉ bởi Admin (vi phạm chính sách)
+   * - deleted     : Đã xóa mềm
+   */
   status: {
     type: String,
-    enum: ["published", "hidden", "archived", "deleted"],
-    default: "hidden"
+    enum: ['draft', 'pending', 'published', 'unpublished', 'hidden', 'archived', 'suspended', 'deleted'],
+    default: 'draft'
   },
 
-  version: { type: Number, default: 1 }
+  // Version tracking (đồng bộ với plan_2.md)
+  publishedVersionNo: { type: Number, default: null },   // Version live hiện tại
+  currentDraftVersionNo: { type: Number, default: 1 },  // Version draft đang soạn
+
+  version: { type: Number, default: 1 }, // Legacy / compat
+
+  // Admin feedback khi suspend
+  suspendReason: { type: String, default: null },
 
 }, { timestamps: true });
 

@@ -77,6 +77,13 @@ const AddCoursePage = () => {
             // Pack FormData - tất cả media đều là CDN URLs từ S3
             const formData = new FormData();
             formData.append('title', courseData.title);
+
+            // ✨ Gửi slug frontend đã generate (consistent với S3 key)
+            // Backend sẽ dùng slug này thay vì tạo random mới
+            if (courseData.slug) {
+                formData.append('slug', courseData.slug);
+            }
+
             courseData.categories.forEach(cat => formData.append('categories', cat.value));
             formData.append('level', courseData.level);
             formData.append('language', courseData.language);
@@ -154,6 +161,14 @@ const AddCoursePage = () => {
     };
 
     const handleOpenLessonModal = (sIdx, lIdx) => {
+        // ✨ Ensure slug tồn tại trước khi upload video/resource lên S3
+        if (!form.courseData.slug) {
+            if (!form.courseData.title) {
+                toast.error('Vui lòng nhập tên khóa học trước khi thêm bài học');
+                return;
+            }
+            form.ensureSlug();
+        }
         setEditingSectionIndex(sIdx);
         setEditingLectureIndex(lIdx);
         setIsLessonModalOpen(true);
@@ -168,10 +183,23 @@ const AddCoursePage = () => {
         setIsLessonModalOpen(false);
     };
 
-    const nextStep = () => currentStep < 5 && setCurrentStep(c => c + 1);
+    const nextStep = () => {
+        if (currentStep < 5) {
+            // Khi chuyển sang Step 2 (Media/Video), đảm bảo có slug cho S3 key
+            if (currentStep === 1) {
+                if (!form.courseData.title) {
+                    toast.error('Vui lòng nhập tên khóa học trước');
+                    return;
+                }
+                form.ensureSlug(); // ✨ Generate slug nếu chưa có
+            }
+            setCurrentStep(c => c + 1);
+        }
+    };
     const prevStep = () => currentStep > 1 && setCurrentStep(c => c - 1);
 
     // Get course slug for S3 key generation
+    // ensureSlug() validates slug tồn tại (hoặc tạo mới nếu chưa có) - trả về giá trị ngay lập tức
     const courseSlug = form.courseData?.slug || null;
 
     const renderStepContent = () => {
