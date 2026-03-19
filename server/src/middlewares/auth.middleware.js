@@ -63,3 +63,36 @@ export const verifyToken = async (req, res, next) => {
     }
   }
 };
+
+/**
+ * Optional auth - không bắt buộc có token
+ * - Nếu có token hợp lệ → attach user vào req.user
+ * - Nếu không có token → req.user = null, tiếp tục bình thường
+ * Dùng cho: lecture play (preview free = public, paid = need user check)
+ */
+export const optionalAuth = async (req, res, next) => {
+  try {
+    let token = req.cookies?.accessToken;
+
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
+
+    if (!token) {
+      req.user = null;
+      return next(); // Không có token → đi tiếp mà không có user
+    }
+
+    const decoded = verifyJWT(token);
+    const user = await User.findById(decoded.id).select('-password');
+    req.user = user || null;
+    next();
+  } catch {
+    // Token lỗi → coi như không đăng nhập, đi tiếp
+    req.user = null;
+    next();
+  }
+};

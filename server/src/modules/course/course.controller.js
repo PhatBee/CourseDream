@@ -1,6 +1,8 @@
-// Thay đổi 'require' thành 'import'
+// src/modules/course/course.controller.js
 import Course from './course.model.js';
 import * as courseService from './course.service.js';
+import { generatePresignedUploadUrl, buildS3Key, getCDNUrl, generateSignedVideoUrl, extractKeyFromCDNUrl } from '../../config/aws.js';
+import Lecture from './lecture.model.js';
 
 /**
  * @desc    Lấy chi tiết khóa học
@@ -78,21 +80,39 @@ export const getLecture = async (req, res, next) => {
   }
 };
 
+// ======================== AWS S3 VIDEO UPLOAD ========================
+
 /**
- * @desc    Upload video lên YouTube
- * @route   POST /api/v1/courses/upload-video
+ * @desc    Tạo Presigned URL để Frontend upload video trực tiếp lên S3
+ * @route   POST /api/v1/courses/videos/presign-upload
+ * @access  Private (Instructor | Admin)
  */
-export const uploadCourseVideo = async (req, res, next) => {
+export const presignVideoUpload = async (req, res, next) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No video file provided" });
+    const { fileName, fileType, courseSlug, lectureTitle } = req.body;
+
+    if (!fileName || !fileType) {
+      return res.status(400).json({ success: false, message: 'Thiếu fileName hoặc fileType' });
     }
-    const { title } = req.body;
-    const result = await courseService.uploadVideo(req.file, title || "Course Video");
+
+    // Chỉ cho phép file video
+    if (!fileType.startsWith('video/')) {
+      return res.status(400).json({ success: false, message: 'Chỉ hỗ trợ file video' });
+    }
+
+    const slug = courseSlug || 'temp';
+    const title = lectureTitle || 'lecture';
+    const key = buildS3Key.video(slug, title, fileName);
+
+    const result = await generatePresignedUploadUrl(key, fileType, 1800); // 30 phút
 
     res.status(200).json({
       success: true,
-      data: result // { videoId, videoUrl }
+      data: {
+        uploadUrl: result.uploadUrl,
+        key: result.key,
+        cdnUrl: result.cdnUrl,
+      }
     });
   } catch (error) {
     next(error);
@@ -100,21 +120,34 @@ export const uploadCourseVideo = async (req, res, next) => {
 };
 
 /**
- * @desc    Upload tài liệu khóa học (PDF, Doc, Zip...)
- * @route   POST /api/courses/upload-resource
+ * @desc    Tạo Presigned URL để Frontend upload thumbnail trực tiếp lên S3
+ * @route   POST /api/v1/courses/thumbnails/presign-upload
+ * @access  Private (Instructor | Admin)
  */
-export const uploadCourseResource = async (req, res, next) => {
+export const presignThumbnailUpload = async (req, res, next) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file provided" });
+    const { fileName, fileType, courseSlug } = req.body;
+
+    if (!fileName || !fileType) {
+      return res.status(400).json({ success: false, message: 'Thiếu fileName hoặc fileType' });
     }
-    const { title } = req.body;
-    // Gọi service upload resource
-    const result = await courseService.uploadResource(req.file, title || "Course Resource");
+
+    if (!fileType.startsWith('image/')) {
+      return res.status(400).json({ success: false, message: 'Chỉ hỗ trợ file ảnh' });
+    }
+
+    const slug = courseSlug || 'temp';
+    const key = buildS3Key.thumbnail(slug, fileName);
+
+    const result = await generatePresignedUploadUrl(key, fileType, 600); // 10 phút
 
     res.status(200).json({
       success: true,
-      data: result // { url, originalName, format }
+      data: {
+        uploadUrl: result.uploadUrl,
+        key: result.key,
+        cdnUrl: result.cdnUrl,
+      }
     });
   } catch (error) {
     next(error);
@@ -122,16 +155,101 @@ export const uploadCourseResource = async (req, res, next) => {
 };
 
 /**
- * @desc    Tạo HOẶC Cập nhật Course Revision (Draft/Pending)
+ * @desc    Tạo Presigned URL để upload preview video của khóa học
+ * @route   POST /api/v1/courses/previews/presign-upload
+ * @access  Private (Instructor | Admin)
+ */
+export const presignPreviewUpload = async (req, res, next) => {
+  try {
+    const { fileName, fileType, courseSlug } = req.body;
+
+    if (!fileName || !fileType) {
+      return res.status(400).json({ success: false, message: 'Thiếu fileName hoặc fileType' });
+    }
+
+    if (!fileType.startsWith('video/')) {
+      return res.status(400).json({ success: false, message: 'Chỉ hỗ trợ file video' });
+    }
+
+    const slug = courseSlug || 'temp';
+    const key = buildS3Key.preview(slug, fileName);
+
+    const result = await generatePresignedUploadUrl(key, fileType, 1800);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        uploadUrl: result.uploadUrl,
+        key: result.key,
+        cdnUrl: result.cdnUrl,
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Tạo Presigned URL để upload Resource (PDF, Doc, Zip...)
+ * @route   POST /api/v1/courses/resources/presign-upload
+ * @access  Private (Instructor | Admin)
+ */
+export const presignResourceUpload = async (req, res, next) => {
+  try {
+    const { fileName, fileType, courseSlug, lectureTitle } = req.body;
+
+    if (!fileName || !fileType) {
+      return res.status(400).json({ success: false, message: 'Thiếu fileName hoặc fileType' });
+    }
+
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'application/zip',
+      'application/x-zip-compressed',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+
+    if (!allowedTypes.includes(fileType)) {
+      return res.status(400).json({ success: false, message: 'Loại file không được hỗ trợ' });
+    }
+
+    const slug = courseSlug || 'temp';
+    const title = lectureTitle || 'lecture';
+    const key = buildS3Key.resource(slug, title, fileName);
+
+    const result = await generatePresignedUploadUrl(key, fileType, 900); // 15 phút
+
+    res.status(200).json({
+      success: true,
+      data: {
+        uploadUrl: result.uploadUrl,
+        key: result.key,
+        cdnUrl: result.cdnUrl,
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ======================== COURSE MANAGEMENT ========================
+
+/**
+ * @desc    Tạo HOẶC Cập nhật Course Revision (Draft/Pending) - AWS Version
  * @route   POST /api/courses
  */
 export const createCourseRevision = async (req, res, next) => {
   try {
     const courseData = req.body;
-    const thumbnailFile = req.file;
+    const thumbnailFile = req.file; // Vẫn hỗ trợ upload thumbnail qua server (nhỏ)
     const instructorId = req.user._id;
 
-    // Gọi service để xử lý Revision
     const revision = await courseService.createOrUpdateRevision(courseData, thumbnailFile, instructorId);
 
     res.status(201).json({
@@ -144,34 +262,9 @@ export const createCourseRevision = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Tạo khóa học mới
- * @route   POST /api/courses
- * SẼ SỬA LẠI SAU, HIỆN SẼ CHƯA DÙNG (CỦA ADMIN)
- */
-export const createCourse = async (req, res, next) => {
-  try {
-    // req.body chứa các field text, req.file chứa thumbnail
-    const courseData = req.body;
-    const thumbnailFile = req.file;
-    const instructorId = req.user._id;
-
-    const newCourse = await courseService.createCourse(courseData, thumbnailFile, instructorId);
-
-    res.status(201).json({
-      success: true,
-      message: "Course created successfully",
-      data: newCourse
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const getLevels = async (req, res, next) => {
   try {
     const levels = (await Course.distinct('level')).filter(lv => lv);
-    console.log("Levels:", levels);
     res.json(levels);
   } catch (err) {
     next(err);
@@ -186,6 +279,7 @@ export const getCourseStats = async (req, res, next) => {
     next(err);
   }
 };
+
 /**
  * @desc    Lấy khóa học của Instructor hiện tại
  * @route   GET /api/courses/instructor/my-courses
@@ -207,7 +301,7 @@ export const getMyCourses = async (req, res, next) => {
 export const getPopularCourses = async (req, res, next) => {
   try {
     const courses = await courseService.getPopularCourses();
-    
+
     res.status(200).json({
       success: true,
       data: courses
@@ -226,7 +320,6 @@ export const getCourseForEdit = async (req, res, next) => {
     const { slug } = req.params;
     const instructorId = req.user._id;
 
-    // Gọi service
     const data = await courseService.getCourseForEdit(slug, instructorId);
 
     res.status(200).json({
@@ -239,7 +332,7 @@ export const getCourseForEdit = async (req, res, next) => {
 };
 
 /**
- * @desc    Xóa khóa học (Instructor) - Logic phức tạp (Delete/Hide/Archive)
+ * @desc    Xóa khóa học (Instructor)
  * @route   DELETE /api/courses/:id
  */
 export const deleteCourse = async (req, res, next) => {
@@ -252,17 +345,13 @@ export const deleteCourse = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: result.message,
-      action: result.action // 'deleted', 'hidden', 'archived'
+      action: result.action
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * @desc    Kích hoạt lại khóa học (Hidden -> Published)
- * @route   PATCH /api/courses/:id/activate
- */
 export const activateCourse = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -271,6 +360,91 @@ export const activateCourse = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
-// ==================== ADMIN CONTROLLERS ====================
+// ======================== VIDEO PLAYBACK (Signed URL) ========================
+
+/**
+ * @desc    Lấy link phát video ngắn hạn từ CloudFront (theo plan_2.md)
+ *          DB lưu object_key/CDN URL -> Backend ký URL -> Frontend phát bằng Video.js
+ * @route   GET /api/v1/courses/:courseId/lectures/:lectureId/play
+ * @access  Private (Enrolled Student | Instructor | Admin) hoặc Preview Free
+ */
+export const getVideoPlayUrl = async (req, res, next) => {
+  try {
+    const { courseId, lectureId } = req.params;
+    const user = req.user;
+
+    // Lấy lecture từ DB
+    const lecture = await Lecture.findById(lectureId).select('title videoUrl duration isPreviewFree resources section');
+
+    if (!lecture) {
+      return res.status(404).json({ success: false, message: 'Bài giảng không tồn tại' });
+    }
+
+    if (!lecture.isPreviewFree && !user) {
+      return res.status(401).json({ success: false, message: 'Vui lòng đăng nhập để xem bài giảng' });
+    }
+
+    if (!lecture.videoUrl) {
+      return res.status(404).json({ success: false, message: 'Bài giảng chưa có video' });
+    }
+
+    // Trích xuất object_key từ CDN URL được lưu trong DB
+    // DB lưu dạng: https://d2xxx.cloudfront.net/courses/abc/video.mp4
+    // Cần lấy: courses/abc/video.mp4
+    const objectKey = extractKeyFromCDNUrl(lecture.videoUrl);
+
+    // Tạo Signed URL ngắn hạn (1 giờ) - KHÔNG lưu URL này vào DB
+    const signedVideoUrl = generateSignedVideoUrl(objectKey, 3600);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        lectureId: lecture._id,
+        title: lecture.title,
+        videoUrl: signedVideoUrl,   // URL có thời hạn, dùng để phát ngay
+        expiresIn: 3600,             // Giây
+        duration: lecture.duration,
+        isPreviewFree: lecture.isPreviewFree,
+        resources: lecture.resources || [],
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Lấy preview video URL cho trang CourseDetail (intro video)
+ * @route   GET /api/v1/courses/:slug/preview-url
+ * @access  Public
+ */
+export const getCoursePreviewUrl = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const course = await Course.findOne({ slug }).select('title previewUrl thumbnail').lean();
+
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khóa học' });
+    }
+
+    let previewVideoUrl = null;
+
+    if (course.previewUrl) {
+      const objectKey = extractKeyFromCDNUrl(course.previewUrl);
+      // Preview video có thể là public (không cần signed URL) hoặc signed
+      previewVideoUrl = generateSignedVideoUrl(objectKey, 1800); // 30 phút
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        previewUrl: previewVideoUrl,
+        thumbnail: course.thumbnail,
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

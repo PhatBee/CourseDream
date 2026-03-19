@@ -55,3 +55,90 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #d1d5db; /* gray-300 */
 }
+
+/* ============================================================
+   VIDEO.JS - ROSE THEME (đồng bộ với chủ đề của dự án)
+   ============================================================ */
+
+/* Progress bar màu rose */
+.video-js .vjs-play-progress,
+.video-js .vjs-load-progress div {
+  background-color: #f43f5e; /* rose-500 */
+}
+
+.video-js .vjs-load-progress {
+  background: rgba(244, 63, 94, 0.25);
+}
+
+/* Slider màu rose */
+.video-js .vjs-slider {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Big Play Button - hình tròn đẹp */
+.video-js .vjs-big-play-button {
+  background-color: rgba(244, 63, 94, 0.85) !important;
+  border: 3px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 50% !important;
+  width: 64px !important;
+  height: 64px !important;
+  line-height: 64px !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  transition: background-color 0.2s, transform 0.2s !important;
+  box-shadow: 0 8px 32px rgba(244, 63, 94, 0.5) !important;
+}
+
+.video-js .vjs-big-play-button:hover {
+  background-color: #e11d48 !important;
+  transform: translate(-50%, -50%) scale(1.1) !important;
+}
+
+.video-js .vjs-big-play-button .vjs-icon-placeholder::before {
+  font-size: 2rem !important;
+  line-height: 60px !important;
+}
+
+/* Control bar - nền semi-transparent đẹp */
+.video-js .vjs-control-bar {
+  background: linear-gradient(to top, rgba(0,0,0,0.75), transparent) !important;
+  padding: 0 8px 4px !important;
+}
+
+/* Playback rate menu */
+.video-js .vjs-menu-item.vjs-selected,
+.video-js .vjs-menu-item:hover {
+  background-color: #f43f5e !important;
+  color: white !important;
+}
+
+/* Tooltip text */
+.video-js .vjs-time-tooltip,
+.video-js .vjs-mouse-display .vjs-time-tooltip {
+  background-color: #f43f5e !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+}
+
+/* Skip forward/backward */
+.video-js .vjs-skip-forward-10,
+.video-js .vjs-skip-backward-10 {
+  opacity: 0.85;
+}
+
+.video-js .vjs-skip-forward-10:hover,
+.video-js .vjs-skip-backward-10:hover {
+  opacity: 1;
+}
+
+/* Fullscreen - remove margin */
+.video-js.vjs-fullscreen {
+  font-size: 14px;
+}
+
+/* Volume panel compact */
+.video-js .vjs-volume-panel {
+  width: auto;
+}

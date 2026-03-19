@@ -7,12 +7,13 @@ import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
 import Category from "../category/category.model.js";
 import InstructorProfile from "../user/InstructorProfile.model.js";
-import { uploadToYouTube } from "../../config/youtube.js";
-import { uploadToCloudinary, uploadResourceToCloudinary } from "../../config/cloudinary.js";
+import { uploadToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
 import notificationService from "../notification/notification.service.js";
 import User from "../auth/auth.model.js";
+// NOTE: Video uploads now go directly to S3 via presigned URLs from the frontend.
+// This service no longer handles video file uploads.
 /**
  * Service: Lấy chi tiết khóa học
  * @param {string} slug - Slug của khóa học
@@ -337,19 +338,11 @@ export const getLecture = async ({ courseId, lectureId, user }) => {
   return { lecture };
 };
 
-/**
- * Upload video lên YouTube (Service riêng để gọi từ Controller)
- */
-export const uploadVideo = async (file, title) => {
-  return await uploadToYouTube(file.buffer, title, "Uploaded via DreamsLMS");
-};
-
-/**
- * Upload Resource lên Cloudinary
- */
-export const uploadResource = async (file, title) => {
-  return await uploadResourceToCloudinary(file, title);
-};
+// ======================== AWS S3 NOTE ========================
+// Video và Resource upload không còn đi qua server.
+// Frontend upload trực tiếp lên S3 qua Presigned URL.
+// Backend chỉ lưu CDN URL sau khi upload xong.
+// =============================================================
 
 // Hàm helper để chuẩn hóa input mảng từ FormData
 // Vì FormData gửi 1 item sẽ là string, gửi nhiều là array. Chúng ta cần ép về Array.
@@ -891,8 +884,10 @@ export const getCourseForEdit = async (slug, instructorId) => {
  */
 export const createOrUpdateRevision = async (courseData, thumbnailFile, instructorId) => {
   // 1. Xử lý Thumbnail
-  let thumbnailUrl = courseData.thumbnailUrl || ''; // Nếu edit thì có thể có URL cũ
-  if (thumbnailFile) {
+  // Ưu tiên: thumbnailUrl từ body (S3 CDN URL) -> file upload qua server (Cloudinary fallback) -> URL cũ
+  let thumbnailUrl = courseData.thumbnailUrl || courseData.thumbnail || '';
+  if (thumbnailFile && !thumbnailUrl) {
+    // Fallback: nếu thumbnail gửi qua FormData file (legacy)
     const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
     thumbnailUrl = uploadResult.secure_url;
   }

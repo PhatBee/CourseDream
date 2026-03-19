@@ -1,99 +1,76 @@
+// src/modules/course/course.routes.js
 import express from 'express';
 import {
-  searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent, uploadCourseVideo, createCourse,
-  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit, uploadCourseResource, deleteCourse,
-  activateCourse, getPopularCourses
+  searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent,
+  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit,
+  deleteCourse, activateCourse, getPopularCourses,
+  // AWS S3 Presign Controllers
+  presignVideoUpload, presignThumbnailUpload, presignPreviewUpload, presignResourceUpload,
+  // Video Playback (CloudFront Signed URL)
+  getVideoPlayUrl, getCoursePreviewUrl,
 } from './course.controller.js';
-import { verifyToken } from '../../middlewares/auth.middleware.js';
+import { verifyToken, optionalAuth } from '../../middlewares/auth.middleware.js';
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
-import { uploadVideo, upload, uploadDocument } from '../../middlewares/upload.middleware.js';
-
+import { upload } from '../../middlewares/upload.middleware.js';
 
 const router = express.Router();
 
-// ==================== ADMIN ROUTES ====================
-// Đặt trước các route public để tránh conflict với :slug
-
-
-// ==================== PUBLIC & INSTRUCTOR ROUTES ====================
-
+// ==================== PUBLIC ROUTES ====================
 router.get('/', getCourses);
 router.get('/levels', getLevels);
 router.get('/stats', getCourseStats);
-router.get("/search", searchCourses);
+router.get('/search', searchCourses);
 router.get('/popular', getPopularCourses);
 
-router.get(
-  '/instructor/my-courses',
-  verifyToken,
-  // checkRole('instructor'), // Uncomment nếu muốn chặn student
-  getMyCourses
-);
+// ==================== AWS S3 PRESIGN ROUTES (Instructor/Admin) ====================
+
+// Upload video lên S3 (presigned URL)
+router.post('/videos/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignVideoUpload);
+
+// Upload thumbnail lên S3
+router.post('/thumbnails/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignThumbnailUpload);
+
+// Upload preview video lên S3
+router.post('/previews/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignPreviewUpload);
+
+// Upload resource (PDF, Doc...) lên S3
+router.post('/resources/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignResourceUpload);
+
+// ==================== INSTRUCTOR ROUTES ====================
+
+router.get('/instructor/my-courses', verifyToken, getMyCourses);
+router.get('/instructor/edit/:slug', verifyToken, getCourseForEdit);
+
+// Tạo khóa học mới (Course Revision)
+router.post('/', verifyToken, upload.single('thumbnail'), createCourseRevision);
+
+// Xóa / Kích hoạt khóa học
+router.delete('/:id', verifyToken, deleteCourse);
+router.patch('/:id/activate', verifyToken, activateCourse);
+
+// ==================== VIDEO PLAYBACK (CloudFront Signed URL) ====================
 
 /**
- * @route   GET /api/v1/courses/:slug
- * @desc    Lấy chi tiết khóa học
- * @access  Public
+ * GET /api/v1/courses/:slug/preview-url
+ * Lấy preview video URL cho trang CourseDetail (public)
  */
+router.get('/:slug/preview-url', getCoursePreviewUrl);
+
+/**
+ * GET /api/v1/courses/:courseId/lectures/:lectureId/play
+ * Tạo CloudFront Signed URL ngắn hạn để phát video bài giảng
+ * - isPreviewFree = true: public (không cần đăng nhập)
+ * - isPreviewFree = false: cần token (enrolled student)
+ */
+router.get('/:courseId/lectures/:lectureId/play', optionalAuth, getVideoPlayUrl);
+
+// ==================== DETAIL / LEARNING ROUTES ====================
+
 router.get('/:slug', getCourseDetailsBySlug);
-router.get(
-  '/:slug/learn',
-  verifyToken,
-  checkEnrollment,
-  getLearningContent
-);
 
-// Route upload video (Cần auth và role instructor/admin)
-router.post(
-  '/upload-video',
-  verifyToken,
-  // checkRole('instructor', 'admin'),
-  uploadVideo.single('video'), // 'video' là key trong FormData
-  uploadCourseVideo
-);
+router.get('/:slug/learn', verifyToken, checkEnrollment, getLearningContent);
 
-// Route upload tài liệu (Resource)
-router.post(
-  '/upload-resource',
-  verifyToken,
-  // checkRole('instructor', 'admin'),
-  uploadDocument.single('file'), // Key là 'file'
-  uploadCourseResource
-);
-
-// Route tạo khóa học (bản Revision)
-router.post(
-  '/',
-  verifyToken,
-  // checkRole('instructor', 'admin'),
-  upload.single('thumbnail'), // 'thumbnail' là key trong FormData
-  createCourseRevision
-);
-
-router.get(
-  '/instructor/edit/:slug', // Route mới
-  verifyToken,
-  // checkRole('instructor'),
-  getCourseForEdit
-);
-
-// Route xóa khóa học
-router.delete(
-  '/:id',
-  verifyToken,
-  // checkRole('instructor'),
-  deleteCourse
-);
-
-// Route kích hoạt lại khóa học ẩn
-router.patch(
-  '/:id/activate',
-  verifyToken,
-  // checkRole('instructor'),
-  activateCourse
-);
-
-router.get("/:courseId/lectures/:lectureId", verifyToken, getLecture);
+router.get('/:courseId/lectures/:lectureId', verifyToken, getLecture);
 
 export default router;
