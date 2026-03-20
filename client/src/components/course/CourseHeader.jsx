@@ -35,8 +35,6 @@ const CourseHeader = ({ course, reviewCount }) => {
     rating = 0,
   } = course;
 
-  const categoryName = categories[0]?.name || 'Course';
-
   useEffect(() => {
     if (success) {
       toast.success('Báo cáo của bạn đã được gửi!');
@@ -78,9 +76,12 @@ const CourseHeader = ({ course, reviewCount }) => {
         <div className="flex-1 min-w-0">
           {/* Category Badge */}
           <div className="mb-3">
-            <span className="px-3 py-1 bg-rose-50 text-rose-600 text-xs font-bold rounded-full border border-rose-200 uppercase tracking-wide">
-              {categoryName}
-            </span>
+            {/* Lấy tất cả category name của course */}
+            {categories.map((category, index) => (
+              <span key={index} className="px-3 py-1 bg-rose-50 text-rose-600 text-xs font-bold rounded-full border border-rose-200 uppercase tracking-wide">
+                {category.name}
+              </span>
+            ))}
           </div>
 
           {/* Title */}

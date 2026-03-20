@@ -135,7 +135,7 @@ const EnrollCard = ({ course }) => {
                 onClick={handleToggleCart}
                 className={`w-full font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group ${isInCart
                   ? 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                  : 'bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white'
                   }`}
               >
                 <ShoppingCart size={20} className={`group-hover:scale-110 transition-transform ${isInCart ? 'fill-current' : ''}`} />
@@ -144,7 +144,7 @@ const EnrollCard = ({ course }) => {
               {/* Enroll Now Button - Secondary CTA */}
               <button
                 onClick={handleEnrollNow}
-                className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
+                className="w-full border-2 border-rose-600 text-rose-600 hover:bg-rose-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
               >
                 Enroll Now
               </button>

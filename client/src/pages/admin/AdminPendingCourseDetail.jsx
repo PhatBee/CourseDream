@@ -440,35 +440,101 @@ const AdminPendingCourseDetail = () => {
                       {expandedSections.includes(sIdx) && section.lectures?.length > 0 && (
                         <ul className="divide-y divide-gray-50">
                           {section.lectures.map((lecture, lIdx) => (
-                            <li key={lIdx} className="flex items-center justify-between p-3.5 hover:bg-gray-50 transition-colors">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                  <Play size={11} className="text-gray-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-gray-800 truncate font-medium">{lecture.title}</p>
-                                  <div className="flex items-center gap-3 mt-0.5">
-                                    <span className="text-xs text-gray-400">
-                                      {Math.floor(lecture.duration / 60)}:{String(lecture.duration % 60).padStart(2, '0')}
-                                    </span>
-                                    {lecture.isPreviewFree && (
-                                      <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-xs rounded font-medium">Preview</span>
-                                    )}
-                                    {lecture.videoUrl && isVideoS3(lecture.videoUrl) && (
-                                      <span className="flex items-center gap-1 text-xs text-blue-500">
-                                        <Cloud size={10} /> S3
+                            <li key={lIdx} className="p-3.5 hover:bg-gray-50 transition-colors">
+                              {/* Lecture Header Row */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                    <Play size={11} className="text-gray-400" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-800 truncate font-medium">{lecture.title}</p>
+                                    <div className="flex items-center gap-3 mt-0.5">
+                                      <span className="text-xs text-gray-400">
+                                        {Math.floor(lecture.duration / 60)}:{String(lecture.duration % 60).padStart(2, '0')}
                                       </span>
-                                    )}
+                                      {lecture.isPreviewFree && (
+                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-xs rounded font-medium">Preview</span>
+                                      )}
+                                      {lecture.videoUrl && isVideoS3(lecture.videoUrl) && (
+                                        <span className="flex items-center gap-1 text-xs text-blue-500">
+                                          <Cloud size={10} /> S3
+                                        </span>
+                                      )}
+                                      {lecture.resources?.length > 0 && (
+                                        <span className="text-xs text-indigo-500 font-medium">
+                                          📎 {lecture.resources.length} tài liệu
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
+                                {lecture.videoUrl && (
+                                  <button
+                                    onClick={() => setVideoPreview(lecture.videoUrl)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex-shrink-0 ml-2"
+                                  >
+                                    <Video size={12} /> Xem video
+                                  </button>
+                                )}
                               </div>
-                              {lecture.videoUrl && (
-                                <button
-                                  onClick={() => setVideoPreview(lecture.videoUrl)}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex-shrink-0 ml-2"
-                                >
-                                  <Video size={12} /> Xem video
-                                </button>
+
+                              {/* Resources Section */}
+                              {lecture.resources?.length > 0 && (
+                                <div className="mt-2 ml-9 space-y-1.5">
+                                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Tài liệu đính kèm</p>
+                                  {lecture.resources.map((res, rIdx) => (
+                                    <div key={rIdx} className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                                      {res.type === 'link' ? (
+                                        <>
+                                          <span className="text-indigo-400 flex-shrink-0">🔗</span>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium text-gray-700 truncate">{res.title || res.url}</p>
+                                            <a
+                                              href={res.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs text-indigo-600 hover:underline truncate block"
+                                            >
+                                              {res.url}
+                                            </a>
+                                          </div>
+                                          <a
+                                            href={res.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-shrink-0 text-xs px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                                          >
+                                            Mở
+                                          </a>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="text-indigo-400 flex-shrink-0">📄</span>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium text-gray-700 truncate">{res.title || 'Tài liệu'}</p>
+                                            {res.url && (
+                                              <span className="text-xs text-gray-400 truncate block">
+                                                {res.url.includes('cloudfront.net') ? '☁ AWS CloudFront' : res.url}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {res.url && (
+                                            <a
+                                              href={res.url}
+                                              download={res.title}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex-shrink-0 text-xs px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                                            >
+                                              Tải
+                                            </a>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
                               )}
                             </li>
                           ))}

@@ -80,7 +80,7 @@ const CourseOverview = ({ course }) => {
         return (
           <div key={idx} className="mb-6">
             <h6 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-              {section.title.includes('Learn') && <Target className="w-5 h-5 mr-2 text-blue-600" />}
+              {section.title.includes('Learn') && <Target className="w-5 h-5 mr-2 text-rose-600" />}
               {section.title.includes('Who') && <Users className="w-5 h-5 mr-2 text-purple-600" />}
               {section.title}
             </h6>
@@ -99,7 +99,7 @@ const CourseOverview = ({ course }) => {
           <ol key={idx} className="space-y-3 mb-4">
             {section.content.map((item, i) => (
               <li key={i} className="flex items-start">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold mr-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-sm font-semibold mr-3">
                   {item.number}
                 </span>
                 <span className="text-gray-700 pt-1">{item.text}</span>
@@ -135,7 +135,7 @@ const CourseOverview = ({ course }) => {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg">
-        <h5 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-500">
+        <h5 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-rose-500">
           Course Description
         </h5>
         <div className="prose max-w-none text-justify">
@@ -144,9 +144,9 @@ const CourseOverview = ({ course }) => {
       </div>
 
       {learnOutcomes && learnOutcomes.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+        <div className="bg-gradient-to-br from-rose-50 to-indigo-50 rounded-lg p-6 border border-rose-100">
           <h5 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <Target className="w-6 h-6 mr-2 text-blue-600" />
+            <Target className="w-6 h-6 mr-2 text-rose-600" />
             What you'll learn
           </h5>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">

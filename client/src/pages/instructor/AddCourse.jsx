@@ -231,6 +231,7 @@ const AddCoursePage = () => {
                         removeSection={form.removeSection}
                         openLessonModal={handleOpenLessonModal}
                         deleteLecture={form.removeLecture}
+                        setCourseData={form.setCourseData}
                     />
                 );
             case 4:

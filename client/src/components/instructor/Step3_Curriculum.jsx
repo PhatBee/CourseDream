@@ -1,6 +1,26 @@
 // src/components/instructor/Step3_Curriculum.jsx
 import React, { useState } from 'react';
-import { PlusCircle, LayoutList, Edit2, Trash2, Check, PlayCircle, Video, FileText, Lock, Eye, Cloud, GripVertical } from 'lucide-react';
+import {
+    PlusCircle, LayoutList, Edit2, Trash2, Check, PlayCircle,
+    Video, FileText, Lock, Eye, Cloud, GripVertical
+} from 'lucide-react';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragOverlay
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const formatDuration = (seconds) => {
     if (!seconds || seconds === 0) return '0:00';
@@ -9,18 +29,61 @@ const formatDuration = (seconds) => {
     return `${m}:${String(s).padStart(2, '0')}`;
 };
 
+// ======================== STEP 3 CURRICULUM ========================
 const Step3_Curriculum = ({
     sections,
     addSection,
     updateSection,
     removeSection,
     openLessonModal,
-    deleteLecture
+    deleteLecture,
+    setCourseData
 }) => {
+    const [activeSectionId, setActiveSectionId] = useState(null);
+
     const totalLectures = sections.reduce((acc, s) => acc + (s.lectures?.length || 0), 0);
     const totalDuration = sections.reduce((acc, s) =>
         acc + (s.lectures || []).reduce((a, l) => a + (l.duration || 0), 0), 0
     );
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    // Reorder sections
+    const handleSectionDragEnd = (event) => {
+        const { active, over } = event;
+        setActiveSectionId(null);
+        if (!over || active.id === over.id) return;
+
+        const oldIdx = sections.findIndex((_, i) => `section-${i}` === active.id);
+        const newIdx = sections.findIndex((_, i) => `section-${i}` === over.id);
+        if (oldIdx === -1 || newIdx === -1) return;
+
+        const reordered = arrayMove(sections, oldIdx, newIdx).map((s, i) => ({
+            ...s, order: i
+        }));
+        setCourseData(prev => ({ ...prev, sections: reordered }));
+    };
+
+    // Reorder lectures inside a section
+    const handleLectureDragEnd = (sIdx, event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const lectures = sections[sIdx].lectures || [];
+        const oldIdx = lectures.findIndex((_, i) => `lec-${sIdx}-${i}` === active.id);
+        const newIdx = lectures.findIndex((_, i) => `lec-${sIdx}-${i}` === over.id);
+        if (oldIdx === -1 || newIdx === -1) return;
+
+        const reordered = arrayMove(lectures, oldIdx, newIdx).map((l, i) => ({
+            ...l, order: i
+        }));
+        updateSection(sIdx, { lectures: reordered });
+    };
+
+    const sectionIds = sections.map((_, i) => `section-${i}`);
 
     return (
         <div className="space-y-6 animate-fadeIn">
@@ -31,6 +94,9 @@ const Step3_Curriculum = ({
                     <p className="text-sm text-gray-400 mt-1">
                         {sections.length} section • {totalLectures} bài học •{' '}
                         <span className="text-rose-500 font-medium">{formatDuration(totalDuration)}</span> tổng
+                        {sections.length > 1 && (
+                            <span className="ml-2 text-gray-300">· Kéo <GripVertical size={12} className="inline" /> để sắp xếp</span>
+                        )}
                     </p>
                 </div>
                 <button
@@ -48,7 +114,7 @@ const Step3_Curriculum = ({
                         <LayoutList size={24} className="text-gray-300" />
                     </div>
                     <p className="font-semibold text-gray-500 mb-1">Chưa có section nào</p>
-                    <p className="text-sm text-gray-400 mb-4">Nhấn "Thêm Section" để bắt đầu xây dựng nội dung khóa học</p>
+                    <p className="text-sm text-gray-400 mb-4">Nhấn "Thêm Section" để bắt đầu xây dựng nội dung</p>
                     <button
                         onClick={addSection}
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-semibold text-sm transition-colors"
@@ -58,20 +124,48 @@ const Step3_Curriculum = ({
                 </div>
             )}
 
-            {/* Section List */}
-            <div className="space-y-4">
-                {sections.map((section, sIdx) => (
-                    <SectionCard
-                        key={sIdx}
-                        section={section}
-                        sIdx={sIdx}
-                        updateSection={updateSection}
-                        removeSection={removeSection}
-                        openLessonModal={openLessonModal}
-                        deleteLecture={deleteLecture}
-                    />
-                ))}
-            </div>
+            {/* Section List with Drag */}
+            {sections.length > 0 && (
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={({ active }) => setActiveSectionId(active.id)}
+                    onDragEnd={handleSectionDragEnd}
+                >
+                    <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-4">
+                            {sections.map((section, sIdx) => (
+                                <SortableSectionCard
+                                    key={`section-${sIdx}`}
+                                    id={`section-${sIdx}`}
+                                    section={section}
+                                    sIdx={sIdx}
+                                    updateSection={updateSection}
+                                    removeSection={removeSection}
+                                    openLessonModal={openLessonModal}
+                                    deleteLecture={deleteLecture}
+                                    onLectureDragEnd={(e) => handleLectureDragEnd(sIdx, e)}
+                                />
+                            ))}
+                        </div>
+                    </SortableContext>
+
+                    {/* Drag Overlay for sections */}
+                    <DragOverlay>
+                        {activeSectionId && (() => {
+                            const idx = sections.findIndex((_, i) => `section-${i}` === activeSectionId);
+                            if (idx === -1) return null;
+                            return (
+                                <div className="border-2 border-rose-300 rounded-2xl bg-white shadow-2xl opacity-90 p-4">
+                                    <p className="font-semibold text-rose-600 text-sm">
+                                        ✦ {sections[idx].title || '(Chưa đặt tên)'}
+                                    </p>
+                                </div>
+                            );
+                        })()}
+                    </DragOverlay>
+                </DndContext>
+            )}
 
             {sections.length > 0 && (
                 <button
@@ -85,16 +179,52 @@ const Step3_Curriculum = ({
     );
 };
 
-// ======================== SECTION CARD ========================
-const SectionCard = ({ section, sIdx, updateSection, removeSection, openLessonModal, deleteLecture }) => {
+// ======================== SORTABLE SECTION CARD ========================
+const SortableSectionCard = ({
+    id, section, sIdx, updateSection, removeSection,
+    openLessonModal, deleteLecture, onLectureDragEnd
+}) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+        zIndex: isDragging ? 10 : 'auto'
+    };
+
     const sectionDuration = (section.lectures || []).reduce((a, l) => a + (l.duration || 0), 0);
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const lectureIds = (section.lectures || []).map((_, i) => `lec-${sIdx}-${i}`);
+
     return (
-        <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div ref={setNodeRef} style={style} className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
             {/* Section Header */}
             <div className="p-4 bg-gradient-to-r from-gray-50 to-slate-50 flex items-center gap-3 border-b border-gray-100 group">
-                <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-rose-600">{sIdx + 1}</span>
+                {/* Drag Handle for section */}
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-rose-400 transition-colors flex-shrink-0 touch-none"
+                    title="Kéo để sắp xếp section"
+                >
+                    <GripVertical size={18} />
+                </div>
+
+                <div className="w-7 h-7 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-rose-600">{sIdx + 1}</span>
                 </div>
 
                 {section.isEditing ? (
@@ -146,23 +276,34 @@ const SectionCard = ({ section, sIdx, updateSection, removeSection, openLessonMo
                 </div>
             </div>
 
-            {/* Lecture List */}
+            {/* Lecture List with Drag */}
             <div className="p-4 space-y-2">
                 {section.lectures && section.lectures.length > 0 ? (
-                    section.lectures.map((lec, lIdx) => (
-                        <LectureRow
-                            key={lIdx}
-                            lecture={lec}
-                            lIdx={lIdx}
-                            sIdx={sIdx}
-                            onEdit={() => openLessonModal(sIdx, lIdx)}
-                            onDelete={() => deleteLecture(sIdx, lIdx)}
-                        />
-                    ))
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={onLectureDragEnd}
+                    >
+                        <SortableContext items={lectureIds} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-2">
+                                {section.lectures.map((lec, lIdx) => (
+                                    <SortableLectureRow
+                                        key={`lec-${sIdx}-${lIdx}`}
+                                        id={`lec-${sIdx}-${lIdx}`}
+                                        lecture={lec}
+                                        lIdx={lIdx}
+                                        sIdx={sIdx}
+                                        onEdit={() => openLessonModal(sIdx, lIdx)}
+                                        onDelete={() => deleteLecture(sIdx, lIdx)}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
                 ) : (
                     <div className="flex items-center gap-3 py-3 px-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                         <Video size={16} className="text-gray-300" />
-                        <span className="text-sm text-gray-400 italic">Chưa có bài học nào trong section này</span>
+                        <span className="text-sm text-gray-400 italic">Chưa có bài học nào</span>
                     </div>
                 )}
 
@@ -178,17 +319,47 @@ const SectionCard = ({ section, sIdx, updateSection, removeSection, openLessonMo
     );
 };
 
-// ======================== LECTURE ROW ========================
-const LectureRow = ({ lecture, lIdx, sIdx, onEdit, onDelete }) => {
+// ======================== SORTABLE LECTURE ROW ========================
+const SortableLectureRow = ({ id, lecture, lIdx, sIdx, onEdit, onDelete }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1
+    };
+
     const isS3Video = lecture.videoUrl && lecture.videoUrl.includes('cloudfront.net');
     const hasVideo = !!lecture.videoUrl;
 
     return (
-        <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-rose-200 hover:bg-rose-50/30 transition-all group">
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`flex items-center justify-between p-3 bg-white border rounded-xl transition-all group
+                ${isDragging ? 'border-rose-300 shadow-lg' : 'border-gray-100 hover:border-rose-200 hover:bg-rose-50/30'}`}
+        >
+            {/* Drag Handle for lecture */}
+            <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing text-gray-200 hover:text-rose-300 mr-2 flex-shrink-0 touch-none transition-colors"
+                title="Kéo để sắp xếp bài học"
+            >
+                <GripVertical size={15} />
+            </div>
+
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 {/* Video indicator */}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${hasVideo ? 'bg-rose-100' : 'bg-gray-100'}`}>
-                    <PlayCircle size={16} className={hasVideo ? 'text-rose-500' : 'text-gray-400'} />
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${hasVideo ? 'bg-rose-100' : 'bg-gray-100'}`}>
+                    <PlayCircle size={14} className={hasVideo ? 'text-rose-500' : 'text-gray-400'} />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -204,11 +375,10 @@ const LectureRow = ({ lecture, lIdx, sIdx, onEdit, onDelete }) => {
                     <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400">
                         <span>⏱ {formatDuration(lecture.duration)}</span>
                         {lecture.resources?.length > 0 && (
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1 text-indigo-500">
                                 <FileText size={11} /> {lecture.resources.length} tài liệu
                             </span>
                         )}
-                        {/* S3/AWS badge */}
                         {isS3Video && (
                             <span className="flex items-center gap-1 text-blue-500">
                                 <Cloud size={11} /> AWS S3
@@ -228,14 +398,14 @@ const LectureRow = ({ lecture, lIdx, sIdx, onEdit, onDelete }) => {
                     className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-100 rounded-lg transition-all"
                     title="Chỉnh sửa bài học"
                 >
-                    <Edit2 size={15} />
+                    <Edit2 size={14} />
                 </button>
                 <button
                     onClick={onDelete}
                     className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                     title="Xóa bài học"
                 >
-                    <Trash2 size={15} />
+                    <Trash2 size={14} />
                 </button>
             </div>
         </div>

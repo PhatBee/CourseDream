@@ -212,7 +212,13 @@ export const presignResourceUpload = async (req, res, next) => {
       'application/vnd.ms-powerpoint',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      // file pcap
+      'application/vnd.tcpdump.pcap',
+      'application/x-pcap',
+      'application/x-ns-3-pcap',
+      'application/pcap',
+      'application/octet-stream'
     ];
 
     if (!allowedTypes.includes(fileType)) {
