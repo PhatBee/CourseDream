@@ -10,7 +10,7 @@ export const generateAccessToken = (userId, userRole) => {
   return jwt.sign(
     { id: userId, role: userRole },
     process.env.JWT_SECRET,
-    { expiresIn: '15m' } // 15 phút
+    { expiresIn: '24h' } // 24 giờ
   );
 };
 
@@ -49,7 +49,7 @@ export const resetToken = (userId) => {
   return jwt.sign(
     { id: userId },
     process.env.JWT_SECRET,
-    { expiresIn: '10m' }
+    { expiresIn: '24h' }
   );
 };
 
