@@ -1,6 +1,6 @@
-// src/components/instructor/Step2_Media.jsx
+﻿// src/components/instructor/Step2_Media.jsx
 import React, { useRef, useState } from 'react';
-import { X, Image as ImageIcon, Upload, Video, CheckCircle, Cloud } from 'lucide-react';
+import { X, Image as ImageIcon, Upload, Video, CheckCircle, Cloud, AlertCircle } from 'lucide-react';
 import { courseApi } from '../../api/courseApi';
 import { toast } from 'react-hot-toast';
 
@@ -20,7 +20,7 @@ const UploadProgressBar = ({ progress, label }) => (
     </div>
 );
 
-const Step2_Media = ({ courseData, setCourseData, courseSlug }) => {
+const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }) => {
     const [thumbUploading, setThumbUploading] = useState(false);
     const [thumbProgress, setThumbProgress] = useState(0);
     const [previewUploading, setPreviewUploading] = useState(false);
@@ -137,7 +137,13 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug }) => {
                     </label>
                     <p className="text-xs text-gray-400 mb-3">Tỷ lệ 16:9 khuyến nghị, tối thiểu 750x422px</p>
 
-                    <div className="border-2 border-dashed border-gray-200 rounded-2xl h-56 flex flex-col items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-rose-300 transition-all cursor-pointer">
+                    {/* Thumbnail upload zone */}
+                    <div
+                        className={`border-2 border-dashed rounded-2xl h-56 flex flex-col items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-rose-300 transition-all cursor-pointer ${errorFields.thumbnail
+                                ? 'border-red-400 bg-red-50/30 ring-2 ring-red-300'
+                                : 'border-gray-200'
+                            }`}
+                    >
 
                         {/* Preview */}
                         {(courseData.thumbnailPreview || courseData.thumbnail) && !thumbUploading ? (
@@ -186,6 +192,13 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug }) => {
                         <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                     </div>
                 </div>
+
+                {/* Error message cho thumbnail */}
+                {errorFields.thumbnail && !courseData.thumbnailPreview && !courseData.thumbnail && (
+                    <p className="mt-2 flex items-center gap-1 text-xs text-red-500 font-medium animate-fadeIn">
+                        <AlertCircle size={12} className="flex-shrink-0" /> {errorFields.thumbnail}
+                    </p>
+                )}
 
                 {/* ===== PREVIEW VIDEO ===== */}
                 <div>

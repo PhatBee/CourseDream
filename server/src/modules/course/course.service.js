@@ -1112,59 +1112,76 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
 };
 
 /**
- * Xóa khóa học (Xử lý cả 3 trường hợp A, B, C)
+ * Xóa khóa học — xử lý đủ 4 trường hợp:
+ *
+ * Case A  : Fresh draft revision (course: null) — xóa vĩnh viễn revision
+ * Case A2 : Rejected/changes_requested chưa link course — xóa vĩnh viễn
+ * Case B  : Course đã publish, 0 học viên — Hidden
+ * Case C  : Course đã publish, đã có học viên — Archived
+ * Case D  : Revision gắn course đã publish đang rejected/draft — xóa revision
  */
 export const deleteCourse = async (id, instructorId) => {
-  // BƯỚC 1: Tìm trong Collection COURSE trước (Cho Case B & C)
-  const course = await Course.findOne({ _id: id, instructor: instructorId });
-
-  if (course) {
-    // --- TRƯỜNG HỢP C: Đã có học viên -> Archive ---
-    if (course.studentsCount > 0) {
-      // Nếu đã archived rồi thì không cần làm gì hoặc báo lỗi tùy bạn
-      if (course.status === 'archived') {
-        return { message: "Khóa học đã được lưu trữ.", action: "archived" };
-      }
-
-      course.status = 'archived';
-      await course.save();
-      return {
-        message: "Khóa học đã chuyển sang trạng thái Lưu trữ (Archived) vì đã có học viên.",
-        action: "archived"
-      };
-    }
-
-    // --- TRƯỜNG HỢP B: Chưa có học viên -> Hidden ---
-    else {
-      // Logic: Ẩn khóa học khỏi marketplace
-      course.status = 'hidden';
-      await course.save();
-      return {
-        message: "Khóa học đã được ẩn (Hidden).",
-        action: "hidden"
-      };
-    }
-  }
-
-  // BƯỚC 2: Nếu không tìm thấy Course, tìm trong REVISION (Cho Case A - Fresh Draft)
-  // Lưu ý: Fresh Draft có course: null
+  // BƯỚC 1: Tìm Revision trước (ưu tiên để xử lý mọi loại revision)
   const revision = await CourseRevision.findOne({
     _id: id,
     instructor: instructorId,
-    course: null // Đảm bảo đây là fresh draft chưa link tới course nào
   });
 
   if (revision) {
-    // --- TRƯỜNG HỢP A: Course Draft (Chưa từng publish) ---
-    await CourseRevision.findByIdAndDelete(id);
+    // Không cho xóa khi revision đang pending (admin đang duyệt)
+    if (revision.status === 'pending') {
+      const err = new Error('Không thể xóa khi khóa học đang chờ Admin duyệt.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Case A / A2: Fresh revision chưa từng publish (course: null) — xóa vĩnh viễn
+    if (!revision.course) {
+      await CourseRevision.findByIdAndDelete(id);
+      return {
+        message: 'Đã xóa vĩnh viễn bản nháp khóa học.',
+        action: 'deleted',
+      };
+    }
+
+    // Case D: Revision gắn với course đã publish (rejected/changes_requested/draft)
+    // Chỉ xóa revision, giữ nguyên course gốc đang publish
+    if (['draft', 'rejected', 'changes_requested', 'archived'].includes(revision.status)) {
+      await CourseRevision.findByIdAndDelete(id);
+      return {
+        message: 'Đã xóa bản chỉnh sửa. Khóa học gốc vẫn được giữ nguyên.',
+        action: 'revision_deleted',
+      };
+    }
+  }
+
+  // BƯỚC 2: Tìm trong Course collection (course đã publish)
+  const course = await Course.findOne({ _id: id, instructor: instructorId });
+
+  if (course) {
+    // Case C: Đã có học viên → Archive
+    if ((course.studentsCount || 0) > 0) {
+      if (course.status === 'archived') {
+        return { message: 'Khóa học đã được lưu trữ.', action: 'archived' };
+      }
+      course.status = 'archived';
+      await course.save();
+      return {
+        message: 'Khóa học đã chuyển sang Lưu trữ (Archived) vì đã có học viên.',
+        action: 'archived',
+      };
+    }
+
+    // Case B: Chưa có học viên → Hidden
+    course.status = 'hidden';
+    await course.save();
     return {
-      message: "Đã xóa vĩnh viễn bản nháp khóa học.",
-      action: "deleted"
+      message: 'Khóa học đã được ẩn (Hidden) khỏi marketplace.',
+      action: 'hidden',
     };
   }
 
-  // Nếu không tìm thấy ở cả 2 nơi
-  const error = new Error("Không tìm thấy khóa học hoặc bạn không có quyền xóa.");
+  const error = new Error('Không tìm thấy khóa học hoặc bạn không có quyền xóa.');
   error.statusCode = 404;
   throw error;
 };

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import {
     PlusCircle, LayoutList, Edit2, Trash2, Check, PlayCircle,
-    Video, FileText, Lock, Eye, Cloud, GripVertical
+    Video, FileText, Lock, Eye, Cloud, GripVertical, AlertCircle
 } from 'lucide-react';
 import {
     DndContext,
@@ -37,7 +37,8 @@ const Step3_Curriculum = ({
     removeSection,
     openLessonModal,
     deleteLecture,
-    setCourseData
+    setCourseData,
+    errorFields = {}  // { sections }
 }) => {
     const [activeSectionId, setActiveSectionId] = useState(null);
 
@@ -109,12 +110,28 @@ const Step3_Curriculum = ({
 
             {/* Empty state */}
             {sections.length === 0 && (
-                <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                    <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <LayoutList size={24} className="text-gray-300" />
+                <div className={`text-center py-16 border-2 border-dashed rounded-2xl transition-all ${
+                    errorFields.sections
+                        ? 'border-red-400 bg-red-50/40 ring-2 ring-red-300'
+                        : 'border-gray-200 bg-gray-50'
+                }`}>
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 ${
+                        errorFields.sections ? 'bg-red-100' : 'bg-gray-100'
+                    }`}>
+                        {errorFields.sections
+                            ? <AlertCircle size={24} className="text-red-400" />
+                            : <LayoutList size={24} className="text-gray-300" />}
                     </div>
-                    <p className="font-semibold text-gray-500 mb-1">Chưa có section nào</p>
-                    <p className="text-sm text-gray-400 mb-4">Nhấn "Thêm Section" để bắt đầu xây dựng nội dung</p>
+                    <p className={`font-semibold mb-1 ${
+                        errorFields.sections ? 'text-red-600' : 'text-gray-500'
+                    }`}>
+                        {errorFields.sections ? 'Cần thêm ít nhất 1 section!' : 'Chưa có section nào'}
+                    </p>
+                    <p className={`text-sm mb-4 ${
+                        errorFields.sections ? 'text-red-500' : 'text-gray-400'
+                    }`}>
+                        {errorFields.sections || 'Nhấn "Thêm Section" để bắt đầu xây dựng nội dung'}
+                    </p>
                     <button
                         onClick={addSection}
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-semibold text-sm transition-colors"

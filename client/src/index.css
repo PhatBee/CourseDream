@@ -169,4 +169,47 @@
 /* Volume panel compact */
 .video-js .vjs-volume-panel {
   width: auto;
-}
+}
+/* ============================================================
+   VALIDATION ERROR ANIMATIONS
+   ============================================================ */
+
+/* Shake animation — field loi khi step duoc navigate vao */
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-6px); }
+  30%  { transform: translateX(6px); }
+  45%  { transform: translateX(-5px); }
+  60%  { transform: translateX(5px); }
+  75%  { transform: translateX(-3px); }
+  90%  { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+/* FadeIn — error helper text ben duoi field */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* ScaleIn — modal */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* Field error highlight */
+.field-error {
+  animation: shake 0.35s ease-in-out;
+  border-color: #fca5a5 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  background-color: rgba(254, 242, 242, 0.4);
+}

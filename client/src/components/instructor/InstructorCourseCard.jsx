@@ -77,7 +77,10 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
         else if (isPublished && revisionStatus === 'draft') { label = 'Sửa bản nháp'; }
 
         return (
-            <Link to={editLink} className={`flex items-center gap-1.5 text-xs transition-colors ${colorCls}`}>
+            <Link
+                to={editLink}
+                state={{ showEnterToast: true, ts: Date.now() }}
+                className={`flex items-center gap-1.5 text-xs transition-colors ${colorCls}`}>
                 <Edit2 size={13} /> {label}
             </Link>
         );
@@ -121,12 +124,11 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
 
     // ======================== RENDER ========================
     return (
-        <div className={`group bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden ${
-            isChangesRequested ? 'border-orange-300 ring-2 ring-orange-100' :
+        <div className={`group bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden ${isChangesRequested ? 'border-orange-300 ring-2 ring-orange-100' :
             isRejected ? 'border-red-200' :
-            isSuspended ? 'border-red-300 ring-2 ring-red-100' :
-            'border-gray-100'
-        }`}>
+                isSuspended ? 'border-red-300 ring-2 ring-red-100' :
+                    'border-gray-100'
+            }`}>
 
             {/* Suspend Banner */}
             {isSuspended && (
@@ -138,15 +140,15 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
             {/* Thumbnail */}
             <div className="relative h-44 bg-gray-100 overflow-hidden flex-shrink-0">
                 {canEdit && !isSuspended ? (
-                    <Link to={editLink}>
+                    <Link to={editLink} state={{ showEnterToast: true, ts: Date.now() }}>
                         <img src={thumbnail || '/default-course.svg'} alt={title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={e => e.target.src='/default-course.svg'} />
+                            onError={e => e.target.src = '/default-course.svg'} />
                     </Link>
                 ) : (
                     <img src={thumbnail || '/default-course.svg'} alt={title}
                         className={`w-full h-full object-cover ${isSuspended || isPending ? 'grayscale opacity-60' : ''}`}
-                        onError={e => e.target.src='/default-course.svg'} />
+                        onError={e => e.target.src = '/default-course.svg'} />
                 )}
 
                 {/* Status Badge */}

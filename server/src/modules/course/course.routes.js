@@ -13,12 +13,12 @@ import { verifyToken, optionalAuth } from '../../middlewares/auth.middleware.js'
 import { checkRole } from '../../middlewares/role.middleware.js';
 import { checkEnrollment } from '../../middlewares/enrollment.middleware.js';
 import { upload } from '../../middlewares/upload.middleware.js';
-import { deleteCourseController } from '../../utils/utils.js';
+// import { deleteCourseController } from '../../utils/utils.js';
 
 const router = express.Router();
 
 // Xóa khóa học (cảnh báo : chỉ dành cho dev)
-router.delete('/:id', deleteCourseController);
+// router.delete('/:id', deleteCourseController);
 
 // ==================== PUBLIC ROUTES ====================
 router.get('/', getCourses);

@@ -1,9 +1,9 @@
 // src/pages/instructor/AddCourse.jsx
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Check, ChevronRight, ChevronLeft, Save, XCircle, BookOpen } from 'lucide-react';
+import { Check, ChevronRight, ChevronLeft, Save, XCircle, BookOpen, AlertCircle } from 'lucide-react';
 
 // Redux & API
 import { createNewCourse } from '../../features/course/courseSlice';
@@ -11,6 +11,7 @@ import { categoryApi } from '../../api/categoryApi';
 
 // Hooks & Components
 import { useAddCourseForm } from '../../features/course/useAddCourseForm';
+import { validateCourse } from '../../features/course/courseValidation';
 import Step1_CourseInfo from '../../components/instructor/Step1_CourseInfo';
 import Step2_Media from '../../components/instructor/Step2_Media';
 import Step3_Curriculum from '../../components/instructor/Step3_Curriculum';
@@ -19,17 +20,20 @@ import Step5_Pricing from '../../components/instructor/Step5_Pricing';
 import LessonModal from '../../components/instructor/LessonModal';
 import CancelModal from '../../components/common/CancelModal';
 
+// Icon là số step by step
 const STEPS = [
-    { label: 'Thông tin', icon: '📝' },
-    { label: 'Media', icon: '🎨' },
-    { label: 'Nội dung', icon: '📚' },
-    { label: 'Chi tiết', icon: '📋' },
-    { label: 'Giá', icon: '💰' },
+    { label: 'Thông tin', icon: '1' },
+    { label: 'Media', icon: '2' },
+    { label: 'Nội dung', icon: '3' },
+    { label: 'Chi tiết', icon: '4' },
+    { label: 'Giá', icon: '5' },
 ];
 
 const AddCoursePage = () => {
+
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
     const { isLoading } = useSelector(state => state.course);
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -38,6 +42,10 @@ const AddCoursePage = () => {
     const [editingSectionIndex, setEditingSectionIndex] = useState(null);
     const [editingLectureIndex, setEditingLectureIndex] = useState(null);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    // ✅ Track steps có lỗi để hiển thị warning badge trên stepper
+    const [errorSteps, setErrorSteps] = useState([]);
+    // ✅ Track field-level errors để highlight từng field trong Step
+    const [errorFields, setErrorFields] = useState({});
 
     const form = useAddCourseForm();
 
@@ -53,6 +61,17 @@ const AddCoursePage = () => {
         fetchCategories();
     }, []);
 
+    useEffect(() => {
+        if (location.state?.showEnterToast) {
+            const timer = setTimeout(() => {
+                toast('Đã vào trang tạo khóa học');
+                navigate(location.pathname, { replace: true, state: {} });
+            }, 80);
+
+            return () => clearTimeout(timer);
+        }
+    }, [location.state, location.pathname, navigate]);
+
     /**
      * Submit Handler (AWS version)
      * Videos, thumbnails, previews đã được upload lên S3 trong từng Step.
@@ -62,14 +81,38 @@ const AddCoursePage = () => {
         const { courseData } = form;
         const isDraft = actionType === 'draft';
 
-        // Validation
-        if (!isDraft) {
-            if (!courseData.title) return toast.error('Vui lòng nhập tên khóa học');
-            if (courseData.categories.length === 0) return toast.error('Vui lòng chọn danh mục');
-            if (!courseData.thumbnail && !courseData.thumbnailUrl) return toast.error('Vui lòng upload thumbnail (ảnh bìa)');
-        } else {
-            if (!courseData.title) return toast.error('Vui lòng nhập tên khóa học để lưu nháp');
+        // ✅ Centralized validation với navigate-to-step
+        const { isValid, errors, firstErrorStep, errorFields: validationErrorFields } = validateCourse(courseData, isDraft ? 'draft' : 'submit');
+        if (!isValid) {
+            // Lưu danh sách step có lỗi (unique)
+            setErrorSteps([...new Set(errors.map(e => e.step))]);
+            setErrorFields(validationErrorFields);
+            // Hiển thị lỗi
+            toast.error(
+                <div className="space-y-1">
+                    {errors.map((e, i) => (
+                        <div key={i} className="flex items-start gap-1.5">
+                            <AlertCircle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm">{e.message}</span>
+                        </div>
+                    ))}
+                </div>,
+                { duration: 5000 }
+            );
+            // Auto-navigate đến step chứa lỗi đầu tiên
+            if (firstErrorStep && firstErrorStep !== currentStep) {
+                setCurrentStep(firstErrorStep);
+            }
+            // Auto-scroll đến field lỗi đầu tiên (sau khi DOM render)
+            setTimeout(() => {
+                const el = document.querySelector('.field-error, [class*="ring-red"]');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 120);
+            return;
         }
+        // Clear errors khi pass validation
+        setErrorSteps([]);
+        setErrorFields({});
 
         const toastId = toast.loading(isDraft ? 'Đang lưu nháp...' : 'Đang tạo khóa học...');
 
@@ -212,6 +255,7 @@ const AddCoursePage = () => {
                         handleArrayAction={form.handleArrayAction}
                         categoriesList={categoriesList}
                         updateCategories={form.updateCategories}
+                        errorFields={errorFields}
                     />
                 );
             case 2:
@@ -220,6 +264,7 @@ const AddCoursePage = () => {
                         courseData={form.courseData}
                         setCourseData={form.setCourseData}
                         courseSlug={courseSlug}
+                        errorFields={errorFields}
                     />
                 );
             case 3:
@@ -232,6 +277,7 @@ const AddCoursePage = () => {
                         openLessonModal={handleOpenLessonModal}
                         deleteLecture={form.removeLecture}
                         setCourseData={form.setCourseData}
+                        errorFields={errorFields}
                     />
                 );
             case 4:
@@ -240,6 +286,7 @@ const AddCoursePage = () => {
                         courseData={form.courseData}
                         handleInputChange={form.handleInputChange}
                         handleArrayAction={form.handleArrayAction}
+                        errorFields={errorFields}
                     />
                 );
             case 5:
@@ -301,19 +348,32 @@ const AddCoursePage = () => {
                             const stepNum = idx + 1;
                             const isActive = stepNum === currentStep;
                             const isDone = stepNum < currentStep;
+                            const hasError = errorSteps.includes(stepNum);
                             return (
                                 <div key={idx} className="flex-1 flex flex-col items-center z-10">
-                                    <div
-                                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold mb-2 transition-all duration-300 border-2 ${isActive
-                                            ? 'bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-200 scale-110'
-                                            : isDone
-                                                ? 'bg-rose-500 text-white border-rose-500'
-                                                : 'bg-white text-gray-400 border-gray-200'
-                                            }`}
-                                    >
-                                        {isDone ? <Check size={18} /> : step.icon}
+                                    <div className="relative">
+                                        <div
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold mb-2 transition-all duration-300 border-2 ${isActive
+                                                ? 'bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-200 scale-110'
+                                                : hasError
+                                                    ? 'bg-red-50 text-red-500 border-red-400'
+                                                    : isDone
+                                                        ? 'bg-rose-500 text-white border-rose-500'
+                                                        : 'bg-white text-gray-400 border-gray-200'
+                                                }`}
+                                        >
+                                            {isDone && !hasError ? <Check size={18} /> : hasError ? <AlertCircle size={16} /> : step.icon}
+                                        </div>
+                                        {/* Error dot */}
+                                        {hasError && !isActive && (
+                                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+                                        )}
                                     </div>
-                                    <span className={`text-xs font-semibold ${isActive ? 'text-rose-600' : isDone ? 'text-rose-400' : 'text-gray-400'}`}>
+                                    <span className={`text-xs font-semibold ${isActive ? 'text-rose-600'
+                                        : hasError ? 'text-red-500'
+                                            : isDone ? 'text-rose-400'
+                                                : 'text-gray-400'
+                                        }`}>
                                         {step.label}
                                     </span>
                                 </div>
