@@ -1,56 +1,83 @@
-// src/components/course/LectureItem.js
+// src/components/course/LectureItem.jsx
 import React from 'react';
 import { PlayCircle, Lock } from 'lucide-react';
 
-// Hàm format thời gian (giây -> hh:mm:ss)
+// Format thời gian (giây → mm:ss hoặc hh:mm:ss)
 const formatDuration = (seconds) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
 
-  // Sử dụng padStart để đảm bảo mm và ss luôn có 2 chữ số
-  const formattedMinutes = minutes.toString().padStart(2, '0');
-  const formattedSeconds = remainingSeconds.toString().padStart(2, '0');
+    const mm = minutes.toString().padStart(2, '0');
+    const ss = remainingSeconds.toString().padStart(2, '0');
 
-  if (hours > 0) {
-    // Nếu lớn hơn 1 giờ, hiển thị HH:mm:ss
-    const formattedHours = hours.toString().padStart(2, '0');
-    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
-  } else {
-    // Nếu ít hơn 1 giờ, chỉ hiển thị mm:ss
-    return `${formattedMinutes}:${formattedSeconds}`;
-  }
+    if (hours > 0) {
+        const hh = hours.toString().padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+    }
+    return `${mm}:${ss}`;
 };
 
-const LectureItem = ({ lecture, onPreviewClick }) => {
-  const { title, duration = 0, isPreviewFree = false, videoUrl = '' } = lecture;
+/**
+ * LectureItem — Hiển thị 1 bài giảng trong accordion trang chi tiết khóa học.
+ *
+ * Props:
+ *   lecture    : object (từ API getCourseDetailsBySlug)
+ *   courseId   : string — MongoDB _id của Course (dùng để gọi API Signed URL)
+ *   onPreviewClick : (info: { lectureId, courseId, lectureTitle, thumbnail }) => void
+ */
+const LectureItem = ({ lecture, courseId, onPreviewClick }) => {
+    const { _id, title, duration = 0, isPreviewFree = false } = lecture;
 
-  return (
-    <li className="p-4 flex justify-between items-center">
-      <div className="flex items-center">
-        {isPreviewFree ? (
-          <PlayCircle size={18} className="text-gray-600 mr-2" />
-        ) : (
-          <Lock size={18} className="text-gray-400 mr-2" />
-        )}
-        <p className="text-sm text-gray-700">{title}</p>
-      </div>
+    const handlePreview = () => {
+        if (!isPreviewFree || !onPreviewClick) return;
+        onPreviewClick({
+            lectureId: _id,
+            courseId,
+            lectureTitle: title,
+            thumbnail: lecture.thumbnail || '',
+        });
+    };
 
-      <div className="flex items-center gap-4">
-        {isPreviewFree ? (
-          <a
-            onClick={() => onPreviewClick(videoUrl)}
-            className="text-sm font-medium text-rose-600 hover:underline"
-          >
-            Preview
-          </a>
-        ) : (
-          null
-        )}
-        <span className="text-sm text-gray-500">{formatDuration(duration)}</span>
-      </div>
-    </li>
-  );
+    return (
+        <li className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 transition-colors group">
+            {/* Icon + Title */}
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                {isPreviewFree ? (
+                    <PlayCircle
+                        size={17}
+                        className="text-rose-500 flex-shrink-0"
+                    />
+                ) : (
+                    <Lock
+                        size={16}
+                        className="text-gray-350 flex-shrink-0"
+                    />
+                )}
+                <span className={`text-sm truncate ${isPreviewFree ? 'text-gray-800' : 'text-gray-600'}`}>
+                    {title}
+                </span>
+            </div>
+
+            {/* Right side: Preview link + Duration */}
+            <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                {isPreviewFree && (
+                    <button
+                        onClick={handlePreview}
+                        className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline underline-offset-2 transition-colors whitespace-nowrap flex items-center gap-1"
+                    >
+                        <PlayCircle size={13} />
+                        Xem thử
+                    </button>
+                )}
+                {duration > 0 && (
+                    <span className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                        {formatDuration(duration)}
+                    </span>
+                )}
+            </div>
+        </li>
+    );
 };
 
 export default LectureItem;

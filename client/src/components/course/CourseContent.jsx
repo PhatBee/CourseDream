@@ -19,7 +19,7 @@ const CourseContent = ({ course }) => {
       {/* Card 2: Course Content (Accordion) */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <div className="p-5">
-          <CourseAccordion sections={course.sections} />
+          <CourseAccordion sections={course.sections} courseId={course._id} />
         </div>
       </div>
 
