@@ -66,7 +66,7 @@ export default function Cart() {
                     </p>
                     <Link
                         to="/login"
-                        className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="inline-block px-6 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors"
                     >
                         Đăng nhập
                     </Link>
@@ -98,7 +98,7 @@ export default function Cart() {
                     </p>
                     <Link
                         to="/"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                     >
                         <ArrowLeft size={20} />
                         Khám phá khóa học
@@ -119,7 +119,7 @@ export default function Cart() {
                             <div className="flex justify-between items-center border-b pb-4 mb-6">
                                 <h2 className="text-2xl font-bold text-gray-800">
                                     Giỏ hàng của bạn
-                                    <span className="text-blue-600 ml-2">({totalItems})</span>
+                                    <span className="text-rose-600 ml-2">({totalItems})</span>
                                 </h2>
                                 {items.length > 0 && (
                                     <button
@@ -177,7 +177,7 @@ export default function Cart() {
 
                                                     {/* Title */}
                                                     <Link to={`/courses/${course.slug}`}>
-                                                        <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-blue-600 transition-colors line-clamp-2">
+                                                        <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-rose-600 transition-colors line-clamp-2">
                                                             {course.title}
                                                         </h3>
                                                     </Link>
@@ -188,7 +188,7 @@ export default function Cart() {
                                                             {course.categories.map((cat) => (
                                                                 <span
                                                                     key={cat._id}
-                                                                    className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full"
+                                                                    className="px-2 py-1 bg-rose-50 text-rose-600 text-xs rounded-full"
                                                                 >
                                                                     {cat.name}
                                                                 </span>
@@ -265,7 +265,7 @@ export default function Cart() {
                                 <div className="border-t pt-4">
                                     <div className="flex justify-between items-center">
                                         <span className="text-lg font-bold text-gray-800">Tổng cộng:</span>
-                                        <span className="text-2xl font-bold text-blue-600">
+                                        <span className="text-2xl font-bold text-rose-600">
                                             {formatPrice(totalPrice)}
                                         </span>
                                     </div>
@@ -275,7 +275,7 @@ export default function Cart() {
                             {/* Checkout Button */}
                             <button
                                 onClick={handleCheckout}
-                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3.5 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg mb-3"
+                                className="w-full bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg mb-3"
                             >
                                 Thanh toán
                             </button>
@@ -290,8 +290,8 @@ export default function Cart() {
                             </Link>
 
                             {/* Info */}
-                            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                <p className="text-sm text-blue-800">
+                            <div className="mt-6 p-4 bg-rose-50 rounded-lg border border-rose-100">
+                                <p className="text-sm text-rose-800">
                                     💡 <strong>Lưu ý:</strong> Giá có thể thay đổi. Vui lòng kiểm tra kỹ trước khi thanh toán.
                                 </p>
                             </div>

@@ -1,14 +1,14 @@
+// src/components/course/CourseHeader.jsx
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast";
-
+import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
+import { FaFlag } from 'react-icons/fa';
+import { HiOutlineBookOpen, HiOutlineClock, HiOutlineUsers } from 'react-icons/hi';
+import { Cloud } from 'lucide-react';
 import StarRating from '../common/StarRating';
 import ReportModal from '../common/ReportModal';
-
-import { FaPlay, FaFlag } from 'react-icons/fa';
-import { HiOutlineBookOpen, HiOutlineClock, HiOutlineUsers } from 'react-icons/hi';
-import { getEmbedUrl } from '../../utils/videoUtils.js';
-import { sendReport, resetReportState } from "../../features/report/reportSlice";
+import CoursePreviewPlayer from './CoursePreviewPlayer';
+import { sendReport, resetReportState } from '../../features/report/reportSlice';
 
 const COURSE_REPORT_REASONS = [
   'Nội dung khóa học không phù hợp - Có hại, bạo lực, thù hận hoặc tội phạm',
@@ -19,30 +19,25 @@ const COURSE_REPORT_REASONS = [
 ];
 
 const CourseHeader = ({ course, reviewCount }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { success, error } = useSelector(state => state.report);
+  const currentUser = useSelector(state => state.auth.user);
+
   const {
     title = '',
-    description = '',
     shortDescription = '',
-    thumbnail = '',
     totalLectures = 0,
     totalHours = 0,
     studentsCount = 0,
     instructor = {},
     categories = [],
     rating = 0,
-    previewUrl = '',
   } = course;
-  const embedUrl = getEmbedUrl(previewUrl);
-  const categoryName = categories[0]?.name || 'Course';
-  const dispatch = useDispatch();
-  const { success, error } = useSelector(state => state.report);
-  const currentUser = useSelector(state => state.auth.user);
 
   useEffect(() => {
     if (success) {
-      toast.success("Báo cáo của bạn đã được gửi!");
+      toast.success('Báo cáo của bạn đã được gửi!');
       dispatch(resetReportState());
       setReportOpen(false);
     }
@@ -52,127 +47,105 @@ const CourseHeader = ({ course, reviewCount }) => {
     }
   }, [success, error, dispatch]);
 
-  const handlePlayClick = () => {
-    if (embedUrl) {
-      setIsPlaying(true);
-    }
-  };
-
   const handleReportSubmit = (reason, detail) => {
     dispatch(sendReport({
-      type: "course",
+      type: 'course',
       targetId: course._id,
-      reason: reason + (detail ? `\n${detail}` : "")
+      reason: reason + (detail ? `\n${detail}` : ''),
     }));
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden text-left">
-      <div className="p-4 sm:p-6 lg:flex items-center">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-left">
+      <div className="p-5 sm:p-7 lg:flex items-start gap-8">
 
-        {/* Cột trái: Thumbnail Video */}
-        <div className="relative flex-shrink-0 mb-4 lg:mb-0 lg:w-2/5">
-          {isPlaying && embedUrl ? (
+        {/* === CỘT TRÁI: Video Preview Player (AWS CloudFront) === */}
+        <div className="flex-shrink-0 w-full lg:w-2/5 mb-5 lg:mb-0">
+          <CoursePreviewPlayer course={course} />
 
-            <div className="aspect-video w-full bg-black rounded-md">
-              <iframe
-                className="w-full h-full rounded-md"
-                src={embedUrl}
-                title={title}
-                allow="autoplay; fullscreen; web-share"
-                allowFullScreen
-              ></iframe>
+          {/* AWS CDN indicator */}
+          {(course.thumbnail || course.previewUrl) && (
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-400">
+              <Cloud size={11} className="text-blue-400" />
+              <span>Media by <span className="font-medium">AWS CloudFront CDN</span></span>
             </div>
-
-          ) : (
-
-            <div className="relative aspect-video">
-              <img
-                className="w-full h-auto object-cover rounded-md aspect-video"
-                src={thumbnail || '/default-course.svg'}
-                alt={title}
-                onError={(e) => { e.target.src = '/default-course.svg'; }}
-              />
-
-              {/* 5c. Nếu có link (embedUrl) -> Hiển thị nút Play */}
-              {embedUrl && (
-                <button
-                  onClick={handlePlayClick}
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-md group"
-                  aria-label="Play video"
-                >
-                  <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-                    <FaPlay className="text-blue-600 text-2xl" />
-                  </div>
-                </button>
-              )}
-            </div>
-
           )}
         </div>
 
-        {/* Cột phải: Thông tin chi tiết */}
-        <div className="w-full lg:pl-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{title}</h1>
-          <p className="text-sm text-gray-600 mb-3">{shortDescription}</p>
-
-          {/* Thông số nhanh */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-wrap my-4">
-            <span className="flex items-center text-sm font-medium text-gray-700">
-              <HiOutlineBookOpen className="mr-1.5 text-gray-500" /> {totalLectures} Lessons
-            </span>
-            <span className="flex items-center text-sm font-medium text-gray-700">
-              <HiOutlineClock className="mr-1.5 text-gray-500" /> {totalHours.toFixed(1)} hours
-            </span>
-            <span className="flex items-center text-sm font-medium text-gray-700">
-              <HiOutlineUsers className="mr-1.5 text-gray-500" /> {studentsCount} Students
-            </span>
-            <span className="text-xs font-semibold bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">{categoryName}</span>
+        {/* === CỘT PHẢI: Thông tin khóa học === */}
+        <div className="flex-1 min-w-0">
+          {/* Category Badge */}
+          <div className="mb-3">
+            {/* Lấy tất cả category name của course */}
+            {categories.map((category, index) => (
+              <span key={index} className="px-3 py-1 bg-rose-50 text-rose-600 text-xs font-bold rounded-full border border-rose-200 uppercase tracking-wide">
+                {category.name}
+              </span>
+            ))}
           </div>
 
-          {/* Giảng viên và Rating */}
-          <div className="sm:flex items-center justify-between mt-4 border-t pt-4">
-            {/* Giảng viên */}
-            <div className="flex items-center mb-2 sm:mb-0">
+          {/* Title */}
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">{title}</h1>
+
+          {/* Short Description */}
+          <p className="text-gray-500 text-sm mb-4 leading-relaxed line-clamp-3">{shortDescription}</p>
+
+          {/* Rating Row */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <StarRating rating={rating} />
+              <span className="font-bold text-amber-600 text-sm">{rating.toFixed(1)}</span>
+              <span className="text-gray-400 text-sm">({reviewCount} đánh giá)</span>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="flex items-center gap-3 sm:gap-5 flex-wrap mb-5">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl">
+              <HiOutlineBookOpen className="text-rose-500" size={16} />
+              {totalLectures} bài học
+            </span>
+            <span className="flex items-center gap-1.5 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl">
+              <HiOutlineClock className="text-rose-500" size={16} />
+              {typeof totalHours === 'number' ? totalHours.toFixed(1) : totalHours} giờ
+            </span>
+            <span className="flex items-center gap-1.5 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl">
+              <HiOutlineUsers className="text-rose-500" size={16} />
+              {(studentsCount || 0).toLocaleString('vi-VN')} học viên
+            </span>
+          </div>
+
+          {/* Instructor */}
+          <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+            <div className="flex items-center gap-3">
               <img
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-11 h-11 rounded-full object-cover border-2 border-rose-100 shadow-sm"
                 src={instructor.avatar || '/default-avatar.svg'}
                 alt={instructor.name || 'Instructor'}
                 crossOrigin="anonymous"
                 referrerPolicy="no-referrer"
               />
-              <div className="ml-3">
-                <h5 className="text-base font-semibold text-gray-800">{instructor.name || '...'}</h5>
-                <p className="text-sm text-gray-500">Instructor</p>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Giảng viên</p>
+                <h5 className="text-sm font-bold text-gray-800">{instructor.name || '...'}</h5>
               </div>
             </div>
-            {/* Rating */}
-            <div className="flex items-center">
-              <StarRating rating={rating} />
-              <p className="text-sm ml-2">
-                <span className="font-bold text-gray-800">{rating.toFixed(1)}</span>
-                <span className="text-gray-500"> ({reviewCount} reviews)</span>
-              </p>
-            </div>
-          </div>
 
-          {/* Nút báo cáo khóa học */}
-          <div className="mt-4 flex items-center">
+            {/* Report button */}
             {currentUser?._id !== instructor?._id && (
               <button
                 onClick={() => setReportOpen(true)}
-                className="flex items-center text-sm font-medium text-gray-700 hover:text-red-500"
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-rose-500 transition-colors"
                 aria-label="Report course"
               >
-                <FaFlag className="mr-1.5" />
-                Báo cáo khóa học
+                <FaFlag size={11} /> Báo cáo
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Modal báo cáo khóa học */}
+      {/* Report Modal */}
       <ReportModal
         open={reportOpen}
         onClose={() => setReportOpen(false)}

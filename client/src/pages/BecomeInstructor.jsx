@@ -1,15 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { userService } from '../features/user/userService';
 import { X, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+    getInstructorApplication,
+    applyToBecomeInstructor,
+    reset,
+} from '../features/user/userSlice';
 
 const BecomeInstructor = () => {
-    const [application, setApplication] = useState(null); // null (chưa có), object (đã có)
-    const [isLoading, setIsLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
+    const {
+        instructorApplication,
+        isApplicationLoading,
+        isLoading,
+        isSuccess,
+        isError,
+        message,
+    } = useSelector((state) => state.user);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -22,58 +34,54 @@ const BecomeInstructor = () => {
 
     // 1. Fetch trạng thái đơn khi load trang
     useEffect(() => {
-        fetchApplicationStatus();
-    }, []);
+        dispatch(getInstructorApplication());
+    }, [dispatch]);
 
-    const fetchApplicationStatus = async () => {
-        try {
-            const res = await userService.getInstructorApplication();
-            setApplication(res.data); // data có thể là null hoặc object application
-
-            // Nếu bị rejected, điền sẵn dữ liệu cũ vào form để user sửa
-            if (res.data && res.data.status === 'rejected') {
-                const app = res.data;
-                setFormData({
-                    bio: app.bio || '',
-                    experience: app.experience || '',
-                    sampleVideoUrl: app.sampleVideoUrl || '',
-                    intendedTopics: app.intendedTopics ? app.intendedTopics.join(', ') : ''
-                });
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
+    // 2. Handle success/error messages
+    useEffect(() => {
+        if (isSuccess && message) {
+            toast.success(message);
+            setIsModalOpen(false);
+            dispatch(getInstructorApplication()); // Refresh status
+            dispatch(reset());
         }
-    };
 
-    // 2. Xử lý Input Form
+        if (isError && message) {
+            toast.error(message);
+            dispatch(reset());
+        }
+    }, [isSuccess, isError, message, dispatch]);
+
+    // 3. Pre-fill form if rejected
+    useEffect(() => {
+        if (instructorApplication?.status === 'rejected') {
+            const app = instructorApplication;
+            setFormData({
+                bio: app.bio || '',
+                experience: app.experience || '',
+                sampleVideoUrl: app.sampleVideoUrl || '',
+                intendedTopics: app.intendedTopics ? app.intendedTopics.join(', ') : ''
+            });
+        }
+    }, [instructorApplication]);
+
+    // 4. Xử lý Input Form
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // 3. Submit Form
+    // 5. Submit Form
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
-        try {
-            await userService.applyToBecomeInstructor(formData);
-            toast.success("Đơn đăng ký đã được gửi!");
-            setIsModalOpen(false);
-            fetchApplicationStatus(); // Refresh lại trạng thái
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Đăng ký thất bại");
-        } finally {
-            setIsSubmitting(false);
-        }
+        dispatch(applyToBecomeInstructor(formData));
     };
 
     // --- Helper Render UI dựa trên Status ---
     const renderActionSection = () => {
-        if (isLoading) return <div className="animate-pulse h-10 w-32 bg-gray-200 rounded"></div>;
+        if (isApplicationLoading) return <div className="animate-pulse h-10 w-32 bg-gray-200 rounded"></div>;
 
         // Trường hợp 1: Đang chờ duyệt
-        if (application && application.status === 'pending') {
+        if (instructorApplication && instructorApplication.status === 'pending') {
             return (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-lg">
                     <div className="flex items-center gap-3">
@@ -88,7 +96,7 @@ const BecomeInstructor = () => {
         }
 
         // Trường hợp 2: Đã là Instructor (Approved)
-        if (user.role === 'instructor' || (application && application.status === 'approved')) {
+        if (user.role === 'instructor' || (instructorApplication && instructorApplication.status === 'approved')) {
             return (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-lg">
                     <div className="flex items-center gap-3">
@@ -104,7 +112,7 @@ const BecomeInstructor = () => {
         }
 
         // Trường hợp 3: Bị từ chối (Rejected) -> Cho phép Apply lại
-        if (application && application.status === 'rejected') {
+        if (instructorApplication && instructorApplication.status === 'rejected') {
             return (
                 <div className="space-y-4 max-w-lg">
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -113,7 +121,7 @@ const BecomeInstructor = () => {
                             <div>
                                 <h4 className="font-bold text-red-800">Đăng ký không thành công</h4>
                                 <p className="text-sm text-red-700 mt-1">
-                                    <span className="font-semibold">Reason: {application?.rejectionReason}</span>
+                                    <span className="font-semibold">Reason: {instructorApplication?.rejectionReason}</span>
                                 </p>
                             </div>
                         </div>
@@ -291,10 +299,10 @@ const BecomeInstructor = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={isSubmitting}
+                                    disabled={isLoading}
                                     className="px-8 py-2.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition disabled:opacity-70 flex items-center gap-2"
                                 >
-                                    {isSubmitting ? (
+                                    {isLoading ? (
                                         <>Processing...</>
                                     ) : (
                                         <>Submit Application</>

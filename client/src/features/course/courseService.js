@@ -1,14 +1,8 @@
+// src/features/course/courseService.js
 import { courseApi } from "../../api/courseApi";
 
-/**
- * Gọi API để lấy chi tiết khóa học
- * @param {string} slug - Slug của khóa học
- * @returns {Promise<object>} - Dữ liệu trả về từ API (data: { course, reviews, ... })
- */
 const getDetails = async (slug) => {
   const response = await courseApi.getDetailsBySlug(slug);
-
-  // Backend trả về: { success: true, data: { course, reviews, ... } }
   return response.data.data;
 };
 
@@ -19,16 +13,6 @@ const getAllCourses = async (params) => {
 
 const createCourse = async (formData) => {
   const response = await courseApi.createCourse(formData);
-  return response.data;
-};
-
-const uploadVideo = async (formData) => {
-  const response = await courseApi.uploadVideo(formData);
-  return response.data;
-};
-
-const uploadResource = async (formData) => {
-  const response = await courseApi.uploadResource(formData);
   return response.data;
 };
 
@@ -58,13 +42,10 @@ const courseService = {
   getDetails,
   getAllCourses,
   createCourse,
-  uploadVideo,
-  uploadResource,
   getInstructorCourses,
   getInstructorCourseForEdit,
   deleteCourse,
   activateCourse,
-  // Admin Services
 };
 
 export default courseService;

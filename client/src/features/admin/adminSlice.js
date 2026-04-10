@@ -4,13 +4,14 @@ import { adminApi } from '../../api/adminApi';
 import toast from 'react-hot-toast';
 
 const initialState = {
-    stats: null,          // Dữ liệu tổng quan (counts, top courses...)
-    revenueData: null,    // Dữ liệu biểu đồ doanh thu
+    stats: null,
+    revenueData: null,
     isLoading: false,
     isError: false,
     message: '',
     adminPendingCourses: [],
     adminPendingPagination: { page: 1, limit: 10, totalPages: 1, total: 0 },
+    adminPendingStats: { pending: 0, changes_requested: 0 },  // NEW: stats riêng
     adminPendingDetail: null,
     adminActionLoading: false,
     studentsList: {
@@ -21,7 +22,7 @@ const initialState = {
         data: [],
         pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
     },
-    adminApplications: [], // List đơn đăng ký
+    adminApplications: [],
     adminAppPagination: { page: 1, limit: 10, totalPages: 1, total: 0 },
 };
 
@@ -153,6 +154,22 @@ export const adminRejectCourse = createAsyncThunk(
     }
 );
 
+// CASE 3: Yêu cầu Instructor sửa
+export const adminRequestChanges = createAsyncThunk(
+    'admin/adminRequestChanges',
+    async ({ revisionId, reviewMessage }, thunkAPI) => {
+        try {
+            const response = await adminApi.requestRevisionChanges(revisionId, reviewMessage);
+            toast.success('Đã gửi yêu cầu sửa đổi cho instructor!');
+            return { revisionId, ...response.data };
+        } catch (error) {
+            const message = error.response?.data?.message || 'Có lỗi xảy ra';
+            toast.error(message);
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+
 // [MỚI] Thunk: Get Applications
 export const fetchInstructorApplications = createAsyncThunk(
     'admin/fetchInstructorApplications',
@@ -244,11 +261,30 @@ const adminSlice = createSlice({
                 state.isLoading = false;
                 state.adminPendingCourses = action.payload.data.revisions;
                 state.adminPendingPagination = action.payload.data.pagination;
+                if (action.payload.data.stats) {
+                    state.adminPendingStats = action.payload.data.stats;
+                }
             })
             .addCase(getAdminPendingCourses.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;
+            })
+
+            // CASE 3: Request Changes
+            .addCase(adminRequestChanges.pending, (state) => {
+                state.adminActionLoading = true;
+            })
+            .addCase(adminRequestChanges.fulfilled, (state, action) => {
+                state.adminActionLoading = false;
+                // Remove from pending list (đã chuyển sang changes_requested)
+                state.adminPendingCourses = state.adminPendingCourses.filter(
+                    c => c._id !== action.payload.revisionId
+                );
+                state.adminPendingPagination.total = Math.max(0, (state.adminPendingPagination.total || 0) - 1);
+            })
+            .addCase(adminRequestChanges.rejected, (state, action) => {
+                state.adminActionLoading = false;
             })
 
             // Get Admin Pending Detail

@@ -132,7 +132,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
             <Heart size={18} className={isHeartFilled ? "fill-current" : ""} />
           </button>
 
-          <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600/90 text-white text-xs font-medium rounded-md backdrop-blur-sm">
+          <span className="absolute top-3 left-3 px-2.5 py-1 bg-rose-600/90 text-white text-xs font-medium rounded-md backdrop-blur-sm">
             {categoryName}
           </span>
         </div>
@@ -152,7 +152,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
           </div>
 
           <Link to={`/courses/${slug}`} className="block mb-2 flex-grow">
-            <h3 className="text-base font-bold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
+            <h3 className="text-base font-bold text-gray-800 line-clamp-2 group-hover:text-rose-600 transition-colors">
               {title}
             </h3>
           </Link>
@@ -185,7 +185,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                     onClick={handleToggleCart}  // ← Changed
                     className={`p-2 rounded-full transition-colors ${isInCart
                       ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'  // ← Filled state
-                      : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                      : 'text-gray-500 hover:text-rose-600 hover:bg-rose-50'
                       }`}
                     title={isInCart ? "Remove from Cart" : "Add to Cart"}
                   >
@@ -194,7 +194,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
 
                   <button
                     onClick={handleEnrollNow}
-                    className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                    className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                   >
                     Enroll
                   </button>
@@ -220,7 +220,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
             onError={(e) => { e.target.src = '/default-course.svg'; }}
           />
         </Link>
-        <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600/90 text-white text-xs font-medium rounded-md backdrop-blur-sm">
+        <span className="absolute top-3 left-3 px-2.5 py-1 bg-rose-600/90 text-white text-xs font-medium rounded-md backdrop-blur-sm">
           {categoryName}
         </span>
       </div>
@@ -241,7 +241,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
           </div>
 
           <Link to={`/courses/${slug}`}>
-            <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+            <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-rose-600 transition-colors line-clamp-2">
               {title}
             </h3>
           </Link>
@@ -284,8 +284,8 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                 <button
                   onClick={handleToggleCart}  // ← Changed
                   className={`p-2.5 rounded-full transition-colors ${isInCart
-                      ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'
-                      : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                    ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'
+                    : 'text-gray-500 hover:text-rose-600 hover:bg-rose-50'
                     }`}
                   title={isInCart ? "Remove from Cart" : "Add to Cart"}
                 >
@@ -294,7 +294,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
 
                 <button
                   onClick={handleEnrollNow}
-                  className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-full hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                  className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-full hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                 >
                   Enroll Now
                 </button>

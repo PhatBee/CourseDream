@@ -23,11 +23,14 @@ import reportRoutes from "./modules/report/report.routes.js";
 import notificationRoutes from "./modules/notification/notification.routes.js";
 import discussionRoutes from "./modules/discussion/discussion.routes.js";
 import promotionRoutes from "./modules/promotion/promotion.routes.js";
+import ensureDbConnection from "./middlewares/ensureDbConnection.js";
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 // CORS CONFIG
-const allowedOrigins = ["http://localhost:5173"];
+const allowedOrigins = ["http://localhost:5173", "https://course-dream-react.vercel.app"];
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -46,6 +49,24 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 
+// Đảm bảo DB đã kết nối trước khi xử lý API requests
+app.use("/api", ensureDbConnection);
+
+// Health check endpoint (không cần DB connection)
+app.get("/health", (req, res) => {
+  const dbState = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+
+  res.json({
+    status: 'ok',
+    database: dbState[require('mongoose').connection.readyState] || 'unknown',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // routes
 app.use("/api/auth", authRoutes);

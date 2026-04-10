@@ -7,12 +7,13 @@ import Section from "./section.model.js";
 import Enrollment from "../enrollment/enrollment.model.js";
 import Category from "../category/category.model.js";
 import InstructorProfile from "../user/InstructorProfile.model.js";
-import { uploadToYouTube } from "../../config/youtube.js";
-import { uploadToCloudinary, uploadResourceToCloudinary } from "../../config/cloudinary.js";
+import { uploadToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
 import notificationService from "../notification/notification.service.js";
 import User from "../auth/auth.model.js";
+// NOTE: Video uploads now go directly to S3 via presigned URLs from the frontend.
+// This service no longer handles video file uploads.
 /**
  * Service: Lấy chi tiết khóa học
  * @param {string} slug - Slug của khóa học
@@ -337,19 +338,11 @@ export const getLecture = async ({ courseId, lectureId, user }) => {
   return { lecture };
 };
 
-/**
- * Upload video lên YouTube (Service riêng để gọi từ Controller)
- */
-export const uploadVideo = async (file, title) => {
-  return await uploadToYouTube(file.buffer, title, "Uploaded via DreamsLMS");
-};
-
-/**
- * Upload Resource lên Cloudinary
- */
-export const uploadResource = async (file, title) => {
-  return await uploadResourceToCloudinary(file, title);
-};
+// ======================== AWS S3 NOTE ========================
+// Video và Resource upload không còn đi qua server.
+// Frontend upload trực tiếp lên S3 qua Presigned URL.
+// Backend chỉ lưu CDN URL sau khi upload xong.
+// =============================================================
 
 // Hàm helper để chuẩn hóa input mảng từ FormData
 // Vì FormData gửi 1 item sẽ là string, gửi nhiều là array. Chúng ta cần ép về Array.
@@ -573,126 +566,100 @@ export const getCourseStats = async () => {
 export const getInstructorCourses = async (instructorId, query) => {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 9;
-  const skip = (page - 1) * limit;
-  const statusFilter = query.status; // 'published', 'pending', 'draft', 'hidden', 
+  const statusFilter = query.status;
 
-  // 1. Lấy tất cả Course "chính thức" (Published, Hidden, Archived)
-  // Lưu ý: Không phân trang ở đây, cần lấy hết để merge rồi mới cắt trang
+  // 1. Lấy tất cả Course (mọi status)
   const courses = await Course.find({ instructor: instructorId })
-    .select('title slug thumbnail price priceDiscount level rating studentsCount status totalLectures totalHours createdAt')
+    .select('title slug thumbnail price priceDiscount level rating studentsCount status totalLectures totalHours createdAt publishedVersionNo suspendReason')
     .lean();
 
-  // 2. Lấy tất cả Revision của instructor
-  // Ta cần status 'draft', 'pending', hoặc 'rejected' để xác định trạng thái
+  // 2. Lấy tất cả Revision đang "active" (chưa approved / archived)
   const allRevisions = await CourseRevision.find({
     instructor: instructorId,
-    status: { $in: ['draft', 'pending', 'rejected'] }
+    status: { $in: ['draft', 'pending', 'changes_requested', 'rejected'] }
   }).lean();
-
-  // --- XỬ LÝ GỘP DỮ LIỆU ---
 
   const mergedList = [];
 
-  // A. Xử lý các Course chính thức
+  // A. Courses chính thức (đã có trong Course collection)
   courses.forEach(course => {
-    // Tìm xem course này có bản revision nào đang treo không
     const activeRevision = allRevisions.find(r => r.course && r.course.toString() === course._id.toString());
 
     mergedList.push({
       ...course,
-      // Gắn thêm cờ revisionStatus
       revisionStatus: activeRevision ? activeRevision.status : null,
-      reviewMessage: activeRevision?.reviewMessage || null, // Message từ admin khi reject
-      type: 'course' // Đánh dấu đây là course thật
+      revisionId: activeRevision?._id || null,
+      reviewMessage: activeRevision?.reviewMessage || null,
+      reviewHistory: activeRevision?.reviewHistory || [],
+      type: 'course'
     });
   });
 
-  // B. Xử lý các Revision "độc lập" (Course mới chưa từng publish)
-  // Là các revision mà field 'course' bị null
+  // B. Standalone Revisions (Course mới chưa từng publish - course = null)
   const standaloneRevisions = allRevisions.filter(r => !r.course);
-
   standaloneRevisions.forEach(rev => {
-    // Chuẩn hóa data từ revision.data ra ngoài để giống cấu trúc Course
-    // Giúp Frontend hiển thị thống nhất mà không cần sửa nhiều
-
-    // ✨ QUAN TRỌNG: Dùng _id của revision làm "slug" để frontend có thể route
-    // Khi course chưa publish, không cần slug thật, dùng ID là đủ
-
     mergedList.push({
-      _id: rev._id, // Dùng ID của revision
+      _id: rev._id,
       title: rev.data.title || 'Untitled Course',
-      slug: rev.data.slug, // ✨ Dùng slug thật từ revision.data (có timestamp, unique)
+      slug: rev.data.slug,
       thumbnail: rev.data.thumbnail,
       price: rev.data.price || 0,
       priceDiscount: rev.data.priceDiscount,
-      totalLectures: rev.data.sections ? rev.data.sections.reduce((acc, sec) => acc + (sec.lectures?.length || 0), 0) : 0,
-      totalHours: 0, // Tính toán nếu cần
-      status: rev.status, // 'draft', 'pending', hoặc 'rejected'
-      revisionStatus: null, // Không có revision con
+      totalLectures: (rev.data.sections || []).reduce((acc, s) => acc + (s.lectures?.length || 0), 0),
+      totalHours: 0,
+      status: rev.status, // draft | pending | changes_requested | rejected
+      revisionStatus: null,
+      revisionId: rev._id,
       reviewMessage: rev.reviewMessage || null,
-      type: 'revision', // Đánh dấu là revision
+      reviewHistory: rev.reviewHistory || [],
+      type: 'revision',
       createdAt: rev.createdAt
     });
   });
 
-  // --- LỌC (FILTER) ---
+  // --- FILTER ---
   let finalCourses = mergedList;
-
   if (statusFilter && statusFilter !== 'all') {
     finalCourses = finalCourses.filter(c => {
-      // Logic filter status
-      // Nếu filter = pending -> Lấy course pending HOẶC course published đang có revision pending
-      if (statusFilter === 'pending') {
-        return c.status === 'pending' || c.revisionStatus === 'pending';
-      }
-      // Nếu filter = rejected -> Lấy course rejected HOẶC course có revision rejected
-      if (statusFilter === 'rejected') {
-        return c.status === 'rejected' || c.revisionStatus === 'rejected';
-      }
+      if (statusFilter === 'pending') return c.status === 'pending' || c.revisionStatus === 'pending';
+      if (statusFilter === 'rejected') return c.status === 'rejected' || c.revisionStatus === 'rejected';
+      if (statusFilter === 'changes_requested') return c.status === 'changes_requested' || c.revisionStatus === 'changes_requested';
       return c.status === statusFilter;
     });
   }
 
-  // --- THỐNG KÊ (STATS) ---
-  const stats = { all: 0, published: 0, pending: 0, draft: 0, hidden: 0, archived: 0, rejected: 0 };
+  // --- STATS (đầy đủ 8 trường hợp) ---
+  const stats = {
+    all: 0, published: 0, pending: 0, changes_requested: 0,
+    draft: 0, hidden: 0, archived: 0, rejected: 0, unpublished: 0, suspended: 0
+  };
   mergedList.forEach(c => {
     stats.all++;
-    // Logic đếm stats: Ưu tiên trạng thái revision nếu là pending hoặc rejected
-    if (c.status === 'pending' || c.revisionStatus === 'pending') {
-      stats.pending++;
-    } else if (c.status === 'rejected' || c.revisionStatus === 'rejected') {
-      stats.rejected++;
-    } else if (c.status === 'draft') {
-      stats.draft++;
-    } else if (c.status === 'published') {
-      stats.published++;
-    } else if (c.status === 'hidden') {
-      stats.hidden++;
-    } else if (c.status === 'archived') {
-      stats.archived++;
-    }
+    // Ưu tiên revision status nếu là pending/changes_requested/rejected
+    const effectiveStatus = c.revisionStatus || c.status;
+    if (effectiveStatus === 'pending') stats.pending++;
+    else if (effectiveStatus === 'changes_requested') stats.changes_requested++;
+    else if (effectiveStatus === 'rejected') stats.rejected++;
+    else if (c.status === 'draft') stats.draft++;
+    else if (c.status === 'published') stats.published++;
+    else if (c.status === 'hidden') stats.hidden++;
+    else if (c.status === 'archived') stats.archived++;
+    else if (c.status === 'unpublished') stats.unpublished++;
+    else if (c.status === 'suspended') stats.suspended++;
   });
 
-  // --- SẮP XẾP (SORT) ---
-  // Mới nhất lên đầu
+  // --- SORT & PAGINATE ---
   finalCourses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  // --- PHÂN TRANG (PAGINATION) ---
   const total = finalCourses.length;
-  const totalPages = Math.ceil(total / limit);
   const paginatedData = finalCourses.slice((page - 1) * limit, page * limit);
 
   return {
     courses: paginatedData,
     stats,
-    pagination: {
-      total,
-      page,
-      limit,
-      totalPages
-    }
+    pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
   };
 };
+
 
 /**
  * Lấy dữ liệu để Edit (Xử lý 3 trường hợp)
@@ -704,10 +671,10 @@ export const getCourseForEdit = async (slug, instructorId) => {
   if (liveCourse) {
     // --- TRƯỜNG HỢP 2 & 3: Course đã từng publish ---
 
-    // Tìm xem có bản Revision nào đang treo (draft/pending/rejected) của course này không
+    // Tìm xem có bản Revision nào đang treo (draft/pending/rejected/changes_requested) của course này không
     const existingRevision = await CourseRevision.findOne({
       course: liveCourse._id,
-      status: { $in: ['draft', 'pending', 'rejected'] }
+      status: { $in: ['draft', 'pending', 'rejected', 'changes_requested'] }
     }).lean();
 
     // CASE 3: Đang Pending -> Chặn
@@ -737,6 +704,20 @@ export const getCourseForEdit = async (slug, instructorId) => {
         courseId: liveCourse._id,
         status: 'rejected',
         reviewMessage: existingRevision.reviewMessage || null,
+        reviewHistory: existingRevision.reviewHistory || [],
+        isUpdateMode: true
+      };
+    }
+
+    // CASE 2.1.3: changes_requested -> Cho phép edit và resubmit
+    if (existingRevision && existingRevision.status === 'changes_requested') {
+      return {
+        ...existingRevision.data,
+        _id: existingRevision._id,
+        courseId: liveCourse._id,
+        status: 'changes_requested',
+        reviewMessage: existingRevision.reviewMessage || null,
+        reviewHistory: existingRevision.reviewHistory || [],
         isUpdateMode: true
       };
     }
@@ -874,9 +855,40 @@ export const getCourseForEdit = async (slug, instructorId) => {
     return {
       ...freshRejected.data,
       _id: freshRejected._id,
-      revisionId: freshRejected._id, // ✨ Thêm revisionId để frontend gửi lại khi save
+      revisionId: freshRejected._id,
       status: 'rejected',
       reviewMessage: freshRejected.reviewMessage || null,
+      reviewHistory: freshRejected.reviewHistory || [],
+      isUpdateMode: false
+    };
+  }
+
+  // Nếu changes_requested (Fresh Changes Requested) -> Cho phép edit lại và resubmit
+  let freshChangesRequested;
+  if (isObjectId) {
+    freshChangesRequested = await CourseRevision.findOne({
+      _id: slug,
+      instructor: instructorId,
+      course: null,
+      status: 'changes_requested'
+    }).lean();
+  } else {
+    freshChangesRequested = await CourseRevision.findOne({
+      'data.slug': slug,
+      instructor: instructorId,
+      course: null,
+      status: 'changes_requested'
+    }).lean();
+  }
+
+  if (freshChangesRequested) {
+    return {
+      ...freshChangesRequested.data,
+      _id: freshChangesRequested._id,
+      revisionId: freshChangesRequested._id,
+      status: 'changes_requested',
+      reviewMessage: freshChangesRequested.reviewMessage || null,
+      reviewHistory: freshChangesRequested.reviewHistory || [],
       isUpdateMode: false
     };
   }
@@ -891,8 +903,10 @@ export const getCourseForEdit = async (slug, instructorId) => {
  */
 export const createOrUpdateRevision = async (courseData, thumbnailFile, instructorId) => {
   // 1. Xử lý Thumbnail
-  let thumbnailUrl = courseData.thumbnailUrl || ''; // Nếu edit thì có thể có URL cũ
-  if (thumbnailFile) {
+  // Ưu tiên: thumbnailUrl từ body (S3 CDN URL) -> file upload qua server (Cloudinary fallback) -> URL cũ
+  let thumbnailUrl = courseData.thumbnailUrl || courseData.thumbnail || '';
+  if (thumbnailFile && !thumbnailUrl) {
+    // Fallback: nếu thumbnail gửi qua FormData file (legacy)
     const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
     thumbnailUrl = uploadResult.secure_url;
   }
@@ -954,9 +968,8 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     // CASE 2 & 3: Edit course đã publish -> Giữ nguyên slug của course gốc
     const liveCourse = await Course.findById(courseData.courseId).select('slug');
     if (liveCourse) {
-      finalSlug = liveCourse.slug; // Slug không đổi
+      finalSlug = liveCourse.slug; // Slug không đổi khi update
     } else {
-      // Fallback nếu không tìm thấy course (không nên xảy ra)
       finalSlug = courseData.slug || slugify(courseData.title, { lower: true, strict: true });
     }
   } else {
@@ -964,22 +977,34 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
 
     if (courseData.revisionId) {
       // ✨ Đang edit draft có sẵn -> Kiểm tra xem có cần update slug không
-      const existingRevision = await CourseRevision.findById(courseData.revisionId).select('data.slug data.title');
+      const existingRevision = await CourseRevision.findById(courseData.revisionId)
+        .select('data.slug data.title');
 
       if (existingRevision && existingRevision.data.title === courseData.title) {
         // Title không đổi -> Giữ nguyên slug cũ
         finalSlug = existingRevision.data.slug;
+      } else if (courseData.slug && courseData.slug.trim()) {
+        // ✨ Frontend đã generate slug (có timestamp) -> dùng luôn, consistent với S3 key
+        finalSlug = courseData.slug.trim();
       } else {
-        // Title đã đổi -> Tạo slug mới với timestamp để unique
+        // Fallback: Tạo slug mới
         const baseSlug = slugify(courseData.title, { lower: true, strict: true });
         finalSlug = `${baseSlug}-${Date.now()}`;
       }
     } else {
-      // ✨ Tạo draft mới lần đầu -> Tạo slug unique với timestamp
-      const baseSlug = slugify(courseData.title, { lower: true, strict: true });
-      finalSlug = `${baseSlug}-${Date.now()}`;
+      // ✨ Tạo draft mới lần đầu
+      if (courseData.slug && courseData.slug.trim()) {
+        // Frontend đã tạo slug trước khi gọi API (khi upload S3) -> Dùng slug đó
+        // Điều này đảm bảo S3 key và DB slug nhất quán với nhau
+        finalSlug = courseData.slug.trim();
+      } else {
+        // Fallback nếu frontend chưa tạo slug
+        const baseSlug = slugify(courseData.title, { lower: true, strict: true });
+        finalSlug = `${baseSlug}-${Date.now()}`;
+      }
     }
   }
+
 
   // 6. Chuẩn bị Data Object cho Revision
   const revisionData = {
@@ -1019,10 +1044,12 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
   }
 
   // 6. LOGIC SAVE/UPDATE QUAN TRỌNG
-  // Check xem có draft/rejected nào đang tồn tại không để update đè lên, tránh spam record
+  // Check xem có draft/rejected/changes_requested nào đang tồn tại không để update đè lên, tránh spam record
   const filter = {
     instructor: instructorId,
-    status: { $in: ['draft', 'rejected'] } // Cho phép update cả draft và rejected
+    // ✅ Fix Bug 2: thêm 'changes_requested' vào filter
+    // Khi instructor submit lại sau yêu cầu sửa, phải tìm được record cũ để update thành 'pending'
+    status: { $in: ['draft', 'rejected', 'changes_requested'] }
   };
 
   // Nếu có courseId (Case 2: Update Course Live)
@@ -1033,22 +1060,34 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     filter._id = courseData.revisionId;
     filter.course = null;
   } else {
-    // ✨ Case 1: Fresh Draft lần đầu tạo -> Không filter gì thêm, sẽ tạo mới
+    // ✨ Case 1: Fresh Draft lần đầu tạo -> Tìm theo instructor + course null + slug khớp
+    // (nếu slug đã được frontend generate, dùng để tránh tạo mới)
     filter.course = null;
-    // Không filter theo slug nữa vì fresh draft không có slug
-    // Mỗi lần save draft mới sẽ tạo revision mới (hoặc có thể dùng logic khác)
+    if (courseData.slug) {
+      filter['data.slug'] = courseData.slug;
+    }
   }
+
+  // ReviewMessage logic:
+  // - Khi submit (pending): Set message reviewer muốn nói với admin
+  // - Khi save draft: Xóa reviewMessage (không nên giữ message cũ)
+  // - Khi là changes_requested -> pending (resubmit): Xóa reviewMessage cũ của admin
+  const newReviewMessage = courseData.status === 'pending'
+    ? (courseData.messageToReviewer || '')
+    : ''; // Xóa message khi save draft
 
   // Thực hiện Upsert (Tìm thấy thì update, không thì tạo mới)
   const updatedRevision = await CourseRevision.findOneAndUpdate(
     filter,
     {
       instructor: instructorId,
-      course: courseData.courseId || null, // Nếu null thì là fresh draft
+      course: courseData.courseId || null,
       status: courseData.status || 'draft',
-      version: nextVersion, // Version của bản Revision = Version Course gốc + 1
+      version: nextVersion,
       data: revisionData,
-      reviewMessage: courseData.status === 'pending' ? (courseData.messageToReviewer || '') : '' // Clear message nếu save draft
+      reviewMessage: newReviewMessage,
+      // ✅ Xóa submittedAt cũ khi save draft, cập nhật khi submit
+      ...(courseData.status === 'pending' ? { submittedAt: new Date() } : {})
     },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
@@ -1073,59 +1112,76 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
 };
 
 /**
- * Xóa khóa học (Xử lý cả 3 trường hợp A, B, C)
+ * Xóa khóa học — xử lý đủ 4 trường hợp:
+ *
+ * Case A  : Fresh draft revision (course: null) — xóa vĩnh viễn revision
+ * Case A2 : Rejected/changes_requested chưa link course — xóa vĩnh viễn
+ * Case B  : Course đã publish, 0 học viên — Hidden
+ * Case C  : Course đã publish, đã có học viên — Archived
+ * Case D  : Revision gắn course đã publish đang rejected/draft — xóa revision
  */
 export const deleteCourse = async (id, instructorId) => {
-  // BƯỚC 1: Tìm trong Collection COURSE trước (Cho Case B & C)
-  const course = await Course.findOne({ _id: id, instructor: instructorId });
-
-  if (course) {
-    // --- TRƯỜNG HỢP C: Đã có học viên -> Archive ---
-    if (course.studentsCount > 0) {
-      // Nếu đã archived rồi thì không cần làm gì hoặc báo lỗi tùy bạn
-      if (course.status === 'archived') {
-        return { message: "Khóa học đã được lưu trữ.", action: "archived" };
-      }
-
-      course.status = 'archived';
-      await course.save();
-      return {
-        message: "Khóa học đã chuyển sang trạng thái Lưu trữ (Archived) vì đã có học viên.",
-        action: "archived"
-      };
-    }
-
-    // --- TRƯỜNG HỢP B: Chưa có học viên -> Hidden ---
-    else {
-      // Logic: Ẩn khóa học khỏi marketplace
-      course.status = 'hidden';
-      await course.save();
-      return {
-        message: "Khóa học đã được ẩn (Hidden).",
-        action: "hidden"
-      };
-    }
-  }
-
-  // BƯỚC 2: Nếu không tìm thấy Course, tìm trong REVISION (Cho Case A - Fresh Draft)
-  // Lưu ý: Fresh Draft có course: null
+  // BƯỚC 1: Tìm Revision trước (ưu tiên để xử lý mọi loại revision)
   const revision = await CourseRevision.findOne({
     _id: id,
     instructor: instructorId,
-    course: null // Đảm bảo đây là fresh draft chưa link tới course nào
   });
 
   if (revision) {
-    // --- TRƯỜNG HỢP A: Course Draft (Chưa từng publish) ---
-    await CourseRevision.findByIdAndDelete(id);
+    // Không cho xóa khi revision đang pending (admin đang duyệt)
+    if (revision.status === 'pending') {
+      const err = new Error('Không thể xóa khi khóa học đang chờ Admin duyệt.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Case A / A2: Fresh revision chưa từng publish (course: null) — xóa vĩnh viễn
+    if (!revision.course) {
+      await CourseRevision.findByIdAndDelete(id);
+      return {
+        message: 'Đã xóa vĩnh viễn bản nháp khóa học.',
+        action: 'deleted',
+      };
+    }
+
+    // Case D: Revision gắn với course đã publish (rejected/changes_requested/draft)
+    // Chỉ xóa revision, giữ nguyên course gốc đang publish
+    if (['draft', 'rejected', 'changes_requested', 'archived'].includes(revision.status)) {
+      await CourseRevision.findByIdAndDelete(id);
+      return {
+        message: 'Đã xóa bản chỉnh sửa. Khóa học gốc vẫn được giữ nguyên.',
+        action: 'revision_deleted',
+      };
+    }
+  }
+
+  // BƯỚC 2: Tìm trong Course collection (course đã publish)
+  const course = await Course.findOne({ _id: id, instructor: instructorId });
+
+  if (course) {
+    // Case C: Đã có học viên → Archive
+    if ((course.studentsCount || 0) > 0) {
+      if (course.status === 'archived') {
+        return { message: 'Khóa học đã được lưu trữ.', action: 'archived' };
+      }
+      course.status = 'archived';
+      await course.save();
+      return {
+        message: 'Khóa học đã chuyển sang Lưu trữ (Archived) vì đã có học viên.',
+        action: 'archived',
+      };
+    }
+
+    // Case B: Chưa có học viên → Hidden
+    course.status = 'hidden';
+    await course.save();
     return {
-      message: "Đã xóa vĩnh viễn bản nháp khóa học.",
-      action: "deleted"
+      message: 'Khóa học đã được ẩn (Hidden) khỏi marketplace.',
+      action: 'hidden',
     };
   }
 
-  // Nếu không tìm thấy ở cả 2 nơi
-  const error = new Error("Không tìm thấy khóa học hoặc bạn không có quyền xóa.");
+  const error = new Error('Không tìm thấy khóa học hoặc bạn không có quyền xóa.');
   error.statusCode = 404;
   throw error;
 };

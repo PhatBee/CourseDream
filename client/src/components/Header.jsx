@@ -135,7 +135,7 @@ const Header = () => {
                   <ShoppingCart className="h-5 w-5 text-gray-700" />
                   {/* Hiển thị số lượng dynamic */}
                   {totalItems > 0 && (
-                    <span className="absolute -right-1 -top-1 rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">
+                    <span className="absolute -right-1 -top-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
                       {totalItems}
                     </span>
                   )}

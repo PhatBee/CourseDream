@@ -1,9 +1,9 @@
 import multer from 'multer';
 
-// Lưu trữ file trong bộ nhớ (RAM) dưới dạng Buffer để upload thẳng lên Cloudinary
+// Lưu trữ file trong bộ nhớ (RAM) dưới dạng Buffer
 const storage = multer.memoryStorage();
 
-// Kiểm tra định dạng file
+// ===== IMAGE FILTER (thumbnail, avatar, etc.) =====
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image')) {
         cb(null, true);
@@ -12,29 +12,19 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-// Kiểm tra định dạng file video
-const fileFilterVideo = (req, file, cb) => {
-    if (file.mimetype.startsWith('video')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Chỉ được phép upload file video!'), false);
-    }
-};
-
-// Filter Document (PDF, Word, Text, Zip...)
+// ===== DOCUMENT FILTER (PDF, Word, Excel, Zip, Text) =====
 const fileFilterDocument = (req, file, cb) => {
-    // Danh sách các mime type cho phép ( có thể mở rộng thêm)
     const allowedMimeTypes = [
-        'application/pdf', // .pdf
-        'application/msword', // .doc
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-        'text/plain', // .txt
-        'application/zip', // .zip
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'application/zip',
         'application/x-zip-compressed',
-        'application/vnd.ms-powerpoint', // .ppt
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-        'application/vnd.ms-excel', // .xls
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // .xlsx
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ];
 
     if (allowedMimeTypes.includes(file.mimetype)) {
@@ -44,20 +34,22 @@ const fileFilterDocument = (req, file, cb) => {
     }
 };
 
-export const uploadVideo = multer({
-    storage,
-    fileFilterVideo,
-    limits: { fileSize: 500 * 1024 * 1024 }, // Giới hạn 500MB
-})
+// ===== MULTER EXPORTS =====
 
+// Dùng cho upload ảnh thumbnail (qua server -> Cloudinary)
 export const upload = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 2 * 1024 * 1024 }, // Giới hạn 2MB
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
+// Dùng cho upload tài liệu resource lên S3 (thông qua server nếu cần)
 export const uploadDocument = multer({
     storage,
-    fileFilterDocument,
-    limits: { fileSize: 10 * 1024 * 1024 }, // Giới hạn 10MB
+    fileFilter: fileFilterDocument,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
 });
+
+// NOTE: Video upload không qua server nữa.
+// Video được upload TRỰC TIẾP từ Browser lên S3 qua Presigned URL.
+// Backend chỉ cấp presigned URL, không cần xử lý file video.

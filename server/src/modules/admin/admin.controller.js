@@ -231,3 +231,93 @@ export const reviewInstructorApplication = async (req, res, next) => {
         next(error);
     }
 };
+
+// ======================== COURSE STATUS MANAGEMENT ========================
+
+/**
+ * CASE 3: Yêu cầu Instructor chỉnh sửa
+ * @route   PATCH /api/admin/revisions/:revisionId/request-changes
+ */
+export const requestRevisionChanges = async (req, res, next) => {
+  try {
+    const { revisionId } = req.params;
+    const { reviewMessage } = req.body;
+    const adminId = req.user._id;
+
+    if (!reviewMessage || !reviewMessage.trim()) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập phản hồi chi tiết cho instructor.' });
+    }
+
+    const result = await adminService.requestRevisionChanges(revisionId, reviewMessage, adminId);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * CASE 7: Unpublish khóa học
+ * @route   PATCH /api/admin/courses/:courseId/unpublish
+ */
+export const unpublishCourse = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const { reason } = req.body;
+    const adminId = req.user._id;
+
+    const result = await adminService.unpublishCourse(courseId, adminId, reason);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * CASE 8: Suspend khóa học (vi phạm chính sách)
+ * @route   PATCH /api/admin/courses/:courseId/suspend
+ */
+export const suspendCourse = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const { reason } = req.body;
+    const adminId = req.user._id;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập lý do đình chỉ.' });
+    }
+
+    const result = await adminService.suspendCourse(courseId, adminId, reason);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Restore khóa học từ suspended
+ * @route   PATCH /api/admin/courses/:courseId/restore
+ */
+export const restoreSuspendedCourse = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const adminId = req.user._id;
+
+    const result = await adminService.restoreSuspendedCourse(courseId, adminId);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Lấy danh sách tất cả courses (có filter status) cho Admin quản lý
+ * @route   GET /api/admin/courses
+ */
+export const getAllCourses = async (req, res, next) => {
+  try {
+    const result = await adminService.getAllCoursesForAdmin(req.query);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};

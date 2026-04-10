@@ -2,10 +2,10 @@ import React from 'react';
 import { Users, Clock, Layers, PlayCircle, BarChart2 } from 'lucide-react';
 
 const FeaturesCard = ({ course }) => {
-  const { 
-    studentsCount = 0, 
-    totalHours = 0, 
-    sections = [], 
+  const {
+    studentsCount = 0,
+    totalHours = 0,
+    sections = [],
     totalLectures = 0,
     level = 'beginner'
   } = course;
@@ -25,7 +25,7 @@ const FeaturesCard = ({ course }) => {
         <ul className="space-y-3">
           {features.map((item, index) => (
             <li key={index} className="flex items-center text-sm text-gray-700">
-              <span className="text-blue-600 mr-3">{item.icon}</span>
+              <span className="text-rose-600 mr-3">{item.icon}</span>
               {item.text}
             </li>
           ))}

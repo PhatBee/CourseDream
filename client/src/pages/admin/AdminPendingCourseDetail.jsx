@@ -1,423 +1,690 @@
+// src/pages/admin/AdminPendingCourseDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-    getAdminPendingDetail,
-    adminApproveCourse,
-    adminRejectCourse
+  getAdminPendingDetail,
+  adminApproveCourse,
+  adminRejectCourse,
+  adminRequestChanges
 } from '../../features/admin/adminSlice';
-import { ChevronDown, ChevronUp, Play, X, CheckCircle } from 'lucide-react';
-import VideoPreviewModal from '../../components/common/VideoPreviewModal';
+import {
+  ChevronDown, ChevronUp, Play, X, CheckCircle, ArrowLeft,
+  User, Tag, DollarSign, Globe, Layers, Clock, Video,
+  BookOpen, Award, List, Cloud
+} from 'lucide-react';
 import { createPortal } from 'react-dom';
 
-// Approve Confirmation Modal Component
+// ======================== MODAL COMPONENTS ========================
+
 const ApproveModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
-    if (!isOpen) return null;
-
-    const modalContent = (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
-            <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined}></div>
-
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative z-10 animate-scaleIn text-center">
-                <button
-                    onClick={onClose}
-                    disabled={isLoading}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-                >
-                    <X size={20} />
-                </button>
-
-                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="text-green-500 w-8 h-8" />
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Xác nhận duyệt khóa học</h3>
-                <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-                    Bạn có chắc chắn muốn duyệt khóa học này? Khóa học sẽ được xuất bản và hiển thị công khai.
-                </p>
-
-                <div className="flex items-center justify-center gap-3">
-                    <button
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="px-6 py-2.5 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors min-w-[100px] disabled:opacity-50"
-                    >
-                        Hủy
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        disabled={isLoading}
-                        className="px-6 py-2.5 rounded-full bg-green-500 text-white font-medium hover:bg-green-600 shadow-lg shadow-green-200 transition-all transform hover:scale-105 min-w-[140px] flex justify-center items-center disabled:transform-none disabled:opacity-70"
-                    >
-                        {isLoading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : 'Xác nhận duyệt'}
-                    </button>
-                </div>
-            </div>
+  if (!isOpen) return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined} />
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 relative z-10 text-center">
+        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <CheckCircle size={28} className="text-emerald-500" />
         </div>
-    );
-
-    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Xác nhận duyệt</h3>
+        <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+          Khóa học sẽ được xuất bản ngay lập tức và hiển thị trên marketplace.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+          >
+            {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : '✅ Duyệt ngay'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
 };
 
-// Reject Input Modal Component
 const RejectModal = ({ isOpen, onClose, onConfirm, isLoading, rejectMessage, setRejectMessage }) => {
-    if (!isOpen) return null;
-
-    const modalContent = (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
-            <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined}></div>
-
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative z-10 animate-scaleIn">
-                <button
-                    onClick={onClose}
-                    disabled={isLoading}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-                >
-                    <X size={20} />
-                </button>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Từ chối khóa học</h3>
-                <p className="text-gray-600 mb-4 text-sm">
-                    Vui lòng nhập lý do từ chối để giảng viên có thể chỉnh sửa:
-                </p>
-
-                <textarea
-                    value={rejectMessage}
-                    onChange={(e) => setRejectMessage(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-3 mb-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="Nhập lý do từ chối..."
-                    disabled={isLoading}
-                />
-
-                <div className="flex justify-end gap-3">
-                    <button
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="px-6 py-2.5 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                        Hủy
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        disabled={isLoading || !rejectMessage.trim()}
-                        className="px-6 py-2.5 rounded-full bg-red-500 text-white font-medium hover:bg-red-600 shadow-lg shadow-red-200 transition-all transform hover:scale-105 flex justify-center items-center min-w-[140px] disabled:transform-none disabled:opacity-50"
-                    >
-                        {isLoading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : 'Xác nhận từ chối'}
-                    </button>
-                </div>
-            </div>
+  if (!isOpen) return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined} />
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative z-10">
+        <button onClick={onClose} disabled={isLoading} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+          <X size={20} />
+        </button>
+        <h3 className="text-xl font-bold text-gray-900 mb-1">Từ chối khóa học</h3>
+        <p className="text-gray-500 text-sm mb-4">Nhập lý do để giảng viên có thể chỉnh sửa và nộp lại:</p>
+        <textarea
+          value={rejectMessage}
+          onChange={(e) => setRejectMessage(e.target.value)}
+          className="w-full border border-gray-200 rounded-xl p-3 mb-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm resize-none"
+          placeholder="Ví dụ: Nội dung chưa đầy đủ, cần bổ sung bài học về XYZ..."
+          disabled={isLoading}
+        />
+        <div className="flex gap-3">
+          <button onClick={onClose} disabled={isLoading} className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50">
+            Hủy
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading || !rejectMessage.trim()}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : '❌ Từ chối'}
+          </button>
         </div>
-    );
-
-    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
+      </div>
+    </div>,
+    document.body
+  );
 };
 
-const AdminPendingCourseDetail = () => {
-    const { revisionId } = useParams();
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
+// ======================== CHANGES REQUESTED MODAL (CASE 3) ========================
+const ChangesRequestedModal = ({ isOpen, onClose, onConfirm, isLoading, value, onChange }) => {
+  if (!isOpen) return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined} />
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative z-10">
+        <button onClick={onClose} disabled={isLoading} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+          <X size={20} />
+        </button>
 
-    const { adminPendingDetail, isLoading, adminActionLoading } = useSelector(
-        (state) => state.admin
-    );
-
-    const [showApproveModal, setShowApproveModal] = useState(false);
-    const [showRejectModal, setShowRejectModal] = useState(false);
-    const [rejectMessage, setRejectMessage] = useState('');
-    const [expandedSections, setExpandedSections] = useState([]);
-    const [videoPreview, setVideoPreview] = useState(null);
-
-    useEffect(() => {
-        dispatch(getAdminPendingDetail(revisionId));
-    }, [dispatch, revisionId]);
-
-    const handleApprove = async () => {
-        const result = await dispatch(adminApproveCourse(revisionId));
-        if (result.type.endsWith('/fulfilled')) {
-            setShowApproveModal(false);
-            navigate('/admin/courses');
-        }
-    };
-
-    const handleReject = async () => {
-        if (!rejectMessage.trim()) return;
-
-        const result = await dispatch(adminRejectCourse({ revisionId, reviewMessage: rejectMessage }));
-        if (result.type.endsWith('/fulfilled')) {
-            setShowRejectModal(false);
-            navigate('/admin/courses');
-        }
-    };
-
-    const toggleSection = (index) => {
-        setExpandedSections(prev =>
-            prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-        );
-    };
-
-    const handleVideoPreview = (videoUrl) => {
-        setVideoPreview(videoUrl);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-        );
-    }
-
-    if (!adminPendingDetail) return null;
-
-    const { revision, originalCourse, type } = adminPendingDetail;
-
-    return (
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
-            <div className="bg-white rounded-lg shadow-md p-6">
-                {/* Header */}
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <h1 className="text-3xl font-bold mb-2">{revision.title}</h1>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                Giảng viên: {revision.instructor?.name}
-                            </span>
-                            <span>Email: {revision.instructor?.email}</span>
-                        </div>
-
-                        <div className="mt-2">
-                            {type === 'new' ? (
-                                <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
-                                    Khóa học mới
-                                </span>
-                            ) : (
-                                <span className="px-3 py-1 bg-rose-100 text-rose-800 text-sm font-semibold rounded-full">
-                                    Cập nhật khóa học
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => navigate('/admin/courses')}
-                            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-                        >
-                            Quay lại
-                        </button>
-                        <button
-                            onClick={() => setShowApproveModal(true)}
-                            disabled={adminActionLoading}
-                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-                        >
-                            Duyệt
-                        </button>
-                        <button
-                            onClick={() => setShowRejectModal(true)}
-                            disabled={adminActionLoading}
-                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-                        >
-                            Từ chối
-                        </button>
-                    </div>
-                </div>
-
-                {/* Thumbnail */}
-                {revision.thumbnail && (
-                    <div className="mb-6">
-                        <img
-                            src={revision.thumbnail}
-                            alt={revision.title}
-                            className="w-full max-h-96 object-cover rounded-lg"
-                        />
-                    </div>
-                )}
-
-                {/* Course Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <h3 className="font-semibold text-lg mb-2">Thông tin cơ bản</h3>
-                        <div className="space-y-2 text-sm">
-                            <p><strong>Giá gốc:</strong> {revision.price?.toLocaleString('vi-VN')} VNĐ</p>
-                            <p><strong>Giá khuyến mãi:</strong> {revision.priceDiscount?.toLocaleString('vi-VN')} VNĐ</p>
-                            <p><strong>Cấp độ:</strong> {revision.level}</p>
-                            <p><strong>Ngôn ngữ:</strong> {revision.language}</p>
-                            <p><strong>Slug:</strong> {revision.slug}</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className="font-semibold text-lg mb-2">Danh mục</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {revision.categories?.map((cat) => (
-                                <span
-                                    key={cat._id}
-                                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                                >
-                                    {cat.name}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Descriptions */}
-                <div className="mb-6">
-                    <h3 className="font-semibold text-lg mb-2">Mô tả ngắn</h3>
-                    <p className="text-gray-700">{revision.shortDescription}</p>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="font-semibold text-lg mb-2">Mô tả chi tiết</h3>
-                    <div
-                        className="prose max-w-none text-gray-700"
-                        dangerouslySetInnerHTML={{ __html: revision.description }}
-                    />
-                </div>
-
-                {/* Learning Outcomes */}
-                {revision.learnOutcomes?.length > 0 && (
-                    <div className="mb-6">
-                        <h3 className="font-semibold text-lg mb-2">Bạn sẽ học được gì?</h3>
-                        <ul className="list-disc list-inside space-y-1">
-                            {revision.learnOutcomes.map((outcome, index) => (
-                                <li key={index} className="text-gray-700">{outcome}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Requirements */}
-                {revision.requirements?.length > 0 && (
-                    <div className="mb-6">
-                        <h3 className="font-semibold text-lg mb-2">Yêu cầu</h3>
-                        <ul className="list-disc list-inside space-y-1">
-                            {revision.requirements.map((req, index) => (
-                                <li key={index} className="text-gray-700">{req}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Curriculum with Expandable Sections */}
-                {revision.sections?.length > 0 && (
-                    <div className="mb-6">
-                        <h3 className="font-semibold text-lg mb-4">
-                            Nội dung khóa học ({revision.sections.length} sections)
-                        </h3>
-                        <div className="space-y-2">
-                            {revision.sections.map((section, sectionIndex) => (
-                                <div key={sectionIndex} className="border rounded-lg overflow-hidden">
-                                    {/* Section Header - Clickable */}
-                                    <button
-                                        onClick={() => toggleSection(sectionIndex)}
-                                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                                    >
-                                        <div className="flex-1">
-                                            <h4 className="font-semibold">
-                                                Section {section.order}: {section.title}
-                                            </h4>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                {section.lectures?.length || 0} lectures
-                                            </p>
-                                        </div>
-                                        {expandedSections.includes(sectionIndex) ? (
-                                            <ChevronUp className="w-5 h-5 text-gray-500" />
-                                        ) : (
-                                            <ChevronDown className="w-5 h-5 text-gray-500" />
-                                        )}
-                                    </button>
-
-                                    {/* Section Content - Expandable */}
-                                    {expandedSections.includes(sectionIndex) && section.lectures?.length > 0 && (
-                                        <ul className="divide-y">
-                                            {section.lectures.map((lecture, lectureIndex) => (
-                                                <li key={lectureIndex} className="p-3 hover:bg-gray-50 flex items-center justify-between">
-                                                    <div className="flex items-center gap-3 flex-1">
-                                                        <Play className="w-4 h-4 text-gray-400" />
-                                                        <div className="flex-1">
-                                                            <span className="text-sm font-medium">{lecture.title}</span>
-                                                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                                                                <span>{Math.floor(lecture.duration / 60)}:{(lecture.duration % 60).toString().padStart(2, '0')}</span>
-                                                                {lecture.isPreviewFree && (
-                                                                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded">
-                                                                        Preview
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {lecture.videoUrl && (
-                                                        <button
-                                                            onClick={() => handleVideoPreview(lecture.videoUrl)}
-                                                            className="px-3 py-1 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors"
-                                                        >
-                                                            Xem video
-                                                        </button>
-                                                    )}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* So sánh với bản gốc (nếu là update) */}
-                {type === 'update' && originalCourse && (
-                    <div className="mb-6 border-t pt-6">
-                        <h3 className="font-semibold text-lg mb-4 text-orange-600">
-                            📋 Thông tin khóa học hiện tại (để so sánh)
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-sm"><strong>Tiêu đề cũ:</strong> {originalCourse.title}</p>
-                            <p className="text-sm"><strong>Giá cũ:</strong> {originalCourse.price?.toLocaleString('vi-VN')} VNĐ</p>
-                            <p className="text-sm"><strong>Version cũ:</strong> {originalCourse.version}</p>
-                            <p className="text-sm"><strong>Số sections cũ:</strong> {originalCourse.sections?.length || 0}</p>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Modals */}
-            <ApproveModal
-                isOpen={showApproveModal}
-                onClose={() => setShowApproveModal(false)}
-                onConfirm={handleApprove}
-                isLoading={adminActionLoading}
-            />
-
-            <RejectModal
-                isOpen={showRejectModal}
-                onClose={() => {
-                    setShowRejectModal(false);
-                    setRejectMessage('');
-                }}
-                onConfirm={handleReject}
-                isLoading={adminActionLoading}
-                rejectMessage={rejectMessage}
-                setRejectMessage={setRejectMessage}
-            />
-
-            {/* Video Preview Modal */}
-            {videoPreview && (
-                <VideoPreviewModal
-                    videoUrl={videoPreview}
-                    onClose={() => setVideoPreview(null)}
-                />
-            )}
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-xl">⚠️</span>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Yêu cầu chỉnh sửa</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Instructor sẽ nhận thông báo và có thể sửa lại</p>
+          </div>
         </div>
+
+        <p className="text-gray-500 text-sm mb-3">Mô tả cụ thể những điểm cần sửa:</p>
+        <textarea
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="w-full border border-orange-200 rounded-xl p-3 mb-3 min-h-[140px] focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm resize-none bg-orange-50/30"
+          placeholder="Ví dụ: Bài 3 thiếu phần giải thích.  Video chưa có phụ đề..."
+          disabled={isLoading}
+        />
+
+        {/* Chú ý: khác với Từ chối */}
+        <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 mb-4 text-xs text-orange-700">
+          ⚠️ <strong>Khác với "Từ chối":</strong> Instructor vẫn có thể chỉnh sửa và gửi lại mà không cần tạo revision mới. Khóa học chưa bị từ chối hoàn toàn.
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading || !value.trim()}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isLoading
+              ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : '⚠️ Gửi yêu cầu sửa'
+            }
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// ======================== CLOUDFRONT VIDEO PLAYER ========================
+const CloudFrontVideoPlayer = ({ url, onClose }) => {
+  const isCloudFront = url?.includes('cloudfront.net');
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+      <div className="absolute inset-0" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-4xl">
+        <button onClick={onClose} className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 text-sm">
+          <X size={18} /> Đóng
+        </button>
+        {isCloudFront ? (
+          <video
+            src={url}
+            controls
+            autoPlay
+            className="w-full rounded-2xl shadow-2xl max-h-[80vh]"
+          />
+        ) : (
+          <iframe
+            src={url.replace('watch?v=', 'embed/')}
+            className="w-full aspect-video rounded-2xl shadow-2xl"
+            allowFullScreen
+            title="Video preview"
+          />
+        )}
+        {isCloudFront && (
+          <div className="flex items-center gap-2 mt-3 justify-center">
+            <Cloud size={14} className="text-blue-400" />
+            <span className="text-white/60 text-xs">Phát từ AWS CloudFront CDN</span>
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// Info Item Component
+const InfoItem = ({ icon: Icon, label, value }) => (
+  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+      <Icon size={15} className="text-rose-500" />
+    </div>
+    <div>
+      <p className="text-xs text-gray-400 font-medium">{label}</p>
+      <p className="text-sm font-semibold text-gray-800 mt-0.5">{value || 'N/A'}</p>
+    </div>
+  </div>
+);
+
+// ======================== MAIN COMPONENT ========================
+const AdminPendingCourseDetail = () => {
+  const { revisionId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { adminPendingDetail, isLoading, adminActionLoading } = useSelector(state => state.admin);
+
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showChangesModal, setShowChangesModal] = useState(false); // CASE 3
+  const [rejectMessage, setRejectMessage] = useState('');
+  const [changesMessage, setChangesMessage] = useState(''); // CASE 3 message
+  const [expandedSections, setExpandedSections] = useState([0]);
+  const [videoPreview, setVideoPreview] = useState(null);
+
+  useEffect(() => {
+    dispatch(getAdminPendingDetail(revisionId));
+  }, [dispatch, revisionId]);
+
+  const handleApprove = async () => {
+    const result = await dispatch(adminApproveCourse(revisionId));
+    if (result.type.endsWith('/fulfilled')) {
+      setShowApproveModal(false);
+      navigate('/admin/pending-courses');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectMessage.trim()) return;
+    const result = await dispatch(adminRejectCourse({ revisionId, reviewMessage: rejectMessage }));
+    if (result.type.endsWith('/fulfilled')) {
+      setShowRejectModal(false);
+      navigate('/admin/pending-courses');
+    }
+  };
+
+  // CASE 3: Yêu cầu sửa
+  const handleRequestChanges = async () => {
+    if (!changesMessage.trim()) return;
+    const result = await dispatch(adminRequestChanges({ revisionId, reviewMessage: changesMessage }));
+    if (result.type.endsWith('/fulfilled')) {
+      setShowChangesModal(false);
+      navigate('/admin/pending-courses');
+    }
+  };
+
+  const toggleSection = (idx) => {
+    setExpandedSections(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3">
+        <div className="w-10 h-10 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-gray-500">Đang tải chi tiết...</p>
+      </div>
     );
+  }
+
+  if (!adminPendingDetail) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400">Không tìm thấy dữ liệu</p>
+    </div>
+  );
+
+  const { revision, originalCourse, type } = adminPendingDetail;
+
+  const formatVND = (num) => (num || 0).toLocaleString('vi-VN') + '₫';
+  const isVideoS3 = (url) => url && url.includes('cloudfront.net');
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans">
+
+      {/* Top Bar */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/admin/courses')}
+              className="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
+            >
+              <ArrowLeft size={18} /> Quay lại
+            </button>
+            <div className="w-px h-5 bg-gray-200" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-bold text-gray-900 text-lg line-clamp-1 max-w-md">{revision.title}</h1>
+                {type === 'new' ? (
+                  <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">Mới</span>
+                ) : (
+                  <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full border border-amber-200">Cập nhật</span>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Giảng viên: <span className="font-medium text-gray-600">{revision.instructor?.name}</span> • {revision.instructor?.email}
+              </p>
+            </div>
+          </div>
+
+          {/* 3 ACTION BUTTONS: Dụt | Yêu cầu sửa | Từ chối */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowApproveModal(true)}
+              disabled={adminActionLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-600 transition-colors shadow-sm text-sm disabled:opacity-50"
+            >
+              <CheckCircle size={15} /> Duyệt
+            </button>
+            <button
+              onClick={() => setShowChangesModal(true)}
+              disabled={adminActionLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors shadow-sm text-sm disabled:opacity-50"
+            >
+              ⚠️ Yêu cầu sửa
+            </button>
+            <button
+              onClick={() => setShowRejectModal(true)}
+              disabled={adminActionLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-xl font-semibold hover:bg-rose-700 transition-colors shadow-sm text-sm disabled:opacity-50"
+            >
+              <X size={15} /> Từ chối
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* ===== LEFT COLUMN: Main Content ===== */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Thumbnail */}
+            {revision.thumbnail && (
+              <div className="relative rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                <img crossorigin="anonymous"
+                  src={revision.thumbnail}
+                  alt={revision.title}
+                  className="w-full aspect-video object-cover"
+                />
+                {revision.thumbnail.includes('cloudfront.net') && (
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
+                    <Cloud size={11} /> AWS CloudFront
+                  </div>
+                )}
+                {(revision.previewUrl) && (
+                  <button
+                    onClick={() => setVideoPreview(revision.previewUrl)}
+                    className="absolute inset-0 flex items-center justify-center group"
+                  >
+                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                      <Play size={24} className="text-rose-600 ml-1" />
+                    </div>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Descriptions */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <BookOpen size={18} className="text-rose-500" /> Mô tả khóa học
+              </h2>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">{revision.shortDescription}</p>
+              {revision.description && (
+                <div
+                  className="prose prose-sm max-w-none text-gray-600"
+                  dangerouslySetInnerHTML={{ __html: revision.description }}
+                />
+              )}
+            </div>
+
+            {/* Learn Outcomes */}
+            {revision.learnOutcomes?.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Award size={18} className="text-rose-500" /> Học viên sẽ học được
+                </h2>
+                <ul className="space-y-2">
+                  {revision.learnOutcomes.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <CheckCircle size={15} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Requirements */}
+            {revision.requirements?.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <List size={18} className="text-rose-500" /> Yêu cầu trước khi học
+                </h2>
+                <ul className="space-y-2">
+                  {revision.requirements.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0 mt-2" />
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Curriculum */}
+            {revision.sections?.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Layers size={18} className="text-rose-500" /> Nội dung khóa học
+                  <span className="text-sm font-normal text-gray-400">
+                    ({revision.sections.length} sections •{' '}
+                    {revision.sections.reduce((acc, s) => acc + (s.lectures?.length || 0), 0)} bài học)
+                  </span>
+                </h2>
+
+                <div className="space-y-3">
+                  {revision.sections.map((section, sIdx) => (
+                    <div key={sIdx} className="border border-gray-100 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => toggleSection(sIdx)}
+                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-lg bg-rose-100 flex items-center justify-center text-xs font-bold text-rose-600">
+                            {sIdx + 1}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 text-sm">{section.title}</h4>
+                            <p className="text-xs text-gray-400 mt-0.5">{section.lectures?.length || 0} bài học</p>
+                          </div>
+                        </div>
+                        {expandedSections.includes(sIdx)
+                          ? <ChevronUp size={18} className="text-gray-400" />
+                          : <ChevronDown size={18} className="text-gray-400" />}
+                      </button>
+
+                      {expandedSections.includes(sIdx) && section.lectures?.length > 0 && (
+                        <ul className="divide-y divide-gray-50">
+                          {section.lectures.map((lecture, lIdx) => (
+                            <li key={lIdx} className="p-3.5 hover:bg-gray-50 transition-colors">
+                              {/* Lecture Header Row */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                    <Play size={11} className="text-gray-400" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-800 truncate font-medium">{lecture.title}</p>
+                                    <div className="flex items-center gap-3 mt-0.5">
+                                      <span className="text-xs text-gray-400">
+                                        {Math.floor(lecture.duration / 60)}:{String(lecture.duration % 60).padStart(2, '0')}
+                                      </span>
+                                      {lecture.isPreviewFree && (
+                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-xs rounded font-medium">Preview</span>
+                                      )}
+                                      {lecture.videoUrl && isVideoS3(lecture.videoUrl) && (
+                                        <span className="flex items-center gap-1 text-xs text-blue-500">
+                                          <Cloud size={10} /> S3
+                                        </span>
+                                      )}
+                                      {lecture.resources?.length > 0 && (
+                                        <span className="text-xs text-indigo-500 font-medium">
+                                          📎 {lecture.resources.length} tài liệu
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                {lecture.videoUrl && (
+                                  <button
+                                    onClick={() => setVideoPreview(lecture.videoUrl)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex-shrink-0 ml-2"
+                                  >
+                                    <Video size={12} /> Xem video
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Resources Section */}
+                              {lecture.resources?.length > 0 && (
+                                <div className="mt-2 ml-9 space-y-1.5">
+                                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Tài liệu đính kèm</p>
+                                  {lecture.resources.map((res, rIdx) => (
+                                    <div key={rIdx} className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                                      {res.type === 'link' ? (
+                                        <>
+                                          <span className="text-indigo-400 flex-shrink-0">🔗</span>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium text-gray-700 truncate">{res.title || res.url}</p>
+                                            <a
+                                              href={res.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs text-indigo-600 hover:underline truncate block"
+                                            >
+                                              {res.url}
+                                            </a>
+                                          </div>
+                                          <a
+                                            href={res.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-shrink-0 text-xs px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                                          >
+                                            Mở
+                                          </a>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="text-indigo-400 flex-shrink-0">📄</span>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium text-gray-700 truncate">{res.title || 'Tài liệu'}</p>
+                                            {res.url && (
+                                              <span className="text-xs text-gray-400 truncate block">
+                                                {res.url.includes('cloudfront.net') ? '☁ AWS CloudFront' : res.url}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {res.url && (
+                                            <a
+                                              href={res.url}
+                                              download={res.title}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex-shrink-0 text-xs px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                                            >
+                                              Tải
+                                            </a>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Compare with original (Update mode) */}
+            {type === 'update' && originalCourse && (
+              <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6">
+                <h2 className="text-lg font-bold text-amber-800 mb-4 flex items-center gap-2">
+                  📋 So sánh với khóa học hiện tại
+                </h2>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-amber-600 font-semibold mb-1">HIỆN TẠI</p>
+                    <p className="text-amber-900"><strong>Tiêu đề:</strong> {originalCourse.title}</p>
+                    <p className="text-amber-900"><strong>Giá:</strong> {formatVND(originalCourse.price)}</p>
+                    <p className="text-amber-900"><strong>Phiên bản:</strong> v{originalCourse.version}</p>
+                    <p className="text-amber-900"><strong>Sections:</strong> {originalCourse.sections?.length || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-rose-600 font-semibold mb-1">PHIÊN BẢN MỚI</p>
+                    <p className="text-rose-900"><strong>Tiêu đề:</strong> {revision.title}</p>
+                    <p className="text-rose-900"><strong>Giá:</strong> {formatVND(revision.price)}</p>
+                    <p className="text-rose-900"><strong>Sections:</strong> {revision.sections?.length || 0}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ===== RIGHT COLUMN: Sidebar ===== */}
+          <div className="space-y-5">
+
+            {/* Course Info Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Thông tin khóa học</h3>
+              <div className="space-y-3">
+                <InfoItem icon={DollarSign} label="Giá gốc" value={formatVND(revision.price)} />
+                <InfoItem icon={DollarSign} label="Giá khuyến mãi" value={formatVND(revision.priceDiscount)} />
+                <InfoItem icon={Award} label="Cấp độ" value={revision.level} />
+                <InfoItem icon={Globe} label="Ngôn ngữ" value={revision.language} />
+                <InfoItem icon={Tag} label="Slug" value={revision.slug} />
+              </div>
+            </div>
+
+            {/* Instructor Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Giảng viên</h3>
+              <div className="flex items-center gap-3">
+                <img
+                  src={revision.instructor?.avatar || `https://ui-avatars.com/api/?name=${revision.instructor?.name}`}
+                  alt={revision.instructor?.name}
+                  className="w-12 h-12 rounded-xl object-cover border border-gray-100"
+                />
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">{revision.instructor?.name}</p>
+                  <p className="text-xs text-gray-400">{revision.instructor?.email}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories */}
+            {revision.categories?.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">Danh mục</h3>
+                <div className="flex flex-wrap gap-2">
+                  {revision.categories.map((cat) => (
+                    <span key={cat._id} className="px-3 py-1 bg-rose-50 text-rose-700 text-xs font-semibold rounded-full border border-rose-200">
+                      {cat.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions (Mobile) */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+              <button
+                onClick={() => setShowApproveModal(true)}
+                disabled={adminActionLoading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50"
+              >
+                <CheckCircle size={18} /> Duyệt khóa học
+              </button>
+              <button
+                onClick={() => setShowChangesModal(true)}
+                disabled={adminActionLoading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-colors disabled:opacity-50"
+              >
+                ⚠️ Yêu cầu sửa
+              </button>
+              <button
+                onClick={() => setShowRejectModal(true)}
+                disabled={adminActionLoading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors disabled:opacity-50"
+              >
+                <X size={18} /> Từ chối
+              </button>
+              <button
+                onClick={() => navigate('/admin/pending-courses')}
+                className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-sm"
+              >
+                ← Quay lại danh sách
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <ApproveModal
+        isOpen={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        onConfirm={handleApprove}
+        isLoading={adminActionLoading}
+      />
+      <RejectModal
+        isOpen={showRejectModal}
+        onClose={() => { setShowRejectModal(false); setRejectMessage(''); }}
+        onConfirm={handleReject}
+        isLoading={adminActionLoading}
+        rejectMessage={rejectMessage}
+        setRejectMessage={setRejectMessage}
+      />
+
+      {/* CASE 3: Changes Requested Modal */}
+      <ChangesRequestedModal
+        isOpen={showChangesModal}
+        onClose={() => { setShowChangesModal(false); setChangesMessage(''); }}
+        onConfirm={handleRequestChanges}
+        isLoading={adminActionLoading}
+        value={changesMessage}
+        onChange={setChangesMessage}
+      />
+
+      {/* Video Preview */}
+      {videoPreview && (
+        <CloudFrontVideoPlayer
+          url={videoPreview}
+          onClose={() => setVideoPreview(null)}
+        />
+      )}
+    </div>
+  );
 };
 
 export default AdminPendingCourseDetail;

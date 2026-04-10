@@ -183,35 +183,45 @@ export const courseSlice = createSlice({
         state.message = action.payload;
       })
 
+      .addCase(deleteInstructorCourse.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(deleteInstructorCourse.fulfilled, (state, action) => {
         state.isLoading = false;
-        const { id, action: deleteAction } = action.payload; // action trả về từ backend: 'deleted', 'hidden', 'archived'
+        const { id, action: deleteAction } = action.payload;
 
-        // Cập nhật lại list mà không cần fetch lại API
         if (deleteAction === 'deleted') {
-          // Xóa hẳn khỏi list
+          // Standalone draft revision — _id === revisionId === card._id
           state.instructorCourses = state.instructorCourses.filter(c => c._id !== id);
-          state.instructorStats.all -= 1;
-          state.instructorStats.draft -= 1; // Giả sử xóa draft
-        } else {
-          if (deleteAction === 'hidden') {
-            state.instructorStats.hidden += 1;
-            state.instructorStats.published -= 1;
-          } else if (deleteAction === 'archived') {
-            state.instructorStats.archived += 1;
-            state.instructorStats.published -= 1;
-          }
-          // Cập nhật status trong list
-          state.instructorCourses = state.instructorCourses.map(c => {
-            if (c._id === id) {
-              return { ...c, status: deleteAction }; // 'hidden' hoặc 'archived'
-            }
-            return c;
-          });
-          // (update lại stats object cho chính xác)
-
+          state.instructorStats.all = Math.max(0, (state.instructorStats.all || 0) - 1);
+          state.instructorStats.draft = Math.max(0, (state.instructorStats.draft || 0) - 1);
+        } else if (deleteAction === 'revision_deleted') {
+          // Case D: revision của published course — cần xóa revisionId khỏi card (hoặc refetch)
+          // Vì card._id = courseId, lọc qua revisionId
+          state.instructorCourses = state.instructorCourses.map(c =>
+            c.revisionId?.toString() === id?.toString()
+              ? { ...c, revisionStatus: null, revisionId: null, reviewMessage: null }
+              : c
+          );
+          // Stats sẽ được cập nhật chính xác sau khi refetch getInstructorCourses
+        } else if (deleteAction === 'hidden') {
+          state.instructorStats.hidden = (state.instructorStats.hidden || 0) + 1;
+          state.instructorStats.published = Math.max(0, (state.instructorStats.published || 0) - 1);
+          state.instructorCourses = state.instructorCourses.map(c =>
+            c._id === id ? { ...c, status: 'hidden' } : c
+          );
+        } else if (deleteAction === 'archived') {
+          state.instructorStats.archived = (state.instructorStats.archived || 0) + 1;
+          state.instructorStats.published = Math.max(0, (state.instructorStats.published || 0) - 1);
+          state.instructorCourses = state.instructorCourses.map(c =>
+            c._id === id ? { ...c, status: 'archived' } : c
+          );
         }
         toast.success(action.payload.message);
+      })
+      .addCase(deleteInstructorCourse.rejected, (state, action) => {
+        state.isLoading = false;
+        toast.error(action.payload || 'Xóa thất bại. Vui lòng thử lại.');
       })
       .addCase(activateInstructorCourse.fulfilled, (state, action) => {
         state.instructorCourses = state.instructorCourses.map(c =>

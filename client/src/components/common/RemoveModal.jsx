@@ -10,7 +10,8 @@ const RemoveModal = ({
   message = "Are you sure you want to remove this item? This action cannot be undone.",
   confirmLabel = "Yes, Remove",
   cancelLabel = "Cancel",
-  isDeleting = false // Trạng thái loading khi đang gọi API xóa
+  isDeleting = false,
+  confirmBtnClass = 'bg-red-500 hover:bg-red-600 shadow-red-200' // custom button color
 }) => {
   
   // Ngăn cuộn trang khi mở modal
@@ -63,7 +64,7 @@ const RemoveModal = ({
           <button
             onClick={onConfirm}
             disabled={isDeleting}
-            className="px-6 py-2.5 rounded-full bg-red-500 text-white font-medium hover:bg-red-600 shadow-lg shadow-red-200 transition-all transform hover:scale-105 min-w-[140px] flex justify-center items-center disabled:transform-none disabled:opacity-70"
+            className={`px-6 py-2.5 rounded-full text-white font-medium shadow-lg transition-all transform hover:scale-105 min-w-[140px] flex justify-center items-center disabled:transform-none disabled:opacity-70 ${confirmBtnClass}`}
           >
             {isDeleting ? (
                 // Simple Loading Spinner nhỏ

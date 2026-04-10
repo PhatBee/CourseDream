@@ -35,17 +35,17 @@ const LectureItem = ({ lecture, onPreviewClick }) => {
         )}
         <p className="text-sm text-gray-700">{title}</p>
       </div>
-      
+
       <div className="flex items-center gap-4">
         {isPreviewFree ? (
-          <a 
+          <a
             onClick={() => onPreviewClick(videoUrl)}
-            className="text-sm font-medium text-blue-600 hover:underline"
+            className="text-sm font-medium text-rose-600 hover:underline"
           >
             Preview
           </a>
         ) : (
-          null 
+          null
         )}
         <span className="text-sm text-gray-500">{formatDuration(duration)}</span>
       </div>

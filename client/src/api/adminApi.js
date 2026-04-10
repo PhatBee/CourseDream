@@ -60,6 +60,31 @@ const reviewInstructorApplication = (id, data) => {
     return axiosClient.post(`${path}/instructors/applications/${id}/review`, data);
 }
 
+// CASE 3: Yêu cầu sửa
+const requestRevisionChanges = (revisionId, reviewMessage) => {
+    return axiosClient.patch(`${path}/revisions/${revisionId}/request-changes`, { reviewMessage });
+};
+
+// CASE 7: Unpublish
+const unpublishCourse = (courseId, reason) => {
+    return axiosClient.patch(`${path}/courses/${courseId}/unpublish`, { reason });
+};
+
+// CASE 8: Suspend
+const suspendCourse = (courseId, reason) => {
+    return axiosClient.patch(`${path}/courses/${courseId}/suspend`, { reason });
+};
+
+// Restore from suspended
+const restoreCourse = (courseId) => {
+    return axiosClient.patch(`${path}/courses/${courseId}/restore`);
+};
+
+// Get all courses (Admin dashboard)
+const getAllCourses = (params) => {
+    return axiosClient.get(`${path}/courses`, { params });
+};
+
 export const adminApi = {
     getDashboardStats,
     getRevenueAnalytics,
@@ -73,5 +98,10 @@ export const adminApi = {
     getInstructors,
     toggleBlockUser,
     getInstructorApplications,
-    reviewInstructorApplication
+    reviewInstructorApplication,
+    requestRevisionChanges,
+    unpublishCourse,
+    suspendCourse,
+    restoreCourse,
+    getAllCourses,
 };

@@ -36,7 +36,7 @@ const CheckboxItem = ({ label, checked, onChange, count }) => (
         <path d="M3 8L6 11L11 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
-    <span className="ml-3 text-gray-600 group-hover:text-gray-900 text-sm flex-1">{label}</span>
+    <span className="ml-3 text-gray-600 group-hover:text-gray-900 text-sm flex-1 text-justify">{label}</span>
     {count !== undefined && <span className="text-xs text-gray-400">({count})</span>}
   </label>
 );

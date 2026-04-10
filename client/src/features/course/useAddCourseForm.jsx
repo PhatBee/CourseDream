@@ -1,8 +1,25 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
+
+// ======================== SLUG HELPER ========================
+// Clone logic backend: slugify + timestamp để unique
+const toSlug = (text) =>
+    text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // bỏ dấu tiếng Việt
+        .replace(/[đ]/g, 'd')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
 
 export const useAddCourseForm = () => {
+    // ✨ Timestamp cố định cho session này - dùng để tạo slug unique mà không thay đổi khi user gõ
+    const slugTimestampRef = useRef(Date.now());
+
     const [courseData, setCourseData] = useState({
         title: '',
+        slug: '',
         categories: [], // Mảng { value, label, isNew }
         level: 'alllevels',
         language: 'Vietnamese',
@@ -67,12 +84,20 @@ export const useAddCourseForm = () => {
     };
 
     // Xử lý input text/select/checkbox
+    // Tự sinh slug khi title thay đổi và slug chưa được khóa
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setCourseData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        setCourseData(prev => {
+            const updated = { ...prev, [name]: type === 'checkbox' ? checked : value };
+
+            // Auto-generate slug khi title thay đổi và slug chưa bị lock
+            // slugTimestampRef.current là hằng số trong suốt session này
+            if (name === 'title' && !prev.slugLocked) {
+                updated.slug = value ? `${toSlug(value)}-${slugTimestampRef.current}` : '';
+            }
+
+            return updated;
+        });
     };
 
     // Xử lý upload thumbnail
@@ -100,6 +125,31 @@ export const useAddCourseForm = () => {
     const updateCategories = (newCategories) => {
         setCourseData(prev => ({ ...prev, categories: newCategories }));
     };
+
+    // --- SLUG MANAGEMENT ---
+    /**
+     * Đảm bảo khoa học luôn có slug trước khi upload S3.
+     * Gọi khi instructor chuyển sang Step 2 hoặc bắt đầu add lesson.
+     * Trả về slug (để dùng ngay mà không cần re-render)
+     */
+    const ensureSlug = useCallback((currentData) => {
+        const data = currentData || courseData;
+        if (data.slug) return data.slug; // Đã có slug
+
+        // Dùng timestamp cố định từ ref
+        const ts = slugTimestampRef.current;
+        const newSlug = data.title
+            ? `${toSlug(data.title)}-${ts}`
+            : `course-${ts}`;
+
+        setCourseData(prev => ({
+            ...prev,
+            slug: newSlug,
+            slugLocked: true,   // Khóa slug sau khi đã tạo
+        }));
+
+        return newSlug;
+    }, [courseData]);
 
     // --- CURRICULUM ACTIONS (Section & Lecture) ---
     const addSection = () => {
@@ -152,6 +202,7 @@ export const useAddCourseForm = () => {
         addLecture,
         updateLecture,
         removeLecture,
-        setFullData
+        setFullData,
+        ensureSlug,   // ✨ Đảm bảo slug tồn tại trước khi upload S3
     };
-};
+};

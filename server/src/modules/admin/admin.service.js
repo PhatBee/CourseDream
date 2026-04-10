@@ -272,77 +272,136 @@ export const getAllStudents = async (query) => {
 
 
 /**
- * Lấy danh sách Course Revisions đang chờ duyệt (Admin)
+/**
+ * Lấy danh sách Course Revisions cần admin xử lý (pending + changes_requested)
  */
 export const getPendingRevisions = async (query) => {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
+  const statusFilter = query.status; // 'pending' | 'changes_requested' | 'all'
 
-  // Lấy tất cả revision có status = 'pending'
-  const revisions = await CourseRevision.find({ status: 'pending' })
+  // Xây dựng filter
+  let statusQuery;
+  if (statusFilter === 'pending') {
+    statusQuery = 'pending';
+  } else if (statusFilter === 'changes_requested') {
+    statusQuery = 'changes_requested';
+  } else {
+    // Default: lấy cả pending và changes_requested
+    statusQuery = { $in: ['pending', 'changes_requested'] };
+  }
+
+  const revisions = await CourseRevision.find({ status: statusQuery })
     .populate('instructor', 'name email avatar')
-    .populate('course', 'title slug status') // Nếu có course link (Case 2)
+    .populate('course', 'title slug status version')
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const total = await CourseRevision.countDocuments({ status: statusQuery });
+
+  // Stats riêng theo từng status
+  const [pendingCount, changesRequestedCount] = await Promise.all([
+    CourseRevision.countDocuments({ status: 'pending' }),
+    CourseRevision.countDocuments({ status: 'changes_requested' }),
+  ]);
+
+  const formattedRevisions = revisions.map(rev => ({
+    _id: rev._id,
+    title: rev.data.title || 'Untitled Course',
+    thumbnail: rev.data.thumbnail,
+    price: rev.data.price || 0,
+    instructor: rev.instructor,
+    courseId: rev.course?._id || null,
+    courseName: rev.course?.title || null,
+    courseStatus: rev.course?.status || null,
+    revisionStatus: rev.status,
+    reviewMessage: rev.reviewMessage || null,
+    submittedAt: rev.submittedAt || rev.updatedAt,
+    version: rev.version,
+    type: rev.course ? 'update' : 'new', // "new" = Case 1, "update" = Case 6
+    sectionsCount: (rev.data.sections || []).length,
+    lecturesCount: (rev.data.sections || []).reduce((acc, s) => acc + (s.lectures?.length || 0), 0),
+  }));
+
+  return {
+    revisions: formattedRevisions,
+    stats: { pending: pendingCount, changes_requested: changesRequestedCount },
+    pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+  };
+};
+
+/**
+ * Lấy tất cả khóa học (Admin) với filter status đầy đủ  
+ */
+export const getAllCoursesForAdmin = async (query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const statusFilter = query.status;
+  const search = query.search || '';
+
+  const filter = {};
+  if (statusFilter && statusFilter !== 'all') {
+    filter.status = statusFilter;
+  }
+  if (search) {
+    filter.title = { $regex: search, $options: 'i' };
+  }
+
+  const courses = await Course.find(filter)
+    .select('title slug thumbnail price status studentsCount totalLectures rating instructor createdAt publishedVersionNo suspendReason')
+    .populate('instructor', 'name email avatar')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
 
-  const total = await CourseRevision.countDocuments({ status: 'pending' });
-  const totalPages = Math.ceil(total / limit);
+  const total = await Course.countDocuments(filter);
 
-  // Format lại data cho frontend dễ hiển thị
-  const formattedRevisions = revisions.map(rev => ({
-    _id: rev._id,
-    title: rev.data.title || 'Untitled Course',
-    thumbnail: rev.data.thumbnail,
-    instructor: rev.instructor,
-    courseId: rev.course?._id || null, // Null = khóa học mới, có ID = chỉnh sửa
-    courseName: rev.course?.title || null,
-    courseStatus: rev.course?.status || null,
-    revisionStatus: rev.status,
-    submittedAt: rev.updatedAt, // Thời gian submit
-    type: rev.course ? 'update' : 'new' // Phân biệt Case 1 và Case 2
-  }));
+  // Stats
+  const statusCounts = await Course.aggregate([
+    { $group: { _id: '$status', count: { $sum: 1 } } }
+  ]);
+  const stats = statusCounts.reduce((acc, item) => {
+    acc[item._id] = item.count;
+    return acc;
+  }, { all: await Course.countDocuments() });
 
   return {
-    revisions: formattedRevisions,
-    pagination: {
-      total,
-      page,
-      limit,
-      totalPages
-    }
+    courses,
+    stats,
+    pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
   };
 };
 
+
 /**
  * Lấy chi tiết CourseRevision đang chờ duyệt (Admin)
+ * Accept cả 'pending' và 'changes_requested' (sau khi instructor sửa và resubmit)
  */
 export const getPendingRevisionDetail = async (revisionId) => {
   const revision = await CourseRevision.findOne({
     _id: revisionId,
-    status: 'pending'
+    status: { $in: ['pending', 'changes_requested'] } // ✅ Fix Bug 1: chấp nhận cả 2 status
   })
     .populate('instructor', 'name email avatar')
-    .populate('course', 'title slug status version') // Course gốc (nếu có)
+    .populate('course', 'title slug status version')
     .populate('data.categories', 'name slug')
     .lean();
 
   if (!revision) {
-    const error = new Error("Không tìm thấy khóa học đang chờ duyệt.");
+    const error = new Error("Không tìm thấy khóa học đang chờ duyệt hoặc cần sửa.");
     error.statusCode = 404;
     throw error;
   }
 
-  // Nếu là Case 2 (Update course đã publish), lấy thông tin course gốc để so sánh
   let originalCourse = null;
   if (revision.course) {
     originalCourse = await Course.findById(revision.course)
-      .populate({
-        path: 'sections',
-        populate: { path: 'lectures' }
-      })
+      .populate({ path: 'sections', populate: { path: 'lectures' } })
       .populate('categories', 'name slug')
       .lean();
   }
@@ -350,10 +409,9 @@ export const getPendingRevisionDetail = async (revisionId) => {
   return {
     revision: {
       ...revision,
-      // Bung data ra ngoài để dễ access
       ...revision.data
     },
-    originalCourse, // Để admin có thể so sánh (nếu là update)
+    originalCourse,
     type: revision.course ? 'update' : 'new'
   };
 };
@@ -372,8 +430,9 @@ export const approveRevision = async (revisionId, adminId) => {
     throw error;
   }
 
-  if (revision.status !== 'pending') {
-    const error = new Error("Chỉ có thể duyệt các khóa học đang ở trạng thái Pending.");
+  // ✅ Fix: Cho phép approve cả 'pending' và 'changes_requested' (instructor đã sửa và resubmit)
+  if (!['pending', 'changes_requested'].includes(revision.status)) {
+    const error = new Error("Chỉ có thể duyệt các khóa học đang ở trạng thái Pending hoặc Changes Requested.");
     error.statusCode = 400;
     throw error;
   }
@@ -551,6 +610,21 @@ export const approveRevision = async (revisionId, adminId) => {
     resultCourse = liveCourse;
   }
 
+  // ✅ Fix Bug 3: Cleanup - Archive tất cả revision còn lại của cùng instructor/course
+  // Tránh tình trạng duplicate revisions cũ vẫn hiển thị changes_requested/rejected
+  const cleanupFilter = {
+    instructor: revision.instructor,
+    _id: { $ne: revision._id }, // Không xóa revision vừa approved
+    status: { $in: ['draft', 'rejected', 'changes_requested'] }
+  };
+  if (revision.course) {
+    cleanupFilter.course = revision.course; // Chỉ cleanup revisions của cùng course
+  } else {
+    cleanupFilter.course = null; // Fresh draft: cleanup các draft cũ của cùng slug
+    cleanupFilter['data.slug'] = revision.data.slug;
+  }
+  await CourseRevision.updateMany(cleanupFilter, { $set: { status: 'archived' } });
+
   // Sau khi duyệt thành công, gửi thông báo cho instructor
   await notificationService.createNotification({
     recipient: revision.instructor,
@@ -580,8 +654,9 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
     throw error;
   }
 
-  if (revision.status !== 'pending') {
-    const error = new Error("Chỉ có thể từ chối các khóa học đang ở trạng thái Pending.");
+  // ✅ Fix: Cho phép reject từ cả 'pending' và 'changes_requested'
+  if (!['pending', 'changes_requested'].includes(revision.status)) {
+    const error = new Error("Chỉ có thể từ chối các khóa học đang ở trạng thái Pending hoặc Changes Requested.");
     error.statusCode = 400;
     throw error;
   }
@@ -607,6 +682,183 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
   };
 };
 
+
+/**
+ * CASE 3: Yêu cầu Instructor sửa (changes_requested)
+ * Khác với reject: Instructor vẫn có thể mở lại bản draft và submit lại
+ * Status: pending → changes_requested
+ */
+export const requestRevisionChanges = async (revisionId, reviewMessage, adminId) => {
+  if (!reviewMessage || !reviewMessage.trim()) {
+    const error = new Error('Vui lòng cung cấp phản hồi chi tiết cho instructor.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const revision = await CourseRevision.findById(revisionId);
+
+  if (!revision) {
+    const error = new Error('Không tìm thấy bản revision.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (revision.status !== 'pending') {
+    const error = new Error('Chỉ có thể yêu cầu sửa các khóa học đang ở trạng thái Pending.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Lưu lịch sử phản hồi
+  revision.reviewHistory = revision.reviewHistory || [];
+  revision.reviewHistory.push({
+    message: reviewMessage,
+    action: 'changes_requested',
+    adminId,
+    createdAt: new Date()
+  });
+
+  revision.status = 'changes_requested';
+  revision.reviewMessage = reviewMessage;
+  await revision.save();
+
+  // Gửi thông báo cho instructor
+  await notificationService.createNotification({
+    recipient: revision.instructor,
+    sender: adminId,
+    type: 'system',
+    title: '⚠️ Khóa học cần chỉnh sửa',
+    message: `Khóa học "${revision.data.title}" cần chỉnh sửa trước khi được duyệt. Phản hồi: ${reviewMessage}`,
+    relatedId: revision._id,
+    courseSlug: revision.data.slug || undefined
+  });
+
+  return {
+    message: 'Đã gửi yêu cầu sửa đổi đến instructor.',
+    revisionId: revision._id
+  };
+};
+
+/**
+ * CASE 7: Unpublish khóa học (Admin hoặc Instructor)
+ * published → unpublished
+ * Học viên cũ vẫn có thể xem
+ */
+export const unpublishCourse = async (courseId, adminId, reason = '') => {
+  const course = await Course.findById(courseId);
+
+  if (!course) {
+    const error = new Error('Không tìm thấy khóa học.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!['published', 'hidden'].includes(course.status)) {
+    const error = new Error('Chỉ có thể unpublish khóa học đang ở trạng thái published hoặc hidden.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  course.status = 'unpublished';
+  await course.save();
+
+  // Gửi thông báo cho instructor
+  await notificationService.createNotification({
+    recipient: course.instructor,
+    sender: adminId,
+    type: 'system',
+    title: 'Khóa học đã bị ẩn khỏi marketplace',
+    message: `Khóa học "${course.title}" đã bị admin unpublish.${reason ? ` Lý do: ${reason}` : ''} Học viên hiện tại vẫn có thể truy cập.`,
+    relatedId: course._id,
+    courseSlug: course.slug
+  });
+
+  return {
+    message: 'Đã unpublish khóa học. Học viên hiện tại vẫn có thể truy cập.'
+  };
+};
+
+/**
+ * CASE 8: Suspend khóa học (Admin đình chỉ - vi phạm chính sách)
+ * published/unpublished → suspended
+ * Học viên không thể xem, không cấp signed URL
+ */
+export const suspendCourse = async (courseId, adminId, reason) => {
+  if (!reason || !reason.trim()) {
+    const error = new Error('Vui lòng cung cấp lý do đình chỉ khóa học.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const course = await Course.findById(courseId);
+
+  if (!course) {
+    const error = new Error('Không tìm thấy khóa học.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (course.status === 'suspended') {
+    const error = new Error('Khóa học đã bị đình chỉ trước đó.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const previousStatus = course.status;
+  course.status = 'suspended';
+  course.suspendReason = reason;
+  await course.save();
+
+  // Gửi thông báo nghiêm túc cho instructor
+  await notificationService.createNotification({
+    recipient: course.instructor,
+    sender: adminId,
+    type: 'system',
+    title: '🚫 Khóa học bị đình chỉ vi phạm chính sách',
+    message: `Khóa học "${course.title}" đã bị đình chỉ. Lý do: ${reason}. Vui lòng liên hệ Admin để được hỗ trợ.`,
+    relatedId: course._id,
+    courseSlug: course.slug
+  });
+
+  return {
+    message: `Đã đình chỉ khóa học. Trạng thái trước: ${previousStatus}.`,
+    previousStatus
+  };
+};
+
+/**
+ * Restore khóa học từ suspended → unpublished (Admin review lại)
+ */
+export const restoreSuspendedCourse = async (courseId, adminId) => {
+  const course = await Course.findById(courseId);
+  if (!course) {
+    const error = new Error('Không tìm thấy khóa học.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (course.status !== 'suspended') {
+    const error = new Error('Khóa học không ở trạng thái suspended.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  course.status = 'unpublished'; // Restore về unpublished để admin/instructor publish lại thủ công
+  course.suspendReason = null;
+  await course.save();
+
+  await notificationService.createNotification({
+    recipient: course.instructor,
+    sender: adminId,
+    type: 'system',
+    title: 'Khóa học đã được khôi phục',
+    message: `Khóa học "${course.title}" đã được admin khôi phục về trạng thái Unpublished. Bạn có thể liên hệ Admin để publish lại.`,
+    relatedId: course._id,
+    courseSlug: course.slug
+  });
+
+  return { message: 'Đã khôi phục khóa học về trạng thái Unpublished.' };
+};
 
 export const getAllInstructors = async (query) => {
   const page = parseInt(query.page) || 1;

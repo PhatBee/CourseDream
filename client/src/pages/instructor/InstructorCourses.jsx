@@ -1,26 +1,77 @@
+// src/pages/instructor/InstructorCourses.jsx
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getInstructorCourses } from '../../features/course/courseSlice';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import {
+    getInstructorCourses,
+    deleteInstructorCourse,
+    activateInstructorCourse
+} from '../../features/course/courseSlice';
 import InstructorCourseCard from '../../components/instructor/InstructorCourseCard';
-import Pagination from '../../components/common/Pagination'; // Import component Pagination bạn đã có
-import { Link } from 'react-router-dom';
-import { PlusCircle, BookOpen, FileText, AlertCircle, Archive, Lock, XCircle } from 'lucide-react';
+import Pagination from '../../components/common/Pagination';
 import Spinner from '../../components/common/Spinner';
 import RemoveModal from '../../components/common/RemoveModal';
-import { deleteInstructorCourse, activateInstructorCourse } from '../../features/course/courseSlice';
+import {
+    PlusCircle, BookOpen, CheckCircle2, Clock3, FileText,
+    AlertCircle, Archive, EyeOff, XCircle, BanIcon, AlertTriangle
+} from 'lucide-react';
 
+
+// ======================== STAT CARD ========================
+const StatCard = ({ icon, title, value, color, bgColor, onClick, active }) => (
+    <button
+        onClick={onClick}
+        className={`group relative rounded-2xl p-5 text-left transition-all duration-200 border-2 ${active
+            ? `${bgColor} border-current shadow-lg scale-105`
+            : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-md'
+            }`}
+    >
+        <div className="flex items-start justify-between mb-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${active ? 'bg-white/30' : bgColor}`}>
+                <span className={active ? 'text-white' : color}>{icon}</span>
+            </div>
+            <span className={`text-2xl font-black ${active ? 'text-white' : 'text-gray-900'}`}>{value ?? 0}</span>
+        </div>
+        <p className={`text-xs font-semibold uppercase tracking-wide ${active ? 'text-white/80' : 'text-gray-500'}`}>{title}</p>
+    </button>
+);
+
+// ======================== STATUS TAB ========================
+const STATUS_TABS = [
+    { key: 'all', label: 'Tất cả', icon: <BookOpen size={14} /> },
+    { key: 'published', label: 'Đã xuất bản', icon: <CheckCircle2 size={14} /> },
+    { key: 'pending', label: 'Chờ duyệt', icon: <Clock3 size={14} /> },
+    { key: 'changes_requested', label: 'Cần sửa', icon: <AlertTriangle size={14} /> },
+    { key: 'draft', label: 'Nháp', icon: <FileText size={14} /> },
+    { key: 'rejected', label: 'Từ chối', icon: <XCircle size={14} /> },
+    { key: 'hidden', label: 'Ẩn', icon: <EyeOff size={14} /> },
+    { key: 'unpublished', label: 'Unpublished', icon: <EyeOff size={14} /> },
+    { key: 'archived', label: 'Lưu trữ', icon: <Archive size={14} /> },
+    { key: 'suspended', label: 'Bị đình chỉ', icon: <BanIcon size={14} /> },
+];
+
+const STAT_CONFIG = [
+    { key: 'all', title: 'Tất cả', icon: <BookOpen size={16} />, color: 'text-gray-600', bgColor: 'bg-gray-600' },
+    { key: 'published', title: 'Đã xuất bản', icon: <CheckCircle2 size={16} />, color: 'text-emerald-600', bgColor: 'bg-emerald-500' },
+    { key: 'pending', title: 'Chờ duyệt', icon: <Clock3 size={16} />, color: 'text-amber-600', bgColor: 'bg-amber-500' },
+    { key: 'changes_requested', title: 'Cần sửa', icon: <AlertTriangle size={16} />, color: 'text-orange-600', bgColor: 'bg-orange-500' },
+    { key: 'draft', title: 'Nháp', icon: <FileText size={16} />, color: 'text-gray-600', bgColor: 'bg-gray-400' },
+    { key: 'rejected', title: 'Từ chối', icon: <XCircle size={16} />, color: 'text-red-600', bgColor: 'bg-red-500' },
+];
+
+// ======================== MAIN COMPONENT ========================
 const InstructorCourses = () => {
     const dispatch = useDispatch();
-    const { instructorCourses, instructorStats, instructorPagination, isLoading } = useSelector(state => state.course);
+    const navigate = useNavigate();
+    const { instructorCourses, instructorStats, instructorPagination, isLoading } = useSelector(s => s.course);
 
-    const [activeTab, setActiveTab] = useState('all'); // all, published, pending, draft...
+    const [activeTab, setActiveTab] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
-
     const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
     const [courseToDelete, setCourseToDelete] = useState(null);
-    const [modalConfig, setModalConfig] = useState({ title: '', message: '', btnLabel: '' });
+    const [modalConfig, setModalConfig] = useState({ title: '', message: '', btnLabel: '', btnClass: '' });
 
-    // Gọi API khi tab hoặc page thay đổi
     useEffect(() => {
         dispatch(getInstructorCourses({
             page: currentPage,
@@ -28,44 +79,56 @@ const InstructorCourses = () => {
         }));
     }, [dispatch, activeTab, currentPage]);
 
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-        window.scrollTo(0, 0);
-    };
-
     const handleTabChange = (tab) => {
         setActiveTab(tab);
-        setCurrentPage(1); // Reset về trang 1 khi đổi tab
+        setCurrentPage(1);
     };
 
-    // Handle Click Delete Button từ Card
     const handleDeleteClick = (course) => {
         setCourseToDelete(course);
 
-        // TRƯỜNG HỢP A: Fresh Draft (Chưa có trong Course Model)
-        // Dấu hiệu nhận biết: status là 'draft' và không phải là bản update của course đã publish
-        // (Hoặc đơn giản là status = 'draft' vì Backend đã gộp list trả về chuẩn rồi)
-        if (course.status === 'draft') {
+        const effStatus = course.revisionStatus || course.status;
+
+        // Không cho xóa khi đang pending (admin đang duyệt)
+        if (effStatus === 'pending') {
+            toast.error('Không thể xóa khi khóa học đang chờ Admin duyệt.');
+            return;
+        }
+
+        // Case A: Draft chưa từng publish (type=revision) — xóa vĩnh viễn revision
+        if (course.type === 'revision' || course.status === 'draft' || course.status === 'rejected' || course.status === 'changes_requested') {
             setModalConfig({
-                title: "Xóa khóa học Draft",
-                message: "Đây là khóa học chưa được publish. Nó sẽ bị xóa vĩnh viễn cùng với tất cả nội dung. Hành động này không thể được hoàn tác.",
-                btnLabel: "Xóa vĩnh viễn" // Hành động: Xóa cứng
+                title: 'Xóa khóa học',
+                message: 'Bản nháp này sẽ bị xóa vĩnh viễn. Hành động không thể hoàn tác.',
+                btnLabel: 'Xóa vĩnh viễn',
+                btnClass: 'bg-red-600 hover:bg-red-700'
             });
         }
-        // // TRƯỜNG HỢP C: Đã có học viên
-        else if (course.studentsCount > 0) {
+        // Case D: Course đã publish nhưng có revision đang rejected/changes_requested — chỉ xóa revision
+        else if (course.revisionStatus && ['rejected', 'changes_requested', 'draft'].includes(course.revisionStatus)) {
             setModalConfig({
-                title: "Archive khóa học",
-                message: `Khóa học này có ${course.studentsCount} sinh viên đã đăng ký. Nó không thể bị xóa. Thay vào đó, nó sẽ được chuyển đến trạng thái "Archived". Sinh viên hiện tại vẫn có thể truy cập nó, nhưng không có thêm các đăng ký mới được cho phép.`,
-                btnLabel: "Archive khóa học"
+                title: 'Xóa bản chỉnh sửa',
+                message: 'Bản chỉnh sửa sẽ bị xóa. Khóa học đang xuất bản vẫn được giữ nguyên trên marketplace.',
+                btnLabel: 'Xóa bản chỉnh sửa',
+                btnClass: 'bg-orange-600 hover:bg-orange-700'
             });
         }
-        // TRƯỜNG HỢP B: Published/Hidden nhưng chưa có học viên
+        // Case C: Đã có học viên — Archive
+        else if ((course.studentsCount || 0) > 0) {
+            setModalConfig({
+                title: 'Lưu trữ khóa học',
+                message: `Khóa học có ${course.studentsCount} học viên đang đăng ký. Nó sẽ được chuyển sang trạng thái "Archived" — học viên cũ vẫn xem được nhưng không nhận đăng ký mới.`,
+                btnLabel: 'Lưu trữ',
+                btnClass: 'bg-gray-700 hover:bg-gray-800'
+            });
+        }
+        // Case B: Chưa có học viên — Hidden
         else {
             setModalConfig({
-                title: "Ẩn khóa học",
-                message: "Khóa học này chưa có sinh viên nào đăng ký. Nó sẽ được chuyển đến trạng thái 'Hidden'. Nó sẽ không xuất hiện trên trang web, và bạn không thể chỉnh sửa nó cho đến khi bạn publish nó lại.",
-                btnLabel: "Ẩn khóa học"
+                title: 'Ẩn khóa học',
+                message: 'Khóa học sẽ được chuyển sang trạng thái "Hidden" và không xuất hiện trên marketplace.',
+                btnLabel: 'Ẩn khóa học',
+                btnClass: 'bg-gray-600 hover:bg-gray-700'
             });
         }
 
@@ -73,95 +136,163 @@ const InstructorCourses = () => {
     };
 
     const confirmDelete = async () => {
-        if (courseToDelete) {
-            // Gọi action delete chung, backend tự quyết định xóa thật hay ẩn dựa trên logic service
-            await dispatch(deleteInstructorCourse(courseToDelete._id));
-            setIsRemoveModalOpen(false);
-            setCourseToDelete(null);
-        }
+        if (!courseToDelete) return;
+
+        // Case D: published course có revision cần xóa → dùng revisionId
+        // Case A/A2: standalone revision (type='revision') → _id chính là revisionId
+        // Case B/C: published course → dùng course _id để hidden/archive
+        const deleteId =
+            courseToDelete.type === 'course' &&
+                courseToDelete.revisionId &&
+                ['rejected', 'changes_requested', 'draft'].includes(courseToDelete.revisionStatus)
+                ? courseToDelete.revisionId          // Case D: xóa revision, giữ course
+                : courseToDelete._id;                // Case A/B/C
+
+        await dispatch(deleteInstructorCourse(deleteId));
+        setIsRemoveModalOpen(false);
+        setCourseToDelete(null);
+        // Refetch để đảm bảo list luôn chính xác
+        dispatch(getInstructorCourses({ page: currentPage, status: activeTab === 'all' ? '' : activeTab }));
     };
 
     const handleActivate = (id) => {
         dispatch(activateInstructorCourse(id));
     };
 
+    // Lấy các tab có data > 0
+    const visibleTabs = STATUS_TABS.filter(t =>
+        t.key === 'all' ||
+        (instructorStats[t.key] && instructorStats[t.key] > 0) ||
+        t.key === activeTab
+    );
+
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
-            <div className="max-w-7xl mx-auto">
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                    <StatCard icon={<BookOpen className="text-white" />} title="Total Courses" value={instructorStats.all} color="bg-blue-500" />
-                    <StatCard icon={<CheckCircle className="text-white" />} title="Published" value={instructorStats.published} color="bg-green-500" />
-                    <StatCard icon={<AlertCircle className="text-white" />} title="Pending" value={instructorStats.pending} color="bg-yellow-500" />
-                    <StatCard icon={<FileText className="text-white" />} title="Drafts" value={instructorStats.draft} color="bg-gray-500" />
-                    <StatCard icon={<XCircle className="text-white" />} title="Rejected" value={instructorStats.rejected} color="bg-red-500" />
-                    <StatCard icon={<Lock className="text-white" />} title="Hidden" value={instructorStats.hidden} color="bg-orange-500" />
-                    <StatCard icon={<Archive className="text-white" />} title="Archived" value={instructorStats.archived} color="bg-purple-500" />
-                </div>
-
-                {/* Header & Add Button */}
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                    <h1 className="text-2xl font-bold text-gray-800">My Courses</h1>
-                    <Link to="/instructor/add-course" className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 flex items-center gap-2 transition">
-                        <PlusCircle size={18} /> Create New Course
+        <div className="min-h-screen bg-gray-50">
+            {/* ===== HEADER ===== */}
+            <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h1 className="text-2xl font-black text-gray-900">Khóa học của tôi</h1>
+                        <p className="text-sm text-gray-400 mt-0.5">Quản lý và theo dõi tất cả khóa học</p>
+                    </div>
+                    <Link
+                        to="/instructor/add-course"
+                        state={{ showEnterToast: true, ts: Date.now() }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-xl font-semibold text-sm hover:bg-rose-700 transition-all shadow-md shadow-rose-200 flex-shrink-0"
+                    >
+                        <PlusCircle size={17} /> Tạo khóa học mới
                     </Link>
                 </div>
+            </div>
 
-                {/* Tabs */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-                    <div className="flex overflow-x-auto">
-                        {['all', 'published', 'pending', 'draft', 'rejected', 'hidden', 'archived'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => handleTabChange(tab)}
-                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${activeTab === tab
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
-                                    {tab === 'all' ? instructorStats.all : instructorStats[tab] || 0}
-                                </span>
-                            </button>
-                        ))}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+                {/* ===== STATS GRID ===== */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                    {STAT_CONFIG.map(s => (
+                        <StatCard
+                            key={s.key}
+                            icon={s.icon}
+                            title={s.title}
+                            value={instructorStats?.[s.key] ?? 0}
+                            color={s.color}
+                            bgColor={s.bgColor}
+                            active={activeTab === s.key}
+                            onClick={() => handleTabChange(s.key)}
+                        />
+                    ))}
+                </div>
+
+                {/* ===== ALERT: Changes Requested ===== */}
+                {(instructorStats?.changes_requested || 0) > 0 && (
+                    <div className="mb-5 bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-start gap-3">
+                        <AlertTriangle size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="font-bold text-orange-800 text-sm">
+                                {instructorStats.changes_requested} khóa học cần chỉnh sửa theo yêu cầu Admin
+                            </p>
+                            <p className="text-orange-600 text-xs mt-0.5">
+                                Xem lại phản hồi và chỉnh sửa để tiếp tục quá trình duyệt.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => handleTabChange('changes_requested')}
+                            className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 transition flex-shrink-0"
+                        >
+                            Xem ngay
+                        </button>
+                    </div>
+                )}
+
+                {/* ===== TABS ===== */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6 overflow-hidden">
+                    <div className="flex overflow-x-auto scrollbar-hide">
+                        {visibleTabs.map(tab => {
+                            const count = tab.key === 'all' ? instructorStats?.all : instructorStats?.[tab.key];
+                            const isActive = activeTab === tab.key;
+                            return (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => handleTabChange(tab.key)}
+                                    className={`flex items-center gap-1.5 px-5 py-3.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${isActive
+                                        ? 'border-rose-500 text-rose-600 bg-rose-50/50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {tab.icon}
+                                    {tab.label}
+                                    {count > 0 && (
+                                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-rose-500 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}>
+                                            {count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* Course Grid */}
+                {/* ===== COURSE GRID ===== */}
                 {isLoading ? (
-                    <div className="flex justify-center py-20"><Spinner /></div>
+                    <div className="flex justify-center py-20"><Spinner color="border-rose-500" /></div>
                 ) : instructorCourses.length > 0 ? (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                             {instructorCourses.map(course => (
                                 <InstructorCourseCard
                                     key={course._id}
                                     course={course}
-                                    onDelete={handleDeleteClick} // Pass function mở modal
-                                    onActivate={handleActivate}  // Pass function kích hoạt lại
+                                    onDelete={handleDeleteClick}
+                                    onActivate={handleActivate}
                                 />
                             ))}
                         </div>
-
-                        {/* Pagination */}
                         <Pagination
-                            currentPage={instructorPagination.page}
-                            totalPages={instructorPagination.totalPages}
-                            onPageChange={handlePageChange}
+                            currentPage={instructorPagination?.page || 1}
+                            totalPages={instructorPagination?.totalPages || 1}
+                            onPageChange={(p) => { setCurrentPage(p); window.scrollTo(0, 0); }}
                         />
                     </>
                 ) : (
-                    <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-                        <Archive className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                        <h3 className="text-lg font-medium text-gray-900">No courses found</h3>
-                        <p className="text-gray-500">Get started by creating your first course.</p>
+                    <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-gray-200">
+                        <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <BookOpen size={28} className="text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-700 mb-1">Chưa có khóa học nào</h3>
+                        <p className="text-gray-400 text-sm mb-5">Hãy bắt đầu tạo khóa học đầu tiên của bạn!</p>
+                        <Link
+                            to="/instructor/add-course"
+                            state={{ showEnterToast: true, ts: Date.now() }}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-xl font-semibold text-sm hover:bg-rose-700 transition"
+                        >
+                            <PlusCircle size={16} /> Tạo khóa học ngay
+                        </Link>
                     </div>
                 )}
             </div>
 
-            {/* Remove Modal */}
+            {/* ===== DELETE MODAL ===== */}
             <RemoveModal
                 isOpen={isRemoveModalOpen}
                 onClose={() => setIsRemoveModalOpen(false)}
@@ -169,28 +300,11 @@ const InstructorCourses = () => {
                 title={modalConfig.title}
                 message={modalConfig.message}
                 confirmLabel={modalConfig.btnLabel}
-                isDeleting={isLoading} // Tận dụng loading state của redux hoặc tạo local state
+                confirmBtnClass={modalConfig.btnClass || 'bg-red-500 hover:bg-red-600 shadow-red-200'}
+                isDeleting={isLoading}
             />
         </div>
     );
 };
-
-// Helper Component cho Card Thống kê
-const StatCard = ({ icon, title, value, color }) => (
-    <div className={`${color} rounded-xl p-4 shadow-md text-white flex items-center justify-between`}>
-        <div>
-            <p className="text-sm font-medium opacity-90 mb-1">{title}</p>
-            <h3 className="text-2xl font-bold">{value}</h3>
-        </div>
-        <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-            {icon}
-        </div>
-    </div>
-);
-
-// Helper Icon (vì lucide không có CheckCircle mặc định ở trên)
-const CheckCircle = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-);
 
 export default InstructorCourses;

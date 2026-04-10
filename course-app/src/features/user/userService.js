@@ -1,23 +1,27 @@
-import axiosClient from "../../api/axiosClient";
+import userApi from "../../api/userApi";
 
 const getProfile = async () => {
-    const response = await axiosClient.get("/users/profile");
+    const response = await userApi.getProfile();
     return response.data;
 };
 
 const updateProfile = async (profileData) => {
-    const config = {};
-    if (profileData instanceof FormData) {
-        config.headers = {
-            "Content-Type": "multipart/form-data",
-        };
-    }
-    const response = await axiosClient.put("/users/profile", profileData, config);
+    const response = await userApi.updateProfile(profileData);
     return response.data;
 };
 
 const changePassword = async (passwordData) => {
-    const response = await axiosClient.put("/users/password", passwordData);
+    const response = await userApi.changePassword(passwordData);
+    return response.data;
+};
+
+const getInstructorApplication = async () => {
+    const response = await userApi.getInstructorApplication();
+    return response.data;
+};
+
+const applyToBecomeInstructor = async (data) => {
+    const response = await userApi.applyToBecomeInstructor(data);
     return response.data;
 };
 
@@ -25,6 +29,8 @@ const userService = {
     getProfile,
     updateProfile,
     changePassword,
+    getInstructorApplication,
+    applyToBecomeInstructor,
 };
 
 export default userService;

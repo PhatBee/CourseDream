@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
+import { Toast } from 'react-native-toast-message';
 
 import {
     User,
@@ -146,12 +147,7 @@ const ProfileScreen = ({ navigation }) => {
                         {user.role === 'student' ? (
                             <TouchableOpacity
                                 className="flex-1 bg-white px-4 py-3 rounded-full"
-                                onPress={() =>
-                                    Alert.alert(
-                                        'Coming Soon',
-                                        'Become an Instructor feature is coming soon!'
-                                    )
-                                }
+                                onPress={() => navigation.navigate('BecomeInstructor')}
                             >
                                 <Text className="text-rose-600 text-center font-semibold text-sm">
                                     Become an Instructor

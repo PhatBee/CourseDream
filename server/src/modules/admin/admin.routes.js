@@ -102,4 +102,21 @@ router.post(
     adminController.reviewInstructorApplication
 );
 
-export default router;
+// ===================== COURSE STATUS MANAGEMENT =====================
+
+// Lấy tất cả khóa học (Admin dashboard)
+router.get('/courses', adminController.getAllCourses);
+
+// CASE 3: Yêu cầu sửa (changes_requested)
+router.patch('/revisions/:revisionId/request-changes', adminController.requestRevisionChanges);
+
+// CASE 7: Unpublish khóa học
+router.patch('/courses/:courseId/unpublish', adminController.unpublishCourse);
+
+// CASE 8: Suspend khóa học (vi phạm chính sách)
+router.patch('/courses/:courseId/suspend', adminController.suspendCourse);
+
+// Restore từ suspended
+router.patch('/courses/:courseId/restore', adminController.restoreSuspendedCourse);
+
+export default router;
