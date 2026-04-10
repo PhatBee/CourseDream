@@ -1,14 +1,13 @@
-import React from 'react';
-import CourseOverview from './CourseOverview';
-import CourseAccordion from './CourseAccordion';
-import InstructorBio from './InstructorBio';
-import ReviewList from '../../features/review/ReviewList';
-import ReviewForm from '../../features/review/ReviewForm';
+import React from "react";
+import CourseOverview from "./CourseOverview";
+import CourseAccordion from "./CourseAccordion";
+import InstructorBio from "./InstructorBio";
+import ReviewList from "../../features/review/ReviewList";
+import ReviewForm from "../../features/review/ReviewForm";
 
 const CourseContent = ({ course }) => {
   return (
-    <div className="space-y-6"> 
-      
+    <div className="space-y-6">
       {/* Card 1: Overview */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <div className="p-5">
@@ -33,7 +32,10 @@ const CourseContent = ({ course }) => {
       {/* Card 4: Reviews (List) */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <div className="p-5">
-          <ReviewList courseId={course._id} />
+          <ReviewList
+            courseId={course?._id}
+            instructorId={course?.instructor?._id || course?.instructor}
+          />
         </div>
       </div>
 
@@ -43,7 +45,6 @@ const CourseContent = ({ course }) => {
           <ReviewForm courseId={course._id} />
         </div>
       </div>
-
     </div>
   );
 };
