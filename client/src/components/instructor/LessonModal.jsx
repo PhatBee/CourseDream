@@ -192,7 +192,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                             <Video size={18} className="text-rose-600" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900">
-                            {isEditing ? '✏️ Chỉnh sửa bài học' : '➕ Thêm bài học mới'}
+                            {isEditing ? 'Chỉnh sửa bài học' : 'Thêm bài học mới'}
                         </h3>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-1 transition-colors">
@@ -220,7 +220,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                     {/* Video Upload - AWS S3 */}
                     <div>
                         <label className="block text-sm font-semibold mb-2 text-gray-700">
-                            📹 Video bài học (AWS S3)
+                            📹 Video bài học
                         </label>
 
                         <div className="border-2 border-dashed border-gray-200 rounded-xl p-5 bg-gray-50 hover:border-rose-300 transition-colors">
@@ -257,7 +257,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                             {!lesson.videoUrl && !videoUploadState.isUploading && (
                                 <div className="text-center py-4">
                                     <Video size={32} className="text-gray-300 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-500 mb-3">Chọn file video để upload lên AWS S3</p>
+                                    <p className="text-sm text-gray-500 mb-3">Chọn file video để upload</p>
                                 </div>
                             )}
 
@@ -269,7 +269,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                                     className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Upload size={15} />
-                                    {lesson.videoUrl && isVideoLinked ? 'Đổi video' : 'Upload lên S3'}
+                                    {lesson.videoUrl && isVideoLinked ? 'Đổi video' : 'Upload'}
                                 </button>
 
                                 {/* Manual URL input */}
@@ -295,7 +295,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                             />
 
                             <p className="text-xs text-gray-400 mt-2">
-                                📌 Video upload trực tiếp lên AWS S3 CDN • Hỗ trợ MP4, MOV, AVI • Tối đa 2GB
+                                📌 Hỗ trợ MP4, MOV, AVI • Tối đa 2GB
                             </p>
                         </div>
                     </div>
@@ -377,7 +377,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                                     onClick={() => setResourceType('upload')}
                                     className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${resourceType === 'upload' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
-                                    ☁️ Upload S3
+                                    ☁️ Upload
                                 </button>
                             </div>
 
@@ -474,7 +474,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                             disabled={videoUploadState.isUploading || resourceUploadState.isUploading}
                             className="px-6 py-2 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isEditing ? '💾 Lưu thay đổi' : '➕ Thêm bài học'}
+                            {isEditing ? 'Lưu thay đổi' : 'Thêm bài học'}
                         </button>
                     </div>
                 </div>

@@ -125,7 +125,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
         <div className="space-y-8 animate-fadeIn">
             <div>
                 <h2 className="text-2xl font-bold text-gray-900">🎨 Course Media</h2>
-                <p className="text-gray-500 text-sm mt-1">Thumbnail và video preview cho khóa học của bạn — lưu trên AWS CloudFront CDN</p>
+                <p className="text-gray-500 text-sm mt-1">Thumbnail và video preview cho khóa học của bạn</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -140,8 +140,8 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                     {/* Thumbnail upload zone */}
                     <div
                         className={`border-2 border-dashed rounded-2xl h-56 flex flex-col items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-rose-300 transition-all cursor-pointer ${errorFields.thumbnail
-                                ? 'border-red-400 bg-red-50/30 ring-2 ring-red-300'
-                                : 'border-gray-200'
+                            ? 'border-red-400 bg-red-50/30 ring-2 ring-red-300'
+                            : 'border-gray-200'
                             }`}
                     >
 
@@ -157,12 +157,12 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                     <span className="text-white text-sm font-semibold">Nhấn để đổi ảnh</span>
                                 </div>
-                                {/* S3 badge */}
+                                {/* S3 badge
                                 {isThumbnailS3 && (
                                     <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                                         <Cloud size={10} /> AWS S3
                                     </div>
-                                )}
+                                )} */}
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -177,7 +177,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                             <div className="w-full px-6">
                                 <div className="text-center mb-3">
                                     <div className="w-10 h-10 border-2 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                                    <p className="text-sm text-gray-600 font-medium">Đang upload lên AWS S3...</p>
+                                    <p className="text-sm text-gray-600 font-medium">Đang upload...</p>
                                 </div>
                                 <UploadProgressBar progress={thumbProgress} label="Uploading thumbnail..." />
                             </div>
@@ -185,7 +185,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                             <>
                                 <ImageIcon size={40} className="text-gray-300 mb-2" />
                                 <p className="text-sm font-medium text-gray-500">Click để chọn ảnh</p>
-                                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP • Tải lên AWS S3</p>
+                                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP • Tải lên</p>
                             </>
                         )}
 
@@ -205,7 +205,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                     <label className="block text-sm font-bold mb-2 text-gray-700">
                         🎬 Course Intro Video <span className="text-gray-400 font-normal">(Không bắt buộc)</span>
                     </label>
-                    <p className="text-xs text-gray-400 mb-3">Video giới thiệu ngắn về khóa học (tối đa 5 phút)</p>
+                    <p className="text-xs text-gray-400 mb-3">Video giới thiệu ngắn về khóa học</p>
 
                     <div className="border-2 border-dashed border-gray-200 rounded-2xl h-56 flex flex-col items-center justify-center bg-gray-50 relative overflow-hidden hover:border-rose-300 transition-all">
 
@@ -219,11 +219,11 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                                     muted
                                 />
                                 <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
-                                    {isPreviewS3 && (
+                                    {/* {isPreviewS3 && (
                                         <div className="bg-green-500 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1 mb-3">
                                             <Cloud size={10} /> AWS CloudFront
                                         </div>
-                                    )}
+                                    )} */}
                                     <CheckCircle size={32} className="text-white mb-2" />
                                     <p className="text-white text-sm font-semibold">Preview video đã sẵn sàng</p>
                                     <button
@@ -240,24 +240,24 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                                     <div className="w-10 h-10 border-2 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                                     <p className="text-sm text-gray-600 font-medium">Đang upload Preview Video...</p>
                                 </div>
-                                <UploadProgressBar progress={previewProgress} label="Uploading to AWS S3..." />
+                                <UploadProgressBar progress={previewProgress} label="Uploading..." />
                             </div>
                         ) : (
                             <div className="text-center px-4">
                                 <Video size={40} className="text-gray-300 mx-auto mb-2" />
                                 <p className="text-sm font-medium text-gray-500 mb-1">Upload video giới thiệu</p>
-                                <p className="text-xs text-gray-400 mb-4">MP4, MOV, AVI • Lưu trên AWS S3</p>
+                                <p className="text-xs text-gray-400 mb-4">MP4, MOV, AVI</p>
 
                                 <div className="flex gap-2 justify-center flex-wrap">
                                     <button
                                         onClick={() => previewRef.current?.click()}
                                         className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 text-sm font-medium transition-colors"
                                     >
-                                        <Upload size={14} /> Upload lên S3
+                                        <Upload size={14} /> Upload
                                     </button>
                                 </div>
 
-                                {/* Manual URL option */}
+                                {/* Manual URL option
                                 <div className="mt-3">
                                     <input
                                         type="url"
@@ -266,7 +266,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                                         onChange={(e) => setCourseData(p => ({ ...p, previewUrl: e.target.value, previewVideoUrl: e.target.value }))}
                                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-rose-400"
                                     />
-                                </div>
+                                </div> */}
                             </div>
                         )}
 
@@ -281,7 +281,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                 </div>
             </div>
 
-            {/* AWS Info Banner */}
+            {/* AWS Info Banner
             <div className="flex items-start gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Cloud size={16} className="text-blue-600" />
@@ -292,7 +292,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                         Media được lưu trữ trên Amazon S3 và phân phối qua CloudFront CDN toàn cầu — đảm bảo tốc độ tải nhanh nhất và bảo mật cao.
                     </p>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 };

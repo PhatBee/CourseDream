@@ -63,13 +63,13 @@ const CourseHeader = ({ course, reviewCount }) => {
         <div className="flex-shrink-0 w-full lg:w-2/5 mb-5 lg:mb-0">
           <CoursePreviewPlayer course={course} />
 
-          {/* AWS CDN indicator */}
+          {/* AWS CDN indicator
           {(course.thumbnail || course.previewUrl) && (
             <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-400">
               <Cloud size={11} className="text-blue-400" />
               <span>Media by <span className="font-medium">AWS CloudFront CDN</span></span>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* === CỘT PHẢI: Thông tin khóa học === */}
