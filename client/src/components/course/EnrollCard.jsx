@@ -1,23 +1,29 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Heart, Share2, ShoppingCart, PlayCircle } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
-import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
-import ShareModal from '../common/ShareModal';
-import { toast } from 'react-hot-toast';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Heart, Share2, ShoppingCart, PlayCircle } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addToWishlist,
+  removeFromWishlist,
+} from "../../features/wishlist/wishlistSlice";
+import { addToCart, removeFromCart } from "../../features/cart/cartSlice";
+import ShareModal from "../common/ShareModal";
+import { toast } from "react-hot-toast";
 
 const formatPrice = (price) => {
-  if (price === 0) return 'FREE';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  if (price === 0) return "FREE";
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
 };
 
 const countPercentage = (originalPrice, discountedPrice) => {
   if (originalPrice === 0) return 0;
   return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100);
-}
+};
 
-const EnrollCard = ({ course }) => {
+const EnrollCard = ({ course, isInstructor }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
@@ -29,10 +35,13 @@ const EnrollCard = ({ course }) => {
   const { _id, title, price = 0, priceDiscount = 0, slug } = course;
   const discountPercentage = countPercentage(price, priceDiscount);
   const isEnrolled = enrolledCourseIds.includes(_id);
-  const isInCart = cartItems?.some(item => item.course._id === _id);
 
+  // Xác định quyền vào học (Đã mua HOẶC chính là giảng viên tạo ra)
+  const canAccessCourse = isEnrolled || isInstructor;
 
-  const isInWishlist = wishlistItems.some(item => item._id === _id);
+  const isInCart = cartItems?.some((item) => item.course._id === _id);
+
+  const isInWishlist = wishlistItems.some((item) => item._id === _id);
 
   const handleWishlistClick = () => {
     if (isInWishlist) {
@@ -61,11 +70,11 @@ const EnrollCard = ({ course }) => {
       return;
     }
     // Navigate directly to checkout with this course
-    navigate('/checkout', {
+    navigate("/checkout", {
       state: {
         directCheckout: true,
-        course: course
-      }
+        course: course,
+      },
     });
   };
 
@@ -73,7 +82,7 @@ const EnrollCard = ({ course }) => {
     navigate(`/courses/${slug}/overview`);
   };
 
-  const shareUrl = window.location.origin + '/courses/' + slug;
+  const shareUrl = window.location.origin + "/courses/" + slug;
 
   return (
     <>
@@ -82,19 +91,24 @@ const EnrollCard = ({ course }) => {
           {/* Price Section */}
           {!isEnrolled ? (
             <div className="flex justify-between items-center mb-4">
-              <h2 className={`text-3xl font-bold ${price === 0 ? 'text-green-600' : 'text-gray-800'}`}>
+              <h2
+                className={`text-3xl font-bold ${price === 0 ? "text-green-600" : "text-gray-800"}`}
+              >
                 {formatPrice(priceDiscount)}
               </h2>
               {price > 0 && (
                 <p className="text-sm">
-                  <span className="text-gray-500 line-through mr-2">{formatPrice(price)}</span>
-                  <span className="text-red-500 font-medium">{discountPercentage}% off</span>
+                  <span className="text-gray-500 line-through mr-2">
+                    {formatPrice(price)}
+                  </span>
+                  <span className="text-red-500 font-medium">
+                    {discountPercentage}% off
+                  </span>
                 </p>
               )}
             </div>
           ) : (
-            <div>
-            </div>
+            <div></div>
           )}
 
           {/* Wishlist and Share Buttons */}
@@ -102,13 +116,14 @@ const EnrollCard = ({ course }) => {
             <button
               onClick={handleWishlistClick}
               className={`btn-wishlist flex items-center justify-center gap-2 transition-colors duration-200
-              ${isInWishlist
-                  ? 'bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
+              ${
+                isInWishlist
+                  ? "bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
             >
               <Heart size={18} className={isInWishlist ? "fill-current" : ""} />
-              {isInWishlist ? 'Wishlisted' : 'Add to Wishlist'}
+              {isInWishlist ? "Wishlisted" : "Add to Wishlist"}
             </button>
 
             <button
@@ -119,13 +134,13 @@ const EnrollCard = ({ course }) => {
             </button>
           </div>
 
-          {isEnrolled ? (
+          {canAccessCourse ? ( // Đổi isEnrolled thành canAccessCourse
             /* Nút Go to Course (Rose/Pink tone) */
             <button
               onClick={handleGoToCourse}
               className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg group"
             >
-              Go to Course
+              {isInstructor ? "View as Instructor" : "Go to Course"}
             </button>
           ) : (
             /* Các nút mua hàng (Hiển thị khi chưa đăng ký) */
@@ -133,13 +148,17 @@ const EnrollCard = ({ course }) => {
               {/* Add to Cart Button - Primary CTA */}
               <button
                 onClick={handleToggleCart}
-                className={`w-full font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group ${isInCart
-                  ? 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white'
-                  : 'bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white'
-                  }`}
+                className={`w-full font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group ${
+                  isInCart
+                    ? "bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white"
+                    : "bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white"
+                }`}
               >
-                <ShoppingCart size={20} className={`group-hover:scale-110 transition-transform ${isInCart ? 'fill-current' : ''}`} />
-                {isInCart ? 'Remove from Cart' : 'Add to Cart'}
+                <ShoppingCart
+                  size={20}
+                  className={`group-hover:scale-110 transition-transform ${isInCart ? "fill-current" : ""}`}
+                />
+                {isInCart ? "Remove from Cart" : "Add to Cart"}
               </button>
               {/* Enroll Now Button - Secondary CTA */}
               <button
