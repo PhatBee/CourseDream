@@ -7,13 +7,13 @@ import VerifyOTP from "../pages/VerifyOTP";
 import ForgotPassword from "../pages/ForgotPassword";
 import VerifyResetOTP from "../pages/VerifyResetOTP";
 import SetPassword from "../pages/SetPassword";
-import CourseDetail from '../pages/CourseDetail';
+import CourseDetail from "../pages/CourseDetail";
 // import Header from '../components/Header'; // Không dùng trực tiếp ở đây
-import ProfileLayout from '../layouts/ProfileLayout';
-import MyProfile from '../components/profile/MyProfile';
-import SettingsPage from '../pages/SettingsPage';
-import EditProfile from '../components/profile/EditProfile';
-import ChangePassword from '../components/profile/ChangePassword';
+import ProfileLayout from "../layouts/ProfileLayout";
+import MyProfile from "../components/profile/MyProfile";
+import SettingsPage from "../pages/SettingsPage";
+import EditProfile from "../components/profile/EditProfile";
+import ChangePassword from "../components/profile/ChangePassword";
 import WishlistPage from "../pages/WishlistPage";
 import CoursePage from "../pages/CoursePage";
 import LearningPage from "../pages/LearningPage";
@@ -25,8 +25,8 @@ import AddCoursePage from "../pages/instructor/AddCourse";
 import PrivateRoute from "../components/common/PrivateRoute";
 import EnrolledCoursesPage from "../pages/EnrolledCoursesPage";
 import InstructorCourses from "../pages/instructor/InstructorCourses";
-import AdminLayout from '../layouts/AdminLayout';
-import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminLayout from "../layouts/AdminLayout";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 import EditCoursePage from "../pages/instructor/EditCourse";
 import BecomeInstructor from "../pages/BecomeInstructor";
 import AdminPendingCourses from "../pages/admin/AdminPendingCourses";
@@ -42,13 +42,41 @@ import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
 import StudentDashboard from "../pages/StudentDashboard";
 import ReportsManagement from "../pages/admin/ReportsManagement";
 import PromotionsManagement from "../pages/admin/PromotionsManagement";
+import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { io } from "socket.io-client";
 
 export default function AppRoutes() {
+  const { user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    // Nếu chưa đăng nhập thì không mở socket để tiết kiệm hiệu năng
+    if (!user?._id) return;
+
+    // Gắn userId để backend biết ai đang truy cập, khớp với logic server
+    const socket = io(import.meta.env.VITE_API_URL, {
+      query: { userId: user._id },
+    });
+
+    // Khi backend (Admin) bắn sự kiện account_banned
+    socket.on("account_banned", (data) => {
+      localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
+
+      // Chuyển thông điệp để hiển thị tại form Login
+      sessionStorage.setItem(
+        "ban_msg",
+        data.reason || "Tài khoản của bạn đã bị khóa",
+      );
+      window.location.href = "/login";
+    });
+
+    return () => socket.disconnect();
+  }, [user]);
 
   return (
     <BrowserRouter>
       <Routes>
-
         {/* ===================== PUBLIC + USER AREA ===================== */}
         {/* Những route nào cần header thì bọc bởi MainLayout */}
 
@@ -60,7 +88,7 @@ export default function AppRoutes() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment/return" element={<PaymentReturn />} />
 
-        {/* Learning Page — có header riêng, KHÔNG bọc bởi MainLayout */}
+          {/* Learning Page — có header riêng, KHÔNG bọc bởi MainLayout */}
           {/* => Chuyển xuống dưới ngoài MainLayout */}
           <Route path="/courses/:slug/overview" element={<OverviewPage />} />
 
@@ -78,8 +106,15 @@ export default function AppRoutes() {
               {/* 2b. Tab Security */}
               <Route path="security" element={<ChangePassword />} />
 
-              <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
-                <Route path="instructor-profile" element={<InstructorInfoEdit />} />
+              <Route
+                element={
+                  <PrivateRoute allowedRoles={["instructor", "admin"]} />
+                }
+              >
+                <Route
+                  path="instructor-profile"
+                  element={<InstructorInfoEdit />}
+                />
                 <Route path="social-payout" element={<SocialPayoutEdit />} />
               </Route>
               {/* Khi vào /profile/settings, tự động nhảy sang /edit */}
@@ -87,21 +122,33 @@ export default function AppRoutes() {
             </Route>
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
-            
-            <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
-              <Route path="instructor/courses" element={<InstructorCourses />} />
-              <Route path="instructor/dashboard" element={<InstructorDashboard />} />
+
+            <Route
+              element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}
+            >
+              <Route
+                path="instructor/courses"
+                element={<InstructorCourses />}
+              />
+              <Route
+                path="instructor/dashboard"
+                element={<InstructorDashboard />}
+              />
             </Route>
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
-
           </Route>
         </Route>
 
-        <Route element={<PrivateRoute allowedRoles={['instructor', 'admin']} />}>
+        <Route
+          element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}
+        >
           <Route path="instructor/add-course" element={<AddCoursePage />} />
-          <Route path="instructor/courses/:slug/edit" element={<EditCoursePage />} />
+          <Route
+            path="instructor/courses/:slug/edit"
+            element={<EditCoursePage />}
+          />
         </Route>
 
         {/* No header Routes */}
@@ -111,12 +158,18 @@ export default function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
         <Route path="/set-password" element={<SetPassword />} />
-        <Route path="/profile/become-instructor" element={<BecomeInstructor />} />
+        <Route
+          path="/profile/become-instructor"
+          element={<BecomeInstructor />}
+        />
 
         {/* LearningPage: có header tự quản lý, không bọc MainLayout */}
-        <Route path="/courses/:slug/learn/lecture/:lectureId" element={<LearningPage />} />
+        <Route
+          path="/courses/:slug/learn/lecture/:lectureId"
+          element={<LearningPage />}
+        />
 
-        <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+        <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
@@ -139,7 +192,10 @@ export default function AppRoutes() {
           </Route>
 
           {/* <Route path="admin/pending-courses" element={<AdminPendingCourses />} /> */}
-          <Route path="admin/pending-courses/:revisionId" element={<AdminPendingCourseDetail />} />
+          <Route
+            path="admin/pending-courses/:revisionId"
+            element={<AdminPendingCourseDetail />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>

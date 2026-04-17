@@ -24,14 +24,6 @@ import {
   resetReportState,
 } from "../../features/report/reportSlice";
 
-const DISCUSSION_REPORT_REASONS = [
-  "Hành vi không phù hợp",
-  "Nội dung rác",
-  "Vi phạm chính sách cộng đồng",
-  "Spam hoặc quảng cáo",
-  "Ý khác",
-];
-
 const CourseDiscussion = ({
   courseId,
   lectureId,
@@ -154,6 +146,45 @@ const CourseDiscussion = ({
       dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
     }
   };
+
+  // Lắng nghe sự thay đổi của discussions để tìm và scroll
+  useEffect(() => {
+    if (!loading && discussions.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const discussionId = urlParams.get("discussionId");
+      const replyId = urlParams.get("replyId");
+
+      // Ưu tiên reply, nếu ko có thì tìm discussion gốc
+      const targetId = replyId
+        ? `reply-${replyId}`
+        : discussionId
+          ? `discussion-${discussionId}`
+          : null;
+
+      if (targetId) {
+        setTimeout(() => {
+          // Timeout nhỏ để đảm bảo render DOM xong
+          const elm = document.getElementById(targetId);
+          if (elm) {
+            elm.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            // Thêm class css để highlight nhấp nháy tạo sự chú ý
+            elm.classList.add(
+              "ring-4",
+              "ring-rose-400",
+              "bg-rose-50",
+              "transition-all",
+              "duration-1000",
+            );
+
+            setTimeout(() => {
+              elm.classList.remove("ring-4", "ring-rose-400", "bg-rose-50");
+            }, 3000); // Tắt highlight sau 3s
+          }
+        }, 300);
+      }
+    }
+  }, [loading, discussions]);
 
   if (loading)
     return (
@@ -302,7 +333,8 @@ const CourseDiscussion = ({
               {discussion.replies?.map((reply) => (
                 <div
                   key={reply._id}
-                  className="flex flex-col gap-1 border-l-[3px] border-rose-100 pl-4 py-1 group/reply relative text-left"
+                  id={`reply-${reply._id}`}
+                  className="flex flex-col gap-1 border-l-[3px] border-rose-100 pl-4 py-1 group/reply relative text-left transition-all duration-1000"
                 >
                   <div className="flex items-center gap-2">
                     {reply.author?.avatar ? (
@@ -446,13 +478,13 @@ const CourseDiscussion = ({
         open={reportOpen}
         onClose={() => setReportOpen(false)}
         onSubmit={handleReportSubmit}
-        reasons={DISCUSSION_REPORT_REASONS}
+        type="discussion"
       />
       <ReportModal
         open={reportReplyOpen}
         onClose={() => setReportReplyOpen(false)}
         onSubmit={handleReportReplySubmit}
-        reasons={DISCUSSION_REPORT_REASONS}
+        type="reply"
       />
     </div>
   );

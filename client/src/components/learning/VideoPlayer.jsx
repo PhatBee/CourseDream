@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { courseApi } from "../../api/courseApi";
 import CourseDiscussion from "../../features/discussion/CourseDiscussion"; // <== THÊM
+import { useLocation } from "react-router-dom";
 
 // ======================== VIDEO.JS PLAYER ========================
 
@@ -149,6 +150,8 @@ const VideoPlayer = ({
   isEnrolled,
   isInstructor,
 }) => {
+  const location = useLocation(); // Thêm useLocation
+
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(null);
@@ -177,8 +180,18 @@ const VideoPlayer = ({
 
   useEffect(() => {
     fetchVideoUrl();
-    setActiveTab("overview");
-  }, [fetchVideoUrl]);
+
+    // Kiểm tra xem URL có chứa param của thảo luận không
+    const urlParams = new URLSearchParams(location.search);
+    const hasDiscussionLink =
+      urlParams.get("discussionId") || urlParams.get("replyId");
+
+    if (hasDiscussionLink) {
+      setActiveTab("discussion"); // Tự động mở tab Hỏi đáp
+    } else {
+      setActiveTab("overview"); // Mặc định mở Tổng quan
+    }
+  }, [fetchVideoUrl, location.search]);
 
   const parsedResources = React.useMemo(() => {
     if (!lecture?.resources || !Array.isArray(lecture.resources)) return [];

@@ -37,7 +37,7 @@ const EnrollCard = ({ course, isInstructor }) => {
   const isEnrolled = enrolledCourseIds.includes(_id);
 
   // Xác định quyền vào học (Đã mua HOẶC chính là giảng viên tạo ra)
-  const canAccessCourse = isEnrolled || isInstructor;
+  const canAccessCourse = isEnrolled || isInstructor || user?.role === "admin";
 
   const isInCart = cartItems?.some((item) => item.course._id === _id);
 
@@ -140,7 +140,11 @@ const EnrollCard = ({ course, isInstructor }) => {
               onClick={handleGoToCourse}
               className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg group"
             >
-              {isInstructor ? "View as Instructor" : "Go to Course"}
+              {user?.role === "admin"
+                ? "View as Admin"
+                : isInstructor
+                  ? "View as Instructor"
+                  : "Go to Course"}
             </button>
           ) : (
             /* Các nút mua hàng (Hiển thị khi chưa đăng ký) */
