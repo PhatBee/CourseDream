@@ -280,31 +280,85 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
       }
     }
   }
-  await report.save();
+  await report.save(); // Chỗ này là kết thúc ghi lịch sử xử lý cũ của bạn
+
+  // LẤY DỮ LIỆU ĐỂ ĐIỀU HƯỚNG VÀ IN VÀO THÔNG BÁO
+  let courseSlug = null;
+  let lessonId = null;
+  let discussionId = null;
+  let replyId = null;
+  let originalContent = "Nội dung vi phạm"; // Khai báo
+
+  if (report.targetType === "course") {
+    const c = await Course.findById(report.targetId).select("slug title");
+    if (c) {
+      courseSlug = c.slug;
+      originalContent = `Khóa học: ${c.title}`;
+    }
+  } else if (report.targetType === "discussion") {
+    const d = await Discussion.findById(report.targetId).populate(
+      "course",
+      "slug",
+    );
+    if (d) {
+      courseSlug = d.course?.slug;
+      lessonId = d.lectureId;
+      discussionId = d._id;
+      // HIỂN THỊ ĐẦY ĐỦ TIÊU ĐỀ + NỘI DUNG THẢO LUẬN BỊ XÓA
+      originalContent = `Tiêu đề: ${d.title}\nChi tiết: ${d.content}`;
+    }
+  } else if (report.targetType === "reply") {
+    const d = await Discussion.findOne({
+      "replies._id": report.targetId,
+    }).populate("course", "slug");
+    if (d) {
+      courseSlug = d.course?.slug;
+      lessonId = d.lectureId;
+      discussionId = d._id;
+      replyId = report.targetId;
+      const rep = d.replies.id(report.targetId);
+      // HIỂN THỊ ĐẦY ĐỦ BÌNH LUẬN (BỎ HÀM .substring CŨ ĐI)
+      if (rep) originalContent = `${rep.content}`;
+    }
+  }
 
   // Gửi một thông báo tổng hợp cho người bị báo cáo
   if ((status === "resolved" || status === "reviewed") && report.reportedUser) {
-    let reportType = "Khóa học";
-    if (report.targetType === "reply") reportType = "Bình luận";
-    else if (report.targetType === "discussion") reportType = "Thảo luận";
+    const isDeletedAction =
+      action === "hide_course" || action === "lock_comment";
 
-    // Xác định kết quả xử lý
-    let result = "";
-    if (action === "warn") result = "Kết quả: Bạn bị cảnh cáo.";
-    else if (action === "ban_user")
-      result = "Kết quả: Tài khoản của bạn đã bị khóa.";
-    else if (action === "lock_comment")
-      result = "Kết quả: Bình luận của bạn đã bị xóa.";
-    else if (action === "hide_course") result = "Kết quả: Khóa học đã bị ẩn.";
-    else result = "Kết quả: Báo cáo đã được xử lý.";
+    // 1. ÁNH XẠ LÝ DO (REASON) RA LABEL TIẾNG VIỆT
+    const REASON_MAP = {
+      INAPPROPRIATE_CONTENT: "Nội dung không phù hợp / Vi phạm chính sách",
+      COPYRIGHT_VIOLATION: "Vi phạm bản quyền",
+      FRAUD: "Lừa đảo / Sai sự thật",
+      HARASSMENT: "Hành vi không phù hợp / Quấy rối",
+      SPAM: "Spam hoặc quảng cáo",
+      OTHER: "Khác",
+    };
+    const reportReasonLabel = REASON_MAP[report.reason] || report.reason;
 
+    // 2. KHÔNG CỘNG STRING NỮA, LƯU VÀO METADATA ĐỂ TÁCH BIỆT BÊN FRONTEND
     await notificationService.createNotification({
       recipient: report.reportedUser,
       sender: adminId,
-      type: "report",
-      title: "Vi phạm nguyên tắc cộng đồng",
-      message: `Loại vi phạm: ${reportType}\nHành vi vi phạm: ${adminNote || report.reason}\n${result}`,
-      relatedId: report._id,
+      type: "warning",
+      title: isDeletedAction
+        ? `BÁO CÁO VI PHẠM: NỘI DUNG BỊ ${action === "hide_course" ? "ẨN" : "XÓA"}`
+        : "CẢNH BÁO VI PHẠM TỪ ADMIN",
+      message: isDeletedAction
+        ? "Nội dung của bạn đã bị gỡ bỏ do vi phạm tiêu chuẩn cộng đồng của hệ thống."
+        : "Bạn có một nhắc nhở từ quản trị viên về hành vi của mình.",
+      metadata: {
+        isDeleted: isDeletedAction,
+        courseSlug,
+        lessonId,
+        discussionId,
+        replyId,
+        reportReasonLabel: reportReasonLabel, // Gắn nhãn lỗi
+        adminNote: adminNote || "", // Lời nhắn admin riêng biệt
+        originalContent: originalContent, // Nội dung đầy đủ
+      },
     });
   }
 

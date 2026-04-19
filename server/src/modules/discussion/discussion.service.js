@@ -229,9 +229,13 @@ export const replyToDiscussion = async (discussionId, authorId, content) => {
         type: "reply",
         title: "Có trả lời mới trong thảo luận của bạn",
         message: `${replyAuthorName} đã trả lời: "${content.substring(0, 50)}${content.length > 50 ? "..." : ""}"`,
-        relatedId: discussionId,
-        courseSlug: discussion.course?.slug,
-        replyId: latestReply._id,
+        // ĐỔI TỪ ĐÂY
+        metadata: {
+          discussionId: discussionId, // Gắn ID cuộc thảo luận để FE cuộn tới
+          replyId: latestReply._id, // Gắn ID Reply để FE highlight
+          courseSlug: discussion.course?.slug,
+          lessonId: discussion.lectureId, // <== QUAN TRỌNG: Để biết reply ở bài học nào
+        },
       });
     } catch (error) {
       console.error("Lỗi gửi notification (replyToDiscussion):", error);
