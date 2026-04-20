@@ -6,7 +6,7 @@ import React from 'react';
  * @param {string} size - Kích thước của spinner (mặc định là 'w-12 h-12')
  * @param {string} color - Màu của spinner (mặc định là 'border-blue-600')
  */
-const Spinner = ({ size = 'w-12 h-12', color = 'border-blue-600' }) => {
+const Spinner = ({ size = 'w-12 h-12', color = 'border-rose-600' }) => {
   return (
     <div className="flex justify-center items-center">
       <div

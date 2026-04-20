@@ -151,13 +151,13 @@ const CoursePreviewPlayer = ({ course }) => {
                         )}
                     </div>
 
-                    {/* CloudFront badge (optional) */}
+                    {/* CloudFront badge (optional)
                     {course?.thumbnail?.includes('cloudfront.net') && (
                         <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/60 rounded-full px-2.5 py-1">
                             <Cloud size={11} className="text-blue-400" />
                             <span className="text-white text-xs">AWS CDN</span>
                         </div>
-                    )}
+                    )} */}
                 </div>
             )}
 
