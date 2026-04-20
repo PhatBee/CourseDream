@@ -4,45 +4,72 @@ import { sendEmailNotification } from "../../utils/notify.js";
 import User from "../auth/auth.model.js";
 
 class NotificationService {
-  // Tạo thông báo + gửi realtime + email
-  async createNotification({ recipient, sender, type, title, message, relatedId, courseSlug,replyId }) {
+  async createNotification({
+    recipient,
+    sender,
+    type,
+    title,
+    message,
+    metadata,
+  }) {
+    // 🚀 BỔ SUNG PROMOTION VÀ COURSE_COMPLETED VÀO ĐÂY
+    // 1. NHÓM CHỈ GỬI EMAIL (Không lưu DB, không báo realtime)
+    const emailOnlyTypes = [
+      "purchase_success",
+      "new_lesson",
+      "promotion",
+      "course_completed",
+    ];
+
+    if (emailOnlyTypes.includes(type)) {
+      const recipientUser = await User.findById(recipient).select("email name");
+      if (recipientUser?.email) {
+        sendEmailNotification({
+          to: recipientUser.email,
+          name: recipientUser.name,
+          title,
+          message,
+        }).catch(console.error);
+      }
+      return null; // Thoát luôn
+    }
+
+    // 2. NHÓM LƯU DATABASE & IN-APP (Các type còn lại)
     const notification = await Notification.create({
       recipient,
       sender,
       type,
       title,
       message,
-      relatedId,
-      courseSlug,
-      replyId, 
+      metadata,
     });
 
-    // Populate để frontend nhận được thông tin sender
     await notification.populate("sender", "name avatar");
 
-    // 1. Gửi realtime qua Socket.io
+    // Realtime Socket
     getIO().to(`user_${recipient}`).emit("new_notification", {
       _id: notification._id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
+      title,
+      message,
+      type,
       sender: notification.sender,
-      relatedId: notification.relatedId,
+      metadata: notification.metadata,
       createdAt: notification.createdAt,
       read: false,
-      courseSlug: notification.courseSlug,
-      replyId: notification.replyId,
     });
 
-    // 2. Gửi email (tùy chọn)
-    const recipientUser = await User.findById(recipient).select("email name");
-    if (recipientUser?.email) {
-      sendEmailNotification({
-        to: recipientUser.email,
-        name: recipientUser.name,
-        title,
-        message,
-      }).catch(console.error); // Không await
+    // Option: Cảnh báo quan trọng vừa hiện In-app vừa gửi Email
+    const importantTypes = ["warning", "system"];
+    if (importantTypes.includes(type)) {
+      const recipientUser = await User.findById(recipient).select("email name");
+      if (recipientUser?.email) {
+        sendEmailNotification({
+          to: recipientUser.email,
+          name: recipientUser.name,
+          title,
+          message,
+        }).catch(console.error);
+      }
     }
 
     return notification;
@@ -81,10 +108,11 @@ class NotificationService {
     const notification = await Notification.findOneAndUpdate(
       { _id: notificationId, recipient: userId },
       { read: true },
-      { new: true }
+      { new: true },
     );
 
-    if (!notification) throw new Error("Thông báo không tồn tại hoặc không thuộc về bạn");
+    if (!notification)
+      throw new Error("Thông báo không tồn tại hoặc không thuộc về bạn");
 
     return notification;
   }
@@ -93,7 +121,7 @@ class NotificationService {
   async markAllAsRead(userId) {
     const result = await Notification.updateMany(
       { recipient: userId, read: false },
-      { read: true }
+      { read: true },
     );
 
     return { modifiedCount: result.modifiedCount };

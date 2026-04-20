@@ -6,7 +6,11 @@ export const getMyNotifications = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 15;
 
-    const result = await notificationService.getUserNotifications(userId, page, limit);
+    const result = await notificationService.getUserNotifications(
+      userId,
+      page,
+      limit,
+    );
 
     res.json({
       success: true,
@@ -22,7 +26,10 @@ export const markNotificationAsRead = async (req, res, next) => {
     const userId = req.user._id;
     const { notificationId } = req.params;
 
-    const notification = await notificationService.markAsRead(userId, notificationId);
+    const notification = await notificationService.markAsRead(
+      userId,
+      notificationId,
+    );
 
     res.json({
       success: true,
@@ -44,6 +51,18 @@ export const markAllNotificationsAsRead = async (req, res, next) => {
       success: true,
       message: `Đã đánh dấu ${result.modifiedCount} thông báo là đã đọc`,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteNotification = async (req, res, next) => {
+  try {
+    await Notification.findOneAndDelete({
+      _id: req.params.notificationId,
+      recipient: req.user._id,
+    });
+    res.json({ success: true, message: "Đã xóa thông báo" });
   } catch (err) {
     next(err);
   }

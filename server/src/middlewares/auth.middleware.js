@@ -17,7 +17,7 @@ export const verifyToken = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         message: "Access denied, no token provided",
-        code: "NO_TOKEN"
+        code: "NO_TOKEN",
       });
     }
 
@@ -29,7 +29,16 @@ export const verifyToken = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         message: "User not found",
-        code: "USER_NOT_FOUND"
+        code: "USER_NOT_FOUND",
+      });
+    }
+
+    // 🔥 FIX: Đá văng người dùng nếu trạng thái là khóa
+    if (!user.isActive) {
+      return res.status(403).json({
+        message: "Tài khoản của bạn đã bị khóa.",
+        code: "ACCOUNT_BANNED",
+        banReason: user.banReason,
       });
     }
 
@@ -42,23 +51,23 @@ export const verifyToken = async (req, res, next) => {
     console.error("Auth Middleware Error:", err.message);
 
     // Phân biệt loại lỗi
-    if (err.name === 'TokenExpiredError') {
+    if (err.name === "TokenExpiredError") {
       // Token hết hạn - client nên refresh
       return res.status(401).json({
         message: "Access token expired",
-        code: "TOKEN_EXPIRED"
+        code: "TOKEN_EXPIRED",
       });
-    } else if (err.name === 'JsonWebTokenError') {
+    } else if (err.name === "JsonWebTokenError") {
       // Token không hợp lệ
       return res.status(401).json({
         message: "Invalid token",
-        code: "INVALID_TOKEN"
+        code: "INVALID_TOKEN",
       });
     } else {
       // Lỗi khác
       return res.status(401).json({
         message: "Authentication failed",
-        code: "AUTH_FAILED"
+        code: "AUTH_FAILED",
       });
     }
   }
@@ -76,8 +85,8 @@ export const optionalAuth = async (req, res, next) => {
 
     if (!token) {
       const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.split(' ')[1];
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
       }
     }
 
@@ -87,7 +96,7 @@ export const optionalAuth = async (req, res, next) => {
     }
 
     const decoded = verifyJWT(token);
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id).select("-password");
     req.user = user || null;
     next();
   } catch {

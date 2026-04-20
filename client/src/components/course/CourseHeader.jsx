@@ -10,14 +10,6 @@ import ReportModal from '../common/ReportModal';
 import CoursePreviewPlayer from './CoursePreviewPlayer';
 import { sendReport, resetReportState } from '../../features/report/reportSlice';
 
-const COURSE_REPORT_REASONS = [
-  'Nội dung khóa học không phù hợp - Có hại, bạo lực, thù hận hoặc tội phạm',
-  'Nội dung khóa học không phù hợp - Khác',
-  'Vi phạm chính sách của nền tảng',
-  'Nội dung quảng cáo không phù hợp',
-  'Ý khác',
-];
-
 const CourseHeader = ({ course, reviewCount }) => {
   const [reportOpen, setReportOpen] = useState(false);
   const dispatch = useDispatch();
@@ -150,7 +142,7 @@ const CourseHeader = ({ course, reviewCount }) => {
         open={reportOpen}
         onClose={() => setReportOpen(false)}
         onSubmit={handleReportSubmit}
-        reasons={COURSE_REPORT_REASONS}
+        type="course"
       />
     </div>
   );
