@@ -1,0 +1,107 @@
+@startuml
+!theme plain
+autonumber
+
+' Khai báo các thành phần
+actor "Guest/Student" as User
+boundary "Course Detail Page\n(UI)" as UI
+control "Router" as Router
+control "Course Controller" as Controller
+participant "Course Service" as Service
+entity ":Course" as CourseModel
+entity ":Instructor" as ProfileModel
+entity ":Review" as ReviewModel
+
+' ==========================================
+' MAIN FLOW: FETCH COURSE DATA
+' ==========================================
+== Load Course Details ==
+
+User -> UI: Click vào khóa học (từ Home/Search/Link)
+activate UI
+
+' Gửi Request
+note right of UI
+  API Endpoint:
+  GET /api/v1/courses/:slug
+end note
+UI -> Router: Gửi Request
+activate Router
+
+Router -> Controller: getCourseDetailsBySlug(req, res, next)
+activate Controller
+
+Controller -> Service: getCourseDetailsBySlug(slug)
+activate Service
+
+' 1. Query Course Info
+Service -> CourseModel: findOne({ slug, status: 'published' })\n.populate(instructor, categories)\n.populate(sections.lectures)
+activate CourseModel
+CourseModel --> Service: Trả về course document
+deactivate CourseModel
+
+alt Course Not Found
+    Service --> Controller: Throw Error 404
+    Controller --> UI: Hiển thị lỗi "Không tìm thấy khóa học"
+else Course Found
+    
+    ' 2. Query Instructor Profile (Logic [MỚI] trong service)
+    group Get Extended Instructor Info
+        Service -> ProfileModel: findOne({ user: course.instructor._id })
+        activate ProfileModel
+        ProfileModel --> Service: Trả về instructorDetails
+        deactivate ProfileModel
+        
+        opt instructorDetails exists
+            Service -> Service: Merge profile info\n(headline, socialLinks, stats...)
+        end
+    end
+
+    ' 3. Query Reviews
+    group Get Reviews
+        Service -> ReviewModel: find({ course: id }).limit(20)
+        activate ReviewModel
+        ReviewModel --> Service: Trả về reviews list
+        deactivate ReviewModel
+        
+        Service -> ReviewModel: countDocuments({ course: id })
+        activate ReviewModel
+        ReviewModel --> Service: Trả về reviewCount
+        deactivate ReviewModel
+    end
+
+    ' Trả kết quả về Controller
+    Service --> Controller: Return { course, reviews, reviewCount }
+    deactivate Service
+
+    Controller --> UI: Response 200 OK (JSON Data)
+    deactivate Controller
+    deactivate Router
+
+    ' ==========================================
+    ' ALTERNATE FLOWS (CLIENT SIDE LOGIC)
+    ' ==========================================
+    == Render UI & Check Enrollment State ==
+
+    UI -> UI: Render thông tin khóa học\n(Title, Video, Bio, Reviews...)
+
+    alt User là Guest (Chưa đăng nhập)
+        UI -> User: Hiển thị nút "Enroll Now" & "Add to Wishlist"
+    
+    else User là Student (Đã đăng nhập)
+        ' Logic kiểm tra enrollment nằm ở Client State (Redux/Context)
+        ' vì API getDetail bên trên là Public
+        UI -> UI: Kiểm tra Client State (Redux)\n(Check if courseId in myEnrollments)
+        
+        alt A1: Student Đã đăng ký (Enrolled)
+            UI -> User: Hiển thị nút "Go to Course"\n& Progress Bar
+        else A2: Student Chưa đăng ký
+            UI -> User: Hiển thị nút "Enroll Now"\n& "Add to Wishlist"
+        end
+    end
+
+    User -> UI: Xem nội dung / Cuộn trang
+    deactivate UI
+end
+
+@enduml
