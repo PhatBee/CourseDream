@@ -3,18 +3,16 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchDiscussions,
   addDiscussion,
-  replyDiscussion,
   voteDiscussion,
-  markBestAnswer,
   deleteDiscussion,
 } from "./discussionSlice";
 import Spinner from "../../components/common/Spinner";
 import {
   FaUserCircle,
-  FaFlag,
   FaThumbsUp,
   FaCheck,
   FaTrash,
+  FaFlag,
 } from "react-icons/fa";
 import ReportModal from "../../components/common/ReportModal";
 import toast from "react-hot-toast";
@@ -23,6 +21,8 @@ import {
   sendReport,
   resetReportState,
 } from "../../features/report/reportSlice";
+import DiscussionModal from "./DiscussionModal";
+import { useLocation } from "react-router-dom";
 
 const CourseDiscussion = ({
   courseId,
@@ -36,17 +36,16 @@ const CourseDiscussion = ({
     (state) => state.discussion,
   );
   const { success, error } = useSelector((state) => state.report);
+  const location = useLocation();
 
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [replyContent, setReplyContent] = useState({});
   const [page, setPage] = useState(1);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDiscussionId, setReportDiscussionId] = useState(null);
-  const [reportReplyOpen, setReportReplyOpen] = useState(false);
-  const [reportReplyId, setReportReplyId] = useState(null);
+  const [selectedDiscussion, setSelectedDiscussion] = useState(null);
 
-  // Focus: Tải lại Thảo Luận khi Bài giảng (lectureId) thay đổi
+  // Load Thảo Luận khi Bài giảng (lectureId) thay đổi
   useEffect(() => {
     if (courseId && lectureId) {
       dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
@@ -58,13 +57,14 @@ const CourseDiscussion = ({
       toast.success("Báo cáo của bạn đã được gửi!");
       dispatch(resetReportState());
       setReportOpen(false);
-      setReportReplyOpen(false);
     }
     if (error) {
       toast.error(error);
       dispatch(resetReportState());
     }
   }, [success, error, dispatch]);
+
+  const canDiscuss = isEnrolled || isInstructor;
 
   const handleCreateDiscussion = async (e) => {
     e.preventDefault();
@@ -86,19 +86,25 @@ const CourseDiscussion = ({
     dispatch(fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }));
   };
 
-  const handleReply = async (discussionId) => {
-    if (!replyContent[discussionId]?.trim()) return;
-    await dispatch(
-      replyDiscussion({ discussionId, content: replyContent[discussionId] }),
-    );
-    setReplyContent({ ...replyContent, [discussionId]: "" });
+  const handleVote = async (discussionId, targetType, targetId = null) => {
+    if (!canDiscuss) return toast.error("Vui lòng ghi danh để vote!");
+    await dispatch(voteDiscussion({ discussionId, targetType, targetId }));
     dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
+  };
+
+  const handleDeleteDiscussion = async (discussionId) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa bài thảo luận này?")) {
+      await dispatch(deleteDiscussion(discussionId));
+      toast.success("Đã xóa thảo luận.");
+      dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
+    }
   };
 
   const openReportPopup = (discussionId) => {
     setReportDiscussionId(discussionId);
     setReportOpen(true);
   };
+
   const handleReportSubmit = (reason, detail) => {
     dispatch(
       sendReport({
@@ -108,85 +114,52 @@ const CourseDiscussion = ({
       }),
     );
   };
-  const openReportReplyPopup = (replyId) => {
-    setReportReplyId(replyId);
-    setReportReplyOpen(true);
-  };
-  const handleReportReplySubmit = (reason, detail) => {
-    dispatch(
-      sendReport({
-        type: "reply",
-        targetId: reportReplyId,
-        reason: reason + (detail ? `\n${detail}` : ""),
-      }),
-    );
-  };
 
-  const canDiscuss = isEnrolled || isInstructor;
-
-  // 1. Xử lý Vote
-  const handleVote = async (discussionId, targetType, targetId = null) => {
-    if (!canDiscuss) return toast.error("Vui lòng ghi danh để vote!");
-    await dispatch(voteDiscussion({ discussionId, targetType, targetId }));
+  // Callback hàm để con DiscussionModal gọi mỗi khi có câu trả lời mới (Update answerCount)
+  const refreshParent = () => {
     dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
   };
 
-  // 2. Đánh dấu Best Answer
-  const handleMarkBestAnswer = async (discussionId, replyId) => {
-    await dispatch(markBestAnswer({ discussionId, replyId }));
-    toast.success("Đã đánh dấu câu trả lời hay nhất!");
-    dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
-  };
-
-  // 3. Xóa câu hỏi thảo luận
-  const handleDeleteDiscussion = async (discussionId) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa bài thảo luận này?")) {
-      await dispatch(deleteDiscussion(discussionId));
-      toast.success("Đã xóa thảo luận.");
-      dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
-    }
-  };
-
-  // Lắng nghe sự thay đổi của discussions để tìm và scroll
+  // Lắng nghe URL Params để Scroll & Mở Modal
   useEffect(() => {
     if (!loading && discussions.length > 0) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const discussionId = urlParams.get("discussionId");
-      const replyId = urlParams.get("replyId");
+      const params = new URLSearchParams(location.search);
+      const focusDiscussionId = params.get("discussionId");
+      const focusReplyId = params.get("replyId");
 
-      // Ưu tiên reply, nếu ko có thì tìm discussion gốc
-      const targetId = replyId
-        ? `reply-${replyId}`
-        : discussionId
-          ? `discussion-${discussionId}`
-          : null;
-
-      if (targetId) {
-        setTimeout(() => {
-          // Timeout nhỏ để đảm bảo render DOM xong
-          const elm = document.getElementById(targetId);
-          if (elm) {
-            elm.scrollIntoView({ behavior: "smooth", block: "center" });
-
-            // Thêm class css để highlight nhấp nháy tạo sự chú ý
-            elm.classList.add(
-              "ring-4",
-              "ring-rose-400",
-              "bg-rose-50",
-              "transition-all",
-              "duration-1000",
-            );
-
-            setTimeout(() => {
-              elm.classList.remove("ring-4", "ring-rose-400", "bg-rose-50");
-            }, 3000); // Tắt highlight sau 3s
+      if (focusDiscussionId) {
+        // Tự động mở Modal nếu có replyId (tức là báo cáo bình luận bên trong)
+        if (focusReplyId && !selectedDiscussion) {
+          const itemToOpen = discussions.find(
+            (d) => d._id === focusDiscussionId,
+          );
+          if (itemToOpen) {
+            setSelectedDiscussion(itemToOpen);
           }
-        }, 300);
+        }
+        // Scroll đến Thảo luận gốc
+        else if (!focusReplyId) {
+          setTimeout(() => {
+            const el = document.getElementById(
+              `discussion-${focusDiscussionId}`,
+            );
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+              // Highlight nhẹ
+              el.classList.add("ring-2", "ring-rose-400", "bg-rose-50");
+              setTimeout(
+                () =>
+                  el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50"),
+                3000,
+              );
+            }
+          }, 500); // Đợi render xong
+        }
       }
     }
-  }, [loading, discussions]);
+  }, [location.search, discussions, loading]);
 
-  if (loading)
+  if (loading && discussions.length === 0)
     return (
       <div className="py-10 flex justify-center">
         <Spinner color="border-rose-500" />
@@ -194,14 +167,14 @@ const CourseDiscussion = ({
     );
 
   return (
-    <div className="w-full">
+    <div className="w-full text-left">
       {!canDiscuss && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl text-sm">
           Bạn cần ghi danh khóa học để tham gia hỏi đáp bài giảng này.
         </div>
       )}
 
-      {/* KHUNG TẠO THẢO LUẬN MỚI TRONG BÀI GIẢNG */}
+      {/* FORM TẠO */}
       <form
         onSubmit={handleCreateDiscussion}
         className="flex items-start gap-4 mb-8 bg-gray-50 border border-gray-100 p-5 rounded-2xl"
@@ -222,7 +195,6 @@ const CourseDiscussion = ({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Tiêu đề câu hỏi của bạn"
-            required
             disabled={!canDiscuss}
             className="w-full px-4 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white disabled:bg-gray-100 transition-shadow"
           />
@@ -230,7 +202,6 @@ const CourseDiscussion = ({
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
             placeholder="Mô tả chi tiết khó khăn bạn đang gặp phải tại bài học này..."
-            required
             disabled={!canDiscuss}
             className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none bg-white disabled:bg-gray-100 transition-shadow"
             rows={3}
@@ -238,10 +209,10 @@ const CourseDiscussion = ({
           <div className="flex justify-end gap-2 mt-1">
             <button
               type="submit"
-              className="inline-flex items-center px-6 py-2.5 text-sm rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 transition-colors disabled:bg-gray-300 disabled:text-gray-50 disabled:cursor-not-allowed"
               disabled={
                 !canDiscuss || !newContent.trim() || newTitle.trim().length < 5
               }
+              className="inline-flex items-center px-6 py-2.5 text-sm rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 transition-colors disabled:bg-gray-300 disabled:text-gray-50 disabled:cursor-not-allowed"
             >
               Gửi Câu Hỏi
             </button>
@@ -249,243 +220,150 @@ const CourseDiscussion = ({
         </div>
       </form>
 
-      {/* DANH SÁCH BÌNH LUẬN CỦA BÀI HỌC */}
-      <div className="space-y-6">
-        <h3 className="text-gray-800 font-bold text-lg mb-2">
-          Hỏi đáp trong bài này ({pagination?.total || discussions.length})
-        </h3>
-
-        {discussions.length === 0 && (
-          <div className="py-6 text-center bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 text-gray-500 text-sm">
-            Chưa có ai đặt câu hỏi cho bài giảng này. Dễ hiểu quá chăng?
-          </div>
-        )}
-
-        {discussions.map((discussion) => (
+      {/* DANH SÁCH BÌNH LUẬN */}
+      <div className="space-y-6 mt-8">
+        {discussions.map((item) => (
           <div
-            key={discussion._id}
-            id={`discussion-${discussion._id}`}
-            className="bg-white text-left rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all group relative"
+            key={item._id}
+            id={`discussion-${item._id}`}
+            className="p-5 border border-gray-200 rounded-xl bg-white shadow-sm hover:border-gray-300 transition-all group"
           >
-            <div className="flex items-start gap-4 mb-3">
-              {discussion.author?.avatar ? (
-                <img
-                  src={discussion.author.avatar}
-                  alt="avatar"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <FaUserCircle className="w-10 h-10 text-gray-300" />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-gray-900 text-base leading-tight break-words text-left">
-                  {discussion.title}
-                </div>
-                <div className="text-[13px] text-gray-500 mt-0.5 text-left">
-                  <span className="font-medium text-gray-700">
-                    {discussion.author?.name || "Học viên ẩn danh"}
-                  </span>{" "}
-                  • {new Date(discussion.createdAt).toLocaleString()}
-                </div>
-              </div>
-              {discussion.author?._id !== user?._id && (
-                <button
-                  className="ml-2 text-gray-300 hover:text-red-500 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Báo cáo"
-                  onClick={() => openReportPopup(discussion._id)}
-                >
-                  <FaFlag size={13} />
-                </button>
-              )}
-            </div>
-
-            <div className="ml-14 text-gray-700 text-left text-sm mb-5 leading-relaxed break-words">
-              {discussion.content}
-            </div>
-
-            {/* BẮT ĐẦU THÊM: Các nút tương tác cho CÂU HỎI */}
-            <div className="flex items-center gap-4 mt-3 ml-14 text-sm">
-              <button
-                onClick={() => handleVote(discussion._id, "DISCUSSION")}
-                className={`flex items-center gap-1 font-medium transition-colors ${
-                  discussion.upvotedBy?.includes(user?._id)
-                    ? "text-rose-500"
-                    : "text-gray-400 hover:text-gray-700"
-                }`}
-              >
-                <FaThumbsUp size={14} />
-                <span>{discussion.upvoteCount || 0}</span>
-              </button>
-
-              {(isInstructor || discussion.author?._id === user?._id) && (
-                <button
-                  onClick={() => handleDeleteDiscussion(discussion._id)}
-                  className="text-gray-400 hover:text-rose-500 transition-colors flex items-center gap-1"
-                >
-                  <FaTrash size={13} /> Xóa
-                </button>
-              )}
-            </div>
-            {/* KẾT THÚC THÊM */}
-
-            {/* VÙNG TRẢ LỜI */}
-            <div className="ml-14 flex flex-col gap-3">
-              {discussion.replies?.map((reply) => (
-                <div
-                  key={reply._id}
-                  id={`reply-${reply._id}`}
-                  className="flex flex-col gap-1 border-l-[3px] border-rose-100 pl-4 py-1 group/reply relative text-left transition-all duration-1000"
-                >
-                  <div className="flex items-center gap-2">
-                    {reply.author?.avatar ? (
-                      <img
-                        src={reply.author.avatar}
-                        alt="avatar"
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <FaUserCircle className="w-6 h-6 text-gray-300" />
-                    )}
-                    <span className="font-bold text-gray-800 text-[13px]">
-                      {reply.author?.name || "Học viên"}
-                    </span>
-                    <span className="text-[11px] text-gray-400">
-                      {new Date(reply.createdAt).toLocaleDateString()}
-                    </span>
-                    {reply.isBestAnswer && (
-                      <span className="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded text-[10px] ml-1 flex items-center gap-1">
-                        ✓ Câu trả lời hay nhất
-                      </span>
-                    )}
-
-                    {reply.author?._id !== user?._id && (
-                      <button
-                        className="text-gray-300 hover:text-red-500 opacity-0 group-hover/reply:opacity-100 transition-opacity ml-auto"
-                        title="Báo cáo"
-                        onClick={() => openReportReplyPopup(reply._id)}
-                      >
-                        <FaFlag size={12} />
-                      </button>
-                    )}
-                  </div>
-                  <div className="text-gray-700 text-sm ml-8 text-left leading-relaxed max-w-prose break-words">
-                    {reply.content}
-                  </div>
-
-                  {/* BẮT ĐẦU THÊM: Các nút tương tác cho CÂU TRẢ LỜI */}
-                  <div className="flex items-center gap-4 mt-1 mb-2 ml-8 text-xs">
-                    <button
-                      onClick={() =>
-                        handleVote(discussion._id, "ANSWER", reply._id)
-                      }
-                      className={`flex items-center gap-1 font-medium transition-colors ${
-                        reply.upvotedBy?.includes(user?._id)
-                          ? "text-rose-500"
-                          : "text-gray-400 hover:text-gray-700"
-                      }`}
-                    >
-                      <FaThumbsUp size={12} />
-                      <span>{reply.upvoteCount || 0}</span>
-                    </button>
-
-                    {(isInstructor || discussion.author?._id === user?._id) && (
-                      <button
-                        onClick={() =>
-                          handleMarkBestAnswer(discussion._id, reply._id)
-                        }
-                        className={`flex items-center gap-1 font-medium transition-colors ${
-                          reply.isBestAnswer
-                            ? "text-red-400 hover:text-red-600" // Câu đang làm chuẩn -> Button màu đỏ báo hiệu: Xóa chuẩn
-                            : "text-gray-400 hover:text-emerald-600" // Câu chưa làm chuẩn -> Đổi sang câu này
-                        }`}
-                      >
-                        {reply.isBestAnswer ? (
-                          <>
-                            <span>✕ Bỏ chọn chuẩn</span>
-                          </>
-                        ) : (
-                          <>
-                            <FaCheck size={12} /> Câu trả lời hay nhất
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                  {/* KẾT THÚC THÊM */}
-                </div>
-              ))}
-
-              {/* Form tạo trả lời */}
-              <form
-                className="flex items-center gap-3 mt-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleReply(discussion._id);
-                }}
-              >
-                {user?.avatar ? (
+            <div className="flex gap-4">
+              <div className="pt-1">
+                {item.author?.avatar ? (
                   <img
-                    src={user.avatar}
+                    src={item.author.avatar}
                     alt="avatar"
-                    className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    className="w-12 h-12 rounded-full object-cover shadow-sm"
                   />
                 ) : (
-                  <FaUserCircle className="w-9 h-9 text-gray-300 flex-shrink-0" />
+                  <FaUserCircle className="text-gray-300 w-12 h-12" />
                 )}
-                <input
-                  type="text"
-                  value={replyContent[discussion._id] || ""}
-                  onChange={(e) =>
-                    setReplyContent({
-                      ...replyContent,
-                      [discussion._id]: e.target.value,
-                    })
-                  }
-                  placeholder="Viết câu trả lời hoặc thảo luận thêm..."
-                  disabled={!canDiscuss}
-                  className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all disabled:bg-gray-100"
-                />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-bold text-gray-900 flex gap-2 items-center">
+                    {item.author?.name}
+                    {item.author?.role === "instructor" && (
+                      <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full text-xs uppercase border border-rose-200">
+                        Giảng viên
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-xs text-gray-400 mb-2">
+                  {new Date(item.createdAt).toLocaleString("vi-VN")}
+                </div>
 
-                {/* NÚT "GỬI" ĐƯỢC CHUYỂN DESIGN GIỐNG NÚT TẠO CÂU HỎI */}
-                <button
-                  type="submit"
-                  disabled={
-                    !canDiscuss || !replyContent[discussion._id]?.trim()
-                  }
-                  className="inline-flex flex-shrink-0 items-center px-5 py-2.5 text-sm rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 transition-colors disabled:bg-gray-300 disabled:text-gray-50 disabled:cursor-not-allowed"
+                <h4
+                  onClick={() => setSelectedDiscussion(item)}
+                  className="text-lg font-bold text-gray-600 mt-2 mb-1.5 hover:text-gray-700 cursor-pointer"
                 >
-                  Gửi
-                </button>
-              </form>
+                  {item.title}
+                </h4>
+                <p className="text-gray-600 text-sm line-clamp-3 mb-4">
+                  {item.content}
+                </p>
+
+                {item.bestAnswerId && (
+                  <div className="mb-4 bg-green-50/70 border border-green-200 rounded-lg p-4 relative ml-4">
+                    <div className="absolute -left-[17px] top-4 w-[16px] h-px bg-green-200"></div>
+                    <div className="absolute -left-[17px] top-4 -bottom-4 w-px bg-green-200"></div>
+                    <div className="flex gap-2 items-center text-green-700 font-bold text-xs uppercase mb-2">
+                      <FaCheck /> Câu Trả Lời Hay Nhất
+                    </div>
+                    <div className="flex gap-2">
+                      {item.bestAnswerId.author?.avatar ? (
+                        <img
+                          src={item.bestAnswerId.author.avatar}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      ) : (
+                        <FaUserCircle className="text-gray-300 w-8 h-8" />
+                      )}
+                      <div>
+                        <span className="font-semibold text-gray-800 text-sm block">
+                          {item.bestAnswerId.author?.name}
+                        </span>
+                        <span className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
+                          {item.bestAnswerId.content}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-5 mt-2 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={() => handleVote(item._id, "DISCUSSION")}
+                    className={`flex items-center gap-1.5 font-bold text-sm ${item.upvotedBy?.includes(user?._id) ? "text-rose-600" : "text-gray-500 hover:text-gray-800"}`}
+                  >
+                    <FaThumbsUp /> {item.upvoteCount} Hữu ích
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedDiscussion(item)}
+                    className="flex items-center justify-center bg-gray-100 hover:bg-rose-50 text-gray-700 hover:text-rose-600 py-1.5 px-4 rounded-full text-sm font-semibold border border-transparent hover:border-rose-100"
+                  >
+                    Xem / Trả lời ({item.answerCount})
+                  </button>
+
+                  {/* Nút Phụ Trợ (Xóa/Báo cáo) */}
+                  <div className="ml-auto flex items-center gap-3">
+                    {user?._id === item.author?._id || isInstructor ? (
+                      <button
+                        onClick={() => handleDeleteDiscussion(item._id)}
+                        className="text-gray-400 hover:text-red-500 text-sm flex gap-1 items-center px-2"
+                      >
+                        <FaTrash /> Xóa
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openReportPopup(item._id)}
+                        className="text-gray-400 hover:text-rose-500 text-sm flex gap-1 items-center px-2"
+                      >
+                        <FaFlag /> Báo cáo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Phân trang */}
-      {pagination?.totalPages > 1 && (
+      {pagination.totalPages > 1 && (
         <div className="mt-8 flex justify-center">
           <Pagination
-            currentPage={page}
+            page={page}
+            setPage={setPage}
             totalPages={pagination.totalPages}
-            onPageChange={setPage}
           />
         </div>
       )}
 
-      {/* Modal Báo cáo */}
-      <ReportModal
-        open={reportOpen}
-        onClose={() => setReportOpen(false)}
-        onSubmit={handleReportSubmit}
-        type="discussion"
-      />
-      <ReportModal
-        open={reportReplyOpen}
-        onClose={() => setReportReplyOpen(false)}
-        onSubmit={handleReportReplySubmit}
-        type="reply"
-      />
+      {selectedDiscussion && (
+        <DiscussionModal
+          discussion={selectedDiscussion}
+          user={user}
+          isInstructor={isInstructor}
+          onClose={() => setSelectedDiscussion(null)}
+          refreshParent={refreshParent}
+          onReport={() => openReportPopup(selectedDiscussion._id)}
+        />
+      )}
+
+      {reportOpen && (
+        <ReportModal
+          open={reportOpen}
+          type="discussion"
+          onClose={() => setReportOpen(false)}
+          onSubmit={handleReportSubmit}
+          title="Báo cáo thảo luận"
+          loading={loading}
+        />
+      )}
     </div>
   );
 };

@@ -41,3 +41,9 @@ export const markBestAnswer = (discussionId, replyId) =>
 // Xóa thảo luận (Soft Delete - Dành cho Giảng viên/Admin/Tác giả)
 export const deleteDiscussion = (discussionId) =>
   axiosClient.delete(`/discussions/${discussionId}`);
+
+// Lấy danh sách Replies phân trang của 1 Thảo luận
+export const getDiscussionReplies = (discussionId, page = 1, limit = 5) =>
+  axiosClient.get(
+    `/discussions/${discussionId}/replies?page=${page}&limit=${limit}`,
+  );

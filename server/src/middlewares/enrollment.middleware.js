@@ -40,24 +40,23 @@ export const checkEnrollment = async (req, res, next) => {
 
     // THÊM MỚI: XỬ LÝ replyId → tìm discussion chứa reply
     if (!targetCourseId && replyId) {
-      const Discussion =
-        mongoose.model("Discussion") ||
-        mongoose.model(
-          "Discussion",
-          new mongoose.Schema({
-            course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
-            replies: [{ _id: mongoose.Schema.Types.ObjectId }],
-          }),
-        );
+      const DiscussionReply = mongoose.model("DiscussionReply");
+      const reply =
+        await DiscussionReply.findById(replyId).select("discussionId");
 
-      const discussion = await Discussion.findOne(
-        { "replies._id": replyId },
-        { course: 1 },
+      if (!reply) {
+        return res.status(404).json({ message: "Bình luận không tồn tại" });
+      }
+
+      const Discussion = mongoose.model("Discussion");
+      const discussion = await Discussion.findById(reply.discussionId).select(
+        "course",
       );
 
       if (!discussion) {
-        return res.status(404).json({ message: "Bình luận không tồn tại" });
+        return res.status(404).json({ message: "Thảo luận gốc không tồn tại" });
       }
+
       targetCourseId = discussion.course;
     }
 

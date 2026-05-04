@@ -155,7 +155,7 @@ const ReportDetailModal = ({ reportId, onClose }) => {
     );
 
     objectDetail = (
-      <InfoRow label="Bình luận (Reply)">
+      <InfoRow label="Bình luận">
         <div className="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200 italic mt-1 sm:mt-0">
           "{textContent}"
         </div>

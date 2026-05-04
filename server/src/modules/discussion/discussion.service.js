@@ -6,7 +6,9 @@ import { sendEmailNotification } from "../../utils/notify.js";
 import User from "../auth/auth.model.js";
 import notificationService from "../notification/notification.service.js";
 import Course from "../course/course.model.js";
+import DiscussionReply from "./discussionReply.model.js";
 
+// Khởi tạo thảo luận
 export const createDiscussion = async (
   courseId,
   lectureId,
@@ -35,6 +37,7 @@ export const createDiscussion = async (
   });
 };
 
+// Đánh dấu Best Answer
 export const markBestAnswer = async (
   discussionId,
   replyId,
@@ -42,81 +45,65 @@ export const markBestAnswer = async (
   isInstructor,
 ) => {
   if (!mongoose.Types.ObjectId.isValid(discussionId))
-    throw new Error("ID thảo luận không hợp lệ");
+    throw new Error("ID cuộc thảo luận không hợp lệ");
   if (!mongoose.Types.ObjectId.isValid(replyId))
-    throw new Error("ID câu trả lời không hợp lệ");
+    throw new Error("ID reply không hợp lệ");
 
-  let discussion = await Discussion.findById(discussionId);
+  const discussion = await Discussion.findById(discussionId);
   if (!discussion) throw new Error("Không tìm thấy cuộc thảo luận");
 
-  // Kiểm tra quyền
+  // Kiểm tra quyền (chỉ giảng viên, admin hoặc tác giả câu hỏi mới được mark)
   if (!isInstructor && discussion.author.toString() !== userId.toString()) {
-    throw new Error("Bạn không có quyền đánh dấu câu trả lời này");
+    throw new Error("Không có quyền đánh dấu Câu trả lời hay nhất");
   }
 
-  // Tìm câu trả lời để biết trước đó nó đã là Best Answer hay chưa
-  const replyToMark = discussion.replies.id(replyId);
-  if (!replyToMark) throw new Error("Không tìm thấy câu trả lời");
+  const replyToMark = await DiscussionReply.findById(replyId);
+  if (!replyToMark) throw new Error("Reply not found");
 
-  const isCurrentlyBest = replyToMark.isBestAnswer;
-
-  // ÁP DỤNG MONGOOSE TRANSACTION (Mongo Session)
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    // 1. Dù là Tắt hay Đổi, ta cũng LUÔN Reset toàn bộ cờ của các comment về false (Xóa Best Answer)
-    await Discussion.updateOne(
-      { _id: discussionId },
-      {
-        $set: {
-          "replies.$[].isBestAnswer": false,
-          bestAnswerId: null,
-          status: "OPEN",
-        },
-      },
-      { session },
-    );
-
-    // 2. NẾU câu này TRƯỚC ĐÓ CHƯA ĐƯỢC CHỌN -> Giờ mới gán nó làm Best Answer (nếu trước đó chọn thì bước 1 đã undo rồi, bước 2 bỏ qua)
-    if (!isCurrentlyBest) {
-      await Discussion.updateOne(
-        { _id: discussionId, "replies._id": replyId },
-        {
-          $set: {
-            "replies.$.isBestAnswer": true,
-            bestAnswerId: replyId,
-            status: "RESOLVED",
-          },
-        },
-        { session },
-      );
+  // Xóa status best answer cũ nếu đã có
+  if (discussion.bestAnswerId) {
+    if (discussion.bestAnswerId.toString() === replyId) {
+      // Bỏ đánh dấu best answer hiện tại nếu user click lại
+      replyToMark.isBestAnswer = false;
+      await replyToMark.save();
+      discussion.bestAnswerId = null;
+      discussion.status = "OPEN";
+      await discussion.save();
+      return discussion.populate({
+        path: "bestAnswerId",
+        populate: { path: "author", select: "name avatar" },
+      });
+    } else {
+      // Gỡ dấu câu cũ
+      await DiscussionReply.findByIdAndUpdate(discussion.bestAnswerId, {
+        isBestAnswer: false,
+      });
     }
-
-    await session.commitTransaction(); // Atomic commit
-  } catch (err) {
-    await session.abortTransaction(); // Rollback nếu có lỗi xảy ra
-    throw err;
-  } finally {
-    session.endSession();
   }
 
-  // Lấy dòng mới nhất trả về cho UI
-  discussion = await Discussion.findById(discussionId)
-    .populate("author", "name avatar")
-    .populate("replies.author", "name avatar");
+  // Đánh dấu mới
+  replyToMark.isBestAnswer = true;
+  await replyToMark.save();
 
-  return discussion;
+  // Cập nhật lại Discussion
+  discussion.bestAnswerId = replyId;
+  discussion.status = "RESOLVED";
+  await discussion.save();
+
+  // Lấy data mới nhất để trả về Client UI
+  return discussion.populate({
+    path: "bestAnswerId",
+    populate: { path: "author", select: "name avatar" },
+  });
 };
 
-// Xử lý Upvote/Downvote (Sử dụng update nguyên tử để tránh race condition)
+// Vote/Unvote (Sửa logic Vote ANSWER vì đã tách collection riêng)
 export const toggleUpvote = async (
   discussionId,
   targetType,
   targetId,
   userId,
 ) => {
-  // Validate Target Type tại logic Service (Bảo vệ đa lớp)
   if (!["DISCUSSION", "ANSWER"].includes(targetType)) {
     throw new Error(
       "TargetType không hợp lệ (Chỉ chấp nhận DISCUSSION/ANSWER)",
@@ -125,21 +112,18 @@ export const toggleUpvote = async (
 
   if (!mongoose.Types.ObjectId.isValid(discussionId))
     throw new Error("ID cuộc thảo luận không hợp lệ");
-  if (targetId && !mongoose.Types.ObjectId.isValid(targetId))
-    throw new Error("targetId không hợp lệ");
 
   const userIdObj = userId;
 
   if (targetType === "DISCUSSION") {
-    // Thử thêm Vote (Nơi mảng upvotedBy CHƯA CÓ userId)
     let result = await Discussion.findOneAndUpdate(
       { _id: discussionId, upvotedBy: { $ne: userIdObj } },
       { $push: { upvotedBy: userIdObj }, $inc: { upvoteCount: 1 } },
       { new: true },
     );
 
-    // Nếu kết quả trả về null, tức là user đã vote rồi -> Tiến hành Rút Vote
     if (!result) {
+      // Đã vote rồi -> Rút vote
       result = await Discussion.findOneAndUpdate(
         { _id: discussionId, upvotedBy: userIdObj },
         { $pull: { upvotedBy: userIdObj }, $inc: { upvoteCount: -1 } },
@@ -149,48 +133,39 @@ export const toggleUpvote = async (
     if (!result) throw new Error("Không tìm thấy cuộc thảo luận");
     return result;
   } else if (targetType === "ANSWER") {
-    // Tương tự với sub-documents (Replies)
-    let result = await Discussion.findOneAndUpdate(
+    // SỬA ĐỔI QUAN TRỌNG: Vote vào DiscussionReply
+    if (!mongoose.Types.ObjectId.isValid(targetId))
+      throw new Error("targetId không hợp lệ");
+
+    let result = await DiscussionReply.findOneAndUpdate(
       {
-        _id: discussionId,
-        "replies._id": targetId,
-        "replies.upvotedBy": { $ne: userIdObj },
+        _id: targetId,
+        discussionId: discussionId,
+        upvotedBy: { $ne: userIdObj },
       },
-      {
-        $push: { "replies.$.upvotedBy": userIdObj },
-        $inc: { "replies.$.upvoteCount": 1 },
-      },
+      { $push: { upvotedBy: userIdObj }, $inc: { upvoteCount: 1 } },
       { new: true },
     );
 
     if (!result) {
-      result = await Discussion.findOneAndUpdate(
-        {
-          _id: discussionId,
-          "replies._id": targetId,
-          "replies.upvotedBy": userIdObj,
-        },
-        {
-          $pull: { "replies.$.upvotedBy": userIdObj },
-          $inc: { "replies.$.upvoteCount": -1 },
-        },
+      // Đã vote rồi -> Rút vote
+      result = await DiscussionReply.findOneAndUpdate(
+        { _id: targetId, discussionId: discussionId, upvotedBy: userIdObj },
+        { $pull: { upvotedBy: userIdObj }, $inc: { upvoteCount: -1 } },
         { new: true },
       );
     }
-    if (!result) throw new Error("Không tìm thấy câu trả lời hoặc thảo luận");
+    if (!result) throw new Error("Không tìm thấy câu trả lời");
     return result;
-  } else {
-    throw new Error("TargetType không hợp lệ (DISCUSSION/ANSWER)");
   }
 };
 
+// Đăng Reply
 export const replyToDiscussion = async (discussionId, authorId, content) => {
-  // Validate ID chuẩn
   if (!mongoose.Types.ObjectId.isValid(discussionId)) {
     throw new Error("ID cuộc thảo luận không hợp lệ");
   }
 
-  // Check kĩ xem có ẩn/xóa không trước khi reply
   const checkDiscussion = await Discussion.findOne({
     _id: discussionId,
     isHidden: false,
@@ -200,54 +175,47 @@ export const replyToDiscussion = async (discussionId, authorId, content) => {
     throw new Error("Không tìm thấy cuộc thảo luận, hoặc đã bị ẩn/xóa");
   }
 
-  const discussion = await Discussion.findByIdAndUpdate(
+  const newReply = await DiscussionReply.create({
     discussionId,
-    {
-      $push: { replies: { author: authorId, content } },
-      $inc: { answerCount: 1 }, // FIX BUG: Cập nhật biến đếm
-    },
-    { new: true },
-  )
-    .populate("author", "name email")
-    .populate("replies.author", "name avatar")
-    .populate("course", "slug");
+    author: authorId,
+    content,
+  });
 
-  if (!discussion) throw new Error("Không tìm thấy cuộc thảo luận");
+  await Discussion.findByIdAndUpdate(discussionId, {
+    $inc: { answerCount: 1 },
+  });
 
-  if (
-    discussion.author &&
-    discussion.author._id.toString() !== authorId.toString()
-  ) {
-    const latestReply = discussion.replies[discussion.replies.length - 1];
-    const replyAuthorName = latestReply.author?.name || "Ai đó";
-
-    // Gửi notification cho author TRONG TRY-CATCH để bảo vệ API
-    try {
-      await notificationService.createNotification({
-        recipient: discussion.author._id,
-        sender: authorId,
-        type: "reply",
-        title: "Có trả lời mới trong thảo luận của bạn",
-        message: `${replyAuthorName} đã trả lời: "${content.substring(0, 50)}${content.length > 50 ? "..." : ""}"`,
-        // ĐỔI TỪ ĐÂY
-        metadata: {
-          discussionId: discussionId, // Gắn ID cuộc thảo luận để FE cuộn tới
-          replyId: latestReply._id, // Gắn ID Reply để FE highlight
-          courseSlug: discussion.course?.slug,
-          lessonId: discussion.lectureId, // <== QUAN TRỌNG: Để biết reply ở bài học nào
-        },
-      });
-    } catch (error) {
-      console.error("Lỗi gửi notification (replyToDiscussion):", error);
-    }
-  }
-
-  return discussion;
+  return newReply.populate("author", "name avatar");
 };
 
+// Phân trang Replies
+export const getRepliesByDiscussion = async (
+  discussionId,
+  page = 1,
+  limit = 5,
+) => {
+  const skip = (page - 1) * limit;
+  const query = { discussionId, isHidden: false };
+
+  const [replies, total] = await Promise.all([
+    DiscussionReply.find(query)
+      .populate("author", "name avatar")
+      .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit),
+    DiscussionReply.countDocuments(query),
+  ]);
+
+  return {
+    replies,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  };
+};
+
+// Lấy danh sách Discussion có Best Answer
 export const getDiscussionsByCourse = async (
   courseId,
-  lectureId = null, // ĐÃ SỬA
+  lectureId = null,
   status = null,
   sortParam = null,
   page = 1,
@@ -260,18 +228,19 @@ export const getDiscussionsByCourse = async (
     throw new Error("lectureId không hợp lệ");
 
   const skip = (page - 1) * limit;
-
   const query = { course: courseId, isHidden: false, deletedAt: null };
 
-  // ĐÃ SỬA
   if (lectureId) {
-    query.lectureId = lectureId;
+    query.$or = [
+      { lectureId },
+      { lectureId: null },
+      { lectureId: { $exists: false } },
+    ];
   }
   if (status) {
     query.status = status;
   }
 
-  // Tùy chỉnh Sort
   let sortOption = { createdAt: -1 };
   if (sortParam === "most_voted") {
     sortOption = { upvoteCount: -1, createdAt: -1 };
@@ -281,8 +250,8 @@ export const getDiscussionsByCourse = async (
     Discussion.find(query)
       .populate("author", "name avatar")
       .populate({
-        path: "replies.author",
-        select: "name avatar",
+        path: "bestAnswerId",
+        populate: { path: "author", select: "name avatar" },
       })
       .sort(sortOption)
       .skip(skip)
@@ -290,26 +259,8 @@ export const getDiscussionsByCourse = async (
     Discussion.countDocuments(query),
   ]);
 
-  const filteredDiscussions = discussions.map((discussion) => {
-    // Chỉ lấy reply không bị ẩn
-    let filteredReplies = discussion.replies.filter(
-      (reply) => reply.isHidden === false,
-    );
-
-    // NÂNG CẤP SENIOR: Sort đẩy best answer lên đầu (Rule 4.1)
-    filteredReplies = filteredReplies.sort(
-      (a, b) =>
-        (b.isBestAnswer === true ? 1 : 0) - (a.isBestAnswer === true ? 1 : 0),
-    );
-
-    return {
-      ...discussion.toObject(),
-      replies: filteredReplies,
-    };
-  });
-
   return {
-    discussions: filteredDiscussions,
+    discussions,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   };
 };
@@ -350,16 +301,11 @@ export const getDiscussionDetails = async (discussionId) => {
     deletedAt: null,
   })
     .populate("author", "name avatar")
-    .populate("replies.author", "name avatar");
+    .populate({
+      path: "bestAnswerId",
+      populate: { path: "author", select: "name avatar" },
+    });
 
-  if (!discussion) throw new Error("Thảo luận không tồn tại hoặc đã bị xóa");
-
-  // Lọc bỏ các replies bị xóa
-  const filteredReplies = discussion.replies.filter((reply) => !reply.isHidden);
-  filteredReplies.sort(
-    (a, b) =>
-      (b.isBestAnswer === true ? 1 : 0) - (a.isBestAnswer === true ? 1 : 0),
-  );
-
-  return { ...discussion.toObject(), replies: filteredReplies };
+  if (!discussion) throw new Error("Không tìm thấy cuộc thảo luận");
+  return discussion;
 };
