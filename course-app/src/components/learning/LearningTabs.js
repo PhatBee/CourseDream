@@ -1,16 +1,29 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { List, BookOpen } from 'lucide-react-native';
+import { List, BookOpen, Paperclip } from 'lucide-react-native';
 
-const TABS = [
+const BASE_TABS = [
   { id: 'Lectures', label: 'Bài giảng', Icon: List },
   { id: 'Overview', label: 'Tổng quan', Icon: BookOpen },
 ];
 
-const LearningTabs = ({ activeTab, setActiveTab }) => {
+/**
+ * LearningTabs
+ * @param {string} activeTab
+ * @param {Function} setActiveTab
+ * @param {number} resourceCount - Số tài liệu của bài giảng hiện tại (0 → ẩn tab)
+ */
+const LearningTabs = ({ activeTab, setActiveTab, resourceCount = 0 }) => {
+  const tabs = [
+    ...BASE_TABS,
+    ...(resourceCount > 0
+      ? [{ id: 'Resources', label: `Tài liệu (${resourceCount})`, Icon: Paperclip }]
+      : []),
+  ];
+
   return (
     <View style={styles.container}>
-      {TABS.map(({ id, label, Icon }) => {
+      {tabs.map(({ id, label, Icon }) => {
         const isActive = activeTab === id;
         return (
           <TouchableOpacity
@@ -44,7 +57,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 14,
     paddingHorizontal: 4,
-    marginRight: 24,
+    marginRight: 20,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },

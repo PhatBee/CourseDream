@@ -6,26 +6,28 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { Image } from 'expo-image';
 import {
-  Cloud,
   AlertCircle,
   RefreshCw,
   PlayCircle,
+  Maximize2,
 } from 'lucide-react-native';
 import { courseApi } from '../../api/courseApi';
 
 /**
- * VideoPlayer — Mobile version đồng bộ với web client
- * - Chỉ dùng AWS CloudFront Signed URL (expo-av)
- * - Không dùng YouTube / Vimeo / Dailymotion embed
+ * VideoPlayer — Mobile, dùng expo-video (thay thế expo-av)
+ * ─ AWS CloudFront Signed URL
+ * ─ Fullscreen native: xoay ngang video, KHÔNG xoay app, KHÔNG unmount
  */
 const VideoPlayer = ({ currentLecture, courseId, thumbnail, onComplete }) => {
-  const videoRef = useRef(null);
+  const videoViewRef = useRef(null);
+
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // ─── Fetch CloudFront Signed URL ────────────────────────────────────────────
   const fetchVideoUrl = useCallback(async () => {
@@ -41,7 +43,6 @@ const VideoPlayer = ({ currentLecture, courseId, thumbnail, onComplete }) => {
       setVideoUrl(signedUrl);
     } catch (err) {
       console.error('[VideoPlayer] Failed to get signed URL:', err);
-      // Fallback: dùng videoUrl trực tiếp nếu có
       if (currentLecture?.videoUrl) {
         setVideoUrl(currentLecture.videoUrl);
       } else {
@@ -53,10 +54,41 @@ const VideoPlayer = ({ currentLecture, courseId, thumbnail, onComplete }) => {
   }, [currentLecture?._id, courseId]);
 
   useEffect(() => {
-    if (currentLecture?._id) {
-      fetchVideoUrl();
-    }
+    if (currentLecture?._id) fetchVideoUrl();
   }, [fetchVideoUrl]);
+
+  // ─── Tạo player với expo-video ───────────────────────────────────────────
+  // useVideoPlayer LUÔN được gọi, nhưng chỉ play khi có URL hợp lệ
+  const player = useVideoPlayer(videoUrl || '', (p) => {
+    p.loop = false;
+    if (videoUrl) p.play();
+  });
+
+  // Đồng bộ source khi URL thay đổi
+  useEffect(() => {
+    if (!player || !videoUrl) return;
+    player.replaceAsync(videoUrl);
+    player.play();
+  }, [videoUrl]);
+
+  // Lắng nghe khi video kết thúc
+  useEffect(() => {
+    if (!player || !onComplete) return;
+    const subscription = player.addListener('playToEnd', () => {
+      onComplete();
+    });
+    return () => subscription?.remove();
+  }, [player, onComplete]);
+
+  // ─── Fullscreen handler (native expo-video) ───────────────────────────────
+  const handleFullscreen = useCallback(() => {
+    if (!videoViewRef.current || !videoUrl) return;
+    if (isFullscreen) {
+      videoViewRef.current.exitFullscreen();
+    } else {
+      videoViewRef.current.enterFullscreen();
+    }
+  }, [isFullscreen, videoUrl]);
 
   // ─── Chưa chọn bài học → Hiện Thumbnail ──────────────────────────────────
   if (!currentLecture) {
@@ -67,7 +99,6 @@ const VideoPlayer = ({ currentLecture, courseId, thumbnail, onComplete }) => {
           style={StyleSheet.absoluteFill}
           contentFit="cover"
         />
-        {/* Dark overlay */}
         <View style={styles.overlay} />
         <View style={styles.placeholderContent}>
           <View style={styles.playIconWrapper}>
@@ -112,35 +143,39 @@ const VideoPlayer = ({ currentLecture, courseId, thumbnail, onComplete }) => {
     );
   }
 
-  // ─── CloudFront Badge ─────────────────────────────────────────────────────
-  const isCFUrl = videoUrl.includes('cloudfront.net');
-
-  // ─── Main Video Player (expo-av) ──────────────────────────────────────────
+  // ─── Main Video Player (expo-video) ──────────────────────────────────────
   return (
     <View style={styles.container}>
-      <Video
-        ref={videoRef}
-        key={currentLecture._id}
+      {/*
+        VideoView của expo-video:
+        - allowsFullscreen: bật native fullscreen
+        - enterFullscreen() / exitFullscreen() qua ref
+        - Fullscreen tích hợp sẵn hỗ trợ xoay ngang mà KHÔNG unmount component
+        - nativeControls: bật controls (play/pause/seek/fullscreen)
+      */}
+      <VideoView
+        ref={videoViewRef}
+        player={player}
         style={StyleSheet.absoluteFill}
-        source={{ uri: videoUrl }}
-        useNativeControls
-        resizeMode={ResizeMode.CONTAIN}
-        isLooping={false}
-        shouldPlay={true}
-        onPlaybackStatusUpdate={(status) => {
-          if (status.didJustFinish && onComplete) {
-            onComplete();
-          }
-        }}
+        fullscreenOptions={{ enterFullscreen: true, exitFullscreen: true }}
+        allowsPictureInPicture={false}
+        nativeControls
+        contentFit="contain"
+        onFullscreenEnter={() => setIsFullscreen(true)}
+        onFullscreenExit={() => setIsFullscreen(false)}
       />
 
-      {/* CloudFront Badge
-      {isCFUrl && (
-        <View style={styles.cfBadge}>
-          <Cloud size={11} color="#60a5fa" />
-          <Text style={styles.cfBadgeText}>CloudFront CDN</Text>
-        </View>
-      )} */}
+      {/* Nút fullscreen tùy chỉnh (bổ sung) */}
+      {!isFullscreen && (
+        <TouchableOpacity
+          style={styles.fullscreenBtn}
+          onPress={handleFullscreen}
+          activeOpacity={0.8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Maximize2 size={16} color="#fff" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -203,22 +238,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  cfBadge: {
+  fullscreenBtn: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    flexDirection: 'row',
+    bottom: 10,
+    right: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  cfBadgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
   },
 });
 

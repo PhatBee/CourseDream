@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,18 @@ import {
   TouchableOpacity,
   StatusBar,
   StyleSheet,
+  Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { ChevronLeft, ChevronRight, CheckCircle, BookOpen, List } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  FileText,
+  Link as LinkIcon,
+  Download,
+  File,
+} from 'lucide-react-native';
 
 // Import Actions & Components
 import {
@@ -23,6 +31,40 @@ import VideoPlayer from '../../components/learning/VideoPlayer';
 import LearningTabs from '../../components/learning/LearningTabs';
 import CurriculumList from '../../components/learning/CurriculumList';
 
+// ─── Resource Item (giống web client) ───────────────────────────────────────
+const ResourceItem = ({ resource }) => {
+  const isLink = resource.type === 'link';
+  const handleOpen = () => {
+    if (resource.url) Linking.openURL(resource.url).catch(() => {});
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={handleOpen}
+      activeOpacity={0.75}
+      style={styles.resourceItem}
+    >
+      <View style={styles.resourceIcon}>
+        {isLink ? (
+          <LinkIcon size={16} color="#e11d48" />
+        ) : (
+          <File size={16} color="#e11d48" />
+        )}
+      </View>
+      <View style={styles.resourceInfo}>
+        <Text style={styles.resourceTitle} numberOfLines={1}>
+          {resource.title || 'Untitled'}
+        </Text>
+        <Text style={styles.resourceType}>
+          {isLink ? 'External Link' : 'File Download'}
+        </Text>
+      </View>
+      <Download size={14} color="#d1d5db" />
+    </TouchableOpacity>
+  );
+};
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 const LearningScreen = ({ route, navigation }) => {
   const { slug } = route.params;
   const dispatch = useDispatch();
@@ -32,7 +74,19 @@ const LearningScreen = ({ route, navigation }) => {
     (state) => state.learning
   );
 
-  // ─── Điều hướng bài học kế tiếp / trước đó ──────────────────────────────
+  // ─── Parse resources của bài học hiện tại ─────────────────────────────────
+  const parsedResources = useMemo(() => {
+    if (!currentLecture?.resources || !Array.isArray(currentLecture.resources)) return [];
+    return currentLecture.resources
+      .filter(Boolean)
+      .map((r) => {
+        if (typeof r === 'object') return r;
+        try { return JSON.parse(r); } catch { return null; }
+      })
+      .filter(Boolean);
+  }, [currentLecture?.resources]);
+
+  // ─── Điều hướng bài học ───────────────────────────────────────────────────
   const allLectures = sections.flatMap((s) => s.lectures || []);
   const currentIndex = currentLecture
     ? allLectures.findIndex((l) => l._id === currentLecture._id)
@@ -41,11 +95,17 @@ const LearningScreen = ({ route, navigation }) => {
   const hasNext = currentIndex >= 0 && currentIndex < allLectures.length - 1;
 
   const handlePrev = () => {
-    if (hasPrev) dispatch(setCurrentLecture(allLectures[currentIndex - 1]));
+    if (hasPrev) {
+      dispatch(setCurrentLecture(allLectures[currentIndex - 1]));
+      setActiveTab('Lectures');
+    }
   };
 
   const handleNext = () => {
-    if (hasNext) dispatch(setCurrentLecture(allLectures[currentIndex + 1]));
+    if (hasNext) {
+      dispatch(setCurrentLecture(allLectures[currentIndex + 1]));
+      setActiveTab('Lectures');
+    }
   };
 
   const handleToggleComplete = async (lectureId) => {
@@ -53,13 +113,14 @@ const LearningScreen = ({ route, navigation }) => {
   };
 
   useEffect(() => {
-    if (slug) {
-      dispatch(fetchLearningCourse(slug));
-    }
-    return () => {
-      dispatch(resetLearning());
-    };
+    if (slug) dispatch(fetchLearningCourse(slug));
+    return () => { dispatch(resetLearning()); };
   }, [dispatch, slug]);
+
+  // Khi chuyển bài → reset tab về Lectures
+  useEffect(() => {
+    setActiveTab('Lectures');
+  }, [currentLecture?._id]);
 
   const handleLecturePress = (lecture) => {
     dispatch(setCurrentLecture(lecture));
@@ -114,7 +175,6 @@ const LearningScreen = ({ route, navigation }) => {
             <Text style={styles.lectureTitle} numberOfLines={1}>
               {currentLecture.title}
             </Text>
-            {/* Progress */}
             <Text style={styles.progressLabel}>
               {completedCount}/{totalLectures} bài · {progressPct}% hoàn thành
             </Text>
@@ -126,10 +186,7 @@ const LearningScreen = ({ route, navigation }) => {
             style={[styles.completeBtn, isCompleted && styles.completeBtnDone]}
             activeOpacity={0.8}
           >
-            <CheckCircle
-              size={15}
-              color={isCompleted ? '#10b981' : '#fff'}
-            />
+            <CheckCircle size={15} color={isCompleted ? '#10b981' : '#fff'} />
             <Text style={[styles.completeBtnText, isCompleted && styles.completeBtnTextDone]}>
               {isCompleted ? 'Đã xong' : 'Hoàn thành'}
             </Text>
@@ -168,10 +225,15 @@ const LearningScreen = ({ route, navigation }) => {
 
       {/* ── 4. TABS & CONTENT ── */}
       <View style={styles.contentArea}>
-        <LearningTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <LearningTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          resourceCount={parsedResources.length}
+        />
 
         <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-          {activeTab === 'Lectures' ? (
+          {/* ── Tab: Bài giảng ── */}
+          {activeTab === 'Lectures' && (
             <CurriculumList
               sections={sections}
               currentLecture={currentLecture}
@@ -179,10 +241,11 @@ const LearningScreen = ({ route, navigation }) => {
               onLecturePress={handleLecturePress}
               onToggleComplete={handleToggleComplete}
             />
-          ) : (
-            /* ── Tab "Overview" ── */
+          )}
+
+          {/* ── Tab: Tổng quan ── */}
+          {activeTab === 'Overview' && (
             <View style={styles.overviewContainer}>
-              {/* Course title */}
               <Text style={styles.overviewTitle}>{course.title}</Text>
               <Text style={styles.overviewInstructor}>
                 {course.instructor?.name || 'Instructor'}
@@ -196,19 +259,35 @@ const LearningScreen = ({ route, navigation }) => {
                 <Text style={styles.progressBarLabel}>{progressPct}%</Text>
               </View>
 
-              {/* Description */}
               <Text style={styles.overviewSectionTitle}>Mô tả khóa học</Text>
               <Text style={styles.overviewDesc}>
                 {course.description || 'Không có mô tả.'}
               </Text>
+            </View>
+          )}
 
-              {/* AWS CloudFront note
-              <View style={styles.cfNote}>
-                <Text style={styles.cfNoteText}>
-                  🔒 Video được bảo mật và phân phối qua{' '}
-                  <Text style={styles.cfNoteStrong}>AWS CloudFront CDN</Text>
+          {/* ── Tab: Tài liệu ── */}
+          {activeTab === 'Resources' && (
+            <View style={styles.resourcesContainer}>
+              <View style={styles.resourcesHeader}>
+                <FileText size={16} color="#e11d48" />
+                <Text style={styles.resourcesTitle}>
+                  Tài liệu đính kèm ({parsedResources.length})
                 </Text>
-              </View> */}
+              </View>
+
+              {parsedResources.length > 0 ? (
+                parsedResources.map((resource, idx) => (
+                  <ResourceItem key={idx} resource={resource} />
+                ))
+              ) : (
+                <View style={styles.emptyResources}>
+                  <FileText size={32} color="#e5e7eb" />
+                  <Text style={styles.emptyResourcesText}>
+                    Bài giảng này chưa có tài liệu.
+                  </Text>
+                </View>
+              )}
             </View>
           )}
         </ScrollView>
@@ -218,10 +297,7 @@ const LearningScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  root: { flex: 1, backgroundColor: '#fff' },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -229,15 +305,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     gap: 12,
   },
-  loadingText: {
-    color: '#9ca3af',
-    fontSize: 14,
-  },
+  loadingText: { color: '#9ca3af', fontSize: 14 },
 
   // ── Video ──
-  videoWrapper: {
-    position: 'relative',
-  },
+  videoWrapper: { position: 'relative' },
   backBtn: {
     position: 'absolute',
     top: 44,
@@ -262,20 +333,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6',
     backgroundColor: '#fff',
   },
-  infoBarLeft: {
-    flex: 1,
-    marginRight: 10,
-  },
+  infoBarLeft: { flex: 1, marginRight: 10 },
   lectureTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 2,
   },
-  progressLabel: {
-    fontSize: 11,
-    color: '#9ca3af',
-  },
+  progressLabel: { fontSize: 11, color: '#9ca3af' },
   completeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,14 +355,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#6ee7b7',
   },
-  completeBtnText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  completeBtnTextDone: {
-    color: '#10b981',
-  },
+  completeBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  completeBtnTextDone: { color: '#10b981' },
 
   // ── Prev/Next ──
   navRow: {
@@ -320,40 +379,22 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#fff5f7',
   },
-  navBtnDisabled: {
-    borderColor: '#e5e7eb',
-    backgroundColor: '#f9fafb',
-  },
-  navBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#e11d48',
-  },
-  navBtnTextDisabled: {
-    color: '#d1d5db',
-  },
+  navBtnDisabled: { borderColor: '#e5e7eb', backgroundColor: '#f9fafb' },
+  navBtnText: { fontSize: 13, fontWeight: '600', color: '#e11d48' },
+  navBtnTextDisabled: { color: '#d1d5db' },
 
   // ── Content area ──
-  contentArea: {
-    flex: 1,
-  },
+  contentArea: { flex: 1 },
 
   // ── Overview tab ──
-  overviewContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+  overviewContainer: { padding: 20, paddingBottom: 40 },
   overviewTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: '#111827',
     marginBottom: 4,
   },
-  overviewInstructor: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginBottom: 16,
-  },
+  overviewInstructor: { fontSize: 13, color: '#6b7280', marginBottom: 16 },
   progressBarWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -367,11 +408,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     overflow: 'hidden',
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#e11d48',
-    borderRadius: 3,
-  },
+  progressBarFill: { height: '100%', backgroundColor: '#e11d48', borderRadius: 3 },
   progressBarLabel: {
     fontSize: 12,
     fontWeight: '700',
@@ -385,26 +422,62 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginBottom: 6,
   },
-  overviewDesc: {
+  overviewDesc: { fontSize: 14, color: '#4b5563', lineHeight: 22 },
+
+  // ── Resources tab ──
+  resourcesContainer: { padding: 16, paddingBottom: 40 },
+  resourcesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  resourcesTitle: {
     fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 22,
-  },
-  cfNote: {
-    marginTop: 20,
-    backgroundColor: '#f0f9ff',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#bae6fd',
-  },
-  cfNoteText: {
-    fontSize: 12,
-    color: '#0369a1',
-    lineHeight: 18,
-  },
-  cfNoteStrong: {
     fontWeight: '700',
+    color: '#374151',
+  },
+  resourceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 12,
+  },
+  resourceIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#fff1f2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  resourceInfo: { flex: 1 },
+  resourceTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 2,
+  },
+  resourceType: {
+    fontSize: 11,
+    color: '#9ca3af',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  emptyResources: {
+    alignItems: 'center',
+    paddingTop: 40,
+    gap: 10,
+  },
+  emptyResourcesText: {
+    fontSize: 14,
+    color: '#9ca3af',
   },
 });
 
