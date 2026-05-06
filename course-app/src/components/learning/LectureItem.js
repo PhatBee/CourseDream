@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { PlayCircle, CheckCircle, Circle } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { PlayCircle, CheckCircle, Circle, Clock } from 'lucide-react-native';
 
 const LectureItem = ({ lecture, index, isCurrent, isCompleted, onPress, onToggleComplete }) => {
-  
+
   const formatDuration = (seconds) => {
-    if (!seconds) return '00:00';
+    if (!seconds) return '';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -14,46 +14,140 @@ const LectureItem = ({ lecture, index, isCurrent, isCompleted, onPress, onToggle
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-row items-center py-4 px-5 border-b border-gray-50 ${
-        isCurrent ? 'bg-rose-50/60' : 'bg-white'
-      }`}
+      activeOpacity={0.75}
+      style={[
+        styles.row,
+        isCurrent && styles.rowActive,
+      ]}
     >
-      {/* 1. Số thứ tự */}
-      <Text className={`text-sm font-bold mr-4 w-6 text-center ${isCurrent ? 'text-rose-500' : 'text-gray-400'}`}>
-        {index + 1}
-      </Text>
+      {/* ── Index badge ── */}
+      <View style={[styles.indexBadge, isCurrent && styles.indexBadgeActive]}>
+        <Text style={[styles.indexText, isCurrent && styles.indexTextActive]}>
+          {index + 1}
+        </Text>
+      </View>
 
-      {/* 2. Thông tin bài học */}
-      <View className="flex-1 pr-3">
-        <Text 
-            className={`text-[15px] font-medium mb-1.5 leading-5 ${isCurrent ? 'text-rose-600' : 'text-gray-800'}`}
+      {/* ── Info ── */}
+      <View style={styles.info}>
+        <Text
+          style={[styles.title, isCurrent && styles.titleActive]}
+          numberOfLines={2}
         >
           {lecture.title}
         </Text>
-        <View className="flex-row items-center">
-            <PlayCircle size={12} color={isCurrent ? "#e11d48" : "#9ca3af"} />
-            <Text className="text-xs text-gray-400 ml-1.5">
-                {formatDuration(lecture.duration)}
+
+        {lecture.duration > 0 && (
+          <View style={styles.metaRow}>
+            <Clock size={11} color={isCurrent ? '#fda4af' : '#9ca3af'} />
+            <Text style={[styles.duration, isCurrent && styles.durationActive]}>
+              {formatDuration(lecture.duration)}
             </Text>
-        </View>
+          </View>
+        )}
       </View>
 
-      {/* 3. Nút Checkbox (Hoàn thành) */}
-      <TouchableOpacity 
+      {/* ── Play indicator (only for current) ── */}
+      {isCurrent && (
+        <PlayCircle size={18} color="#e11d48" style={styles.playIcon} />
+      )}
+
+      {/* ── Checkbox ── */}
+      <TouchableOpacity
         onPress={(e) => {
-            e.stopPropagation(); // Ngăn chặn việc bấm vào checkbox lại kích hoạt phát video
-            onToggleComplete();
+          e.stopPropagation && e.stopPropagation();
+          onToggleComplete();
         }}
-        className="p-2"
+        style={styles.checkbox}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
         {isCompleted ? (
-           <CheckCircle size={24} color="#10b981" fill="#ecfdf5" /> // Xanh lá đã xong
+          <CheckCircle size={22} color="#10b981" fill="#d1fae5" />
         ) : (
-           <Circle size={24} color="#d1d5db" /> // Vòng tròn xám chưa xong
+          <Circle size={22} color="#d1d5db" />
         )}
       </TouchableOpacity>
     </TouchableOpacity>
   );
 };
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f9fafb',
+    backgroundColor: '#fff',
+  },
+  rowActive: {
+    backgroundColor: '#fff5f7',
+    borderLeftWidth: 3,
+    borderLeftColor: '#e11d48',
+  },
+
+  // Index badge
+  indexBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    flexShrink: 0,
+  },
+  indexBadgeActive: {
+    backgroundColor: '#ffe4e6',
+  },
+  indexText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9ca3af',
+  },
+  indexTextActive: {
+    color: '#e11d48',
+  },
+
+  // Info
+  info: {
+    flex: 1,
+    marginRight: 8,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    lineHeight: 20,
+    marginBottom: 3,
+  },
+  titleActive: {
+    color: '#be123c',
+    fontWeight: '700',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  duration: {
+    fontSize: 11,
+    color: '#9ca3af',
+  },
+  durationActive: {
+    color: '#fda4af',
+  },
+
+  // Play icon
+  playIcon: {
+    marginRight: 8,
+  },
+
+  // Checkbox
+  checkbox: {
+    padding: 4,
+    flexShrink: 0,
+  },
+});
 
 export default LectureItem;

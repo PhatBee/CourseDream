@@ -1,108 +1,225 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
-import { WebView } from 'react-native-webview'; // Cần cài: npx expo install react-native-webview
 import { Image } from 'expo-image';
-import YoutubePlayer from "react-native-youtube-iframe";
-import { getVideoSource } from '../../utils/videoUtils';
+import {
+  Cloud,
+  AlertCircle,
+  RefreshCw,
+  PlayCircle,
+} from 'lucide-react-native';
+import { courseApi } from '../../api/courseApi';
 
-const VideoPlayer = ({ currentLecture, thumbnail, onComplete }) => {
+/**
+ * VideoPlayer — Mobile version đồng bộ với web client
+ * - Chỉ dùng AWS CloudFront Signed URL (expo-av)
+ * - Không dùng YouTube / Vimeo / Dailymotion embed
+ */
+const VideoPlayer = ({ currentLecture, courseId, thumbnail, onComplete }) => {
   const videoRef = useRef(null);
-  const [status, setStatus] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [isLoadingUrl, setIsLoadingUrl] = useState(false);
+  const [urlError, setUrlError] = useState(null);
 
-  // Nếu chưa chọn bài học -> Hiện Thumbnail khóa học
+  // ─── Fetch CloudFront Signed URL ────────────────────────────────────────────
+  const fetchVideoUrl = useCallback(async () => {
+    if (!currentLecture?._id || !courseId) return;
+
+    setIsLoadingUrl(true);
+    setUrlError(null);
+    setVideoUrl(null);
+
+    try {
+      const res = await courseApi.getVideoPlayUrl(courseId, currentLecture._id);
+      const { videoUrl: signedUrl } = res.data.data;
+      setVideoUrl(signedUrl);
+    } catch (err) {
+      console.error('[VideoPlayer] Failed to get signed URL:', err);
+      // Fallback: dùng videoUrl trực tiếp nếu có
+      if (currentLecture?.videoUrl) {
+        setVideoUrl(currentLecture.videoUrl);
+      } else {
+        setUrlError('Không thể tải video. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsLoadingUrl(false);
+    }
+  }, [currentLecture?._id, courseId]);
+
+  useEffect(() => {
+    if (currentLecture?._id) {
+      fetchVideoUrl();
+    }
+  }, [fetchVideoUrl]);
+
+  // ─── Chưa chọn bài học → Hiện Thumbnail ──────────────────────────────────
   if (!currentLecture) {
     return (
-      <View className="w-full h-56 bg-black justify-center items-center">
+      <View style={styles.container}>
         <Image
           source={thumbnail ? { uri: thumbnail.url || thumbnail } : null}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
-          className="opacity-60"
         />
-        <View className="bg-rose-500 px-6 py-3 rounded-full">
-          <Text className="text-white font-bold">Select a lecture to start</Text>
+        {/* Dark overlay */}
+        <View style={styles.overlay} />
+        <View style={styles.placeholderContent}>
+          <View style={styles.playIconWrapper}>
+            <PlayCircle size={48} color="#fff" />
+          </View>
+          <Text style={styles.placeholderText}>Chọn bài giảng để bắt đầu</Text>
         </View>
       </View>
     );
   }
 
-  // Lấy nguồn video đã xử lý
-  const { type, uri, videoId } = getVideoSource(currentLecture.videoUrl);
-
-  if (!uri && !videoId) {
+  // ─── Loading Signed URL ──────────────────────────────────────────────────
+  if (isLoadingUrl) {
     return (
-      <View className="w-full h-56 bg-gray-900 justify-center items-center">
-        <Text className="text-white">Video not available</Text>
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#e11d48" />
+        <Text style={styles.loadingText}>Đang tải video</Text>
       </View>
     );
   }
 
-  // === TRƯỜNG HỢP 0: Video YouTube Native (Dùng react-native-youtube-iframe) ===
-  if (type === 'youtube') {
+  // ─── Error ───────────────────────────────────────────────────────────────
+  if (urlError) {
     return (
-      <View className="w-full h-56 bg-black">
-        <YoutubePlayer
-          height={200}
-          play={true}
-          videoId={videoId}
-          initialPlayerParams={{
-            controls: true,
-            modestbranding: true,
-            showClosedCaptions: true
-          }}
-          onChangeState={(state) => {
-            if (state === 'ended' && onComplete) {
-              onComplete();
-            }
-          }}
-        />
+      <View style={styles.container}>
+        <AlertCircle size={40} color="#e11d48" />
+        <Text style={styles.errorText}>{urlError}</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={fetchVideoUrl}>
+          <RefreshCw size={14} color="#fff" />
+          <Text style={styles.retryText}>Thử lại</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  // === TRƯỜNG HỢP 1: Video YouTube/Vimeo (Dùng WebView) ===
-  if (type === 'webview') {
+  // ─── Không có URL ─────────────────────────────────────────────────────────
+  if (!videoUrl) {
     return (
-      <View className="w-full h-56 bg-black">
-        <WebView
-          style={{ flex: 1 }}
-          source={{ uri: uri }}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          allowsFullscreenVideo={true}
-          startInLoadingState={true}
-          renderLoading={() => (
-            <View className="absolute inset-0 justify-center items-center bg-black">
-              <ActivityIndicator color="#e11d48" />
-            </View>
-          )}
-        />
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Video không khả dụng</Text>
       </View>
     );
   }
 
-  // === TRƯỜNG HỢP 2: Video MP4 Cloudinary (Dùng expo-av) ===
+  // ─── CloudFront Badge ─────────────────────────────────────────────────────
+  const isCFUrl = videoUrl.includes('cloudfront.net');
+
+  // ─── Main Video Player (expo-av) ──────────────────────────────────────────
   return (
-    <View className="w-full h-56 bg-black">
+    <View style={styles.container}>
       <Video
         ref={videoRef}
+        key={currentLecture._id}
         style={StyleSheet.absoluteFill}
-        source={{ uri: uri }}
+        source={{ uri: videoUrl }}
         useNativeControls
         resizeMode={ResizeMode.CONTAIN}
         isLooping={false}
-        onPlaybackStatusUpdate={status => {
-          setStatus(() => status);
+        shouldPlay={true}
+        onPlaybackStatusUpdate={(status) => {
           if (status.didJustFinish && onComplete) {
             onComplete();
           }
         }}
-        shouldPlay={true}
       />
+
+      {/* CloudFront Badge
+      {isCFUrl && (
+        <View style={styles.cfBadge}>
+          <Cloud size={11} color="#60a5fa" />
+          <Text style={styles.cfBadgeText}>CloudFront CDN</Text>
+        </View>
+      )} */}
     </View>
   );
 };
+
+const PLAYER_HEIGHT = 230;
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    height: PLAYER_HEIGHT,
+    backgroundColor: '#0a0a0a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  placeholderContent: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  playIconWrapper: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(225,29,72,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  loadingText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    marginTop: 12,
+  },
+  errorText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: 24,
+    marginTop: 10,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#e11d48',
+    borderRadius: 10,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  cfBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  cfBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+});
 
 export default VideoPlayer;
