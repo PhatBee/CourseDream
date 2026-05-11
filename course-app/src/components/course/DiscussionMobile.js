@@ -1,203 +1,424 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchDiscussions, addDiscussion, replyDiscussion, resetDiscussionState } from '../../features/discussion/discussionSlice';
-import Toast from 'react-native-toast-message';
-import ReportModalMobile from '../common/ReportModalMobile';
-import { Flag } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Thêm dòng này
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+} from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { useRoute } from "@react-navigation/native";
+import {
+  fetchDiscussions,
+  addDiscussion,
+} from "../../features/discussion/discussionSlice";
+import Toast from "react-native-toast-message";
+import ReportModalMobile from "../common/ReportModalMobile";
+import DiscussionModalMobile from "./DiscussionModalMobile";
+import {
+  MessageCircle,
+  ThumbsUp,
+  MoreVertical,
+  CheckCircle2,
+  X,
+} from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const DiscussionMobile = ({ courseId, isEnrolled, user, highlightReplyId: propHighlightReplyId }) => {
-  const insets = useSafeAreaInsets(); // Lấy thông tin vùng an toàn
+const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
-  const { discussions, loading } = useSelector(state => state.discussion);
-  const [newContent, setNewContent] = useState('');
-  const [replyContent, setReplyContent] = useState({});
+  const route = useRoute();
+
+  const { discussions, loading } = useSelector((state) => state.discussion);
+
+  // States dành cho Form Tạo Thảo Luận mới (Yêu Cầu #3)
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+
   const [page, setPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // States dành cho Modals Report / Chi tiết
   const [reportVisible, setReportVisible] = useState(false);
-  const [reportType, setReportType] = useState('');
-  const [reportTargetId, setReportTargetId] = useState('');
+  const [reportTargetId, setReportTargetId] = useState("");
+  const [reportType, setReportType] = useState("discussion");
+  const [selectedDiscussion, setSelectedDiscussion] = useState(null);
+
   const flatListRef = useRef(null);
-  const [pendingScrollIdx, setPendingScrollIdx] = useState(null);
-  const [highlightReplyId, setHighlightReplyId] = useState(propHighlightReplyId);
+  const [highlightedDiscussionId, setHighlightedDiscussionId] = useState(null);
 
   useEffect(() => {
-    if (courseId) {
-      dispatch(fetchDiscussions({ courseId }));
+    if (courseId && lectureId) {
+      setPage(1);
+      dispatch(fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }));
     }
-  }, [courseId, dispatch]);
+  }, [courseId, lectureId, dispatch]);
 
-  // Khi propHighlightReplyId thay đổi (từ NotificationScreen), cập nhật state
   useEffect(() => {
-    setHighlightReplyId(propHighlightReplyId);
-  }, [propHighlightReplyId]);
+    const { discussionId, replyId } = route.params || {};
 
-  // Khi discussions hoặc highlightReplyId thay đổi, xác định discussion chứa reply cần highlight
-  useEffect(() => {
-    if (highlightReplyId && discussions.length > 0) {
-      const idx = discussions.findIndex(d =>
-        d.replies?.some(r => r._id === highlightReplyId)
-      );
-      if (idx !== -1) setPendingScrollIdx(idx);
-    }
-  }, [highlightReplyId, discussions]);
+    if (discussionId && discussions.length > 0) {
+      if (replyId) {
+        // CÓ REPLY ID -> Chỉ mở Popup chi tiết nếu là Reply
+        const target = discussions.find((d) => d._id === discussionId);
+        if (target && !selectedDiscussion) {
+          setSelectedDiscussion(target);
+        }
+      } else {
+        // KHÔNG CÓ REPLY ID (Cảnh cáo toàn bộ thảo luận gốc)
+        // -> Highlight và Scroll, KHÔNG MỞ MODAL CHI TIẾT
+        setHighlightedDiscussionId(discussionId);
 
-  // Scroll khi FlatList render xong
-  const handleContentSizeChange = () => {
-    if (pendingScrollIdx !== null && flatListRef.current) {
-      setTimeout(() => {
-        flatListRef.current.scrollToIndex({ index: pendingScrollIdx, animated: true });
-        setPendingScrollIdx(null);
-      }, 100);
+        const index = discussions.findIndex((d) => d._id === discussionId);
+        if (index !== -1 && flatListRef.current) {
+          setTimeout(() => {
+            flatListRef.current.scrollToIndex({
+              index,
+              animated: true,
+              viewPosition: 0.5,
+            });
+          }, 600);
+        }
+
+        // Tự tắt highlight sau 3s (Tương tự web)
+        setTimeout(() => setHighlightedDiscussionId(null), 3000);
+      }
     }
-  };
+  }, [route.params?.discussionId, route.params?.replyId, discussions]);
+
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    setPage(1);
+    await dispatch(
+      fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }),
+    );
+    setIsRefreshing(false);
+  }, [courseId, lectureId, dispatch]);
 
   const handleCreateDiscussion = async () => {
-    if (!newContent.trim()) return;
-    await dispatch(addDiscussion({ courseId, content: newContent }));
-    setNewContent('');
-    dispatch(fetchDiscussions({ courseId, page: 1, limit: 10 }));
-    setPage(1);
-    Toast.show({ type: 'success', text1: 'Đã gửi thảo luận!' });
+    if (!newTitle.trim() || !newContent.trim()) {
+      Toast.show({ type: "error", text1: "Vui lòng nhập đủ thông tin" });
+      return;
+    }
+    try {
+      await dispatch(
+        addDiscussion({
+          courseId,
+          lectureId,
+          title: newTitle,
+          content: newContent,
+        }),
+      ).unwrap();
+      setNewTitle("");
+      setNewContent("");
+      setCreateModalVisible(false); // Tắt popup
+      dispatch(fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }));
+      Toast.show({ type: "success", text1: "Đã đăng câu hỏi học tập!" });
+    } catch (err) {
+      Toast.show({ type: "error", text1: "Không thể đăng câu hỏi" });
+    }
   };
 
-  const handleReply = async (discussionId) => {
-    if (!replyContent[discussionId]?.trim()) return;
-    await dispatch(replyDiscussion({ discussionId, content: replyContent[discussionId] }));
-    setReplyContent({ ...replyContent, [discussionId]: '' });
-    dispatch(fetchDiscussions({ courseId }));
-    Toast.show({ type: 'success', text1: 'Đã gửi trả lời!' });
-  };
-
-  const openReport = (type, id) => {
-    setReportType(type);
+  const openReport = (id, type = "discussion") => {
     setReportTargetId(id);
+    setReportType(type);
     setReportVisible(true);
   };
 
-  const canDiscuss = isEnrolled || (user && user.role === 'instructor');
+  const canDiscuss = isEnrolled || (user && user.role === "instructor");
 
-  if (loading) return (
-    <View className="py-8 items-center">
-      <ActivityIndicator size="large" color="#e11d48" />
-    </View>
-  );
+  if (loading && discussions?.length === 0)
+    return (
+      <View className="py-10 items-center justify-center flex-1">
+        <ActivityIndicator size="large" color="#e11d48" />
+      </View>
+    );
 
-  // BỎ BỌC TouchableWithoutFeedback, chỉ render View
   return (
-    <View className="px-4 flex-1">
-      <Text className="text-lg font-bold mb-2">Thảo luận khóa học</Text>
-      {!canDiscuss && (
-        <View className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-          <Text className="text-yellow-700">Bạn cần ghi danh khóa học để tham gia thảo luận.</Text>
+    <View className="flex-1 bg-gray-50 pt-3">
+      {/* 3. NÚT HIỂN THỊ POPUP TẠO CHỦ ĐỀ MỚI (Thu gọn giao diện) */}
+      {canDiscuss && (
+        <View className="px-4 mb-4">
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setCreateModalVisible(true)}
+            className="bg-white p-3 rounded-xl border border-gray-200 flex-row items-center gap-3 shadow-sm"
+          >
+            <Image
+              source={
+                user?.avatar?.url
+                  ? { uri: user.avatar.url }
+                  : user?.avatar
+                    ? { uri: user.avatar }
+                    : require("../../../assets/images/default-avatar.jpg")
+              }
+              style={{ width: 40, height: 40, borderRadius: 20 }}
+            />
+            <Text className="text-gray-500 font-medium">
+              Tạo chủ đề thảo luận / Hỏi bài...
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
-      {/* Ô nhập thảo luận mới */}
-      <View className="flex-row items-start mb-4">
-        <TextInput
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 bg-white"
-          placeholder="Nhập chủ đề thảo luận của bạn"
-          value={newContent}
-          onChangeText={setNewContent}
-          editable={canDiscuss}
-          multiline
-        />
-        <TouchableOpacity
-          className="ml-2 bg-rose-500 px-4 py-2 rounded-lg"
-          onPress={handleCreateDiscussion}
-          disabled={!canDiscuss || !newContent.trim()}
-        >
-          <Text className="text-white font-bold">Gửi</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Danh sách thảo luận */}
+
+      {/* DANH SÁCH CÂU HỎI */}
       <FlatList
         ref={flatListRef}
         data={discussions}
-        keyExtractor={item => item._id}
-        renderItem={({ item }) => (
-          <View className="mb-4 bg-white rounded-lg p-3 border border-gray-100">
-            <View className="flex-row items-center mb-1">
-              <Text className="font-semibold">{item.author?.name || 'Ẩn danh'}</Text>
-              <Text className="ml-2 text-xs text-gray-500">{new Date(item.createdAt).toLocaleString()}</Text>
-              {/* Lá cờ báo cáo thảo luận */}
-              {user?._id && item.author?._id !== user._id && (
-                <TouchableOpacity
-                  onPress={() => openReport('discussion', item._id)}
-                  className="ml-2"
-                  accessibilityLabel="Báo cáo thảo luận"
-                >
-                  <Flag size={16} color="#e11d48" />
-                </TouchableOpacity>
-              )}
-            </View>
-            <Text className="text-gray-800 mb-2">{item.content}</Text>
-            {/* Replies */}
-            {item.replies?.map((reply, idx) => {
-              const isHighlight = reply._id === highlightReplyId;
-              return (
-                <View
-                  key={reply._id}
-                  className={`ml-4 mb-2 rounded p-2 flex-row items-center ${isHighlight ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-50'}`}
-                  style={isHighlight ? { shadowColor: '#FFD700', shadowOpacity: 0.5, shadowRadius: 4 } : {}}
-                >
-                  <View className="flex-1">
-                    <Text className="font-semibold text-sm">{reply.author?.name || 'Ẩn danh'}</Text>
-                    <Text className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleString()}</Text>
-                    <Text className="text-gray-700">{reply.content}</Text>
-                  </View>
-                  {/* Lá cờ báo cáo reply */}
-                  {user?._id && reply.author?._id !== user._id && (
-                    <TouchableOpacity
-                      onPress={() => openReport('reply', reply._id)}
-                      className="ml-2"
-                      accessibilityLabel="Báo cáo bình luận"
-                    >
-                      <Flag size={15} color="#e11d48" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              );
-            })}
-            {/* Ô nhập trả lời */}
-            {canDiscuss && (
-              <View className="flex-row items-center mt-2">
-                <TextInput
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1 bg-white"
-                  placeholder="Trả lời thảo luận..."
-                  value={replyContent[item._id] || ''}
-                  onChangeText={text => setReplyContent({ ...replyContent, [item._id]: text })}
-                  multiline
-                  onFocus={() => setHighlightReplyId(null)} // Bỏ highlight khi focus vào input
-                />
-                <TouchableOpacity
-                  className="ml-2 bg-rose-500 px-3 py-1.5 rounded-lg"
-                  onPress={() => handleReply(item._id)}
-                  disabled={!replyContent[item._id]?.trim()}
-                >
-                  <Text className="text-white font-bold">Gửi</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-        ListEmptyComponent={<Text className="text-gray-500 text-center mt-4">Chưa có thảo luận nào.</Text>}
+        keyExtractor={(item) => item._id}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={["#e11d48"]}
+          />
+        }
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 24, // Thêm padding dưới theo vùng an toàn
+          paddingHorizontal: 16,
+          paddingBottom: insets.bottom + 60,
         }}
-        onContentSizeChange={handleContentSizeChange}
-        keyboardShouldPersistTaps="handled" // THÊM DÒNG NÀY
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View className="py-12 items-center px-6">
+            <View className="bg-gray-200 p-4 rounded-full mb-4">
+              <MessageCircle size={32} color="#9CA3AF" />
+            </View>
+            <Text className="text-gray-500 font-bold text-base mt-2">
+              Chưa có thảo luận nào
+            </Text>
+            <Text className="text-gray-400 mt-1 text-sm text-center font-medium">
+              Bạn có thắc mắc gì không? Hãy là người đầu tiên đặt câu hỏi!
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          const isHighlighted = item._id === highlightedDiscussionId;
+          return (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setSelectedDiscussion(item)}
+              className={`rounded-2xl p-4 mb-4 border shadow-sm ${
+                isHighlighted
+                  ? "bg-rose-50 border-rose-300"
+                  : "bg-white border-gray-100"
+              }`}
+              style={{
+                elevation: 2,
+                shadowColor: "#000",
+                shadowOpacity: 0.05,
+                shadowRadius: 3,
+              }}
+            >
+              <View className="flex-row justify-between items-center mb-3">
+                <View className="flex-row items-center flex-1">
+                  <Image
+                    source={
+                      item.author?.avatar?.url
+                        ? { uri: item.author.avatar.url }
+                        : item.author?.avatar
+                          ? { uri: item.author.avatar }
+                          : require("../../../assets/images/default-avatar.jpg")
+                    }
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      marginRight: 8,
+                    }}
+                  />
+                  <View>
+                    <Text className="font-bold text-gray-800 text-[13px]">
+                      {item.author?.name || "Ẩn danh"}
+                    </Text>
+                    <Text className="text-xs text-gray-400 font-medium">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+
+                {user?._id && item.author?._id !== user._id && (
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      openReport(item._id, "discussion");
+                    }}
+                    className="p-2 -mr-2 -mt-2"
+                  >
+                    <MoreVertical size={18} color="#9CA3AF" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <Text
+                className="font-bold text-gray-900 text-base mb-2"
+                numberOfLines={2}
+              >
+                {item.title}
+              </Text>
+
+              <Text
+                className="text-gray-600 text-sm mb-4 leading-5"
+                numberOfLines={3}
+              >
+                {item.content}
+              </Text>
+
+              {/* 1. HIỂN THỊ ĐÁNH DẤU CÂU TRẢ LỜI HAY NHẤT NGAY NGOÀI LIST */}
+              {item.bestAnswerId && (
+                <View className="mb-2 bg-emerald-50 rounded-lg p-3 border border-emerald-100">
+                  <View className="flex-row items-center gap-1.5 mb-1.5">
+                    <CheckCircle2 size={16} color="#10b981" />
+                    <Text className="text-emerald-700 font-bold text-xs">
+                      {/* Kiểm tra nếu là OBJ có nội dung content hay chỉ là ID */}
+                      Câu trả lời hay nhất{" "}
+                      {typeof item.bestAnswerId === "object" &&
+                      item.bestAnswerId.author?.name
+                        ? `- ${item.bestAnswerId.author.name}`
+                        : ""}
+                    </Text>
+                  </View>
+                  {typeof item.bestAnswerId === "object" &&
+                    item.bestAnswerId.content && (
+                      <Text
+                        className="text-emerald-900 text-sm leading-5"
+                        numberOfLines={2}
+                      >
+                        {item.bestAnswerId.content}
+                      </Text>
+                    )}
+                </View>
+              )}
+
+              <View className="flex-row items-center justify-between border-t border-gray-50 pt-3">
+                <View className="flex-row items-center gap-1.5">
+                  <ThumbsUp size={14} color="#6B7280" />
+                  <Text className="text-gray-500 text-xs font-bold">
+                    {item.upvoteCount || 0} lượt thích
+                  </Text>
+                </View>
+                <View className="bg-rose-50 px-2 py-1 rounded">
+                  <Text className="text-rose-600 text-[11px] font-bold">
+                    {item.answerCount || 0} Trả lời
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
 
+      {/* MODAL TẠO CHỦ ĐỀ THẢO LUẬN MỚI */}
+      <Modal
+        visible={createModalVisible}
+        animationType="fade"
+        transparent={true}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+          }}
+        >
+          <View className="bg-white mx-4 rounded-2xl p-5 shadow-lg">
+            <View className="flex-row justify-between items-center mb-4 border-b border-gray-100 pb-3">
+              <Text className="font-bold text-lg text-gray-800">
+                Tạo chủ đề thảo luận
+              </Text>
+              <TouchableOpacity
+                onPress={() => setCreateModalVisible(false)}
+                className="p-1"
+              >
+                <X size={22} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-gray-700 font-bold mb-1 ml-1 text-sm">
+              Tiêu đề (Tóm tắt)
+            </Text>
+            <TextInput
+              style={{
+                fontSize: 15,
+                backgroundColor: "#f9fafb",
+                padding: 12,
+                borderRadius: 10,
+                marginBottom: 12,
+                color: "#1f2937",
+              }}
+              placeholder="Mô tả gọn vấn đề bạn gặp phải..."
+              value={newTitle}
+              onChangeText={setNewTitle}
+              placeholderTextColor="#9CA3AF"
+            />
+
+            <Text className="text-gray-700 font-bold mb-1 ml-1 text-sm">
+              Chi tiết câu hỏi
+            </Text>
+            <TextInput
+              style={{
+                backgroundColor: "#f9fafb",
+                height: 100,
+                fontSize: 15,
+                padding: 12,
+                borderRadius: 10,
+                color: "#4b5563",
+              }}
+              placeholder="Bạn hãy miêu tả rõ nhất về vấn đề để mọi người giúp đỡ..."
+              value={newContent}
+              onChangeText={setNewContent}
+              multiline
+              textAlignVertical="top"
+              placeholderTextColor="#9CA3AF"
+            />
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              className={`mt-5 py-3.5 rounded-xl justify-center items-center ${!newTitle.trim() || !newContent.trim() ? "bg-rose-300" : "bg-rose-600"}`}
+              onPress={handleCreateDiscussion}
+              disabled={!newTitle.trim() || !newContent.trim()}
+            >
+              <Text
+                style={{ color: "white", fontWeight: "bold", fontSize: 16 }}
+              >
+                Gửi câu hỏi
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Modal Báo cáo */}
       <ReportModalMobile
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
         type={reportType}
         targetId={reportTargetId}
-        isEnrolled={isEnrolled} // <-- THÊM DÒNG NÀY
+        isEnrolled={canDiscuss}
+      />
+
+      {/* Modal Chi tiết */}
+      <DiscussionModalMobile
+        visible={!!selectedDiscussion}
+        discussion={selectedDiscussion}
+        onClose={() => setSelectedDiscussion(null)}
+        user={user}
+        isInstructor={user?.role === "instructor"}
+        onRefreshParent={() =>
+          dispatch(
+            fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }),
+          )
+        }
+        onReport={openReport}
       />
     </View>
   );
 };
-
 export default DiscussionMobile;

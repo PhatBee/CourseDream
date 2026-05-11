@@ -170,7 +170,7 @@ export const replyToDiscussion = async (discussionId, authorId, content) => {
     _id: discussionId,
     isHidden: false,
     deletedAt: null,
-  });
+  }).populate("course", "slug");
   if (!checkDiscussion) {
     throw new Error("Không tìm thấy cuộc thảo luận, hoặc đã bị ẩn/xóa");
   }
@@ -184,6 +184,24 @@ export const replyToDiscussion = async (discussionId, authorId, content) => {
   await Discussion.findByIdAndUpdate(discussionId, {
     $inc: { answerCount: 1 },
   });
+
+  if (checkDiscussion.author.toString() !== authorId.toString()) {
+    await notificationService
+      .createNotification({
+        recipient: checkDiscussion.author,
+        sender: authorId,
+        type: "reply",
+        title: "Có người vừa trả lời thảo luận của bạn",
+        message: `Thảo luận "${checkDiscussion.title}" có mội bình luận mới.`,
+        metadata: {
+          courseSlug: checkDiscussion.course?.slug,
+          lessonId: checkDiscussion.lectureId,
+          discussionId: checkDiscussion._id,
+          replyId: newReply._id,
+        },
+      })
+      .catch((err) => console.error("Lỗi gửi thông báo reply thảo luận:", err));
+  }
 
   return newReply.populate("author", "name avatar");
 };

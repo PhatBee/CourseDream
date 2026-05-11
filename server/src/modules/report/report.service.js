@@ -281,10 +281,9 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
         });
       }
       if (report.targetType === "reply") {
-        await Discussion.updateOne(
-          { "replies._id": report.targetId },
-          { $set: { "replies.$.isHidden": true } },
-        );
+        await DiscussionReply.findByIdAndUpdate(report.targetId, {
+          isHidden: true,
+        });
       }
     }
   }
@@ -316,17 +315,20 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
       originalContent = `Tiêu đề: ${d.title}\nChi tiết: ${d.content}`;
     }
   } else if (report.targetType === "reply") {
-    const d = await Discussion.findOne({
-      "replies._id": report.targetId,
-    }).populate("course", "slug");
-    if (d) {
-      courseSlug = d.course?.slug;
-      lessonId = d.lectureId;
-      discussionId = d._id;
-      replyId = report.targetId;
-      const rep = d.replies.id(report.targetId);
-      // HIỂN THỊ ĐẦY ĐỦ BÌNH LUẬN (BỎ HÀM .substring CŨ ĐI)
-      if (rep) originalContent = `${rep.content}`;
+    // ĐÃ CHỈNH SỬA: Sửa query để fetch data từ collection tách rời
+    const rep = await DiscussionReply.findById(report.targetId);
+    if (rep) {
+      const d = await Discussion.findById(rep.discussionId).populate(
+        "course",
+        "slug",
+      );
+      if (d) {
+        courseSlug = d.course?.slug;
+        lessonId = d.lectureId;
+        discussionId = d._id;
+        replyId = rep._id;
+        originalContent = rep.content;
+      }
     }
   }
 
