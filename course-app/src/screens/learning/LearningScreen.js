@@ -26,6 +26,8 @@ import {
   setCurrentLecture,
   toggleLecture,
   resetLearning,
+  fetchVideoProgress,
+  saveVideoProgress,
 } from '../../features/learning/learningSlice';
 import VideoPlayer from '../../components/learning/VideoPlayer';
 import LearningTabs from '../../components/learning/LearningTabs';
@@ -70,7 +72,7 @@ const LearningScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('Lectures');
 
-  const { course, sections, currentLecture, progress, isLoading } = useSelector(
+  const { course, sections, currentLecture, progress, isLoading, lastWatchedTime } = useSelector(
     (state) => state.learning
   );
 
@@ -117,6 +119,12 @@ const LearningScreen = ({ route, navigation }) => {
     return () => { dispatch(resetLearning()); };
   }, [dispatch, slug]);
 
+  // Khi currentLecture thay đổi → fetch last_watched_time
+  useEffect(() => {
+    if (!currentLecture?._id || !slug) return;
+    dispatch(fetchVideoProgress({ courseSlug: slug, lectureId: currentLecture._id }));
+  }, [currentLecture?._id, slug, dispatch]);
+
   // Khi chuyển bài → reset tab về Lectures
   useEffect(() => {
     setActiveTab('Lectures');
@@ -124,6 +132,19 @@ const LearningScreen = ({ route, navigation }) => {
 
   const handleLecturePress = (lecture) => {
     dispatch(setCurrentLecture(lecture));
+  };
+
+  /**
+   * Nhận progress từ VideoPlayer (mỗi 10s hoặc khi pause)
+   * Dispatch saveVideoProgress để lưu lên server
+   */
+  const handleVideoProgress = (watchedSeconds) => {
+    if (!currentLecture?._id || !slug) return;
+    dispatch(saveVideoProgress({
+      courseSlug: slug,
+      lectureId: currentLecture._id,
+      watchedSeconds,
+    }));
   };
 
   // ─── Loading ─────────────────────────────────────────────────────────────
@@ -160,6 +181,8 @@ const LearningScreen = ({ route, navigation }) => {
           currentLecture={currentLecture}
           courseId={course._id}
           thumbnail={course.thumbnail}
+          lastWatchedTime={lastWatchedTime}
+          onProgress={handleVideoProgress}
           onComplete={() => {
             if (!isCompleted && currentLecture?._id) {
               handleToggleComplete(currentLecture._id);
