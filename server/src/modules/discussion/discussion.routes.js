@@ -9,7 +9,8 @@ import {
   voteDiscussion,
   markBestAnswerController,
   deleteDiscussion,
-  getDiscussionById, // Đảm bảo chỉ import hàm này 1 lần duy nhất trong list này
+  getDiscussionById,
+  getDiscussionReplies,
 } from "../discussion/discussion.controller.js";
 
 const router = express.Router();
@@ -33,5 +34,6 @@ router.patch(
 router.delete("/:discussionId", verifyToken, deleteDiscussion);
 
 router.get("/:discussionId", getDiscussionById);
+router.get("/:discussionId/replies", getDiscussionReplies); // GET /api/discussions/123/replies?page=1&limit=5
 
 export default router;

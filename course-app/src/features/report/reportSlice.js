@@ -1,27 +1,30 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import reportApi from '../../api/reportApi';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import reportApi from "../../api/reportApi";
 
 export const sendReport = createAsyncThunk(
-  'report/sendReport',
-  async ({ type, targetId, reason }, thunkAPI) => {
+  "report/sendReport",
+  async ({ type, targetId, reason, detail }, thunkAPI) => {
     try {
       let res;
-      if (type === 'course') {
-        res = await reportApi.reportCourse(targetId, reason);
-      } else if (type === 'discussion') {
-        res = await reportApi.reportDiscussion(targetId, reason);
-      } else if (type === 'reply') {
-        res = await reportApi.reportReply(targetId, reason);
+      // Truyền thêm "detail" (với tư cách là description) vào các hàm API
+      if (type === "course") {
+        res = await reportApi.reportCourse(targetId, reason, detail);
+      } else if (type === "discussion") {
+        res = await reportApi.reportDiscussion(targetId, reason, detail);
+      } else if (type === "reply") {
+        res = await reportApi.reportReply(targetId, reason, detail);
       }
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data?.message || 'Gửi báo cáo thất bại');
+      return thunkAPI.rejectWithValue(
+        err.response?.data?.message || "Gửi báo cáo thất bại",
+      );
     }
-  }
+  },
 );
 
 const reportSlice = createSlice({
-  name: 'report',
+  name: "report",
   initialState: {
     loading: false,
     error: null,
@@ -32,7 +35,7 @@ const reportSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.success = false;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -50,7 +53,7 @@ const reportSlice = createSlice({
         state.error = action.payload;
         state.success = false;
       });
-  }
+  },
 });
 
 export const { resetReportState } = reportSlice.actions;

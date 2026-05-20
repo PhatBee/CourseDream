@@ -1,21 +1,32 @@
-import React, { useEffect } from 'react';
-import { ScrollView, View, ActivityIndicator, Text, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useDispatch, useSelector } from 'react-redux';
-import { getCourseDetails, resetCourse } from '../../features/course/courseSlice';
+import React, { useEffect } from "react";
+import {
+  ScrollView,
+  View,
+  ActivityIndicator,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getCourseDetails,
+  resetCourse,
+} from "../../features/course/courseSlice";
 import { fetchMyEnrollments } from "../../features/enrollment/enrollmentSlice";
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation } from "@react-navigation/native";
 
-import CourseHeaderMobile from '../../components/course/CourseHeaderMobile';
-import IncludesCardMobile from '../../components/course/IncludesCardMobile';
-import FeaturesCardMobile from '../../components/course/FeaturesCardMobile';
-import CourseOverviewMobile from '../../components/course/CourseOverviewMobile';
-import CourseAccordionMobile from '../../components/course/CourseAccordionMobile';
-import InstructorBioMobile from '../../components/course/InstructorBioMobile';
-import ReviewListMobile from '../../components/course/ReviewListMobile';
-import ReviewFormMobile from '../../components/course/ReviewFormMobile';
-import DiscussionMobile from '../../components/course/DiscussionMobile';
-import { fetchReviews } from '../../features/review/reviewSlice';
+import CourseHeaderMobile from "../../components/course/CourseHeaderMobile";
+import IncludesCardMobile from "../../components/course/IncludesCardMobile";
+import FeaturesCardMobile from "../../components/course/FeaturesCardMobile";
+import CourseOverviewMobile from "../../components/course/CourseOverviewMobile";
+import CourseAccordionMobile from "../../components/course/CourseAccordionMobile";
+import InstructorBioMobile from "../../components/course/InstructorBioMobile";
+import ReviewListMobile from "../../components/course/ReviewListMobile";
+import ReviewFormMobile from "../../components/course/ReviewFormMobile";
+import DiscussionMobile from "../../components/course/DiscussionMobile";
+import { fetchReviews } from "../../features/review/reviewSlice";
 
 const CourseDetailScreen = () => {
   const route = useRoute();
@@ -23,10 +34,14 @@ const CourseDetailScreen = () => {
   const dispatch = useDispatch();
   const { slug } = route.params || {};
 
-  const { course, reviewCount, isLoading, isError, message } = useSelector(state => state.course);
-  const enrolledCourseIds = useSelector(state => state.enrollment.enrolledCourseIds);
-  const reviewList = useSelector(state => state.review.reviews);
-  const user = useSelector(state => state.auth.user);
+  const { course, reviewCount, isLoading, isError, message } = useSelector(
+    (state) => state.course,
+  );
+  const enrolledCourseIds = useSelector(
+    (state) => state.enrollment.enrolledCourseIds,
+  );
+  const reviewList = useSelector((state) => state.review.reviews);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     if (slug) dispatch(getCourseDetails(slug));
@@ -38,7 +53,9 @@ const CourseDetailScreen = () => {
   }, [slug, user, dispatch]);
 
   useEffect(() => {
-    if (course?._id) dispatch(fetchReviews(course._id));
+    if (course?._id) {
+      dispatch(fetchReviews({ courseId: course._id }));
+    }
   }, [course?._id, dispatch]);
 
   if (isLoading || !course) {
@@ -53,7 +70,9 @@ const CourseDetailScreen = () => {
   if (isError) {
     return (
       <View className="flex-1 justify-center items-center px-4">
-        <Text className="text-red-500 text-center mb-4">{message || 'Không thể tải khóa học.'}</Text>
+        <Text className="text-red-500 text-center mb-4">
+          {message || "Không thể tải khóa học."}
+        </Text>
         <TouchableOpacity
           className="bg-rose-500 px-6 py-3 rounded-lg"
           onPress={() => navigation.goBack()}
@@ -67,24 +86,35 @@ const CourseDetailScreen = () => {
   const isEnrolled = user && enrolledCourseIds?.includes(String(course?._id));
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "padding"}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingTop: 0, paddingBottom: 100 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingTop: 0,
+            paddingBottom: 100,
+          }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <CourseHeaderMobile course={course} isEnrolled={isEnrolled} reviewCount={reviewCount} />
+          <CourseHeaderMobile
+            course={course}
+            isEnrolled={isEnrolled}
+            reviewCount={reviewCount}
+          />
           <IncludesCardMobile course={course} />
           <FeaturesCardMobile course={course} />
           <CourseOverviewMobile course={course} />
           <CourseAccordionMobile sections={course.sections} courseSlug={course.slug} />
           <InstructorBioMobile instructor={course.instructor} />
-          <ReviewListMobile reviews={reviewList} />
+          <ReviewListMobile
+            reviews={reviewList}
+            instructorId={course.instructor}
+          />
           <ReviewFormMobile courseId={course._id} isEnrolled={isEnrolled} />
 
           {/* Nút chuyển sang trang thảo luận */}
@@ -96,27 +126,15 @@ const CourseDetailScreen = () => {
               <View className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <TouchableOpacity
                   className="bg-rose-500 py-2 rounded-lg"
-                  onPress={() => navigation.navigate('Login')}
+                  onPress={() => navigation.navigate("Login")}
                 >
-                  <Text className="text-white text-center font-semibold">Đánh giá</Text>
+                  <Text className="text-white text-center font-semibold">
+                    Đánh giá
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
-
-          {/* Discussion button */}
-          <View className="px-4 mb-8">
-            <TouchableOpacity
-              className="bg-rose-800 py-3 rounded-xl flex-row items-center justify-center gap-2"
-              onPress={() => navigation.navigate('DiscussionScreen', {
-                courseId: course._id,
-                courseSlug: course.slug,
-                isEnrolled,
-              })}
-            >
-              <Text className="text-white text-center font-bold text-base">💬 Thảo luận khóa học</Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

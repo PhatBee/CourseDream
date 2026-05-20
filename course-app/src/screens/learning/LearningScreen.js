@@ -68,9 +68,14 @@ const ResourceItem = ({ resource }) => {
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 const LearningScreen = ({ route, navigation }) => {
-  const { slug } = route.params;
+  // 1. Lấy toàn bộ tham số được Notification truyền tải sang
+  const { slug, discussionId, replyId } = route.params || {};
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState('Lectures');
+
+  // 2. Nếu có discussionId -> Tự động select activeTab là "Discussions"
+  const [activeTab, setActiveTab] = useState(
+    discussionId ? "Discussions" : "Lectures",
+  );
 
   const { course, sections, currentLecture, progress, isLoading, lastWatchedTime } = useSelector(
     (state) => state.learning
@@ -109,6 +114,8 @@ const LearningScreen = ({ route, navigation }) => {
       setActiveTab('Lectures');
     }
   };
+
+  const { user } = useSelector((state) => state.auth);
 
   const handleToggleComplete = async (lectureId) => {
     await dispatch(toggleLecture({ courseSlug: slug, lectureId }));
@@ -314,6 +321,35 @@ const LearningScreen = ({ route, navigation }) => {
             </View>
           )}
         </ScrollView>
+          (activeTab === 'Discussion') {
+            (
+          // === TRƯỜNG HỢP NÀY CHẠY TAB "THẢO LUẬN" ===
+          <View className="flex-1">
+            <View className="p-5 pb-2">
+              <Text className="text-xl font-bold text-gray-900 leading-7 mb-1">
+                {course.title}
+              </Text>
+              <Text className="text-gray-500 text-xs">
+                {course.instructor?.name || "Instructor"}
+              </Text>
+            </View>
+            <LearningTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            {currentLecture ? (
+              <DiscussionMobile
+                courseId={course._id}
+                lectureId={currentLecture._id}
+                user={user}
+              />
+            ) : (
+              <View className="p-6 items-center justify-center">
+                <Text className="text-gray-500 text-center font-medium">
+                  Bật một video trong Lectures để xem mục Hỏi Đáp tương ứng!
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
       </View>
     </View>
   );

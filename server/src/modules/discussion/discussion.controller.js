@@ -6,6 +6,7 @@ import {
   markBestAnswer,
   softDeleteDiscussion,
   getDiscussionDetails,
+  getRepliesByDiscussion,
 } from "../discussion/discussion.service.js";
 import mongoose from "mongoose";
 
@@ -183,6 +184,25 @@ export const deleteDiscussion = async (req, res, next) => {
     );
 
     res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getDiscussionReplies = async (req, res, next) => {
+  try {
+    const { discussionId } = req.params;
+    const page = +req.query.page || 1;
+    const limit = +req.query.limit || 5; // Load 5 reply mỗi lần lướt
+
+    if (!mongoose.Types.ObjectId.isValid(discussionId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "ID không hợp lệ" });
+    }
+
+    const data = await getRepliesByDiscussion(discussionId, page, limit);
+    res.json({ success: true, ...data });
   } catch (err) {
     next(err);
   }

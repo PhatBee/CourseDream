@@ -1,11 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import discussionService from "./discussionService";
 
-// Lấy danh sách thảo luận (ĐÃ CẬP NHẬT THÊM lectureId)
+// Lấy danh sách thảo luận
 export const fetchDiscussions = createAsyncThunk(
   "discussion/fetchDiscussions",
   async ({ courseId, lectureId, page = 1, limit = 10 }) => {
-    // Truyền đầy đủ lectureId vào service
     return await discussionService.getDiscussions(
       courseId,
       lectureId,
@@ -15,11 +14,10 @@ export const fetchDiscussions = createAsyncThunk(
   },
 );
 
-// Thêm thảo luận mới (ĐÃ CẬP NHẬT THÊM lectureId VÀ title)
+// Thêm thảo luận mới
 export const addDiscussion = createAsyncThunk(
   "discussion/addDiscussion",
   async ({ courseId, lectureId, title, content }) => {
-    // Truyền đầy đủ 4 tham số vào service
     return await discussionService.addDiscussion(
       courseId,
       lectureId,
@@ -29,15 +27,7 @@ export const addDiscussion = createAsyncThunk(
   },
 );
 
-// Trả lời thảo luận
-export const replyDiscussion = createAsyncThunk(
-  "discussion/replyDiscussion",
-  async ({ discussionId, content }) => {
-    return await discussionService.replyDiscussion(discussionId, content);
-  },
-);
-
-// VOTE
+// VOTE (Chỉ còn dùng để Vote cho Discussion gốc)
 export const voteDiscussion = createAsyncThunk(
   "discussion/voteDiscussion",
   async ({ discussionId, targetType, targetId }) => {
@@ -49,20 +39,12 @@ export const voteDiscussion = createAsyncThunk(
   },
 );
 
-// MARK BEST ANSWER
-export const markBestAnswer = createAsyncThunk(
-  "discussion/markBestAnswer",
-  async ({ discussionId, replyId }) => {
-    return await discussionService.markBestAnswer(discussionId, replyId);
-  },
-);
-
 // DELETE
 export const deleteDiscussion = createAsyncThunk(
   "discussion/deleteDiscussion",
   async (discussionId) => {
     await discussionService.deleteDiscussion(discussionId);
-    return discussionId; // Trả về ID để xóa khỏi mảng trong reducer
+    return discussionId;
   },
 );
 
@@ -91,17 +73,13 @@ const discussionSlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(addDiscussion.fulfilled, (state, action) => {
+        // Unshift cái vỏ vào để thấy ngay câu hỏi mới
         state.discussions.unshift(action.payload);
       })
-      .addCase(replyDiscussion.fulfilled, (state, action) => {
-        // Cập nhật lại replies cho discussion tương ứng
-        const { discussionId, reply } = action.payload;
-        const discussion = state.discussions.find(
-          (d) => d._id === discussionId,
+      .addCase(deleteDiscussion.fulfilled, (state, action) => {
+        state.discussions = state.discussions.filter(
+          (d) => d._id !== action.payload,
         );
-        if (discussion) {
-          discussion.replies.push(reply);
-        }
       });
   },
 });
