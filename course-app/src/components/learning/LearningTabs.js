@@ -23,24 +23,23 @@ const LearningTabs = ({ activeTab, setActiveTab, resourceCount = 0 }) => {
   ];
 
   return (
-    <View className="flex-row border-b border-gray-200 px-5 bg-white">
-      {tabs.map((tab) => (
-        <TouchableOpacity
-          key={tab}
-          onPress={() => setActiveTab(tab)}
-          className={`mr-8 py-4 ${
-            activeTab === tab ? 'border-b-2 border-rose-500' : ''
-          }`}
-        >
-          <Text
-            className={`text-sm font-bold ${
-              activeTab === tab ? 'text-rose-500' : 'text-gray-500'
-            }`}
+    <View style={styles.container}>
+      {tabs.map(({ id, label, Icon }) => {
+        const isActive = activeTab === id;
+        return (
+          <TouchableOpacity
+            key={id}
+            onPress={() => setActiveTab(id)}
+            style={[styles.tab, isActive && styles.tabActive]}
+            activeOpacity={0.75}
           >
-            {tab}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            <Icon size={14} color={isActive ? '#e11d48' : '#6b7280'} />
+            <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
