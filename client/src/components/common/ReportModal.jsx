@@ -41,6 +41,10 @@ const ReportModal = ({ open, onClose, onSubmit, type = "course" }) => {
       toast.error("Vui lòng chọn lý do báo cáo!");
       return;
     }
+    if (reason === "OTHER" && !detail.trim()) {
+      toast.error("Vui lòng nhập chi tiết bổ sung khi chọn lý do Khác!");
+      return;
+    }
     onSubmit(reason, detail);
   };
 

@@ -43,7 +43,8 @@ const CourseHeader = ({ course, reviewCount }) => {
     dispatch(sendReport({
       type: 'course',
       targetId: course._id,
-      reason: reason + (detail ? `\n${detail}` : ''),
+      reason,
+      detail,
     }));
   };
 
