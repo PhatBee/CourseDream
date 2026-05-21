@@ -15,6 +15,7 @@ const fileFilter = (req, file, cb) => {
 // ===== DOCUMENT FILTER (PDF, Word, Excel, Zip, Text) =====
 const fileFilterDocument = (req, file, cb) => {
     const allowedMimeTypes = [
+        // Hỗ trợ upload all
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -27,11 +28,13 @@ const fileFilterDocument = (req, file, cb) => {
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ];
 
-    if (allowedMimeTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Chỉ hỗ trợ file văn bản/tài liệu (PDF, Word, Excel, Zip, Txt)!'), false);
-    }
+    cb(null, true);
+
+    // if (allowedMimeTypes.includes(file.mimetype)) {
+    //     cb(null, true);
+    // } else {
+    //     cb(new Error('Chỉ hỗ trợ file văn bản/tài liệu (PDF, Word, Excel, Zip, Txt)!'), false);
+    // }
 };
 
 // ===== MULTER EXPORTS =====

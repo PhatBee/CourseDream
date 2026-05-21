@@ -23,9 +23,22 @@ import { useLocation } from "react-router-dom";
 
 // ======================== VIDEO.JS PLAYER ========================
 
-const VideoJSPlayer = ({ src, poster, onReady, onTimeUpdate, onEnded }) => {
+/**
+ * VideoJSPlayer
+ * @prop {string}   src
+ * @prop {string}   poster
+ * @prop {number}   startTime    - Thời điểm bắt đầu (giây) khi resume
+ * @prop {Function} onReady
+ * @prop {Function} onTimeUpdate - (currentTime) => void
+ * @prop {Function} onProgress   - (currentTime) => void — gọi mỗi 10s
+ * @prop {Function} onEnded
+ */
+const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onProgress, onEnded }) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
+  const progressIntervalRef = useRef(null);
+  // Ref luôn giữ giá trị startTime mới nhất — tránh closure stale
+  const startTimeRef = useRef(startTime);
 
   useEffect(() => {
     if (!playerRef.current && videoRef.current) {
@@ -69,11 +82,41 @@ const VideoJSPlayer = ({ src, poster, onReady, onTimeUpdate, onEnded }) => {
       });
 
       playerRef.current.on("ended", () => {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
         if (onEnded) onEnded();
+      });
+
+      // Interval gửi progress mỗi 10s khi đang play
+      playerRef.current.on("play", () => {
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = setInterval(() => {
+          if (playerRef.current && !playerRef.current.paused() && !playerRef.current.ended()) {
+            const currentTime = playerRef.current.currentTime();
+            if (onProgress && currentTime > 0) onProgress(currentTime);
+          }
+        }, 10000);
+      });
+
+      playerRef.current.on("pause", () => {
+        if (playerRef.current && onProgress) {
+          const currentTime = playerRef.current.currentTime();
+          if (currentTime > 0) onProgress(currentTime);
+        }
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
       });
     }
 
     return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       if (playerRef.current && !playerRef.current.isDisposed()) {
         playerRef.current.dispose();
         playerRef.current = null;
@@ -81,12 +124,47 @@ const VideoJSPlayer = ({ src, poster, onReady, onTimeUpdate, onEnded }) => {
     };
   }, []);
 
+  // ─── Effect: load source mới ─────────────────────────────────────────────
+  // Mỗi khi src thay đổi → load lại + đăng ký seek sau loadedmetadata
+  // Đọc startTimeRef (không phải startTime trực tiếp) để không stale
   useEffect(() => {
-    if (playerRef.current && src) {
-      playerRef.current.src({ src, type: "video/mp4" });
-      if (poster) playerRef.current.poster(poster);
-    }
+    if (!playerRef.current || !src) return;
+
+    playerRef.current.src({ src, type: "video/mp4" });
+    if (poster) playerRef.current.poster(poster);
+
+    // Một lần duy nhất: seek đến vị trí resume sau khi metadata load
+    playerRef.current.one("loadedmetadata", () => {
+      if (startTimeRef.current > 0 && playerRef.current) {
+        playerRef.current.currentTime(startTimeRef.current);
+      }
+    });
   }, [src]);
+
+  // ─── Effect: startTime prop thay đổi (fetchVideoProgress trả về sau) ─────
+  // FIX chính: khi lastWatchedTime fetch xong, startTime prop mới cập nhật
+  // → sync ref + seek ngay nếu player/video đã sẵn sàng
+  useEffect(() => {
+    // Luôn sync ref trước (để loadedmetadata handler từ [src] effect đọc đúng)
+    startTimeRef.current = startTime;
+
+    if (!playerRef.current || startTime <= 0) return;
+
+    // readyState >= 1 (HAVE_METADATA): seek ngay lập tức
+    if (playerRef.current.readyState() >= 1) {
+      playerRef.current.currentTime(startTime);
+    } else {
+      // Metadata chưa load: gắn thêm handler (trường hợp startTime update
+      // trước loadedmetadata event, đảm bảo seek không bị bỏ sót)
+      playerRef.current.one("loadedmetadata", () => {
+        if (startTimeRef.current > 0 && playerRef.current) {
+          playerRef.current.currentTime(startTimeRef.current);
+        }
+      });
+    }
+  }, [startTime]);
+
+
 
   return (
     <div data-vjs-player className="w-full">
@@ -98,6 +176,7 @@ const VideoJSPlayer = ({ src, poster, onReady, onTimeUpdate, onEnded }) => {
     </div>
   );
 };
+
 
 // ======================== RESOURCE ITEM ========================
 
@@ -142,9 +221,11 @@ const ResourceItem = ({ resource }) => {
 const VideoPlayer = ({
   lecture,
   courseId,
+  lastWatchedTime,
   onNext,
   onPrevious,
   onToggleComplete,
+  onVideoProgress,
   isCompleted,
   user,
   isEnrolled,
@@ -243,7 +324,7 @@ const VideoPlayer = ({
             style={{ aspectRatio: "16/9" }}
           >
             <Loader2 size={40} className="animate-spin text-rose-400 mb-3" />
-            <p className="text-sm">Đang tải video từ AWS CloudFront...</p>
+            <p className="text-sm">Đang tải video</p>
           </div>
         ) : urlError ? (
           <div
@@ -261,22 +342,32 @@ const VideoPlayer = ({
           </div>
         ) : videoUrl ? (
           <>
+            {/* Resume badge khi có lastWatchedTime > 10s */}
+            {lastWatchedTime > 10 && (
+              <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-rose-600/90 backdrop-blur-sm rounded-full px-3 py-1 pointer-events-none">
+                <span className="text-white text-xs font-semibold">
+                  ▶ Tiếp tục từ {Math.floor(lastWatchedTime / 60)}:{String(Math.floor(lastWatchedTime % 60)).padStart(2, '0')}
+                </span>
+              </div>
+            )}
             <VideoJSPlayer
               key={lecture._id}
               src={videoUrl}
               poster={lecture.thumbnail || ""}
+              startTime={lastWatchedTime || 0}
+              onProgress={onVideoProgress}
               onEnded={() => {
                 if (!isCompleted) onToggleComplete?.();
               }}
             />
-            {isCFUrl && (
+            {/* {isCFUrl && (
               <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2.5 py-1 pointer-events-none">
                 <Cloud size={11} className="text-blue-400" />
                 <span className="text-white text-xs font-medium">
                   CloudFront CDN
                 </span>
               </div>
-            )}
+            )} */}
           </>
         ) : (
           <div
@@ -309,11 +400,10 @@ const VideoPlayer = ({
             {/* Mark Complete Button */}
             <button
               onClick={onToggleComplete}
-              className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border shadow-sm ${
-                isCompleted
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                  : "bg-rose-600 text-white border-rose-600 hover:bg-rose-700 shadow-rose-200"
-              }`}
+              className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border shadow-sm ${isCompleted
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                : "bg-rose-600 text-white border-rose-600 hover:bg-rose-700 shadow-rose-200"
+                }`}
             >
               <CheckCircle
                 size={16}
@@ -346,12 +436,12 @@ const VideoPlayer = ({
             { id: "overview", label: "Tổng quan", icon: BookOpen },
             ...(parsedResources.length > 0
               ? [
-                  {
-                    id: "resources",
-                    label: `Tài liệu (${parsedResources.length})`,
-                    icon: FileText,
-                  },
-                ]
+                {
+                  id: "resources",
+                  label: `Tài liệu (${parsedResources.length})`,
+                  icon: FileText,
+                },
+              ]
               : []),
             {
               id: "discussion",
@@ -362,11 +452,10 @@ const VideoPlayer = ({
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all -mb-px ${
-                activeTab === id
-                  ? "border-rose-500 text-rose-600"
-                  : "border-transparent text-gray-500 hover:text-gray-800"
-              }`}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all -mb-px ${activeTab === id
+                ? "border-rose-500 text-rose-600"
+                : "border-transparent text-gray-500 hover:text-gray-800"
+                }`}
             >
               <Icon size={15} />
               {label}
@@ -392,7 +481,7 @@ const VideoPlayer = ({
                 </div>
               )}
 
-              {/* CloudFront Info */}
+              {/* CloudFront Info
               {isCFUrl && (
                 <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 rounded-xl px-4 py-3 mt-4">
                   <Cloud size={13} className="text-blue-400 flex-shrink-0" />
@@ -404,7 +493,7 @@ const VideoPlayer = ({
                     — bảo mật và tốc độ cao.
                   </span>
                 </div>
-              )}
+              )} */}
             </div>
           )}
 

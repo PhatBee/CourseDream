@@ -1,124 +1,412 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal } from 'react-native';
-import { ChevronDown, ChevronUp, PlayCircle, Lock } from 'lucide-react-native';
-import { Video } from 'expo-video';
-import { WebView } from 'react-native-webview';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  ActivityIndicator,
+  StatusBar,
+} from 'react-native';
+import { ChevronDown, ChevronUp, PlayCircle, Lock, AlertCircle, X, RefreshCw } from 'lucide-react-native';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { courseApi } from '../../api/courseApi';
 
-const isYouTube = url => /youtube\.com|youtu\.be/.test(url);
-const isDailymotion = url => /dailymotion\.com|dai\.ly/.test(url);
-
-const getEmbedUrl = (url) => {
-  if (/dai\.ly\/([a-zA-Z0-9]+)/.test(url)) {
-    const id = url.match(/dai\.ly\/([a-zA-Z0-9]+)/)[1];
-    return `https://www.dailymotion.com/embed/video/${id}`;
-  }
-  if (/dailymotion\.com\/video\/([a-zA-Z0-9]+)/.test(url)) {
-    const id = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/)[1];
-    return `https://www.dailymotion.com/embed/video/${id}`;
-  }
-  if (/youtu\.be\/([a-zA-Z0-9_-]+)/.test(url)) {
-    const id = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)[1];
-    return `https://www.youtube.com/embed/${id}`;
-  }
-  if (/youtube\.com.*[?&]v=([a-zA-Z0-9_-]+)/.test(url)) {
-    const id = url.match(/v=([a-zA-Z0-9_-]+)/)[1];
-    return `https://www.youtube.com/embed/${id}`;
-  }
-  return url;
-};
-
-const CourseAccordionMobile = ({ sections = [] }) => {
+/**
+ * CourseAccordionMobile
+ * - Xóa bỏ YouTube / Dailymotion / Vimeo embed (WebView)
+ * - Preview bài học miễn phí bằng AWS CloudFront Signed URL (getCoursePreviewUrl)
+ * - Xoay ngang khi fullscreen
+ */
+const CourseAccordionMobile = ({ sections = [], courseSlug }) => {
   const [openSection, setOpenSection] = useState(null);
+
+  // Preview modal state
+  const [modalVisible, setModalVisible] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(null);
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [currentLecture, setCurrentLecture] = useState(null);
+
+  // VideoView ref để gọi enterFullscreen()
+  const videoViewRef = useRef(null);
+
+  // ─── expo-video player (tạo 1 lần, thay source khi cần) ──────────────────
+  const player = useVideoPlayer(previewUrl || '', (p) => {
+    p.loop = false;
+    if (previewUrl) p.play();
+  });
+
+  // Đồng bộ source khi previewUrl thay đổi
+  useEffect(() => {
+    if (!player || !previewUrl) return;
+    player.replaceAsync(previewUrl);
+    player.play();
+  }, [previewUrl]);
+
+  // ─── Mở preview bài học miễn phí ─────────────────────────────────────────
+  const handlePreviewPress = useCallback(async (lecture) => {
+    setPreviewTitle(lecture.title || 'Preview');
+    setCurrentLecture(lecture);
+    setPreviewUrl(null);
+    setPreviewError(null);
+    setIsLoading(true);
+    setModalVisible(true);
+
+    try {
+      const res = await courseApi.getCoursePreviewUrl(courseSlug);
+      const { previewUrl: url } = res.data.data;
+
+      if (!url) {
+        if (lecture.videoUrl) {
+          setPreviewUrl(lecture.videoUrl);
+        } else {
+          setPreviewError('Bài học này chưa có video preview.');
+        }
+      } else {
+        setPreviewUrl(url);
+      }
+    } catch (err) {
+      console.error('[CourseAccordion] Preview fetch error:', err);
+      if (lecture.videoUrl) {
+        setPreviewUrl(lecture.videoUrl);
+      } else {
+        setPreviewError('Không thể tải video. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [courseSlug]);
+
+  const handleCloseModal = useCallback(() => {
+    // Thoát fullscreen nếu đang ở fullscreen trước khi đóng modal
+    videoViewRef.current?.exitFullscreen();
+    setModalVisible(false);
+    setPreviewUrl(null);
+    setPreviewError(null);
+    setCurrentLecture(null);
+    // Pause player
+    if (player) player.pause();
+  }, [player]);
 
   return (
-    <View className="px-4 mb-4">
-      <Text className="font-bold text-base mb-2 text-sky-600">📚 Course Content</Text>
+    <View style={styles.wrapper}>
+      <Text style={styles.sectionHeading}>📚 Nội dung khóa học</Text>
+
       {sections.map((section, idx) => (
-        <View
-          key={section._id || idx}
-          className="mb-3 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden"
-        >
+        <View key={section._id || idx} style={styles.sectionCard}>
+          {/* ── Section Header ── */}
           <TouchableOpacity
-            className="flex-row items-center px-4 py-3 justify-between bg-gray-100"
+            style={styles.sectionHeader}
             onPress={() => setOpenSection(openSection === idx ? null : idx)}
             activeOpacity={0.8}
           >
-            <Text className="font-bold text-base flex-1">{section.title}</Text>
-            {openSection === idx ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            <View style={styles.sectionHeaderLeft}>
+              <View style={styles.sectionNumBadge}>
+                <Text style={styles.sectionNumText}>{idx + 1}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sectionTitle} numberOfLines={2}>
+                  {section.title}
+                </Text>
+                <Text style={styles.sectionMeta}>
+                  {section.lectures?.length || 0} bài giảng
+                </Text>
+              </View>
+            </View>
+            {openSection === idx ? (
+              <ChevronUp size={18} color="#6b7280" />
+            ) : (
+              <ChevronDown size={18} color="#6b7280" />
+            )}
           </TouchableOpacity>
+
+          {/* ── Lecture List ── */}
           {openSection === idx && section.lectures && (
-            <View className="py-2 bg-white">
-              {section.lectures.map((lec, i) => (
-                <View
-                  key={lec._id || i}
-                  className={`flex-row items-center px-4 py-2 ${i !== section.lectures.length - 1 ? 'border-b border-gray-100' : ''} bg-gray-50`}
-                >
-                  {lec.isPreviewFree && lec.videoUrl ? (
-                    <TouchableOpacity
-                      className="flex-row items-center flex-1"
-                      onPress={() => setPreviewUrl(lec.videoUrl)}
-                      activeOpacity={0.7}
-                    >
-                      <PlayCircle size={18} color="#2563eb" className="mr-2" />
-                      <Text
-                        className="text-sky-600 font-bold flex-1"
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
+            <View style={styles.lectureList}>
+              {section.lectures.map((lec, i) => {
+                const isLast = i === section.lectures.length - 1;
+                const isFree = lec.isPreviewFree && lec.videoUrl;
+
+                return (
+                  <View
+                    key={lec._id || i}
+                    style={[styles.lectureRow, !isLast && styles.lectureRowBorder]}
+                  >
+                    {isFree ? (
+                      <TouchableOpacity
+                        style={styles.lectureContent}
+                        onPress={() => handlePreviewPress(lec)}
+                        activeOpacity={0.75}
                       >
-                        {lec.title}
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <View className="flex-row items-center flex-1">
-                      <Lock size={16} color="#9ca3af" className="mr-2" />
-                      <Text
-                        className="text-gray-400 flex-1"
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
-                      >
-                        {lec.title}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              ))}
+                        <View style={styles.playBadge}>
+                          <PlayCircle size={16} color="#e11d48" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.lectureTitleFree} numberOfLines={2}>
+                            {lec.title}
+                          </Text>
+                          <Text style={styles.previewLabel}>Xem thử miễn phí</Text>
+                        </View>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.lectureContent}>
+                        <View style={styles.lockBadge}>
+                          <Lock size={14} color="#9ca3af" />
+                        </View>
+                        <Text style={styles.lectureTitleLocked} numberOfLines={2}>
+                          {lec.title}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           )}
         </View>
       ))}
-      {/* Modal xem video preview */}
-      <Modal visible={!!previewUrl} animationType="slide" onRequestClose={() => setPreviewUrl(null)}>
-        <View className="flex-1 bg-black justify-center">
-          {previewUrl ? (
-            isYouTube(previewUrl) || isDailymotion(previewUrl) ? (
-              <WebView
-                source={{ uri: getEmbedUrl(previewUrl) }}
-                className="w-full h-80"
-                allowsFullscreenVideo
+
+      {/* ── Preview Modal ── */}
+      <Modal
+        visible={modalVisible}
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalContainer}>
+          <StatusBar barStyle="light-content" backgroundColor="#000" />
+
+          {/* Header */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle} numberOfLines={1}>
+              {previewTitle}
+            </Text>
+            <TouchableOpacity
+              onPress={handleCloseModal}
+              style={styles.closeBtn}
+              activeOpacity={0.8}
+            >
+              <X size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Video area */}
+          <View style={styles.videoArea}>
+            {isLoading ? (
+              <View style={styles.centerState}>
+                <ActivityIndicator size="large" color="#e11d48" />
+                <Text style={styles.stateText}>Đang tải video...</Text>
+              </View>
+            ) : previewError ? (
+              <View style={styles.centerState}>
+                <AlertCircle size={40} color="#e11d48" />
+                <Text style={styles.stateText}>{previewError}</Text>
+                <TouchableOpacity
+                  style={styles.retryBtn}
+                  onPress={() => handlePreviewPress({ videoUrl: null, title: previewTitle })}
+                >
+                  <RefreshCw size={14} color="#fff" />
+                  <Text style={styles.retryText}>Thử lại</Text>
+                </TouchableOpacity>
+              </View>
+            ) : previewUrl ? (
+              /*
+               * VideoView của expo-video:
+               * - allowsFullscreen: bật native fullscreen
+               * - Native fullscreen tự xoay ngang (landscape) trên iOS/Android
+               * - KHÔNG unmount component, KHÔNG cần expo-screen-orientation
+               */
+              <VideoView
+                ref={videoViewRef}
+                player={player}
+                style={styles.video}
+                fullscreenOptions={{ enterFullscreen: true, exitFullscreen: true }}
+                allowsPictureInPicture={false}
+                nativeControls
+                contentFit="contain"
               />
-            ) : (
-              <Video
-                source={{ uri: previewUrl }}
-                useNativeControls
-                className="w-full h-80"
-                resizeMode="contain"
-                shouldPlay
-              />
-            )
-          ) : (
-            <Text className="text-white text-center">Không có video preview</Text>
-          )}
-          <TouchableOpacity
-            className="absolute top-10 right-5 bg-white rounded-full px-4 py-2"
-            onPress={() => setPreviewUrl(null)}
-          >
-            <Text className="text-rose-600 font-bold">Đóng</Text>
-          </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
       </Modal>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  wrapper: { paddingHorizontal: 16, marginBottom: 8 },
+  sectionHeading: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 12,
+  },
+
+  // ── Section card ──
+  sectionCard: {
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    backgroundColor: '#fafafa',
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+    marginRight: 8,
+    gap: 10,
+  },
+  sectionNumBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#ffe4e6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  sectionNumText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#e11d48',
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    lineHeight: 20,
+    marginBottom: 2,
+  },
+  sectionMeta: { fontSize: 11, color: '#9ca3af' },
+
+  // ── Lecture list ──
+  lectureList: { paddingVertical: 4, backgroundColor: '#fff' },
+  lectureRow: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  lectureRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f9fafb',
+  },
+  lectureContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  playBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#fff1f2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  lockBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#f9fafb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  lectureTitleFree: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#be123c',
+    lineHeight: 19,
+  },
+  lectureTitleLocked: {
+    fontSize: 14,
+    color: '#9ca3af',
+    lineHeight: 19,
+    flex: 1,
+  },
+  previewLabel: {
+    fontSize: 11,
+    color: '#e11d48',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+
+  // ── Modal ──
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 52,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    backgroundColor: '#111',
+  },
+  modalTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+    marginRight: 10,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoArea: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+  },
+  centerState: {
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 24,
+  },
+  stateText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#e11d48',
+    borderRadius: 10,
+  },
+  retryText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+});
 
 export default CourseAccordionMobile;

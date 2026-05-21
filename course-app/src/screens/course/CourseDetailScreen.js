@@ -109,7 +109,7 @@ const CourseDetailScreen = () => {
           <IncludesCardMobile course={course} />
           <FeaturesCardMobile course={course} />
           <CourseOverviewMobile course={course} />
-          <CourseAccordionMobile sections={course.sections} />
+          <CourseAccordionMobile sections={course.sections} courseSlug={course.slug} />
           <InstructorBioMobile instructor={course.instructor} />
           <ReviewListMobile
             reviews={reviewList}
