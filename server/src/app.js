@@ -30,7 +30,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 // CORS CONFIG
-const allowedOrigins = ["http://localhost:5173", "https://course-dream-react.vercel.app"];
+const allowedOrigins = ["http://localhost:5173", "https://course-dream-react.vercel.app", "https://overhigh-nondefiling-magali.ngrok-free.dev"];
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);

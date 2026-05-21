@@ -41,6 +41,7 @@ export const searchCourses = (params) => {
 const getLevels = () => axiosClient.get("/courses/levels");
 
 const getCourseStats = () => axiosClient.get("/courses/stats");
+
 // API lấy khóa học của Instructor
 const getInstructorCourses = (params) => {
   return axiosClient.get(`${path}/instructor/my-courses`, { params });
@@ -56,6 +57,27 @@ const deleteCourse = (id) => {
 
 const activateCourse = (id) => {
   return axiosClient.patch(`${path}/${id}/activate`);
+};
+
+// ==================== VIDEO PLAYBACK APIs (CloudFront Signed URL) ====================
+
+/**
+ * Lấy CloudFront Signed URL để phát video bài giảng
+ * @param {string} courseId - Mongo ID của Course
+ * @param {string} lectureId - Mongo ID của Lecture
+ * @returns {{ videoUrl, duration, title, expiresIn }}
+ */
+const getVideoPlayUrl = (courseId, lectureId) => {
+  return axiosClient.get(`${path}/${courseId}/lectures/${lectureId}/play`);
+};
+
+/**
+ * Lấy preview intro video URL của khóa học
+ * @param {string} slug - slug của khóa học
+ * @returns {{ previewUrl, thumbnail }}
+ */
+const getCoursePreviewUrl = (slug) => {
+  return axiosClient.get(`${path}/${slug}/preview-url`);
 };
 
 // ==================== ADMIN APIs ====================
@@ -74,4 +96,7 @@ export const courseApi = {
   getInstructorCourseForEdit,
   deleteCourse,
   activateCourse,
+  // Video Playback (CloudFront Signed URL)
+  getVideoPlayUrl,
+  getCoursePreviewUrl,
 };

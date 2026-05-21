@@ -16,11 +16,13 @@ const CoursePlayer = ({
   sections,
   progress,
   currentLecture,
+  lastWatchedTime,
   onBack,
   onNext,
   onPrev,
   onToggleComplete,
   onSelectLecture,
+  onVideoProgress,
   user,
   isEnrolled,
   isInstructor,
@@ -127,9 +129,11 @@ const CoursePlayer = ({
           <VideoPlayer
             lecture={currentLecture}
             courseId={course?._id}
+            lastWatchedTime={lastWatchedTime}
             onNext={onNext}
             onPrevious={onPrev}
             onToggleComplete={onToggleComplete}
+            onVideoProgress={onVideoProgress}
             isCompleted={isCompleted}
             user={user}
             isEnrolled={isEnrolled}

@@ -6,6 +6,7 @@ import User from "../auth/auth.model.js";
 import notificationService from "../notification/notification.service.js";
 import mongoose from "mongoose";
 import { getIO } from "../socket/index.js";
+import DiscussionReply from "../discussion/discussionReply.model.js";
 
 // Bỏ hàm lấy instructor riêng biệt, ta xử lý bên trong createPolymorphicReport
 // Hàm chung xử lý mọi trường hợp báo cáo với Anti-spam & Polymorphic structure
@@ -46,12 +47,14 @@ export const createPolymorphicReport = async (
     reportedUserId = discussion.author;
     summaryContext = `Thảo luận: ${discussion.title}`;
   } else if (targetType === "reply") {
-    const discussion = await Discussion.findOne({ "replies._id": targetId });
-    if (!discussion) throw new Error("Bình luận không tồn tại");
-    const reply = discussion.replies.id(targetId);
+    const reply = await DiscussionReply.findById(targetId);
+    if (!reply) throw new Error("Bình luận không tồn tại");
+
     if (reply?.author?.toString() === reporterId.toString()) {
       throw new Error("Bạn không thể báo cáo bình luận của chính mình.");
     }
+
+    const discussion = await Discussion.findById(reply.discussionId);
     reportedUserId = reply.author;
     summaryContext = `Bình luận: ${reply.content.substring(0, 50)}...`;
   } else {
@@ -124,23 +127,31 @@ export const getReports = async (filter, page = 1, limit = 20) => {
   // Mapping thủ công Course Titles cho UI Admin
   const Course = mongoose.model("Course");
   const Discussion = mongoose.model("Discussion");
+  const DiscussionReply = mongoose.model("DiscussionReply");
 
   for (let r of reports) {
     if (r.targetType === "course") {
       r.course = await Course.findById(r.targetId, "title").lean();
     } else if (r.targetType === "discussion") {
-      const d = await Discussion.findById(r.targetId, "course title")
+      const discussion = await Discussion.findById(r.targetId, "course title")
         .populate("course", "title")
         .lean();
-      if (d) r.course = d.course;
+      if (discussion) r.course = discussion.course;
     } else if (r.targetType === "reply") {
-      const d = await Discussion.findOne(
-        { "replies._id": r.targetId },
-        "course",
-      )
-        .populate("course", "title")
-        .lean();
-      if (d) r.course = d.course;
+      const reply = await DiscussionReply.findById(
+        r.targetId,
+        "discussionId content",
+      ).lean();
+      if (reply) {
+        r.tagetInfo = reply.content;
+        const discussion = await Discussion.findById(
+          reply.discussionId,
+          "course title",
+        )
+          .populate("course", "title")
+          .lean();
+        if (discussion) r.course = discussion.course;
+      }
     }
   }
 
@@ -159,6 +170,9 @@ export const getReportDetail = async (id) => {
 
   const Course = mongoose.model("Course");
   const Discussion = mongoose.model("Discussion");
+  const DiscussionReply = mongoose.model("DiscussionReply");
+
+  let replyObj = null; // Khai báo biến replyObj để lưu thông tin reply nếu targetType là 'reply'
 
   // Nạp dữ liệu giả lập cho Frontend UI đã được thiết kế
   if (report.targetType === "course") {
@@ -169,19 +183,22 @@ export const getReportDetail = async (id) => {
   } else if (report.targetType === "discussion") {
     report.discussion = await Discussion.findById(
       report.targetId,
-      "content _id replies course lectureId", // <-- Lấy thêm lectureId
+      "content _id course lectureId title",
     )
       .populate("course", "title instructor slug")
       .lean();
     report.course = report.discussion?.course;
   } else if (report.targetType === "reply") {
-    report.discussion = await Discussion.findOne(
-      { "replies._id": report.targetId },
-      "content _id replies course lectureId",
-    )
-      .populate("course", "title instructor slug")
-      .lean();
-    report.course = report.discussion?.course;
+    replyObj = await DiscussionReply.findById(report.targetId).lean();
+    if (replyObj) {
+      report.discussion = await Discussion.findById(
+        replyObj.discussionId,
+        "content _id course lectureId title",
+      )
+        .populate("course", "title instructor slug")
+        .lean();
+      report.course = report.discussion?.course;
+    }
   }
 
   let history = [];
@@ -191,15 +208,6 @@ export const getReportDetail = async (id) => {
       status: "resolved",
       _id: { $ne: report._id },
     }).lean();
-  }
-
-  let replyObj = null;
-  if (report.targetType === "reply" && report.discussion) {
-    const replies = report.discussion.replies || [];
-    // Format to string due to _id is ObjectId
-    replyObj = replies.find(
-      (r) => r._id.toString() === report.targetId.toString(),
-    );
   }
 
   return { report, history, replyObj };
@@ -273,10 +281,9 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
         });
       }
       if (report.targetType === "reply") {
-        await Discussion.updateOne(
-          { "replies._id": report.targetId },
-          { $set: { "replies.$.isHidden": true } },
-        );
+        await DiscussionReply.findByIdAndUpdate(report.targetId, {
+          isHidden: true,
+        });
       }
     }
   }
@@ -308,17 +315,20 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
       originalContent = `Tiêu đề: ${d.title}\nChi tiết: ${d.content}`;
     }
   } else if (report.targetType === "reply") {
-    const d = await Discussion.findOne({
-      "replies._id": report.targetId,
-    }).populate("course", "slug");
-    if (d) {
-      courseSlug = d.course?.slug;
-      lessonId = d.lectureId;
-      discussionId = d._id;
-      replyId = report.targetId;
-      const rep = d.replies.id(report.targetId);
-      // HIỂN THỊ ĐẦY ĐỦ BÌNH LUẬN (BỎ HÀM .substring CŨ ĐI)
-      if (rep) originalContent = `${rep.content}`;
+    // ĐÃ CHỈNH SỬA: Sửa query để fetch data từ collection tách rời
+    const rep = await DiscussionReply.findById(report.targetId);
+    if (rep) {
+      const d = await Discussion.findById(rep.discussionId).populate(
+        "course",
+        "slug",
+      );
+      if (d) {
+        courseSlug = d.course?.slug;
+        lessonId = d.lectureId;
+        discussionId = d._id;
+        replyId = rep._id;
+        originalContent = rep.content;
+      }
     }
   }
 
