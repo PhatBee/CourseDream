@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { setStore } from './storeHolder';
 import authReducer from '../features/auth/authSlice';
 import userReducer from '../features/user/userSlice';
 import instructorReducer from '../features/instructor/instructorSlice';
@@ -32,3 +33,7 @@ export const store = configureStore({
                 notification: notificationReducer,
         }
 });
+
+// Inject store vào storeHolder để axiosClient dùng lazy (tránh require cycle)
+// Phải gọi ngay sau configureStore, trước khi bất kỳ request nào xảy ra
+setStore(store);
