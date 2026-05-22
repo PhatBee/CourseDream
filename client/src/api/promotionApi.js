@@ -20,8 +20,8 @@ export const deletePromotion = async (id) => {
   return res.data;
 };
 
-export const previewPromotion = async ({ code, courseId }) => {
-  const res = await axiosClient.post("/promotions/preview", { code, courseId });
+export const previewPromotion = async ({ code, courseIds }) => {
+  const res = await axiosClient.post("/promotions/preview", { code, courseIds });
   return res.data;
 };
 

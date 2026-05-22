@@ -6,6 +6,45 @@ import * as zalopayService from './zalopay.service.js';
 // Giả sử bạn đã có enrollment service, nếu chưa hãy xem phần dưới
 import enrollmentService from '../enrollment/enrollment.service.js';
 import moment from 'moment';
+import Course from '../course/course.model.js';
+import * as promotionService from '../promotion/promotion.service.js';
+import Promotion from '../promotion/promotion.model.js';
+
+// Helper function to calculate price securely
+const calculateOrderPricing = async (courseIds, couponCode, userId) => {
+    const courses = await Course.find({ _id: { $in: courseIds } });
+    if (courses.length !== courseIds.length) {
+        throw new Error('Một hoặc nhiều khóa học không tồn tại');
+    }
+
+    let originalPrice = courses.reduce((sum, item) => sum + (item.priceDiscount ?? item.price ?? 0), 0); 
+    let discountAmount = 0;
+    let couponId = null;
+
+    if (couponCode) {
+        const promotion = await Promotion.findOne({ code: couponCode.toUpperCase() });
+        if (!promotion) throw new Error("Mã giảm giá không tồn tại");
+
+        // Gọi service để tính toán discountAmount, bắt cả các rules appliesTo, minPrice, v.v.
+        const preview = await promotionService.previewPromotion(promotion, courseIds, userId);
+        discountAmount = preview.discountAmount;
+        couponId = preview.promotionId;
+    }
+
+    
+    let amountAfterPromo = originalPrice - discountAmount;
+    if (amountAfterPromo < 0) amountAfterPromo = 0;
+
+    const tax = amountAfterPromo > 0 ? Math.round(amountAfterPromo * 0.1) : 0;
+    let finalPrice = amountAfterPromo + tax;
+    
+    if (finalPrice > 0 && finalPrice < 1000) {
+        finalPrice = 1000;
+    }
+
+    return { originalPrice, finalPrice, discountAmount, couponId };
+};
+
 
 // Helper function to build redirect URL based on platform
 const buildRedirectUrl = (platform, queryParams) => {
@@ -17,14 +56,46 @@ const buildRedirectUrl = (platform, queryParams) => {
     return `${baseUrl}?${queryString}`;
 };
 
+// Helper function to process payment success (Idempotent)
+const processPaymentSuccess = async (payment, transactionDetails) => {
+    if (payment.status === 'success') return true; // Already processed
+
+    // 1. Update Payment Status -> Success
+    const updatedPayment = await paymentService.updatePaymentStatus(payment.orderId, 'success', {
+        ...transactionDetails,
+        payDate: transactionDetails.payDate || new Date()
+    });
+
+    // Nếu updatedPayment = null, tức là không tìm thấy bản ghi nào đang có status='pending'
+    // => Webhook và Return URL đến cùng lúc, thread kia đã xử lý xong rồi. Tránh Race Condition.
+    if (!updatedPayment) return true;
+
+    // 2. Enroll Courses
+    await enrollmentService.enrollStudent(payment.student, payment.courses);
+
+    // 3. Update Coupon Usage
+    if (payment.couponId) {
+        await promotionService.commitPromotion(payment.couponId, payment.student).catch(err => console.error("Commit promotion error:", err));
+    }
+
+    // 4. Clear Cart
+    const paidCourseIds = payment.courses.map(c => c._id ? c._id.toString() : c.toString());
+    await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
+    
+    return true;
+};
+
 export const createPaymentUrl = async (req, res) => {
     try {
-        const { amount, bankCode, language, courseIds, platform = 'web' } = req.body;
+        const { bankCode, language, courseIds, platform = 'web', couponCode } = req.body;
         // Lấy IP thật của user (quan trọng với VNPAY)
         const ipAddr = req.headers['x-forwarded-for'] ||
             req.connection.remoteAddress ||
             req.socket.remoteAddress ||
             req.connection.socket.remoteAddress;
+
+        // Tính toán lại giá tiền an toàn trên backend
+        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
 
         // Tạo mã đơn hàng unique
         const date = new Date();
@@ -37,6 +108,9 @@ export const createPaymentUrl = async (req, res) => {
             courses: courseIds,
             orderId,
             amount,
+            originalPrice,
+            discountAmount,
+            couponId,
             orderInfo,
             ipAddr,
             locale: language,
@@ -83,25 +157,12 @@ export const vnpayReturn = async (req, res) => {
         }
 
         if (verifyResult.isSuccess) {
-            // Kiểm tra xem đơn hàng đã xử lý chưa để tránh xử lý trùng
-            if (payment.status !== 'success') {
-                // 2. Cập nhật trạng thái Payment -> Success
-                await paymentService.updatePaymentStatus(orderId, 'success', {
-                    transactionNo: vnp_Params['vnp_TransactionNo'],
-                    bankCode: vnp_Params['vnp_BankCode'],
-                    payDate: vnp_Params['vnp_PayDate'],
-                    responseCode: vnp_Params['vnp_ResponseCode']
-                });
-
-                // 3. === ENROLL KHÓA HỌC ===
-                // (Enroll student vào danh sách course trong payment)
-                await enrollmentService.enrollStudent(payment.student, payment.courses);
-
-                // 4. === XÓA GIỎ HÀNG ===
-                // (Chỉ xóa những course đã thanh toán khỏi giỏ hàng)
-                const paidCourseIds = payment.courses.map(c => c._id.toString());
-                await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
-            }
+            await processPaymentSuccess(payment, {
+                transactionNo: vnp_Params['vnp_TransactionNo'],
+                bankCode: vnp_Params['vnp_BankCode'],
+                payDate: vnp_Params['vnp_PayDate'] ? moment(vnp_Params['vnp_PayDate'], 'YYYYMMDDHHmmss').toDate() : new Date(),
+                responseCode: vnp_Params['vnp_ResponseCode']
+            });
 
             // Redirect về client với thành công
             const redirectUrl = buildRedirectUrl(payment.platform, {
@@ -148,8 +209,11 @@ export const vnpayReturn = async (req, res) => {
  */
 export const createMomoPaymentUrl = async (req, res) => {
     try {
-        const { amount, language, courseIds, platform = 'web' } = req.body;
+        const { language, courseIds, platform = 'web', couponCode } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        // Tính toán lại giá tiền an toàn trên backend
+        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
 
         // Tạo mã đơn hàng unique (Momo yêu cầu unique requestId và orderId)
         const date = new Date();
@@ -162,6 +226,9 @@ export const createMomoPaymentUrl = async (req, res) => {
             courses: courseIds,
             orderId,
             amount,
+            originalPrice,
+            discountAmount,
+            couponId,
             orderInfo,
             ipAddr,
             locale: language,
@@ -212,22 +279,12 @@ export const momoReturn = async (req, res) => {
         }
 
         if (verifyResult.isSuccess) {
-            if (payment.status !== 'success') {
-                // 2. Cập nhật trạng thái Payment -> Success
-                await paymentService.updatePaymentStatus(orderId, 'success', {
-                    transactionNo: momo_Params['transId'],
-                    responseCode: momo_Params['resultCode'],
-                    transactionStatus: momo_Params['message'],
-                    payDate: new Date()
-                });
-
-                // 3. Enroll Khóa học
-                await enrollmentService.enrollStudent(payment.student, payment.courses);
-
-                // 4. Xóa Giỏ hàng
-                const paidCourseIds = payment.courses.map(c => c._id.toString());
-                await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
-            }
+            await processPaymentSuccess(payment, {
+                transactionNo: momo_Params['transId'],
+                responseCode: momo_Params['resultCode'],
+                transactionStatus: momo_Params['message'],
+                payDate: new Date()
+            });
 
             // Redirect về client với thành công
             const redirectUrl = buildRedirectUrl(payment.platform, {
@@ -274,8 +331,11 @@ export const momoReturn = async (req, res) => {
  */
 export const createZaloPayPaymentUrl = async (req, res) => {
     try {
-        const { amount, courseIds, platform = 'web' } = req.body;
+        const { courseIds, platform = 'web', couponCode } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        // Tính toán lại giá tiền an toàn trên backend
+        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
 
         // Tạo mã giao dịch theo format ZaloPay yêu cầu: YYMMDD_xxxx
         const transID = Math.floor(Math.random() * 1000000);
@@ -293,6 +353,9 @@ export const createZaloPayPaymentUrl = async (req, res) => {
             courses: courseIds,
             orderId: app_trans_id, // Lưu mã này để query
             amount,
+            originalPrice,
+            discountAmount,
+            couponId,
             orderInfo,
             ipAddr,
             method: 'zalopay',
@@ -347,20 +410,10 @@ export const zalopayReturn = async (req, res) => {
         console.log('ZaloPay Query Result:', queryResult);
 
         if (queryResult.isSuccess) {
-            if (payment.status !== 'success') {
-                // 2. Update DB -> Success
-                await paymentService.updatePaymentStatus(app_trans_id, 'success', {
-                    transactionStatus: queryResult.message,
-                    payDate: new Date()
-                });
-
-                // 3. Enroll Course
-                await enrollmentService.enrollStudent(payment.student, payment.courses);
-
-                // 4. Clear Cart
-                const paidCourseIds = payment.courses.map(c => c._id.toString());
-                await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
-            }
+            await processPaymentSuccess(payment, {
+                transactionStatus: queryResult.message,
+                payDate: new Date()
+            });
 
             // Redirect về client với thành công
             const redirectUrl = buildRedirectUrl(payment.platform, {
@@ -405,12 +458,15 @@ export const zalopayReturn = async (req, res) => {
  */
 export const createFreeEnrollment = async (req, res) => {
     try {
-        const { amount, courseIds } = req.body;
+        const { courseIds, couponCode } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        // 1. Validate: Chắc chắn amount là 0 (Backend cần check lại giá gốc DB nếu cần bảo mật cao hơn)
+        // Tính toán lại giá tiền an toàn trên backend
+        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
+
+        // 1. Validate: Chắc chắn amount là 0 (Backend tự tính)
         if (amount !== 0) {
-            return res.status(400).json({ message: "Đơn hàng không hợp lệ cho phương thức này" });
+            return res.status(400).json({ message: "Đơn hàng không hợp lệ cho phương thức này. Số tiền phải bằng 0." });
         }
 
         const date = new Date();
@@ -423,6 +479,9 @@ export const createFreeEnrollment = async (req, res) => {
             courses: courseIds,
             orderId,
             amount: 0,
+            originalPrice,
+            discountAmount,
+            couponId,
             orderInfo,
             ipAddr,
             method: 'free', // Method mới
@@ -433,7 +492,12 @@ export const createFreeEnrollment = async (req, res) => {
         // 3. Enroll Khóa học
         await enrollmentService.enrollStudent(req.user._id, courseIds);
 
-        // 4. Xóa Giỏ hàng
+        // 4. Cập nhật lượt sử dụng mã giảm giá
+        if (couponId) {
+            await promotionService.commitPromotion(couponId, req.user._id).catch(err => console.error("Commit promotion error:", err));
+        }
+
+        // 5. Xóa Giỏ hàng
         const paidCourseIds = courseIds.map(id => id.toString());
         await cartService.removeCoursesFromCart(req.user._id, paidCourseIds);
 
@@ -446,5 +510,96 @@ export const createFreeEnrollment = async (req, res) => {
     } catch (error) {
         console.error('Free enrollment error:', error);
         res.status(500).json({ message: 'Lỗi xử lý ghi danh miễn phí', error: error.message });
+    }
+};
+
+/**
+ * ========================================================
+ * WEBHOOK / IPN HANDLERS (SERVER-TO-SERVER)
+ * ========================================================
+ */
+
+export const vnpayIpn = async (req, res) => {
+    try {
+        const vnp_Params = req.query;
+        const verifyResult = vnpayService.verifyReturnUrl(vnp_Params);
+        const orderId = vnp_Params['vnp_TxnRef'];
+
+        if (verifyResult.isSuccess) {
+            const payment = await paymentService.getPaymentByOrderId(orderId);
+            if (payment) {
+                await processPaymentSuccess(payment, {
+                    transactionNo: vnp_Params['vnp_TransactionNo'],
+                    bankCode: vnp_Params['vnp_BankCode'],
+                    payDate: vnp_Params['vnp_PayDate'] ? moment(vnp_Params['vnp_PayDate'], 'YYYYMMDDHHmmss').toDate() : new Date(),
+                    responseCode: vnp_Params['vnp_ResponseCode']
+                });
+            }
+            return res.status(200).json({ RspCode: '00', Message: 'Confirm Success' });
+        } else {
+            return res.status(200).json({ RspCode: '97', Message: 'Invalid signature' });
+        }
+    } catch (error) {
+        console.error('VNPAY IPN error:', error);
+        return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
+    }
+};
+
+export const momoIpn = async (req, res) => {
+    try {
+        const momo_Params = req.body;
+        const verifyResult = momoService.verifyReturnUrl(momo_Params);
+        const orderId = momo_Params['orderId'];
+
+        if (verifyResult.isSuccess) {
+            const payment = await paymentService.getPaymentByOrderId(orderId);
+            if (payment && momo_Params['resultCode'] === 0) {
+                await processPaymentSuccess(payment, {
+                    transactionNo: momo_Params['transId'],
+                    responseCode: momo_Params['resultCode'],
+                    transactionStatus: momo_Params['message'],
+                    payDate: new Date()
+                });
+            } else if (payment && momo_Params['resultCode'] !== 0) {
+                await paymentService.updatePaymentStatus(orderId, 'failed', {
+                    responseCode: momo_Params['resultCode'],
+                    transactionStatus: momo_Params['message']
+                });
+            }
+            return res.status(200).json({ message: 'OK' }); // MoMo yêu cầu 204 hoặc 200
+        } else {
+            return res.status(400).json({ message: 'Invalid signature' });
+        }
+    } catch (error) {
+        console.error('MoMo IPN error:', error);
+        return res.status(500).json({ message: 'Unknown error' });
+    }
+};
+
+export const zalopayIpn = async (req, res) => {
+    try {
+        const dataStr = req.body.data;
+        const reqMac = req.body.mac;
+        const verifyResult = zalopayService.verifyCallback(dataStr, reqMac);
+        
+        if (verifyResult.isSuccess) {
+            const dataObj = JSON.parse(dataStr);
+            const app_trans_id = dataObj['app_trans_id'];
+            const payment = await paymentService.getPaymentByOrderId(app_trans_id);
+            
+            if (payment) {
+                await processPaymentSuccess(payment, {
+                    transactionNo: dataObj['zp_trans_id'],
+                    transactionStatus: 'Success IPN',
+                    payDate: new Date()
+                });
+            }
+            return res.status(200).json({ return_code: 1, return_message: "success" });
+        } else {
+            return res.status(200).json({ return_code: -1, return_message: "mac not equal" });
+        }
+    } catch (error) {
+        console.error('ZaloPay IPN error:', error);
+        return res.status(200).json({ return_code: 0, return_message: error.message });
     }
 };

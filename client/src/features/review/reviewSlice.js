@@ -71,8 +71,9 @@ const reviewSlice = createSlice({
       .addCase(addReview.fulfilled, (state, action) => {
         // Cập nhật lại UI sau khi Add/Update
         const newReview = action.payload.review;
+        const studentId = newReview.student?._id || newReview.student;
         const index = state.reviews.findIndex(
-          (r) => r.student?._id === newReview.student,
+          (r) => (r.student?._id || r.student) === studentId,
         );
         if (index !== -1) {
           // Xóa review cũ nếu update

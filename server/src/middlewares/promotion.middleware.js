@@ -121,9 +121,17 @@ export const checkCodeExists = async (req, res, next) => {
 export const validateAndLoadPromotion = [
   body("code").isString().notEmpty().withMessage("Vui lòng nhập mã khuyến mãi"),
   body("courseId")
+    .optional()
     .isMongoId()
     .withMessage("courseId không hợp lệ"),
-  // Loại bỏ price vì lấy từ DB
+  body("courseIds")
+    .optional()
+    .isArray()
+    .withMessage("courseIds phải là mảng"),
+  body("courseIds.*")
+    .optional()
+    .isMongoId()
+    .withMessage("Một hoặc nhiều courseId trong mảng không hợp lệ"),
 
   async (req, res, next) => {
     const errors = validationResult(req);
