@@ -89,7 +89,7 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Categories */}
         <View className="pl-5">
-          <CategoryList categories={categories} />
+          <CategoryList categories={categories} navigation={navigation} />
         </View>
 
         {/* Popular Courses */}

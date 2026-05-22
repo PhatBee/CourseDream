@@ -71,6 +71,18 @@ const CoursesScreen = () => {
         limit: 8,
       }));
     }
+    // Nếu navigate từ CategoryList với categoryId
+    if (route.params?.categoryId) {
+      setSelectedCategory(route.params.categoryId);
+      setSearch('');
+      setCurrentPage(1);
+      dispatch(getAllCourses({
+        search: '',
+        category: route.params.categoryId,
+        page: 1,
+        limit: 8,
+      }));
+    }
     // Nếu có clearSearch thì reset search và filter
     if (route.params?.clearSearch) {
       setSearch('');
@@ -85,7 +97,7 @@ const CoursesScreen = () => {
       // Xóa params sau khi dùng để tránh lặp lại khi back
       route.params.clearSearch = false;
     }
-  }, [route.params?.search, route.params?.clearSearch]);
+  }, [route.params?.search, route.params?.clearSearch, route.params?.categoryId]);
 
   if (isLoading) {
     return (
