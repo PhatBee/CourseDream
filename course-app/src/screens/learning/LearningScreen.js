@@ -262,9 +262,9 @@ const LearningScreen = ({ route, navigation }) => {
           resourceCount={parsedResources.length}
         />
 
-        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-          {/* ── Tab: Bài giảng ── */}
-          {activeTab === 'Lectures' && (
+        {/* ── Tab: Bài giảng ── */}
+        {activeTab === 'Lectures' && (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
             <CurriculumList
               sections={sections}
               currentLecture={currentLecture}
@@ -272,10 +272,12 @@ const LearningScreen = ({ route, navigation }) => {
               onLecturePress={handleLecturePress}
               onToggleComplete={handleToggleComplete}
             />
-          )}
+          </ScrollView>
+        )}
 
-          {/* ── Tab: Tổng quan ── */}
-          {activeTab === 'Overview' && (
+        {/* ── Tab: Tổng quan ── */}
+        {activeTab === 'Overview' && (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
             <View style={styles.overviewContainer}>
               <Text style={styles.overviewTitle}>{course.title}</Text>
               <Text style={styles.overviewInstructor}>
@@ -295,10 +297,12 @@ const LearningScreen = ({ route, navigation }) => {
                 {course.description || 'Không có mô tả.'}
               </Text>
             </View>
-          )}
+          </ScrollView>
+        )}
 
-          {/* ── Tab: Tài liệu ── */}
-          {activeTab === 'Resources' && (
+        {/* ── Tab: Tài liệu ── */}
+        {activeTab === 'Resources' && (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
             <View style={styles.resourcesContainer}>
               <View style={styles.resourcesHeader}>
                 <FileText size={16} color="#e11d48" />
@@ -320,37 +324,25 @@ const LearningScreen = ({ route, navigation }) => {
                 </View>
               )}
             </View>
-          )}
-        </ScrollView>
-          (activeTab === 'Discussion') {
-            (
-          // === TRƯỜNG HỢP NÀY CHẠY TAB "THẢO LUẬN" ===
-          <View className="flex-1">
-            <View className="p-5 pb-2">
-              <Text className="text-xl font-bold text-gray-900 leading-7 mb-1">
-                {course.title}
-              </Text>
-              <Text className="text-gray-500 text-xs">
-                {course.instructor?.name || "Instructor"}
-              </Text>
-            </View>
-            <LearningTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-            {currentLecture ? (
-              <DiscussionMobile
-                courseId={course._id}
-                lectureId={currentLecture._id}
-                user={user}
-              />
-            ) : (
-              <View className="p-6 items-center justify-center">
-                <Text className="text-gray-500 text-center font-medium">
-                  Bật một video trong Lectures để xem mục Hỏi Đáp tương ứng!
-                </Text>
-              </View>
-            )}
-          </View>
+          </ScrollView>
         )}
 
+        {/* ── Tab: Thảo luận ── */}
+        {activeTab === 'Discussion' && (
+          currentLecture ? (
+            <DiscussionMobile
+              courseId={course._id}
+              lectureId={currentLecture._id}
+              user={user}
+            />
+          ) : (
+            <View style={styles.emptyDiscussion}>
+              <Text style={styles.emptyDiscussionText}>
+                Chọn một bài giảng để xem phần Hỏi Đáp tương ứng.
+              </Text>
+            </View>
+          )
+        )}
       </View>
     </View>
   );
@@ -445,6 +437,21 @@ const styles = StyleSheet.create({
 
   // ── Content area ──
   contentArea: { flex: 1 },
+  scrollArea: { flex: 1 },
+
+  // ── Empty discussion ──
+  emptyDiscussion: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  emptyDiscussionText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
 
   // ── Overview tab ──
   overviewContainer: { padding: 20, paddingBottom: 40 },
