@@ -164,7 +164,7 @@ export default function Checkout() {
       if (!isDirectCheckout) dispatch(getCart());
 
       // Chuyển hướng
-      navigate("/enrolled-courses"); // Hoặc trang PaymentReturn tuỳ bạn
+      navigate("/profile/enrolled-courses"); // Hoặc trang PaymentReturn tuỳ bạn
     } catch (error) {
       console.error("Free enrollment error:", error);
       toast.error(error.response?.data?.message || "Lỗi khi ghi danh");
