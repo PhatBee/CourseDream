@@ -150,13 +150,13 @@ const CourseOverview = ({ course, progress, onPlayLecture }) => {
             </div>
 
             {/* Action Card */}
-            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 text-center">
+            {/* <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 text-center">
               <p className="text-rose-800 font-medium text-sm mb-3">Bạn cảm thấy khóa học thế nào?</p>
               <button className="w-full py-2.5 bg-white border border-rose-200 text-rose-600 rounded-xl hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-2 text-sm font-bold shadow-sm">
                 <StarRating rating={0} size={16} color="text-yellow-400" />
                 <span>Đánh giá ngay</span>
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
