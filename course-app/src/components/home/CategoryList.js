@@ -4,13 +4,19 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 const CategoryList = ({ categories, navigation }) => {
   const handleCategoryPress = (item) => {
     if (navigation) {
-      navigation.navigate('CoursesTab', { categoryId: item._id, categoryName: item.name });
+      navigation.navigate('MainTabs', {
+        screen: 'CoursesTab',
+        params: { categoryId: item._id, categoryName: item.name },
+      });
     }
   };
 
   const handleSeeAll = () => {
     if (navigation) {
-      navigation.navigate('CoursesTab', { clearSearch: true });
+      navigation.navigate('MainTabs', {
+        screen: 'CoursesTab',
+        params: { clearSearch: true },
+      });
     }
   };
   const renderItem = ({ item }) => (

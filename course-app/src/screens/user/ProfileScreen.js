@@ -11,8 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
-import { Toast } from 'react-native-toast-message';
 
 import {
     User,
@@ -30,16 +28,9 @@ const ProfileScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
 
-    useEffect(() => {
-        if (!user) {
-            navigation.replace('Login');
-        }
-    }, [user, navigation]);
-
     if (!user) {
         return null;
     }
-
 
     const handleLogout = () => {
         Alert.alert(
@@ -52,9 +43,18 @@ const ProfileScreen = ({ navigation }) => {
                     style: 'destructive',
                     onPress: async () => {
                         await dispatch(logout());
+                        // Reset về MainTabs (có BottomTabNavigator) và chỉ sang HomeTab
                         navigation.reset({
                             index: 0,
-                            routes: [{ name: 'Home' }],
+                            routes: [
+                                {
+                                    name: 'MainTabs',
+                                    state: {
+                                        routes: [{ name: 'HomeTab' }],
+                                        index: 0,
+                                    },
+                                },
+                            ],
                         });
                     },
                 },

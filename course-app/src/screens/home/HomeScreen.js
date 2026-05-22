@@ -59,7 +59,10 @@ const HomeScreen = ({ navigation }) => {
 
   const handleSearch = (keyword) => {
     if (keyword) {
-      nav.navigate('CoursesTab', { search: keyword });
+      nav.navigate('MainTabs', {
+        screen: 'CoursesTab',
+        params: { search: keyword },
+      });
     }
   };
 
@@ -96,7 +99,7 @@ const HomeScreen = ({ navigation }) => {
         <View className="mb-20">
           <View className="flex-row justify-between items-center mb-4 px-5">
             <Text className="text-lg font-bold text-gray-900">Popular Courses</Text>
-            <TouchableOpacity onPress={() => nav.navigate('CoursesTab', { clearSearch: true })}>
+            <TouchableOpacity onPress={() => nav.navigate('MainTabs', { screen: 'CoursesTab', params: { clearSearch: true } })}>
               <Text className="text-rose-500 text-sm font-medium">See All</Text>
             </TouchableOpacity>
           </View>
