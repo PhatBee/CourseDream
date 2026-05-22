@@ -85,6 +85,17 @@ export const getAvailablePromotionsCtrl = async (req, res) => {
       $or: [{ maxUsage: 0 }, { $expr: { $lt: ["$totalUsed", "$maxUsage"] } }],
     }).lean();
 
+    // Lọc bỏ những mã mà User hiện tại đã dùng hết số lượt cho phép
+    promotions = promotions.filter(promo => {
+        if (promo.maxUsagePerUser > 0) {
+            const userUsage = promo.usersUsed?.find(u => u.user.toString() === userId.toString());
+            if (userUsage && userUsage.count >= promo.maxUsagePerUser) {
+                return false;
+            }
+        }
+        return true;
+    });
+
     if (courseIds && courseIds.length > 0) {
       const courses = await Course.find({ _id: { $in: courseIds } }).select("_id categories");
       promotions = promotions.filter((promo) => {

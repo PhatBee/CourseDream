@@ -54,7 +54,7 @@ export const previewPromotion = async (promotion, courseIds, userId) => {
     }
   }
 
-  if (eligiblePrice === 0) {
+  if (eligibleCourses.length === 0) {
     throw new Error("Mã này không áp dụng cho các khóa học trong đơn hàng");
   }
 
@@ -101,7 +101,7 @@ export const previewPromotion = async (promotion, courseIds, userId) => {
        if (i === eligibleCourses.length - 1) {
            d = remainingDiscount; // Item cuối gánh phần dư
        } else {
-           d = Math.round(discountAmount * (p / eligiblePrice));
+           d = eligiblePrice > 0 ? Math.round(discountAmount * (p / eligiblePrice)) : 0;
            remainingDiscount -= d;
        }
        
