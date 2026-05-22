@@ -32,6 +32,7 @@ import {
 import VideoPlayer from '../../components/learning/VideoPlayer';
 import LearningTabs from '../../components/learning/LearningTabs';
 import CurriculumList from '../../components/learning/CurriculumList';
+import DiscussionMobile from '../../components/course/DiscussionMobile';
 
 // ─── Resource Item (giống web client) ───────────────────────────────────────
 const ResourceItem = ({ resource }) => {
