@@ -20,4 +20,16 @@ router.get('/zalopay_return', paymentController.zalopayReturn);
 // Route mới cho đơn hàng 0 đồng
 router.post('/create_free_enrollment', verifyToken, paymentController.createFreeEnrollment);
 
+// ==========================================
+// IPN / WEBHOOK ROUTES (Server-to-Server)
+// ==========================================
+// VNPAY gọi IPN bằng method GET
+router.get('/vnpay_ipn', paymentController.vnpayIpn);
+
+// MoMo gọi IPN bằng method POST
+router.post('/momo_ipn', paymentController.momoIpn);
+
+// ZaloPay gọi IPN bằng method POST
+router.post('/zalopay_ipn', paymentController.zalopayIpn);
+
 export default router;

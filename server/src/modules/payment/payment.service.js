@@ -12,7 +12,7 @@ export const createPayment = async (data) => {
  */
 export const updatePaymentStatus = async (orderId, status, paymentDetails) => {
     return await Payment.findOneAndUpdate(
-        { orderId },
+        { orderId, status: 'pending' }, // Atomic lock: chỉ update nếu đang pending
         {
             status,
             ...paymentDetails

@@ -22,7 +22,13 @@ const PaymentSchema = new mongoose.Schema({
   transactionStatus: String, // vnp_TransactionStatus
   orderInfo: String, // vnp_OrderInfo - Mô tả đơn hàng
 
-  // Metadata
+  // Metadata đơn hàng và khuyến mãi
+  originalPrice: { type: Number }, // Tổng tiền gốc
+  discountAmount: { type: Number, default: 0 }, // Số tiền được giảm
+  couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Promotion" }, // Mã giảm giá đã dùng
+
+  // Metadata hệ thống
+
   ipAddr: String, // IP address của khách hàng
   locale: { type: String, default: "vn" }, // Ngôn ngữ
   platform: { type: String, enum: ["web", "mobile"], default: "web" }, // Platform

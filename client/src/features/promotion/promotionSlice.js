@@ -60,9 +60,9 @@ export const deletePromotion = createAsyncThunk(
 // --- USER: Preview Promotion (Coupon) ---
 export const previewPromotionThunk = createAsyncThunk(
   "promotion/previewPromotion",
-  async ({ code, courseId }, thunkAPI) => {
+  async ({ code, courseIds }, thunkAPI) => {
     try {
-      const data = await promotionApi.previewPromotion({ code, courseId });
+      const data = await promotionApi.previewPromotion({ code, courseIds });
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
