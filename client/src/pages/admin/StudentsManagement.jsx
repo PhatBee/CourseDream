@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchStudents, toggleBlockUser } from '../../features/admin/adminSlice';
 import { Search, MoreVertical, Mail, Phone, BookOpen, Calendar, Ban, CheckCircle } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
@@ -19,6 +20,8 @@ const StudentsManagement = () => {
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isBanning, setIsBanning] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => {
