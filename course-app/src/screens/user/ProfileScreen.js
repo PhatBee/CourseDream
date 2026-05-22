@@ -29,7 +29,33 @@ const ProfileScreen = ({ navigation }) => {
     const { user } = useSelector((state) => state.auth);
 
     if (!user) {
-        return null;
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', padding: 24 }} edges={['top']}>
+                <View style={{ alignItems: 'center', gap: 16 }}>
+                    <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#fff1f2', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+                        <User size={40} color="#e11d48" />
+                    </View>
+                    <Text style={{ fontSize: 20, fontWeight: '700', color: '#111827', textAlign: 'center' }}>
+                        Bạn chưa đăng nhập
+                    </Text>
+                    <Text style={{ fontSize: 14, color: '#6b7280', textAlign: 'center', lineHeight: 22 }}>
+                        Đăng nhập để xem hồ sơ, khóa học và quản lý tài khoản của bạn.
+                    </Text>
+                    <TouchableOpacity
+                        style={{ backgroundColor: '#e11d48', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, marginTop: 8, width: '100%', alignItems: 'center' }}
+                        onPress={() => navigation.navigate('Login')}
+                    >
+                        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Đăng nhập</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={{ paddingVertical: 12 }}
+                        onPress={() => navigation.navigate('Register')}
+                    >
+                        <Text style={{ color: '#e11d48', fontWeight: '600', fontSize: 14 }}>Chưa có tài khoản? Đăng ký ngay</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
     }
 
     const handleLogout = () => {
