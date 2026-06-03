@@ -12,6 +12,13 @@ const statusColors = {
   rejected: "bg-red-100 text-red-700",
 };
 
+const statusLabels = {
+  pending: "Chờ xử lý",
+  reviewed: "Đã xem",
+  resolved: "Đã xử lý",
+  rejected: "Từ chối",
+};
+
 const ReportsManagement = () => {
   const dispatch = useDispatch();
   const { list: reportsRaw = [], loading, pagination } = useSelector((state) => state.report);
@@ -33,9 +40,12 @@ const ReportsManagement = () => {
     setShowDetail(true);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (shouldRefresh) => {
     setShowDetail(false);
     setSelectedReport(null);
+    if (shouldRefresh === true) {
+      dispatch(fetchReports({ ...filters, page: currentPage }));
+    }
   };
 
   return (
@@ -101,7 +111,7 @@ const ReportsManagement = () => {
                   <td className="px-6 py-4">{r.reporter?.name}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColors[r.status] || "bg-gray-100 text-gray-700"}`}>
-                      {r.status}
+                      {statusLabels[r.status] || r.status}
                     </span>
                   </td>
                   <td className="px-6 py-4">{new Date(r.createdAt).toLocaleDateString("vi-VN")}</td>
