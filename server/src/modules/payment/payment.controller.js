@@ -9,6 +9,7 @@ import moment from 'moment';
 import Course from '../course/course.model.js';
 import * as promotionService from '../promotion/promotion.service.js';
 import Promotion from '../promotion/promotion.model.js';
+import notificationService from '../notification/notification.service.js';
 
 // Helper function to calculate price securely
 const calculateOrderPricing = async (courseIds, couponCode, userId) => {
@@ -84,6 +85,14 @@ const processPaymentSuccess = async (payment, transactionDetails) => {
     // 4. Clear Cart
     await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
     
+    // 5. Send Notification
+    await notificationService.createNotification({
+        recipient: payment.student,
+        type: "purchase_success",
+        title: "Thanh toán thành công",
+        message: "Cảm ơn bạn đã mua khóa học. Chúc bạn có những giờ học tập hiệu quả!"
+    }).catch(err => console.error("Lỗi gửi thông báo mua hàng:", err));
+
     return true;
 };
 
@@ -502,6 +511,14 @@ export const createFreeEnrollment = async (req, res) => {
         // 5. Xóa Giỏ hàng
         const paidCourseIds = courseIds.map(id => id.toString());
         await cartService.removeCoursesFromCart(req.user._id, paidCourseIds);
+
+        // 6. Gửi thông báo
+        await notificationService.createNotification({
+            recipient: req.user._id,
+            type: "purchase_success",
+            title: "Ghi danh thành công",
+            message: "Bạn đã ghi danh khóa học miễn phí thành công. Chúc bạn học tập tốt!"
+        }).catch(err => console.error("Lỗi gửi thông báo ghi danh:", err));
 
         res.status(200).json({
             success: true,

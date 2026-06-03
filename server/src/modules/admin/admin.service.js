@@ -41,14 +41,26 @@ export const reviewApplication = async (targetUserId, decision, adminNotes) => {
     user.instructorApplication.reviewedAt = new Date();
     user.instructorApplication.adminNotes = adminNotes;
 
-    // thêm thông báo vào email
+    await notificationService.createNotification({
+      recipient: user._id,
+      type: "system",
+      title: "Hồ sơ giảng viên được duyệt",
+      message: "Chúc mừng! Yêu cầu trở thành giảng viên của bạn đã được phê duyệt. Bạn có thể bắt đầu tạo khóa học ngay bây giờ.",
+      metadata: { adminNote: adminNotes }
+    }).catch(err => console.error("Lỗi gửi thông báo:", err));
 
   } else if (decision === 'reject') {
     user.instructorApplication.status = 'rejected';
     user.instructorApplication.reviewedAt = new Date();
     user.instructorApplication.adminNotes = adminNotes;
 
-    // thêm logic thông báo vào email
+    await notificationService.createNotification({
+      recipient: user._id,
+      type: "system",
+      title: "Hồ sơ giảng viên bị từ chối",
+      message: "Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.",
+      metadata: { adminNote: adminNotes }
+    }).catch(err => console.error("Lỗi gửi thông báo:", err));
   } else {
     const error = new Error('Quyết định không hợp lệ.');
     error.statusCode = 400;

@@ -1,8 +1,9 @@
 import Progress from './progress.model.js';
 import Course from '../course/course.model.js';
+import notificationService from '../notification/notification.service.js';
 
 const getCourseBySlug = async (slug) => {
-  const course = await Course.findOne({ slug }).select('_id totalLectures');
+  const course = await Course.findOne({ slug }).select('_id title totalLectures');
   if (!course) {
     const error = new Error('Khóa học không tồn tại.');
     error.statusCode = 404;
@@ -49,6 +50,7 @@ export const toggleLectureCompletion = async (userId, courseSlug, lectureId) => 
     progress.completedLectures.push(lectureId);
   }
 
+  const oldPercentage = progress.percentage;
   const totalLectures = course.totalLectures || 1;
   progress.percentage = Math.min(
     100,
@@ -56,6 +58,17 @@ export const toggleLectureCompletion = async (userId, courseSlug, lectureId) => 
   );
 
   await progress.save();
+
+  if (oldPercentage < 100 && progress.percentage === 100) {
+    await notificationService.createNotification({
+      recipient: userId,
+      type: "course_completed",
+      title: "Chúc mừng bạn đã hoàn thành khóa học!",
+      message: `Bạn đã hoàn thành xuất sắc khóa học "${course.title}". Hãy xem lại các kiến thức đã học và tiếp tục chinh phục những khóa học khác nhé!`,
+      metadata: { courseTitle: course.title }
+    }).catch(err => console.error("Lỗi gửi thông báo hoàn thành khóa học:", err));
+  }
+
   return progress;
 };
 
