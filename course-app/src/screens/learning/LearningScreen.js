@@ -262,26 +262,27 @@ const LearningScreen = ({ route, navigation }) => {
           resourceCount={parsedResources.length}
         />
 
-        {activeTab !== 'Discussion' && (
-          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-            {/* ── Tab: Bài giảng ── */}
-            {activeTab === 'Lectures' && (
-              <CurriculumList
-                sections={sections}
-                currentLecture={currentLecture}
-                completedLectures={progress?.completedLectures || []}
-                onLecturePress={handleLecturePress}
-                onToggleComplete={handleToggleComplete}
-              />
-            )}
+        {/* ── Tab: Bài giảng ── */}
+        {activeTab === 'Lectures' && (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
+            <CurriculumList
+              sections={sections}
+              currentLecture={currentLecture}
+              completedLectures={progress?.completedLectures || []}
+              onLecturePress={handleLecturePress}
+              onToggleComplete={handleToggleComplete}
+            />
+          </ScrollView>
+        )}
 
-            {/* ── Tab: Tổng quan ── */}
-            {activeTab === 'Overview' && (
-              <View style={styles.overviewContainer}>
-                <Text style={styles.overviewTitle}>{course.title}</Text>
-                <Text style={styles.overviewInstructor}>
-                  {course.instructor?.name || 'Instructor'}
-                </Text>
+        {/* ── Tab: Tổng quan ── */}
+        {activeTab === 'Overview' && (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
+            <View style={styles.overviewContainer}>
+              <Text style={styles.overviewTitle}>{course.title}</Text>
+              <Text style={styles.overviewInstructor}>
+                {course.instructor?.name || 'Instructor'}
+              </Text>
 
                 {/* Progress bar */}
                 <View style={styles.progressBarWrapper}>
@@ -291,9 +292,22 @@ const LearningScreen = ({ route, navigation }) => {
                   <Text style={styles.progressBarLabel}>{progressPct}%</Text>
                 </View>
 
-                <Text style={styles.overviewSectionTitle}>Mô tả khóa học</Text>
-                <Text style={styles.overviewDesc}>
-                  {course.description || 'Không có mô tả.'}
+              <Text style={styles.overviewSectionTitle}>Mô tả khóa học</Text>
+              <Text style={styles.overviewDesc}>
+                {course.description || 'Không có mô tả.'}
+              </Text>
+            </View>
+          </ScrollView>
+        )}
+
+        {/* ── Tab: Tài liệu ── */}
+        {activeTab === 'Resources' && (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
+            <View style={styles.resourcesContainer}>
+              <View style={styles.resourcesHeader}>
+                <FileText size={16} color="#e11d48" />
+                <Text style={styles.resourcesTitle}>
+                  Tài liệu đính kèm ({parsedResources.length})
                 </Text>
               </View>
             )}
@@ -307,42 +321,26 @@ const LearningScreen = ({ route, navigation }) => {
                     Tài liệu đính kèm ({parsedResources.length})
                   </Text>
                 </View>
-
-                {parsedResources.length > 0 ? (
-                  parsedResources.map((resource, idx) => (
-                    <ResourceItem key={idx} resource={resource} />
-                  ))
-                ) : (
-                  <View style={styles.emptyResources}>
-                    <FileText size={32} color="#e5e7eb" />
-                    <Text style={styles.emptyResourcesText}>
-                      Bài giảng này chưa có tài liệu.
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
+              )}
+            </View>
           </ScrollView>
         )}
 
+        {/* ── Tab: Thảo luận ── */}
         {activeTab === 'Discussion' && (
-          // === TRƯỜNG HỢP NÀY CHẠY TAB "THẢO LUẬN" ===
-          <View style={{ flex: 1 }}>
-            {currentLecture ? (
-              <DiscussionMobile
-                courseId={course._id}
-                lectureId={currentLecture._id}
-                user={user}
-                isEnrolled={true}
-              />
-            ) : (
-              <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#6b7280', textAlign: 'center', fontWeight: '500' }}>
-                  Bật một video trong Lectures để xem mục Hỏi Đáp tương ứng!
-                </Text>
-              </View>
-            )}
-          </View>
+          currentLecture ? (
+            <DiscussionMobile
+              courseId={course._id}
+              lectureId={currentLecture._id}
+              user={user}
+            />
+          ) : (
+            <View style={styles.emptyDiscussion}>
+              <Text style={styles.emptyDiscussionText}>
+                Chọn một bài giảng để xem phần Hỏi Đáp tương ứng.
+              </Text>
+            </View>
+          )
         )}
       </View>
     </View>
@@ -438,6 +436,21 @@ const styles = StyleSheet.create({
 
   // ── Content area ──
   contentArea: { flex: 1 },
+  scrollArea: { flex: 1 },
+
+  // ── Empty discussion ──
+  emptyDiscussion: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  emptyDiscussionText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
 
   // ── Overview tab ──
   overviewContainer: { padding: 20, paddingBottom: 40 },

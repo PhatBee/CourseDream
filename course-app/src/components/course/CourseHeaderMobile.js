@@ -97,33 +97,60 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
         </View>
         <Text className="text-xs text-gray-500 mb-2">{categoryName}</Text>
         <View className="flex-row items-end mb-2">
-          <Text className="text-rose-600 font-bold text-2xl">{formatCurrency(course.priceDiscount || course.price)}</Text>
-          {course.priceDiscount && course.priceDiscount < course.price && (
+          <Text className="text-rose-600 font-bold text-2xl">
+            {formatCurrency(course.priceDiscount > 0 ? course.priceDiscount : course.price)}
+          </Text>
+          {course.priceDiscount > 0 && course.priceDiscount < course.price && (
             <Text className="text-gray-400 text-base line-through ml-2">{formatCurrency(course.price)}</Text>
           )}
         </View>
         {!isEnrolled ? (
           <>
-            <TouchableOpacity className="bg-rose-500 py-3 rounded-lg mb-2" onPress={handleAddToCart}>
-              <Text className="text-white text-center font-bold">{inCart ? 'Đã trong giỏ hàng' : 'Thêm vào giỏ hàng'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-blue-500 py-3 rounded-lg mb-2"
-              onPress={() => {
-                if (!user) {
-                  Toast.show({ type: 'info', text1: 'Vui lòng đăng nhập để ghi danh' });
-                  navigation.navigate('Login');
-                  return;
-                }
-                // Navigate to Checkout with direct checkout
-                navigation.navigate('Checkout', {
-                  directCheckout: true,
-                  course: course
-                });
-              }}
-            >
-              <Text className="text-white text-center font-bold">Ghi danh ngay</Text>
-            </TouchableOpacity>
+            {course.price === 0 ? (
+              <>
+                <TouchableOpacity className="bg-rose-500 py-3 rounded-lg mb-2" onPress={handleAddToCart}>
+                  <Text className="text-white text-center font-bold">{inCart ? 'Đã trong giỏ hàng' : 'Thêm vào giỏ hàng'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="bg-green-500 py-3 rounded-lg mb-2"
+                  onPress={() => {
+                    if (!user) {
+                      Toast.show({ type: 'info', text1: 'Vui lòng đăng nhập để ghi danh' });
+                      navigation.navigate('Login');
+                      return;
+                    }
+                    navigation.navigate('Checkout', {
+                      directCheckout: true,
+                      course: course,
+                    });
+                  }}
+                >
+                  <Text className="text-white text-center font-bold">Đăng ký miễn phí</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity className="bg-rose-500 py-3 rounded-lg mb-2" onPress={handleAddToCart}>
+                  <Text className="text-white text-center font-bold">{inCart ? 'Đã trong giỏ hàng' : 'Thêm vào giỏ hàng'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="bg-blue-500 py-3 rounded-lg mb-2"
+                  onPress={() => {
+                    if (!user) {
+                      Toast.show({ type: 'info', text1: 'Vui lòng đăng nhập để ghi danh' });
+                      navigation.navigate('Login');
+                      return;
+                    }
+                    navigation.navigate('Checkout', {
+                      directCheckout: true,
+                      course: course,
+                    });
+                  }}
+                >
+                  <Text className="text-white text-center font-bold">Ghi danh ngay</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </>
         ) : (
           <TouchableOpacity

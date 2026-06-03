@@ -222,7 +222,7 @@ const AdminPendingCourseDetail = () => {
     const result = await dispatch(adminApproveCourse(revisionId));
     if (result.type.endsWith('/fulfilled')) {
       setShowApproveModal(false);
-      navigate('/admin/pending-courses');
+      navigate('/admin/courses');
     }
   };
 
@@ -231,7 +231,7 @@ const AdminPendingCourseDetail = () => {
     const result = await dispatch(adminRejectCourse({ revisionId, reviewMessage: rejectMessage }));
     if (result.type.endsWith('/fulfilled')) {
       setShowRejectModal(false);
-      navigate('/admin/pending-courses');
+      navigate('/admin/courses');
     }
   };
 
@@ -241,7 +241,7 @@ const AdminPendingCourseDetail = () => {
     const result = await dispatch(adminRequestChanges({ revisionId, reviewMessage: changesMessage }));
     if (result.type.endsWith('/fulfilled')) {
       setShowChangesModal(false);
-      navigate('/admin/pending-courses');
+      navigate('/admin/courses');
     }
   };
 
@@ -640,7 +640,7 @@ const AdminPendingCourseDetail = () => {
                 <X size={18} /> Từ chối
               </button>
               <button
-                onClick={() => navigate('/admin/pending-courses')}
+                onClick={() => navigate('/admin/courses')}
                 className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-sm"
               >
                 ← Quay lại danh sách

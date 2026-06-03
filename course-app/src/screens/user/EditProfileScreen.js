@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -31,10 +31,18 @@ const EditProfileScreen = ({ navigation }) => {
     const [avatarUri, setAvatarUri] = useState(null);
     const [deleteAvatar, setDeleteAvatar] = useState(false);
 
+    // Ref để track xem người dùng đã bấm submit (gọi API) hay chưa
+    // Tránh useEffect phản ứng với isSuccess/isError từ lần trước hoặc từ getProfile
+    const isSubmittingRef = useRef(false);
+
+    // ─── Load profile khi mount ───────────────────────────────────────────────
     useEffect(() => {
+        // Reset flag trạng thái cũ trước khi load màn hình
+        dispatch(reset());
         dispatch(getProfile());
     }, [dispatch]);
 
+    // ─── Điền form khi profile load xong ─────────────────────────────────────
     useEffect(() => {
         if (profile?.data) {
             const user = profile.data;
@@ -49,13 +57,21 @@ const EditProfileScreen = ({ navigation }) => {
         }
     }, [profile]);
 
+    // ─── Xử lý Alert sau khi API update trả về kết quả ───────────────────────
+    // CHỈ phản ứng khi isSubmittingRef.current = true (đã bấm Submit)
     useEffect(() => {
+        // Nếu chưa submit (chưa gọi API), bỏ qua mọi thay đổi isError/isSuccess
+        if (!isSubmittingRef.current) return;
+
         if (isError && message) {
-            Alert.alert('Error', message);
+            isSubmittingRef.current = false;
+            Alert.alert('Cập nhật thất bại', message);
             dispatch(reset());
         }
+
         if (isSuccess && message) {
-            Alert.alert('Success', message, [
+            isSubmittingRef.current = false;
+            Alert.alert('Thành công', message, [
                 {
                     text: 'OK',
                     onPress: () => {
@@ -66,18 +82,19 @@ const EditProfileScreen = ({ navigation }) => {
                 },
             ]);
         }
-    }, [isError, isSuccess, message, dispatch, navigation]);
+    }, [isError, isSuccess, message]);
 
+    // ─── Chọn ảnh từ thư viện ─────────────────────────────────────────────────
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
         if (status !== 'granted') {
-            Alert.alert('Permission Denied', 'We need camera roll permissions!');
+            Alert.alert('Quyền bị từ chối', 'Cần quyền truy cập thư viện ảnh!');
             return;
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images, // Corrected from legacy constant
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
@@ -89,17 +106,18 @@ const EditProfileScreen = ({ navigation }) => {
         }
     };
 
+    // ─── Xóa avatar ──────────────────────────────────────────────────────────
     const handleDeleteAvatar = () => {
         Alert.alert(
-            'Delete Avatar',
-            'Are you sure you want to delete your avatar?',
+            'Xóa ảnh đại diện',
+            'Bạn có chắc muốn xóa ảnh đại diện?',
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: 'Hủy', style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: 'Xóa',
                     style: 'destructive',
                     onPress: () => {
-                        setAvatarUri(null); // Clear URI
+                        setAvatarUri(null);
                         setDeleteAvatar(true);
                     },
                 },
@@ -107,33 +125,42 @@ const EditProfileScreen = ({ navigation }) => {
         );
     };
 
-    const handleSubmit = async () => {
-        if (!formData.name) {
-            return Alert.alert('Error', 'Name is required!');
+    // ─── Validate + Submit ────────────────────────────────────────────────────
+    const handleSubmit = () => {
+        // === BƯỚC 1: Validate cục bộ (KHÔNG gọi API nếu fail) ===
+        if (!formData.name || !formData.name.trim()) {
+            Alert.alert('Lỗi', 'Họ tên không được để trống!');
+            return; // Dừng hoàn toàn, không dispatch
         }
 
+        if (formData.phone && !/^[0-9]{9,11}$/.test(formData.phone.trim())) {
+            Alert.alert('Lỗi', 'Số điện thoại không hợp lệ (9-11 chữ số)!');
+            return; // Dừng hoàn toàn, không dispatch
+        }
+
+        // === BƯỚC 2: Validate thông qua → build FormData và gọi API ===
         const data = new FormData();
-        data.append('name', formData.name);
-        data.append('bio', formData.bio || "");
-        data.append('phone', formData.phone || "");
+        data.append('name', formData.name.trim());
+        data.append('bio', formData.bio?.trim() || '');
+        data.append('phone', formData.phone?.trim() || '');
 
         if (deleteAvatar) {
             data.append('deleteAvatar', 'true');
         } else if (avatarUri && !avatarUri.startsWith('http')) {
-            // Only append if it's a new local file (not an existing HTTP URL)
-            const uri = Platform.OS === "android" ? avatarUri : avatarUri.replace("file://", "");
+            // Chỉ append nếu là file local mới (không phải URL cũ từ server)
             const filename = avatarUri.split('/').pop();
             const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : `image/jpeg`;
+            const type = match ? `image/${match[1]}` : 'image/jpeg';
 
             data.append('avatar', {
-                uri: avatarUri, // Keep original URI for RN
+                uri: avatarUri,
                 name: filename,
                 type,
             });
         }
 
-        console.log("Submitting formData:", data);
+        // Đánh dấu đang submit để useEffect biết cần xử lý kết quả
+        isSubmittingRef.current = true;
 
         dispatch(updateProfile(data));
     };
@@ -166,7 +193,7 @@ const EditProfileScreen = ({ navigation }) => {
                         <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
                             <ArrowLeft size={24} color="#000" />
                         </TouchableOpacity>
-                        <Text className="text-xl font-bold">Edit Profile</Text>
+                        <Text className="text-xl font-bold">Chỉnh sửa hồ sơ</Text>
                     </View>
 
                     <View className="px-6 py-6">
@@ -187,21 +214,21 @@ const EditProfileScreen = ({ navigation }) => {
                                 </TouchableOpacity>
                             </View>
                             <Text className="text-sm text-gray-500 mt-4 text-center">
-                                Allowed JPG, GIF or PNG. Max size of 2MB
+                                Cho phép JPG, GIF hoặc PNG. Tối đa 2MB
                             </Text>
                             <View className="flex-row gap-3 mt-3">
                                 <TouchableOpacity
                                     onPress={pickImage}
                                     className="px-4 py-2 bg-gray-100 rounded-lg"
                                 >
-                                    <Text className="text-gray-700 font-medium">Upload</Text>
+                                    <Text className="text-gray-700 font-medium">Tải lên</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={handleDeleteAvatar}
                                     className="px-4 py-2 bg-rose-50 rounded-lg flex-row items-center gap-2"
                                 >
                                     <Trash2 size={16} color="#f43f5e" />
-                                    <Text className="text-rose-500 font-medium">Delete</Text>
+                                    <Text className="text-rose-500 font-medium">Xóa</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -210,21 +237,21 @@ const EditProfileScreen = ({ navigation }) => {
                         <View className="space-y-6">
                             <View className="border-b border-gray-100 pb-4 mb-4">
                                 <Text className="text-lg font-bold text-gray-800">
-                                    Personal Details
+                                    Thông tin cá nhân
                                 </Text>
                                 <Text className="text-sm text-gray-500">
-                                    Edit your personal information
+                                    Chỉnh sửa thông tin cá nhân của bạn
                                 </Text>
                             </View>
 
                             {/* Full Name */}
                             <View>
                                 <Text className="mb-2 text-[15px] font-semibold text-gray-700">
-                                    Full Name <Text className="text-rose-500">*</Text>
+                                    Họ và tên <Text className="text-rose-500">*</Text>
                                 </Text>
                                 <TextInput
                                     className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-[15px] text-gray-900"
-                                    placeholder="Enter your full name"
+                                    placeholder="Nhập họ và tên"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.name}
                                     onChangeText={(text) =>
@@ -237,11 +264,11 @@ const EditProfileScreen = ({ navigation }) => {
                             {/* Phone */}
                             <View>
                                 <Text className="mb-2 text-[15px] font-semibold text-gray-700">
-                                    Phone Number <Text className="text-rose-500">*</Text>
+                                    Số điện thoại
                                 </Text>
                                 <TextInput
                                     className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-[15px] text-gray-900"
-                                    placeholder="Enter your phone number"
+                                    placeholder="Nhập số điện thoại"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.phone}
                                     onChangeText={(text) =>
@@ -255,11 +282,11 @@ const EditProfileScreen = ({ navigation }) => {
                             {/* Bio */}
                             <View>
                                 <Text className="mb-2 text-[15px] font-semibold text-gray-700">
-                                    Bio <Text className="text-rose-500">*</Text>
+                                    Giới thiệu
                                 </Text>
                                 <TextInput
                                     className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-[15px] text-gray-900"
-                                    placeholder="Tell us about yourself"
+                                    placeholder="Giới thiệu về bản thân..."
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.bio}
                                     onChangeText={(text) =>
@@ -283,7 +310,7 @@ const EditProfileScreen = ({ navigation }) => {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text className="text-white text-lg font-semibold">
-                                        Update Profile
+                                        Cập nhật hồ sơ
                                     </Text>
                                 )}
                             </TouchableOpacity>

@@ -155,11 +155,10 @@ const WishlistScreen = ({ navigation }) => {
 
           {/* Cart Button - đồng bộ từ database */}
           <TouchableOpacity
-            className={`w-full rounded-xl py-2.5 flex-row items-center justify-center gap-2 ${
-              inCart
-                ? 'bg-emerald-50 border border-emerald-300'
-                : 'bg-rose-500'
-            }`}
+            className={`w-full rounded-xl py-2.5 flex-row items-center justify-center gap-2 ${inCart
+              ? 'bg-emerald-50 border border-emerald-300'
+              : 'bg-rose-500'
+              }`}
             onPress={() => handleToggleCart(item._id, item.title, inCart)}
             disabled={cartLoading}
           >
@@ -232,7 +231,7 @@ const WishlistScreen = ({ navigation }) => {
               </Text>
               <TouchableOpacity
                 className="bg-rose-500 px-6 py-3 rounded-full"
-                onPress={() => nav.navigate('CoursesTab')}
+                onPress={() => nav.navigate('MainTabs', { screen: 'CoursesTab' })}
               >
                 <Text className="text-white font-semibold">Khám phá khóa học</Text>
               </TouchableOpacity>

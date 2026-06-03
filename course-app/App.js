@@ -1,5 +1,6 @@
 // App.js
 import React, { useEffect, useState } from 'react';
+import { LogBox } from 'react-native';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from './src/app/store.js';
 import Toast from 'react-native-toast-message';
@@ -48,7 +49,12 @@ import CourseDetailScreen from './src/screens/course/CourseDetailScreen.js';
 import DiscussionScreen from './src/screens/discussion/DiscussionScreen';
 import NotificationScreen from './src/screens/notification/NotificationScreen';
 
+// Suppress deprecated SafeAreaView warning from third-party dependencies.
+// Our own code already uses react-native-safe-area-context correctly.
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
+
 const Stack = createStackNavigator();
+
 
 const SOCKET_URL = 'http://192.168.1.27:5000'; // Đổi thành URL backend của bạn
 
