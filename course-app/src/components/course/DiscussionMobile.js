@@ -342,7 +342,7 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
             </View>
 
             <Text className="text-gray-700 font-bold mb-1 ml-1 text-sm">
-              Tiêu đề (Tóm tắt)
+              Tiêu đề
             </Text>
             <TextInput
               style={{

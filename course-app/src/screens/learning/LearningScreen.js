@@ -310,16 +310,15 @@ const LearningScreen = ({ route, navigation }) => {
                   Tài liệu đính kèm ({parsedResources.length})
                 </Text>
               </View>
-            )}
 
-            {/* ── Tab: Tài liệu ── */}
-            {activeTab === 'Resources' && (
-              <View style={styles.resourcesContainer}>
-                <View style={styles.resourcesHeader}>
-                  <FileText size={16} color="#e11d48" />
-                  <Text style={styles.resourcesTitle}>
-                    Tài liệu đính kèm ({parsedResources.length})
-                  </Text>
+              {parsedResources.length > 0 ? (
+                parsedResources.map((res, index) => (
+                  <ResourceItem key={index} resource={res} />
+                ))
+              ) : (
+                <View style={styles.emptyResources}>
+                  <FileText size={32} color="#e5e7eb" />
+                  <Text style={styles.emptyResourcesText}>Không có tài liệu đính kèm</Text>
                 </View>
               )}
             </View>
@@ -333,6 +332,7 @@ const LearningScreen = ({ route, navigation }) => {
               courseId={course._id}
               lectureId={currentLecture._id}
               user={user}
+              isEnrolled={true}
             />
           ) : (
             <View style={styles.emptyDiscussion}>
