@@ -193,5 +193,10 @@ export const deletePromotion = async (id) => {
 };
 
 export const getAllPromotions = async () => {
+  const now = new Date();
+  await Promotion.updateMany(
+    { endDate: { $lt: now }, isActive: true },
+    { $set: { isActive: false } }
+  );
   return await Promotion.find().sort({ createdAt: -1 });
 };
