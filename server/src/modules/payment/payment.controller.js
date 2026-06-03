@@ -70,8 +70,11 @@ const processPaymentSuccess = async (payment, transactionDetails) => {
     // => Webhook và Return URL đến cùng lúc, thread kia đã xử lý xong rồi. Tránh Race Condition.
     if (!updatedPayment) return true;
 
+    // Get plain string IDs for courses
+    const paidCourseIds = payment.courses.map(c => c._id ? c._id.toString() : c.toString());
+
     // 2. Enroll Courses
-    await enrollmentService.enrollStudent(payment.student, payment.courses);
+    await enrollmentService.enrollStudent(payment.student, paidCourseIds);
 
     // 3. Update Coupon Usage
     if (payment.couponId) {
@@ -79,7 +82,6 @@ const processPaymentSuccess = async (payment, transactionDetails) => {
     }
 
     // 4. Clear Cart
-    const paidCourseIds = payment.courses.map(c => c._id ? c._id.toString() : c.toString());
     await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
     
     return true;
