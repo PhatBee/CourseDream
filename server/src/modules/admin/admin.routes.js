@@ -119,4 +119,7 @@ router.patch('/courses/:courseId/suspend', adminController.suspendCourse);
 // Restore từ suspended
 router.patch('/courses/:courseId/restore', adminController.restoreSuspendedCourse);
 
+// Publish lại từ unpublished → published
+router.patch('/courses/:courseId/republish', adminController.republishCourse);
+
 export default router;

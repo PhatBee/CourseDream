@@ -346,41 +346,166 @@ export const getPendingRevisions = async (query) => {
 };
 
 /**
- * Lấy tất cả khóa học (Admin) với filter status đầy đủ  
+ * Lấy tất cả khóa học (Admin) với filter đầy đủ + tính ĐỘNG doanh thu & số học sinh
+ * Sử dụng MongoDB Aggregation Pipeline để join Payment & Enrollment
  */
 export const getAllCoursesForAdmin = async (query) => {
-  const page = parseInt(query.page) || 1;
-  const limit = parseInt(query.limit) || 10;
-  const skip = (page - 1) * limit;
-  const statusFilter = query.status;
-  const search = query.search || '';
+  const page    = parseInt(query.page)  || 1;
+  const limit   = parseInt(query.limit) || 10;
+  const skip    = (page - 1) * limit;
 
-  const filter = {};
+  const statusFilter = query.status  || '';
+  const search       = query.search  || '';
+  const sortBy       = query.sortBy  || 'createdAt';   // revenue | students | price | createdAt
+  const sortOrder    = query.sortOrder === 'asc' ? 1 : -1;
+  const minPrice     = query.minPrice != null ? Number(query.minPrice) : null;
+  const maxPrice     = query.maxPrice != null ? Number(query.maxPrice) : null;
+
+  // ---------- Build $match ----------
+  const matchStage = {};
   if (statusFilter && statusFilter !== 'all') {
-    filter.status = statusFilter;
+    matchStage.status = statusFilter;
   }
   if (search) {
-    filter.title = { $regex: search, $options: 'i' };
+    matchStage.title = { $regex: search, $options: 'i' };
+  }
+  if (minPrice !== null || maxPrice !== null) {
+    matchStage.price = {};
+    if (minPrice !== null) matchStage.price.$gte = minPrice;
+    if (maxPrice !== null) matchStage.price.$lte = maxPrice;
   }
 
-  const courses = await Course.find(filter)
-    .select('title slug thumbnail price status studentsCount totalLectures rating instructor createdAt publishedVersionNo suspendReason')
-    .populate('instructor', 'name email avatar')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
+  // ---------- Sort field mapping ----------
+  const sortFieldMap = {
+    revenue:    'totalRevenue',
+    students:   'totalStudents',
+    price:      'price',
+    createdAt:  'createdAt',
+  };
+  const sortField = sortFieldMap[sortBy] || 'createdAt';
 
-  const total = await Course.countDocuments(filter);
+  // ---------- Aggregation Pipeline ----------
+  const pipeline = [
+    { $match: matchStage },
 
-  // Stats
+    // JOIN với Payment để tính doanh thu động
+    {
+      $lookup: {
+        from: 'payments',
+        let:  { courseId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $in: ['$$courseId', '$courses'] },
+                  { $eq: ['$status', 'success'] }
+                ]
+              }
+            }
+          },
+          // Chia đều amount cho số courses trong đơn hàng
+          {
+            $project: {
+              perCourseRevenue: {
+                $divide: [
+                  '$amount',
+                  { $max: [{ $size: '$courses' }, 1] }
+                ]
+              }
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              totalRevenue: { $sum: '$perCourseRevenue' },
+              totalOrders:  { $sum: 1 }
+            }
+          }
+        ],
+        as: 'paymentStats'
+      }
+    },
+
+    // JOIN với Enrollment để đếm học sinh thực tế
+    {
+      $lookup: {
+        from: 'enrollments',
+        localField: '_id',
+        foreignField: 'course',
+        as: 'enrollmentDocs'
+      }
+    },
+
+    // JOIN instructor
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'instructor',
+        foreignField: '_id',
+        as: 'instructorDoc'
+      }
+    },
+
+    // Thêm các trường computed
+    {
+      $addFields: {
+        totalRevenue:  { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalRevenue', 0] }, 0] },
+        totalOrders:   { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalOrders',  0] }, 0] },
+        totalStudents: { $size: '$enrollmentDocs' },
+        instructor:    {
+          $let: {
+            vars: { inst: { $arrayElemAt: ['$instructorDoc', 0] } },
+            in: {
+              _id:    '$$inst._id',
+              name:   '$$inst.name',
+              email:  '$$inst.email',
+              avatar: '$$inst.avatar'
+            }
+          }
+        }
+      }
+    },
+
+    // Bỏ các mảng raw không cần thiết
+    {
+      $project: {
+        paymentStats:    0,
+        enrollmentDocs:  0,
+        instructorDoc:   0,
+      }
+    },
+
+    // Sort động
+    { $sort: { [sortField]: sortOrder } },
+
+    // Facet: vừa lấy data vừa đếm total (1 round-trip)
+    {
+      $facet: {
+        data: [
+          { $skip: skip },
+          { $limit: limit }
+        ],
+        totalCount: [
+          { $count: 'count' }
+        ]
+      }
+    }
+  ];
+
+  const [result] = await Course.aggregate(pipeline);
+  const courses = result?.data || [];
+  const total   = result?.totalCount?.[0]?.count || 0;
+
+  // ---------- Stats theo status (tất cả courses, không filter) ----------
   const statusCounts = await Course.aggregate([
     { $group: { _id: '$status', count: { $sum: 1 } } }
   ]);
+  const allCount = await Course.countDocuments();
   const stats = statusCounts.reduce((acc, item) => {
     acc[item._id] = item.count;
     return acc;
-  }, { all: await Course.countDocuments() });
+  }, { all: allCount });
 
   return {
     courses,
@@ -870,6 +995,42 @@ export const restoreSuspendedCourse = async (courseId, adminId) => {
   });
 
   return { message: 'Đã khôi phục khóa học về trạng thái Unpublished.' };
+};
+
+/**
+ * Publish lại khóa học từ unpublished → published (Admin)
+ * Dùng khi Admin muốn đưa khóa học đã ẩn trở lại marketplace
+ */
+export const republishCourse = async (courseId, adminId) => {
+  const course = await Course.findById(courseId);
+
+  if (!course) {
+    const error = new Error('Không tìm thấy khóa học.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (course.status !== 'unpublished') {
+    const error = new Error('Chỉ có thể publish lại khóa học đang ở trạng thái Unpublished.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  course.status = 'published';
+  await course.save();
+
+  // Thông báo cho instructor
+  await notificationService.createNotification({
+    recipient: course.instructor,
+    sender: adminId,
+    type: 'system',
+    title: '✅ Khóa học đã được publish lại',
+    message: `Khóa học "${course.title}" đã được admin publish trở lại marketplace.`,
+    relatedId: course._id,
+    courseSlug: course.slug
+  });
+
+  return { message: 'Đã publish lại khóa học thành công.' };
 };
 
 export const getAllInstructors = async (query) => {

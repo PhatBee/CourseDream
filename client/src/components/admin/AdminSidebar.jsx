@@ -10,6 +10,7 @@ import {
   BarChart2,
   MessageSquare,
   Tag,
+  Clock,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { logout } from "../../features/auth/authSlice";
@@ -31,6 +32,11 @@ const AdminSidebar = () => {
       label: "Instructors",
     },
     { path: "/admin/courses", icon: <BookOpen size={20} />, label: "Courses" },
+    {
+      path: "/admin/pending-courses",
+      icon: <Clock size={20} />,
+      label: "Kiểm duyệt",
+    },
     {
       path: "/admin/categories",
       icon: <BookOpen size={20} />,

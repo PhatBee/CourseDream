@@ -30,6 +30,7 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import EditCoursePage from "../pages/instructor/EditCourse";
 import BecomeInstructor from "../pages/BecomeInstructor";
 import AdminPendingCourses from "../pages/admin/AdminPendingCourses";
+import AdminCourses from "../pages/admin/AdminCourses";
 import AdminPendingCourseDetail from "../pages/admin/AdminPendingCourseDetail";
 import StudentsManagement from "../pages/admin/StudentsManagement";
 import InstructorsManagement from "../pages/admin/InstructorsManagement";
@@ -185,13 +186,13 @@ export default function AppRoutes() {
               {/* Tab 2: Đơn đăng ký */}
               <Route path="applications" element={<InstructorApplications />} />
             </Route>
-            <Route path="courses" element={<AdminPendingCourses />} />
+            <Route path="courses" element={<AdminCourses />} />
+            <Route path="pending-courses" element={<AdminPendingCourses />} />
             <Route path="categories" element={<CategoriesManagement />} />
             <Route path="blogs" element={<div>Manage Blogs</div>} />
             <Route path="promotions" element={<PromotionsManagement />} />
           </Route>
 
-          {/* <Route path="admin/pending-courses" element={<AdminPendingCourses />} /> */}
           <Route
             path="admin/pending-courses/:revisionId"
             element={<AdminPendingCourseDetail />}

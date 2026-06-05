@@ -310,6 +310,22 @@ export const restoreSuspendedCourse = async (req, res, next) => {
 };
 
 /**
+ * Publish lại khóa học từ unpublished → published
+ * @route   PATCH /api/admin/courses/:courseId/republish
+ */
+export const republishCourse = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const adminId = req.user._id;
+
+    const result = await adminService.republishCourse(courseId, adminId);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Lấy danh sách tất cả courses (có filter status) cho Admin quản lý
  * @route   GET /api/admin/courses
  */
