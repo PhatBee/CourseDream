@@ -26,7 +26,7 @@ const HomeScreen = ({ navigation }) => {
   const { user } = useSelector(state => state.auth);
 
   const { items: categories, isLoading: catLoading } = useSelector(state => state.categories);
-  const { popularCourses, isLoading: courseLoading } = useSelector(state => state.course);
+  const { popularCourses, isLoading: courseLoading, isError: courseError, message: courseMessage } = useSelector(state => state.course);
 
   const { items: enrollments, isLoading: enrollLoading } = useSelector(state => state.enrollment);
 
@@ -116,6 +116,18 @@ const HomeScreen = ({ navigation }) => {
                   course={course}
                 />
               ))
+            ) : courseError ? (
+              <View style={{ alignItems: 'center', paddingHorizontal: 20 }}>
+                <Text style={{ color: '#ef4444', fontSize: 13, marginBottom: 8 }}>
+                  {courseMessage || 'Không thể tải khóa học.'}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => dispatch(getPopularCourses())}
+                  style={{ backgroundColor: '#e11d48', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Thử lại</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               !isLoading && <Text className="text-gray-400 ml-5">No courses available.</Text>
             )}
