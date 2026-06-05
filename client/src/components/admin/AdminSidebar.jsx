@@ -35,7 +35,7 @@ const AdminSidebar = () => {
     {
       path: "/admin/pending-courses",
       icon: <Clock size={20} />,
-      label: "Kiểm duyệt",
+      label: "Censor",
     },
     {
       path: "/admin/categories",
@@ -66,10 +66,9 @@ const AdminSidebar = () => {
                 to={item.path}
                 className={({ isActive }) => `
                   flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
-                  ${
-                    isActive
-                      ? "bg-rose-50 text-rose-600 shadow-sm"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ${isActive
+                    ? "bg-rose-50 text-rose-600 shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }
                 `}
               >
