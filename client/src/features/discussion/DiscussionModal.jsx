@@ -20,6 +20,7 @@ import {
 import { sendReport, resetReportState } from "../report/reportSlice";
 import ReportModal from "../../components/common/ReportModal";
 import { useLocation } from "react-router-dom";
+import Avatar from "../../components/common/Avatar";
 
 const DiscussionModal = ({
   discussion,
@@ -240,7 +241,7 @@ const DiscussionModal = ({
               <div className="flex justify-between items-start mb-3">
                 <div className="flex gap-3 text-left">
                   {discussion.author?.avatar ? (
-                    <img
+                    <Avatar
                       src={discussion.author.avatar}
                       alt="avatar"
                       className="w-10 h-10 rounded-full object-cover shadow-sm"
@@ -309,7 +310,7 @@ const DiscussionModal = ({
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex gap-3 text-left">
                       {reply.author?.avatar ? (
-                        <img
+                        <Avatar
                           src={reply.author.avatar}
                           alt="avatar"
                           className="w-8 h-8 rounded-full object-cover"
@@ -385,7 +386,7 @@ const DiscussionModal = ({
             className="flex-shrink-0 p-4 bg-white border-t border-gray-100 flex gap-3 rounded-b-2xl items-end relative"
           >
             {user?.avatar ? (
-              <img
+              <Avatar
                 src={user.avatar}
                 className="w-10 h-10 rounded-full object-cover"
               />

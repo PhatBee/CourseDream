@@ -11,6 +11,7 @@ import Spinner from "../../components/common/Spinner";
 import StarRating from "../../components/common/StarRating";
 import { ThumbsUp, Trash2, MessageCircle, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import Avatar from "../../components/common/Avatar";
 
 const ReviewList = ({ courseId, instructorId }) => {
   const dispatch = useDispatch();
@@ -66,8 +67,8 @@ const ReviewList = ({ courseId, instructorId }) => {
       <h5 className="text-xl font-semibold text-gray-800">Học viên phản hồi</h5>
       {reviews.map((review) => (
         <div key={review._id} className="flex gap-4 border-b pb-5">
-          <img
-            src={review.student?.avatar || "/default-avatar.jpg"}
+          <Avatar
+            src={review.student?.avatar}
             alt={review.student?.name}
             className="w-12 h-12 rounded-full border border-gray-200"
           />

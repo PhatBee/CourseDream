@@ -23,6 +23,7 @@ import {
 } from "../../features/report/reportSlice";
 import DiscussionModal from "./DiscussionModal";
 import { useLocation } from "react-router-dom";
+import Avatar from "../../components/common/Avatar";
 
 const CourseDiscussion = ({
   courseId,
@@ -182,7 +183,7 @@ const CourseDiscussion = ({
       >
         <div className="pt-1 flex-shrink-0">
           {user?.avatar ? (
-            <img
+            <Avatar
               src={user.avatar}
               alt="avatar"
               className="w-11 h-11 rounded-full object-cover shadow-sm"
@@ -232,7 +233,7 @@ const CourseDiscussion = ({
             <div className="flex gap-4">
               <div className="pt-1">
                 {item.author?.avatar ? (
-                  <img
+                  <Avatar
                     src={item.author.avatar}
                     alt="avatar"
                     className="w-12 h-12 rounded-full object-cover shadow-sm"
@@ -275,7 +276,7 @@ const CourseDiscussion = ({
                     </div>
                     <div className="flex gap-2">
                       {item.bestAnswerId.author?.avatar ? (
-                        <img
+                        <Avatar
                           src={item.bestAnswerId.author.avatar}
                           className="w-8 h-8 rounded-full"
                         />

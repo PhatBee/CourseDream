@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import defaultAvatar from '../../assets/img/icons/apple-icon.png';
 import NotificationMenu from '../common/NotificationMenu';
+import Avatar from '../common/Avatar';
 
 const AdminHeader = ({ user }) => {
     const location = useLocation();
@@ -63,9 +64,9 @@ const AdminHeader = ({ user }) => {
             </p>
           </div>
           
-          {/* Avatar (Dùng ảnh apple-icon nếu user chưa có avatar) */}
-          <img 
-            src={user?.avatar || defaultAvatar} 
+          {/* Avatar */}
+          <Avatar 
+            src={user?.avatar} 
             alt="Admin Avatar" 
             className="w-11 h-11 rounded-full border-2 border-white shadow-sm object-cover ring-2 ring-transparent group-hover:ring-rose-200 transition-all bg-gray-50"
           />

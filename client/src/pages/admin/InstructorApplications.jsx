@@ -6,6 +6,7 @@ import Pagination from '../../components/common/Pagination';
 import ApplicationDetailModal from '../../components/admin/ApplicationDetailModal';
 import { Eye, Clock } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
+import Avatar from '../../components/common/Avatar';
 
 const InstructorApplications = () => {
     const dispatch = useDispatch();
@@ -57,8 +58,8 @@ const InstructorApplications = () => {
                                 <tr key={app._id} className="hover:bg-gray-50 transition">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <img 
-                                                src={app.user?.avatar || "/default-user.png"} 
+                                            <Avatar 
+                                                src={app.user?.avatar} 
                                                 alt="" 
                                                 className="w-10 h-10 rounded-full object-cover border border-gray-200" 
                                             />

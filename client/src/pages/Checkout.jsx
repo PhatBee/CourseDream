@@ -20,6 +20,7 @@ import {
   previewPromotionThunk,
   clearPreview,
 } from "../features/promotion/promotionSlice";
+import Avatar from "../components/common/Avatar";
 
 const formatPrice = (price) => {
   // Ép kiểu về số để đảm bảo so sánh đúng
@@ -472,8 +473,8 @@ export default function Checkout() {
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={user.avatar || "https://via.placeholder.com/40"}
+                  <Avatar
+                    src={user.avatar}
                     alt={user.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
