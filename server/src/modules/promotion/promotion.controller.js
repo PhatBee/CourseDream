@@ -48,10 +48,11 @@ export const getAllPromotionsCtrl = async (req, res) => {
 // Preview promotion (thay thế apply cũ)
 export const previewPromotionCtrl = async (req, res) => {
   try {
-    const { courseId } = req.body; // Loại bỏ price vì lấy từ DB
+    const { courseId, courseIds } = req.body; 
+    const targetCourseIds = courseIds || (courseId ? [courseId] : []);
     const userId = req.user._id;
     const promotion = req.promotion; // Từ middleware
-    const result = await previewPromotion(promotion, courseId, userId);
+    const result = await previewPromotion(promotion, targetCourseIds, userId);
     res.json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -83,6 +84,17 @@ export const getAvailablePromotionsCtrl = async (req, res) => {
       endDate: { $gte: now },
       $or: [{ maxUsage: 0 }, { $expr: { $lt: ["$totalUsed", "$maxUsage"] } }],
     }).lean();
+
+    // Lọc bỏ những mã mà User hiện tại đã dùng hết số lượt cho phép
+    promotions = promotions.filter(promo => {
+        if (promo.maxUsagePerUser > 0) {
+            const userUsage = promo.usersUsed?.find(u => u.user.toString() === userId.toString());
+            if (userUsage && userUsage.count >= promo.maxUsagePerUser) {
+                return false;
+            }
+        }
+        return true;
+    });
 
     if (courseIds && courseIds.length > 0) {
       const courses = await Course.find({ _id: { $in: courseIds } }).select("_id categories");

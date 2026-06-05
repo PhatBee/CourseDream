@@ -1,8 +1,8 @@
 import Course from "../course/course.model.js";
 import Promotion from "./promotion.model.js"; // Import trực tiếp để tránh dynamic import
 
-// Hàm preview (chỉ tính giá, không trừ lượt)
-export const previewPromotion = async (promotion, courseId, userId) => {
+// Hàm preview (tính toán cho mảng courseIds trong giỏ hàng)
+export const previewPromotion = async (promotion, courseIds, userId) => {
   const now = new Date();
   if (!promotion.isActive) {
     throw new Error("Mã khuyến mãi không còn hoạt động");
@@ -11,46 +11,51 @@ export const previewPromotion = async (promotion, courseId, userId) => {
     throw new Error("Mã khuyến mãi đã hết hạn hoặc chưa bắt đầu");
   }
 
-  const course = await Course.findById(courseId);
-  if (!course) throw new Error("Khóa học không tồn tại");
+  if (!Array.isArray(courseIds)) courseIds = [courseIds];
 
-  // Không trust price từ client: Lấy từ DB
-  const price = course.priceDiscount;
+  const courses = await Course.find({ _id: { $in: courseIds } }).populate('categories');
+  if (courses.length === 0) throw new Error("Khóa học không tồn tại");
 
-  if (price < promotion.minPrice) {
-    throw new Error(`Cần mua từ ${promotion.minPrice}đ để dùng mã này`);
+  let originalPrice = 0;
+  let eligiblePrice = 0;
+
+  for (const course of courses) {
+    const price = course.priceDiscount ?? course.price ?? 0;
+    originalPrice += price;
   }
 
-  // Chặn instructor dùng mã cho khóa của mình (nếu có instructor)
-  if (course.instructor && course.instructor.equals(userId)) {
-    throw new Error("Không thể dùng mã cho khóa học của chính bạn");
+  if (originalPrice < promotion.minPrice) {
+    throw new Error(`Đơn hàng phải từ ${promotion.minPrice}đ để dùng mã này`);
   }
 
-  // Kiểm tra áp dụng cho course/category
-  if (["category", "category+course"].includes(promotion.appliesTo)) {
-    const courseCategories = Array.isArray(course.categories)
-      ? course.categories
-      : [course.category];
-    const matchCategory = promotion.categories?.some(catId =>
-      courseCategories.some(courseCat =>
-        courseCat.equals ? courseCat.equals(catId) : courseCat.toString() === catId.toString()
-      )
-    );
-    if (promotion.appliesTo === "category" && !matchCategory) {
-      throw new Error("Mã này không áp dụng cho danh mục của khóa học");
-    }
-    if (promotion.appliesTo === "category+course" && !matchCategory) {
-      const matchCourse = promotion.courses?.some(cId => course._id.equals(cId));
-      if (!matchCourse) {
-        throw new Error("Mã này không áp dụng cho danh mục hoặc khóa học này");
+  let eligibleCourses = [];
+  for (const course of courses) {
+    // Chặn instructor dùng mã cho khóa của mình
+    if (course.instructor && course.instructor.equals(userId)) continue;
+
+    let isEligible = false;
+    if (promotion.appliesTo === "all") isEligible = true;
+    else if (promotion.appliesTo === "course") {
+      if (promotion.courses?.some(cId => course._id.equals(cId))) isEligible = true;
+    } else if (promotion.appliesTo === "category") {
+      const courseCats = Array.isArray(course.categories) ? course.categories : [course.category];
+      if (promotion.categories?.some(catId => courseCats.some(cCat => cCat && (cCat.equals ? cCat.equals(catId) : cCat.toString() === catId.toString())))) isEligible = true;
+    } else if (promotion.appliesTo === "category+course") {
+      const courseCats = Array.isArray(course.categories) ? course.categories : [course.category];
+      if (promotion.courses?.some(cId => course._id.equals(cId)) || 
+          promotion.categories?.some(catId => courseCats.some(cCat => cCat && (cCat.equals ? cCat.equals(catId) : cCat.toString() === catId.toString())))) {
+          isEligible = true;
       }
     }
-  }
-  if (promotion.appliesTo === "course") {
-    const matchCourse = promotion.courses?.some(cId => course._id.equals(cId));
-    if (!matchCourse) {
-      throw new Error("Mã này chỉ áp dụng cho một số khóa học cụ thể");
+
+    if (isEligible) {
+      eligiblePrice += (course.priceDiscount ?? course.price ?? 0);
+      eligibleCourses.push(course);
     }
+  }
+
+  if (eligibleCourses.length === 0) {
+    throw new Error("Mã này không áp dụng cho các khóa học trong đơn hàng");
   }
 
   // Kiểm tra tổng lượt (chỉ check, không update)
@@ -66,20 +71,60 @@ export const previewPromotion = async (promotion, courseId, userId) => {
   }
 
   // Tính giá sau giảm
-  let discountedPrice = price;
+  let discountAmount = 0;
+  let itemDiscounts = [];
+
   if (promotion.discountType === "percent") {
-    discountedPrice = price * (1 - promotion.discountValue / 100);
+    discountAmount = Math.round(eligiblePrice * (promotion.discountValue / 100));
+    
+    // Tính cho từng item
+    for (const course of eligibleCourses) {
+       const p = course.priceDiscount ?? course.price ?? 0;
+       const d = Math.round(p * (promotion.discountValue / 100));
+       itemDiscounts.push({
+          courseId: course._id.toString(),
+          originalPrice: p,
+          discountedPrice: p - d,
+          discountAmount: d
+       });
+    }
   } else if (promotion.discountType === "fixed") {
-    discountedPrice = price - promotion.discountValue;
+    discountAmount = Math.min(promotion.discountValue, eligiblePrice);
+    
+    // Tính phân bổ cho từng item
+    let remainingDiscount = discountAmount;
+    for (let i = 0; i < eligibleCourses.length; i++) {
+       const course = eligibleCourses[i];
+       const p = course.priceDiscount ?? course.price ?? 0;
+       
+       let d = 0;
+       if (i === eligibleCourses.length - 1) {
+           d = remainingDiscount; // Item cuối gánh phần dư
+       } else {
+           d = eligiblePrice > 0 ? Math.round(discountAmount * (p / eligiblePrice)) : 0;
+           remainingDiscount -= d;
+       }
+       
+       itemDiscounts.push({
+          courseId: course._id.toString(),
+          originalPrice: p,
+          discountedPrice: p - d,
+          discountAmount: d
+       });
+    }
   }
-  discountedPrice = Math.max(0, Math.round(discountedPrice));
+
+  let discountedPrice = originalPrice - discountAmount;
+  if (discountedPrice < 0) discountedPrice = 0;
 
   return {
-    originalPrice: price,
+    originalPrice,
     discountedPrice,
+    discountAmount,
     discountValue: promotion.discountValue,
     discountType: promotion.discountType,
     promotionId: promotion._id, // Trả về để dùng ở commit
+    itemDiscounts,
     message: "Áp dụng mã khuyến mãi thành công (preview)!",
   };
 };
@@ -148,5 +193,10 @@ export const deletePromotion = async (id) => {
 };
 
 export const getAllPromotions = async () => {
+  const now = new Date();
+  await Promotion.updateMany(
+    { endDate: { $lt: now }, isActive: true },
+    { $set: { isActive: false } }
+  );
   return await Promotion.find().sort({ createdAt: -1 });
 };

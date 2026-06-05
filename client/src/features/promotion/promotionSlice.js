@@ -47,6 +47,7 @@ export const deletePromotion = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       await promotionApi.deletePromotion(id);
+      thunkAPI.dispatch(fetchPromotions());
       toast.success("Đã chuyển mã sang trạng thái không hoạt động");
       return { id };
     } catch (err) {
@@ -56,13 +57,12 @@ export const deletePromotion = createAsyncThunk(
   }
 );
 
-
 // --- USER: Preview Promotion (Coupon) ---
 export const previewPromotionThunk = createAsyncThunk(
   "promotion/previewPromotion",
-  async ({ code, courseId }, thunkAPI) => {
+  async ({ code, courseIds }, thunkAPI) => {
     try {
-      const data = await promotionApi.previewPromotion({ code, courseId });
+      const data = await promotionApi.previewPromotion({ code, courseIds });
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
@@ -152,7 +152,7 @@ const promotionSlice = createSlice({
       })
       .addCase(deletePromotion.fulfilled, (state, action) => {
         const idx = state.items.findIndex((p) => p._id === action.payload.id);
-        if (idx !== -1) state.items.splice(idx, 1);
+        if (idx !== -1) state.items[idx].isActive = false;
       });
 
     // --- USER: Preview Coupon ---

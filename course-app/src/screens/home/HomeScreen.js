@@ -26,7 +26,7 @@ const HomeScreen = ({ navigation }) => {
   const { user } = useSelector(state => state.auth);
 
   const { items: categories, isLoading: catLoading } = useSelector(state => state.categories);
-  const { popularCourses, isLoading: courseLoading } = useSelector(state => state.course);
+  const { popularCourses, isLoading: courseLoading, isError: courseError, message: courseMessage } = useSelector(state => state.course);
 
   const { items: enrollments, isLoading: enrollLoading } = useSelector(state => state.enrollment);
 
@@ -59,7 +59,10 @@ const HomeScreen = ({ navigation }) => {
 
   const handleSearch = (keyword) => {
     if (keyword) {
-      nav.navigate('CoursesTab', { search: keyword });
+      nav.navigate('MainTabs', {
+        screen: 'CoursesTab',
+        params: { search: keyword },
+      });
     }
   };
 
@@ -89,14 +92,14 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Categories */}
         <View className="pl-5">
-          <CategoryList categories={categories} />
+          <CategoryList categories={categories} navigation={navigation} />
         </View>
 
         {/* Popular Courses */}
         <View className="mb-20">
           <View className="flex-row justify-between items-center mb-4 px-5">
             <Text className="text-lg font-bold text-gray-900">Popular Courses</Text>
-            <TouchableOpacity onPress={() => nav.navigate('CoursesTab', { clearSearch: true })}>
+            <TouchableOpacity onPress={() => nav.navigate('MainTabs', { screen: 'CoursesTab', params: { clearSearch: true } })}>
               <Text className="text-rose-500 text-sm font-medium">See All</Text>
             </TouchableOpacity>
           </View>
@@ -113,6 +116,18 @@ const HomeScreen = ({ navigation }) => {
                   course={course}
                 />
               ))
+            ) : courseError ? (
+              <View style={{ alignItems: 'center', paddingHorizontal: 20 }}>
+                <Text style={{ color: '#ef4444', fontSize: 13, marginBottom: 8 }}>
+                  {courseMessage || 'Không thể tải khóa học.'}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => dispatch(getPopularCourses())}
+                  style={{ backgroundColor: '#e11d48', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Thử lại</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               !isLoading && <Text className="text-gray-400 ml-5">No courses available.</Text>
             )}

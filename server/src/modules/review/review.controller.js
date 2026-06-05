@@ -34,6 +34,8 @@ export const createOrUpdateReview = async (req, res, next) => {
       comment: comment ? comment.trim() : "",
     });
 
+    await review.populate("student", "name avatar");
+
     return res.status(200).json({ message: "Đánh giá đã được lưu", review });
   } catch (err) {
     next(err);

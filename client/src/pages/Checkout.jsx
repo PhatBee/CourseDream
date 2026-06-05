@@ -95,13 +95,8 @@ export default function Checkout() {
     (sum, item) => sum + (item.priceDiscount ?? item.price),
     0
   );
-  //  Giá trị giảm từ mã khuyến mãi (nếu có)
-  let promotionDiscount = 0;
-  if (preview && preview.discountType === "percent") {
-    promotionDiscount = subtotalDiscount * (preview.discountValue / 100);
-  } else if (preview && preview.discountType === "fixed") {
-    promotionDiscount = preview.discountValue;
-  }
+  // Giá trị giảm từ mã khuyến mãi (trả về trực tiếp từ Backend)
+  let promotionDiscount = preview ? preview.discountAmount : 0;
   // 3. Số tiền sau khi áp dụng mã giảm giá
   let amountAfterPromo = subtotalDiscount - promotionDiscount;
   if (amountAfterPromo < 0) amountAfterPromo = 0;
@@ -161,6 +156,7 @@ export default function Checkout() {
       await paymentService.createFreeEnrollment({
         amount: 0,
         courseIds: courseIds,
+        couponCode: selectedPromotion,
       });
 
       toast.success("Ghi danh thành công!");
@@ -168,7 +164,7 @@ export default function Checkout() {
       if (!isDirectCheckout) dispatch(getCart());
 
       // Chuyển hướng
-      navigate("/enrolled-courses"); // Hoặc trang PaymentReturn tuỳ bạn
+      navigate("/profile/enrolled-courses"); // Hoặc trang PaymentReturn tuỳ bạn
     } catch (error) {
       console.error("Free enrollment error:", error);
       toast.error(error.response?.data?.message || "Lỗi khi ghi danh");
@@ -216,6 +212,7 @@ export default function Checkout() {
           orderInfo: orderInfo,
           courseIds: courseIds,
           platform: "web",
+          couponCode: selectedPromotion,
         });
       } else if (selectedMethod === "momo") {
         // === LOGIC MOMO ===
@@ -225,6 +222,7 @@ export default function Checkout() {
           orderInfo: orderInfo,
           courseIds: courseIds,
           platform: "web",
+          couponCode: selectedPromotion,
         });
       } else if (selectedMethod === "zalopay") {
         // === LOGIC ZALOPAY ===
@@ -234,6 +232,7 @@ export default function Checkout() {
           orderInfo: orderInfo,
           courseIds: courseIds,
           platform: "web",
+          couponCode: selectedPromotion,
         });
       } else {
         toast("Phương thức thanh toán này đang bảo trì");
@@ -259,10 +258,14 @@ export default function Checkout() {
   const [selectedPromotion, setSelectedPromotion] = useState(null);
 
   const handleSelectPromotion = (promo) => {
-    setSelectedPromotion(promo.code);
-    dispatch(
-      previewPromotionThunk({ code: promo.code, courseId: courseIds[0] })
-    );
+    if (selectedPromotion === promo.code) {
+      handleRemovePromotion();
+    } else {
+      setSelectedPromotion(promo.code);
+      dispatch(
+        previewPromotionThunk({ code: promo.code, courseIds })
+      );
+    }
   };
 
   const handleRemovePromotion = () => {
@@ -496,10 +499,14 @@ export default function Checkout() {
                   const course = item.course;
                   if (!course) return null;
 
+                  const basePriceDiscount = item.priceDiscount ?? item.price;
+                  const itemPromo = preview?.itemDiscounts?.find(d => d.courseId === course._id);
+                  const currentPrice = itemPromo ? itemPromo.discountedPrice : basePriceDiscount;
+
                   return (
                     <div
                       key={item._id}
-                      className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg relative group"
+                      className={`flex items-start gap-3 p-3 rounded-lg relative group transition-colors ${itemPromo ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}
                     >
                       <img
                         src={
@@ -513,12 +520,17 @@ export default function Checkout() {
                           {course.title}
                         </p>
                         <p className="text-rose-600 font-semibold">
-                          {formatPrice(item.priceDiscount)}
+                          {formatPrice(currentPrice)}
                         </p>
-                        {item.price > item.priceDiscount && (
+                        {item.price > currentPrice && (
                           <p className="text-xs text-gray-500 line-through">
                             {formatPrice(item.price)}
                           </p>
+                        )}
+                        {itemPromo && (
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                            - {formatPrice(itemPromo.discountAmount)} (Mã giảm giá)
+                          </span>
                         )}
                       </div>
 
@@ -570,46 +582,38 @@ export default function Checkout() {
               </div>
 
               {/* Promo Code Section */}
-              {/* <div className="my-4">
-                                <label className="block text-sm font-medium mb-1">Chọn mã giảm giá</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {availableLoading && <span>Đang tải...</span>}
-                                    {available.map((promo) => (
-                                        <button
-                                            key={promo._id}
-                                            className={`px-3 py-2 rounded border ${selectedPromotion === promo.code ? "bg-rose-600 text-white border-rose-600" : "bg-white border-gray-300 text-gray-700"} hover:bg-rose-50 transition`}
-                                            onClick={() => handleSelectPromotion(promo)}
-                                            type="button"
-                                            disabled={previewLoading}
-                                        >
-                                            <b>{promo.code}</b> - {promo.discountType === "percent" ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString("vi-VN")}₫`}
-                                        </button>
-                                    ))}
-                                    {selectedPromotion && (
-                                        <button
-                                            className="px-3 py-2 rounded border bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                            onClick={handleRemovePromotion}
-                                            type="button"
-                                        >
-                                            Bỏ mã
-                                        </button>
-                                    )}
-                                </div>
-                                {preview && (
-                                    <div className="mt-2 text-green-600">
-                                        Đã áp dụng mã <b>{selectedPromotion}</b>!<br />
-                                        {preview.discountValue > 0 && (
-                                            <span className="ml-2 text-xs text-gray-500">
-                                                (Đã giảm {preview.discountValue.toLocaleString("vi-VN")}
-                                                {preview.discountType === "percent" ? "%" : "₫"})
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
-                                {previewError && (
-                                    <div className="mt-2 text-red-600">{previewError}</div>
-                                )}
-                            </div> */}
+              <div className="my-6 pt-4 border-t">
+                  <label className="block text-sm font-bold text-gray-800 mb-3">Ưu đãi dành cho bạn</label>
+                  <div className="flex flex-wrap gap-3">
+                      {availableLoading && (
+                          <div className="flex items-center gap-2 text-gray-500 text-sm">
+                              <Spinner size="xs" /> Đang tìm mã giảm giá...
+                          </div>
+                      )}
+                      {available.map((promo) => (
+                          <button
+                              key={promo._id}
+                              className={`px-4 py-2 rounded-xl transition-all duration-200 border-2 font-medium shadow-sm hover:shadow-md text-sm ${
+                                  selectedPromotion === promo.code 
+                                      ? "bg-gradient-to-r from-rose-600 to-rose-700 text-white border-transparent hover:from-rose-700 hover:to-rose-800 shadow-rose-200" 
+                                      : "bg-white text-gray-700 border-gray-200 hover:border-rose-300 hover:bg-rose-50"
+                              }`}
+                              onClick={() => handleSelectPromotion(promo)}
+                              type="button"
+                              disabled={previewLoading}
+                          >
+                              <b className="tracking-wide">{promo.code}</b> 
+                              <span className="mx-1">•</span> 
+                              Giảm {promo.discountType === "percent" ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString("vi-VN")}₫`}
+                          </button>
+                      ))}
+                  </div>
+                  {previewError && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                          {previewError}
+                      </div>
+                  )}
+              </div>
 
               {/* Info */}
               <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">

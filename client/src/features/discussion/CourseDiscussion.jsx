@@ -110,7 +110,8 @@ const CourseDiscussion = ({
       sendReport({
         type: "discussion",
         targetId: reportDiscussionId,
-        reason: reason + (detail ? `\n${detail}` : ""),
+        reason,
+        detail,
       }),
     );
   };

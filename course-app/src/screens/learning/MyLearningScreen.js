@@ -22,7 +22,7 @@ const MyLearningScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [progressMap, setProgressMap] = useState({});
 
-  // Lấy đủ danh mục khi mount
+  // Lấy đủ danh mục khi mount (public, không cần login)
   useFocusEffect(
     useCallback(() => {
       dispatch(getAllCategoriesSimple());
@@ -48,18 +48,22 @@ const MyLearningScreen = ({ navigation }) => {
     setProgressMap(prev => ({ ...prev, ...newMap }));
   }, []);
 
+  // Chỉ fetch enrollments khi user đã login
   useFocusEffect(
     useCallback(() => {
-      dispatch(fetchMyEnrollments());
-    }, [dispatch])
+      if (user) {
+        dispatch(fetchMyEnrollments());
+      }
+    }, [dispatch, user])
   );
 
+  // Chỉ fetch progress khi user đã login
   useFocusEffect(
     useCallback(() => {
-      if (enrollments.length > 0) {
+      if (user && enrollments.length > 0) {
         fetchProgressData(enrollments);
       }
-    }, [enrollments, fetchProgressData])
+    }, [enrollments, fetchProgressData, user])
   );
 
   // Lọc enrollments theo search và category (lọc client)
@@ -93,6 +97,23 @@ const MyLearningScreen = ({ navigation }) => {
     return require('../../../assets/images/default-course.jpg');
   };
 
+  // ── Guard: chưa login → hiển thị màn hình yêu cầu login ──
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center px-6">
+        <Text className="text-lg font-bold mb-3 text-center">
+          Bạn cần đăng nhập để xem khóa học đã ghi danh.
+        </Text>
+        <TouchableOpacity
+          className="bg-rose-500 px-6 py-3 rounded-lg"
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text className="text-white font-bold">Đăng nhập</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -106,20 +127,6 @@ const MyLearningScreen = ({ navigation }) => {
       <View className="flex-1 justify-center items-center">
         <Text className="text-red-500">{message || 'Đã xảy ra lỗi'}</Text>
       </View>
-    );
-  }
-
-  if (!user) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text className="text-lg font-bold mb-3">Bạn cần đăng nhập để xem khóa học đã ghi danh.</Text>
-        <TouchableOpacity
-          className="bg-rose-500 px-6 py-3 rounded-lg"
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text className="text-white font-bold">Đăng nhập</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
     );
   }
 

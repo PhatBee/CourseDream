@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 import { getCart } from '../../features/cart/cartSlice';
@@ -16,6 +16,25 @@ const PaymentResultScreen = ({ navigation, route }) => {
     useEffect(() => {
         processPaymentResult();
     }, []);
+
+    // Intercept hardware back press
+    useEffect(() => {
+        const onBackPress = () => {
+            if (paymentResult?.success) {
+                handleGoHome();
+                return true; // Prevent default back behavior
+            }
+            // Allow default back behavior if not successful
+            return false;
+        };
+
+        const backHandler = BackHandler.addEventListener(
+            'hardwareBackPress',
+            onBackPress
+        );
+
+        return () => backHandler.remove();
+    }, [paymentResult]);
 
     const processPaymentResult = async () => {
         try {

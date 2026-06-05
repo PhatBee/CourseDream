@@ -65,6 +65,7 @@ export const userSlice = createSlice({
     name: 'user',
     initialState,
     reducers: {
+        // Chỉ reset các flag trạng thái, KHÔNG reset data (profile, instructorApplication)
         reset: (state) => {
             state.isLoading = false;
             state.isSuccess = false;
@@ -74,23 +75,30 @@ export const userSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Get Profile
+            // ─── Get Profile ───────────────────────────────────────────────────────────
+            // QUAN TRỌNG: getProfile.fulfilled KHÔNG set isSuccess=true
+            // vì isSuccess được dùng để trigger Alert trong screen (chỉ dành cho mutation)
             .addCase(getProfile.pending, (state) => {
                 state.isLoading = true;
             })
             .addCase(getProfile.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.isSuccess = true;
                 state.profile = action.payload;
+                // isSuccess và message KHÔNG được set ở đây
             })
             .addCase(getProfile.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;
             })
-            // Update Profile
+
+            // ─── Update Profile ────────────────────────────────────────────────────────
             .addCase(updateProfile.pending, (state) => {
                 state.isLoading = true;
+                // Reset flag trước khi gọi API để tránh state cũ bị giữ lại
+                state.isSuccess = false;
+                state.isError = false;
+                state.message = '';
             })
             .addCase(updateProfile.fulfilled, (state, action) => {
                 state.isLoading = false;
@@ -100,11 +108,16 @@ export const userSlice = createSlice({
             .addCase(updateProfile.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
+                state.isSuccess = false;
                 state.message = action.payload;
             })
-            // Change Password
+
+            // ─── Change Password ───────────────────────────────────────────────────────
             .addCase(changePassword.pending, (state) => {
                 state.isLoading = true;
+                state.isSuccess = false;
+                state.isError = false;
+                state.message = '';
             })
             .addCase(changePassword.fulfilled, (state, action) => {
                 state.isLoading = false;
@@ -114,9 +127,11 @@ export const userSlice = createSlice({
             .addCase(changePassword.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
+                state.isSuccess = false;
                 state.message = action.payload;
             })
-            // Get Instructor Application
+
+            // ─── Get Instructor Application ────────────────────────────────────────────
             .addCase(getInstructorApplication.pending, (state) => {
                 state.isApplicationLoading = true;
             })
@@ -129,9 +144,13 @@ export const userSlice = createSlice({
                 state.isError = true;
                 state.message = action.payload;
             })
-            // Apply to Become Instructor
+
+            // ─── Apply to Become Instructor ────────────────────────────────────────────
             .addCase(applyToBecomeInstructor.pending, (state) => {
                 state.isLoading = true;
+                state.isSuccess = false;
+                state.isError = false;
+                state.message = '';
             })
             .addCase(applyToBecomeInstructor.fulfilled, (state, action) => {
                 state.isLoading = false;
@@ -141,6 +160,7 @@ export const userSlice = createSlice({
             .addCase(applyToBecomeInstructor.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
+                state.isSuccess = false;
                 state.message = action.payload;
             });
     },

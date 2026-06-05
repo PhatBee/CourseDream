@@ -115,21 +115,21 @@ const CourseDetailScreen = () => {
             reviews={reviewList}
             instructorId={course.instructor}
           />
-          <ReviewFormMobile courseId={course._id} isEnrolled={isEnrolled} />
-
-          {/* Nút chuyển sang trang thảo luận */}
           {/* Only show review form if user is logged in */}
           {user ? (
-            <ReviewFormMobile courseId={course._id} />
+            <ReviewFormMobile courseId={course._id} isEnrolled={isEnrolled} />
           ) : (
             <View className="px-4 mb-6">
               <View className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <Text className="text-gray-600 text-center font-medium mb-3">
+                  Đăng nhập để đánh giá khóa học này
+                </Text>
                 <TouchableOpacity
-                  className="bg-rose-500 py-2 rounded-lg"
+                  className="bg-rose-500 py-3 rounded-lg"
                   onPress={() => navigation.navigate("Login")}
                 >
-                  <Text className="text-white text-center font-semibold">
-                    Đánh giá
+                  <Text className="text-white text-center font-bold">
+                    Đăng nhập ngay
                   </Text>
                 </TouchableOpacity>
               </View>

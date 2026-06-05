@@ -91,7 +91,7 @@ const ReportDetailModal = ({ reportId, onClose }) => {
 
     if (resolveReport.fulfilled.match(resultAction)) {
       toast.success("Xử lý báo cáo thành công");
-      onClose();
+      onClose(true);
     } else {
       toast.error(`Lỗi: ${resultAction.error.message || "Không thể xử lý"}`);
     }

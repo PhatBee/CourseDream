@@ -13,9 +13,29 @@ const getDetails = async (slug) => {
 };
 
 const getPopularCourses = async () => {
-  const response = await courseApi.getPopularCourses();
-  // Backend trả về: { success: true, data: [...] }
-  return response.data.data;
+  try {
+    const response = await courseApi.getPopularCourses();
+    // Backend trả về: { success: true, data: [...] }
+    if (!response.data?.data) {
+      console.warn('[courseService] getPopularCourses: Unexpected response shape', response.data);
+      return [];
+    }
+    return response.data.data;
+  } catch (error) {
+    // Phân biệt loại lỗi để dễ debug
+    if (error.code === 'ECONNABORTED') {
+      console.error('[courseService] getPopularCourses: Request timeout');
+      throw new Error('Kết nối quá chậm, vui lòng thử lại.');
+    }
+    if (!error.response) {
+      // Network error: server không phản hồi (ngrok hết hạn, server down, mất mạng)
+      console.error('[courseService] getPopularCourses: Network error - no response', error.message);
+      throw new Error('Không thể kết nối đến server. Kiểm tra kết nối mạng hoặc server.');
+    }
+    // Server trả về lỗi (4xx / 5xx)
+    console.error('[courseService] getPopularCourses: Server error', error.response.status, error.response.data);
+    throw error;
+  }
 };
 
 const getAllCourses = async (params) => {

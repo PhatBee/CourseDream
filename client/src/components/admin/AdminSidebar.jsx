@@ -39,7 +39,7 @@ const AdminSidebar = () => {
     // { path: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
     { path: "/admin/reports", icon: <BarChart2 size={20} />, label: "Reports" },
     // { path: '/admin/messages', icon: <MessageSquare size={20} />, label: 'Messages' },
-    //{ path: '/admin/promotions', icon: <Tag size={20} />, label: 'Promotions' },
+    { path: '/admin/promotions', icon: <Tag size={20} />, label: 'Promotions' },
   ];
 
   return (

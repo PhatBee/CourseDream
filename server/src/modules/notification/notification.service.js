@@ -29,6 +29,7 @@ class NotificationService {
           name: recipientUser.name,
           title,
           message,
+          metadata,
         }).catch(console.error);
       }
       return null; // Thoát luôn
@@ -68,6 +69,7 @@ class NotificationService {
           name: recipientUser.name,
           title,
           message,
+          metadata,
         }).catch(console.error);
       }
     }

@@ -237,7 +237,7 @@ export const courseSlice = createSlice({
           // (update lại stats object cho chính xác)
 
         }
-        toast.success(action.payload.message);
+        Toast.show({ type: 'success', text1: action.payload.message });
       })
       .addCase(activateInstructorCourse.fulfilled, (state, action) => {
         state.instructorCourses = state.instructorCourses.map(c =>
@@ -245,7 +245,7 @@ export const courseSlice = createSlice({
         );
         state.instructorStats.published += 1;
         state.instructorStats.hidden -= 1;
-        toast.success("Khóa học đã được kích hoạt lại!");
+        Toast.show({ type: 'success', text1: 'Khóa học đã được kích hoạt lại!' });
       })
   },
 });

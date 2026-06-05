@@ -1,10 +1,11 @@
 import axios from "axios";
 import { API_URL } from "../utils/config";
 import { getToken, saveToken, removeToken, removeUser } from "../utils/storage";
-import { store } from "../app/store";
+import { getStore } from "../app/storeHolder";
 
 const axiosClient = axios.create({
     baseURL: API_URL,
+    timeout: 10000, // 10 giây — fail fast khi ngrok hết hạn hoặc server down
     headers: {
         "Content-Type": "application/json",
     },
@@ -16,6 +17,9 @@ axiosClient.interceptors.request.use(
         const token = await getToken();
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+        if (__DEV__) {
+            console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
         }
         return config;
     },
@@ -100,12 +104,13 @@ axiosClient.interceptors.response.use(
                 await removeToken();
                 await removeUser();
 
-                // Dispatch logout action (dùng action type string để tránh require cycle)
-                store.dispatch({ type: 'auth/logout/fulfilled' });
+                // Dispatch logout action (dùng getStore() từ storeHolder — không có require cycle)
+                const store = getStore();
+                store?.dispatch({ type: 'auth/logout/fulfilled' });
                 // Clear các slice liên quan
-                store.dispatch({ type: 'wishlist/clearWishlistState' });
-                store.dispatch({ type: 'cart/resetCart' });
-                store.dispatch({ type: 'enrollment/resetEnrollment' });
+                store?.dispatch({ type: 'wishlist/clearWishlistState' });
+                store?.dispatch({ type: 'cart/resetCart' });
+                store?.dispatch({ type: 'enrollment/resetEnrollment' });
 
                 return Promise.reject(refreshError);
             }

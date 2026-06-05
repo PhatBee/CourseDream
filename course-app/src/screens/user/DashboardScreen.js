@@ -129,7 +129,7 @@ const DashboardScreen = ({ navigation }) => {
               </Text>
               <TouchableOpacity
                 className="mt-4 bg-rose-500 px-5 py-2.5 rounded-full"
-                onPress={() => navigation.navigate('CoursesTab')}
+                onPress={() => navigation.navigate('MainTabs', { screen: 'CoursesTab' })}
               >
                 <Text className="text-white font-semibold text-sm">Khám phá ngay</Text>
               </TouchableOpacity>
@@ -200,7 +200,7 @@ const DashboardScreen = ({ navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 bg-white border border-gray-100 rounded-2xl py-4 items-center shadow-sm"
-              onPress={() => navigation.navigate('CoursesTab')}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'CoursesTab' })}
             >
               <TrendingUp size={22} color="#7c3aed" />
               <Text className="text-gray-700 font-semibold text-sm mt-1.5">Khám phá</Text>
