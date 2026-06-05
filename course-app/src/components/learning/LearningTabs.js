@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { List, BookOpen, Paperclip, MessageSquare } from 'lucide-react-native';
 
 const BASE_TABS = [
@@ -23,7 +23,12 @@ const LearningTabs = ({ activeTab, setActiveTab, resourceCount = 0 }) => {
   ];
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false}
+      style={styles.scrollView}
+      contentContainerStyle={styles.tabContainer}
+    >
       {tabs.map(({ id, label, Icon }) => {
         const isActive = activeTab === id;
         return (
@@ -40,25 +45,33 @@ const LearningTabs = ({ activeTab, setActiveTab, resourceCount = 0 }) => {
           </TouchableOpacity>
         );
       })}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
+  scrollView: {
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
     backgroundColor: '#fff',
+    flexGrow: 0,
+    flexShrink: 1,
+    height: 48,
+  },
+  tabContainer: {
+    flexDirection: 'row',
     paddingHorizontal: 16,
+    alignItems: 'center',
+    height: '100%',
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 14,
+    height: '100%',
+    paddingVertical: 12,
     paddingHorizontal: 4,
-    marginRight: 20,
+    marginRight: 24,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
