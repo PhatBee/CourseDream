@@ -14,6 +14,7 @@ import {
   BookOpen, Award, List, Cloud
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import Avatar from '../../components/common/Avatar';
 
 // ======================== MODAL COMPONENTS ========================
 
@@ -590,8 +591,8 @@ const AdminPendingCourseDetail = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Giảng viên</h3>
               <div className="flex items-center gap-3">
-                <img
-                  src={revision.instructor?.avatar || `https://ui-avatars.com/api/?name=${revision.instructor?.name}`}
+                <Avatar
+                  src={revision.instructor?.avatar}
                   alt={revision.instructor?.name}
                   className="w-12 h-12 rounded-xl object-cover border border-gray-100"
                 />

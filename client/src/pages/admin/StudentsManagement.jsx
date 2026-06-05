@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { fetchStudents, toggleBlockUser } from '../../features/admin/adminSlice';
 import { Search, MoreVertical, Mail, Phone, BookOpen, Calendar, Ban, CheckCircle } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
-import defaultAvatar from '../../assets/img/icons/apple-icon.png';
 import { toast } from 'react-toastify';
 import BanUserModal from '../../components/admin/user/BanUserModal';
 import ActionMenu from '../../components/admin/common/ActionMenu';
+import Avatar from '../../components/common/Avatar';
 
 const StudentsManagement = () => {
   const dispatch = useDispatch();
@@ -88,8 +88,8 @@ const StudentsManagement = () => {
                   {/* Avatar & Name */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={student.avatar || defaultAvatar}
+                      <Avatar
+                        src={student.avatar}
                         alt=""
                         className="w-10 h-10 rounded-full object-cover border border-gray-100"
                       />

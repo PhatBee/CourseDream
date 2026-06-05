@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Globe, Facebook, Youtube, Linkedin, Twitter, GraduationCap, Briefcase } from 'lucide-react';
+import Avatar from '../common/Avatar';
 
 const SocialIcon = ({ Icon, url }) => {
   if (!url) return null;
@@ -33,9 +34,9 @@ const InstructorBio = ({ instructor = {} }) => {
 
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center">
-          <img
+          <Avatar
             className="w-16 h-16 rounded-full object-cover"
-            src={avatar || '/default-avatar.svg'}
+            src={avatar}
             alt={name}
             crossOrigin="anonymous"
             referrerPolicy="no-referrer"

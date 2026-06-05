@@ -1,6 +1,6 @@
-// src/components/admin/ApplicationDetailModal.jsx
 import React, { useState } from 'react';
 import { X, CheckCircle, XCircle, User, Video, FileText } from 'lucide-react';
+import Avatar from '../../components/common/Avatar';
 
 const ApplicationDetailModal = ({ isOpen, onClose, application, onReview, isProcessing }) => {
     const [rejectReason, setRejectReason] = useState('');
@@ -33,8 +33,8 @@ const ApplicationDetailModal = ({ isOpen, onClose, application, onReview, isProc
                 <div className="p-6 overflow-y-auto space-y-6">
                     {/* User Info Card */}
                     <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                        <img 
-                            src={application.user?.avatar || "/default-user.png"} 
+                        <Avatar 
+                            src={application.user?.avatar} 
                             alt="Avatar" 
                             className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
                         />
