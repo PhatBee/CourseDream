@@ -53,7 +53,7 @@ const EnrollCard = ({ course, isInstructor }) => {
 
   const handleToggleCart = () => {
     if (!user) {
-      toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      toast("Vui lòng đăng nhập để thêm vào giỏ hàng");
       return;
     }
 
@@ -66,7 +66,7 @@ const EnrollCard = ({ course, isInstructor }) => {
 
   const handleEnrollNow = () => {
     if (!user) {
-      toast.info("Vui lòng đăng nhập");
+      toast("Vui lòng đăng nhập để mua khóa học");
       return;
     }
     // Navigate directly to checkout with this course
@@ -116,11 +116,10 @@ const EnrollCard = ({ course, isInstructor }) => {
             <button
               onClick={handleWishlistClick}
               className={`btn-wishlist flex items-center justify-center gap-2 transition-colors duration-200
-              ${
-                isInWishlist
+              ${isInWishlist
                   ? "bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <Heart size={18} className={isInWishlist ? "fill-current" : ""} />
               {isInWishlist ? "Wishlisted" : "Add to Wishlist"}
@@ -152,11 +151,10 @@ const EnrollCard = ({ course, isInstructor }) => {
               {/* Add to Cart Button - Primary CTA */}
               <button
                 onClick={handleToggleCart}
-                className={`w-full font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group ${
-                  isInCart
-                    ? "bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white"
-                    : "bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white"
-                }`}
+                className={`w-full font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg mb-3 group ${isInCart
+                  ? "bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white"
+                  : "bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white"
+                  }`}
               >
                 <ShoppingCart
                   size={20}
