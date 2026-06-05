@@ -5,6 +5,7 @@ import { getStore } from "../app/storeHolder";
 
 const axiosClient = axios.create({
     baseURL: API_URL,
+    timeout: 10000, // 10 giây — fail fast khi ngrok hết hạn hoặc server down
     headers: {
         "Content-Type": "application/json",
     },
@@ -16,6 +17,9 @@ axiosClient.interceptors.request.use(
         const token = await getToken();
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+        if (__DEV__) {
+            console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
         }
         return config;
     },
