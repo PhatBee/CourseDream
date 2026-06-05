@@ -35,13 +35,13 @@ const formatDate = (d) => {
 // STATUS CONFIG
 // ─────────────────────────────────────────────
 const STATUS_CONFIG = {
-    published:   { label: 'Đang hiển thị', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
-    unpublished: { label: 'Ẩn',            color: 'bg-gray-100 text-gray-600 border-gray-200',         dot: 'bg-gray-400' },
-    hidden:      { label: 'Tạm ẩn',        color: 'bg-yellow-100 text-yellow-700 border-yellow-200',   dot: 'bg-yellow-500' },
-    suspended:   { label: 'Đình chỉ',      color: 'bg-red-100 text-red-700 border-red-200',            dot: 'bg-red-500' },
-    draft:       { label: 'Nháp',          color: 'bg-blue-100 text-blue-700 border-blue-200',         dot: 'bg-blue-400' },
-    pending:     { label: 'Chờ duyệt',     color: 'bg-amber-100 text-amber-700 border-amber-200',      dot: 'bg-amber-500' },
-    archived:    { label: 'Lưu trữ',       color: 'bg-purple-100 text-purple-700 border-purple-200',   dot: 'bg-purple-500' },
+    published: { label: 'Đang hiển thị', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+    unpublished: { label: 'Ẩn', color: 'bg-gray-100 text-gray-600 border-gray-200', dot: 'bg-gray-400' },
+    hidden: { label: 'Tạm ẩn', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', dot: 'bg-yellow-500' },
+    suspended: { label: 'Đình chỉ', color: 'bg-red-100 text-red-700 border-red-200', dot: 'bg-red-500' },
+    draft: { label: 'Nháp', color: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-400' },
+    pending: { label: 'Chờ duyệt', color: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+    archived: { label: 'Lưu trữ', color: 'bg-purple-100 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
 };
 
 const StatusBadge = ({ status }) => {
@@ -62,9 +62,8 @@ const SortHeader = ({ label, field, current, order, onSort }) => {
     return (
         <button
             onClick={() => onSort(field)}
-            className={`flex items-center gap-1 group transition-colors ${
-                isActive ? 'text-rose-600 font-bold' : 'text-gray-500 hover:text-gray-800'
-            }`}
+            className={`flex items-center gap-1 group transition-colors ${isActive ? 'text-rose-600 font-bold' : 'text-gray-500 hover:text-gray-800'
+                }`}
         >
             {label}
             <span className="ml-0.5">
@@ -86,10 +85,10 @@ const ActionModal = ({ course, action, onClose, onConfirm, loading }) => {
     if (!course || !action) return null;
 
     const CONFIG = {
-        unpublish: { title: 'Ẩn khóa học',       color: 'bg-gray-700',    icon: <EyeOff size={18} />,         needReason: false },
-        republish: { title: 'Publish lại',        color: 'bg-emerald-600', icon: <Eye size={18} />,             needReason: false },
-        suspend:   { title: 'Đình chỉ khóa học',  color: 'bg-red-600',     icon: <AlertTriangle size={18} />,   needReason: true  },
-        restore:   { title: 'Khôi phục khóa học', color: 'bg-blue-600',    icon: <Eye size={18} />,             needReason: false },
+        unpublish: { title: 'Ẩn khóa học', color: 'bg-gray-700', icon: <EyeOff size={18} />, needReason: false },
+        republish: { title: 'Publish lại', color: 'bg-emerald-600', icon: <Eye size={18} />, needReason: false },
+        suspend: { title: 'Đình chỉ khóa học', color: 'bg-red-600', icon: <AlertTriangle size={18} />, needReason: true },
+        restore: { title: 'Khôi phục khóa học', color: 'bg-blue-600', icon: <Eye size={18} />, needReason: false },
     };
     const cfg = CONFIG[action];
 
@@ -155,23 +154,23 @@ const AdminCourses = () => {
     const { adminCoursesList, adminCoursesLoading } = useSelector(s => s.admin);
 
     // Filters & pagination
-    const [page, setPage]               = useState(1);
-    const [search, setSearch]           = useState('');
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
     const [searchInput, setSearchInput] = useState('');
-    const [statusFilter, setStatus]     = useState('all');
-    const [sortBy, setSortBy]           = useState('createdAt');
-    const [sortOrder, setSortOrder]     = useState('desc');
-    const [minPrice, setMinPrice]       = useState('');
-    const [maxPrice, setMaxPrice]       = useState('');
+    const [statusFilter, setStatus] = useState('all');
+    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortOrder, setSortOrder] = useState('desc');
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
     const [showFilters, setShowFilters] = useState(false);
-    const searchTimeout                 = useRef(null);
+    const searchTimeout = useRef(null);
 
     // Action modal
     const [modalState, setModalState] = useState({ course: null, action: null });
     const [actionLoading, setActionLoading] = useState(false);
 
-    const courses    = adminCoursesList?.courses    || [];
-    const stats      = adminCoursesList?.stats      || {};
+    const courses = adminCoursesList?.courses || [];
+    const stats = adminCoursesList?.stats || {};
     const pagination = adminCoursesList?.pagination || {};
 
     // Fetch
@@ -238,10 +237,10 @@ const AdminCourses = () => {
         const { course, action } = modalState;
         setActionLoading(true);
         try {
-            if (action === 'unpublish')  await adminApi.unpublishCourse(course._id, reason);
+            if (action === 'unpublish') await adminApi.unpublishCourse(course._id, reason);
             else if (action === 'republish') await adminApi.republishCourse(course._id);
-            else if (action === 'suspend')   await adminApi.suspendCourse(course._id, reason);
-            else if (action === 'restore')   await adminApi.restoreCourse(course._id);
+            else if (action === 'suspend') await adminApi.suspendCourse(course._id, reason);
+            else if (action === 'restore') await adminApi.restoreCourse(course._id);
             toast.success('Thao tác thành công!');
             closeModal();
             fetchData();
@@ -254,12 +253,12 @@ const AdminCourses = () => {
 
     // Status tabs config
     const STATUS_TABS = [
-        { key: 'all',         label: 'Tất cả',     count: stats.all         || 0 },
-        { key: 'published',   label: 'Đang hiển thị', count: stats.published || 0 },
-        { key: 'pending',     label: 'Chờ duyệt',  count: stats.pending     || 0 },
-        { key: 'unpublished', label: 'Ẩn',          count: stats.unpublished || 0 },
-        { key: 'suspended',   label: 'Đình chỉ',    count: stats.suspended   || 0 },
-        { key: 'draft',       label: 'Nháp',        count: stats.draft       || 0 },
+        { key: 'all', label: 'Tất cả', count: stats.all || 0 },
+        { key: 'published', label: 'Đang hiển thị', count: stats.published || 0 },
+        // { key: 'pending', label: 'Chờ duyệt', count: stats.pending || 0 },
+        { key: 'unpublished', label: 'Ẩn', count: stats.unpublished || 0 },
+        { key: 'suspended', label: 'Đình chỉ', count: stats.suspended || 0 },
+        // { key: 'draft', label: 'Nháp', count: stats.draft || 0 },
     ];
 
     const hasActiveFilters = search || statusFilter !== 'all' || minPrice || maxPrice || sortBy !== 'createdAt';
@@ -313,11 +312,10 @@ const AdminCourses = () => {
                         {/* Toggle filter */}
                         <button
                             onClick={() => setShowFilters(prev => !prev)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-                                showFilters || minPrice || maxPrice
-                                    ? 'bg-rose-50 border-rose-200 text-rose-600'
-                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${showFilters || minPrice || maxPrice
+                                ? 'bg-rose-50 border-rose-200 text-rose-600'
+                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                }`}
                         >
                             <Filter size={15} />
                             Bộ lọc
@@ -393,17 +391,15 @@ const AdminCourses = () => {
                             <button
                                 key={tab.key}
                                 onClick={() => handleStatusChange(tab.key)}
-                                className={`flex items-center gap-2 px-4 py-3.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${
-                                    statusFilter === tab.key
-                                        ? 'border-rose-500 text-rose-600 bg-rose-50/50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-                                }`}
+                                className={`flex items-center gap-2 px-4 py-3.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${statusFilter === tab.key
+                                    ? 'border-rose-500 text-rose-600 bg-rose-50/50'
+                                    : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                                    }`}
                             >
                                 {tab.label}
                                 {tab.count > 0 && (
-                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                                        statusFilter === tab.key ? 'bg-rose-500 text-white' : 'bg-gray-100 text-gray-600'
-                                    }`}>
+                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${statusFilter === tab.key ? 'bg-rose-500 text-white' : 'bg-gray-100 text-gray-600'
+                                        }`}>
                                         {tab.count}
                                     </span>
                                 )}
@@ -493,7 +489,7 @@ const AdminCourses = () => {
 // COURSE ROW
 // ─────────────────────────────────────────────
 const CourseRow = ({ course, index, onAction }) => {
-    const revenue  = course.totalRevenue  || 0;
+    const revenue = course.totalRevenue || 0;
     const students = course.totalStudents || 0;
 
     return (
