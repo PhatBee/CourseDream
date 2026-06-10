@@ -220,10 +220,20 @@ const EditCoursePage = () => {
                         title: res.title,
                         url: res.url || '',
                         type: res.type || 'link'
+                    })),
+                    // ✅ FIX: Đưa quizzes vào payload — trước đây bị bỏ sót
+                    quizzes: (lec.quizzes || []).map(q => ({
+                        question:      q.question      || '',
+                        options:       (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
+                        correctAnswer: q.correctAnswer || 'A',
+                        hint:          q.hint          || '',
+                        timestamp:     Number(q.timestamp) || 0,
+                        isActive:      q.isActive !== false, // default true
                     }))
                 }))
             }));
             formData.append('sections', JSON.stringify(sections));
+
 
             // Dispatch
             const resultAction = await dispatch(createNewCourse(formData));

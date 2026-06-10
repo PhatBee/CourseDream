@@ -191,6 +191,7 @@ export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex,
     });
 
     if (!alreadyDone) {
+      // 1. Create or ensure the base document exists with $setOnInsert
       await Progress.findOneAndUpdate(
         { student: userId, course: course._id },
         {
@@ -201,7 +202,15 @@ export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex,
             watchTimes: [],
             completedQuizzes: [],
             percentage: 0,
-          },
+          }
+        },
+        { upsert: true, new: true }
+      );
+
+      // 2. Push the completed quiz into the array
+      await Progress.findOneAndUpdate(
+        { student: userId, course: course._id },
+        {
           $push: {
             completedQuizzes: {
               lectureId,
@@ -210,7 +219,7 @@ export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex,
             },
           },
         },
-        { upsert: true, new: true }
+        { new: true }
       );
     }
   }
@@ -221,4 +230,4 @@ export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex,
     hint: correct ? null : (quiz.hint || null),
     message: correct ? 'Chính xác! Tiếp tục xem video.' : 'Chưa đúng, hãy thử lại!',
   };
-};
+};

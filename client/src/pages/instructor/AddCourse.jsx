@@ -156,7 +156,7 @@ const AddCoursePage = () => {
             const sections = courseData.sections.map(sec => ({
                 title: sec.title,
                 order: sec.order || 0,
-                lectures: sec.lectures.map((lec, lIdx) => ({
+                lectures: (sec.lectures || []).map((lec, lIdx) => ({
                     title: lec.title,
                     videoUrl: lec.videoUrl || '', // CDN URL từ S3
                     duration: lec.duration || 0,
@@ -166,10 +166,20 @@ const AddCoursePage = () => {
                         title: res.title,
                         url: res.url || '',
                         type: res.type || 'link'
+                    })),
+                    // ✅ FIX: Đưa quizzes vào payload — trước đây bị bỏ sót
+                    quizzes: (lec.quizzes || []).map(q => ({
+                        question:      q.question      || '',
+                        options:       (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
+                        correctAnswer: q.correctAnswer || 'A',
+                        hint:          q.hint          || '',
+                        timestamp:     Number(q.timestamp) || 0,
+                        isActive:      q.isActive !== false,
                     }))
                 }))
             }));
             formData.append('sections', JSON.stringify(sections));
+
 
             // Dispatch
             const resultAction = await dispatch(createNewCourse(formData));
