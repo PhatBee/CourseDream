@@ -1,9 +1,11 @@
 // src/components/instructor/LessonModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Link as LinkIcon, Upload, FileText, Video, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Link as LinkIcon, Upload, FileText, Video, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { courseApi } from '../../api/courseApi';
+import QuizBuilder from './QuizBuilder';
+
 
 // UploadProgress Component
 const UploadProgress = ({ progress, label, isComplete }) => (
@@ -28,8 +30,10 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
         videoFile: null,
         duration: 0,
         isPreviewFree: false,
-        resources: []
+        resources: [],
+        quizzes: [],      // ── THÊM
     });
+    const [activeTab, setActiveTab] = useState('info'); // 'info' | 'quiz'
 
     // Video upload state
     const [videoUploadState, setVideoUploadState] = useState({
@@ -67,9 +71,9 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                     })
                     .filter(Boolean);
             }
-            setLesson({ ...initialData, videoFile: null, resources: parsedResources });
+            setLesson({ ...initialData, videoFile: null, resources: parsedResources, quizzes: initialData.quizzes || [] });
         } else {
-            setLesson({ title: '', videoUrl: '', videoFile: null, duration: 0, isPreviewFree: false, resources: [] });
+            setLesson({ title: '', videoUrl: '', videoFile: null, duration: 0, isPreviewFree: false, resources: [], quizzes: [] });
         }
         setTempResource({ title: '', url: '' });
         setUploadFile(null);
@@ -200,9 +204,36 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                     </button>
                 </div>
 
+                {/* ── Tab nav (Thông tin / Quiz) */}
+                <div className="flex border-b border-gray-100 bg-white">
+                    <button
+                        className={`flex-1 py-3 text-sm font-semibold transition-all border-b-2 ${
+                            activeTab === 'info'
+                                ? 'border-rose-500 text-rose-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-800'
+                        }`}
+                        onClick={() => setActiveTab('info')}
+                    >
+                        📹 Thông tin bài học
+                    </button>
+                    <button
+                        className={`flex-1 py-3 text-sm font-semibold transition-all border-b-2 flex items-center justify-center gap-2 ${
+                            activeTab === 'quiz'
+                                ? 'border-rose-500 text-rose-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-800'
+                        }`}
+                        onClick={() => setActiveTab('quiz')}
+                    >
+                        <HelpCircle size={14} />
+                        Quiz ({lesson.quizzes?.length || 0})
+                    </button>
+                </div>
+
                 {/* Body */}
                 <div className="p-6 overflow-y-auto space-y-5 flex-1">
 
+                    {/* ── Tab: Thông tin bài học ── */}
+                    {activeTab === 'info' && (<>
                     {/* Lesson Title */}
                     <div>
                         <label className="block text-sm font-semibold mb-1.5 text-gray-700">
@@ -456,6 +487,16 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                             )}
                         </div>
                     </div>
+                    </>)} {/* end activeTab === 'info' */}
+
+                    {/* ── Tab: Quiz ──────────────────────────────────────────────────── */}
+                    {activeTab === 'quiz' && (
+                        <QuizBuilder
+                            quizzes={lesson.quizzes || []}
+                            onChange={(newQuizzes) => setLesson(prev => ({ ...prev, quizzes: newQuizzes }))}
+                        />
+                    )}
+
                 </div>
 
                 {/* Footer */}

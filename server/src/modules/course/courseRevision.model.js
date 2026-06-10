@@ -12,7 +12,16 @@ const LectureSchema = new mongoose.Schema({
   duration: Number,
   order: Number,
   isPreviewFree: Boolean,
-  resources: [ResourceSchema]
+  resources: [ResourceSchema],
+  // ── Quiz data (lưu cùng bài giảng trong revision) ────────────────────────
+  quizzes: [{
+    question:      String,
+    options:       [{ id: String, text: String }],
+    correctAnswer: String, // 'A' | 'B' | 'C' | 'D'
+    hint:          String,
+    timestamp:     Number,
+    isActive:      { type: Boolean, default: true },
+  }],
 }, { _id: false });
 
 const SectionSchema = new mongoose.Schema({

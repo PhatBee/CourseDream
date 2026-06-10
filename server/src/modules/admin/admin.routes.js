@@ -122,4 +122,12 @@ router.patch('/courses/:courseId/restore', adminController.restoreSuspendedCours
 // Publish lại từ unpublished → published
 router.patch('/courses/:courseId/republish', adminController.republishCourse);
 
-export default router;
+/**
+ * @route   GET /api/admin/courses/:courseId/quizzes-preview
+ * @desc    Admin xem preview tất cả Quiz trong khóa học (để kiểm duyệt)
+ * @access  Admin
+ */
+router.get('/courses/:courseId/quizzes-preview', adminController.getQuizzesPreview);
+
+export default router;
+

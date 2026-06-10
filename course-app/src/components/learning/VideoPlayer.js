@@ -16,12 +16,16 @@ import {
   Clock,
 } from 'lucide-react-native';
 import { courseApi } from '../../api/courseApi';
+import { learningApi } from '../../api/learningApi';
+import VideoQuizOverlayMobile from './VideoQuizOverlayMobile';
+
 
 /**
  * VideoPlayer — Mobile, dùng expo-video
  * ─ AWS CloudFront Signed URL
  * ─ Resume từ last_watched_time (prop lastWatchedTime)
  * ─ Gửi onProgress mỗi 10s khi đang phát
+ * ─ Interactive Quiz: poll currentTime mỗi 500ms, block seek
  *
  * FIX: lastWatchedTimeRef tránh closure stale trong useEffect([videoUrl]).
  * useEffect([lastWatchedTime]) reactive seek khi fetchVideoProgress trả về sau.
@@ -29,6 +33,7 @@ import { courseApi } from '../../api/courseApi';
 const VideoPlayer = ({
   currentLecture,
   courseId,
+  courseSlug,       // ── THÊM: dùng cho quiz API
   thumbnail,
   lastWatchedTime = 0,
   onProgress,
@@ -36,9 +41,25 @@ const VideoPlayer = ({
 }) => {
   const videoViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
+  const quizPollRef = useRef(null);         // ── Quiz polling interval
+  const quizTriggeredRef = useRef(new Set()); // ── Đã trigger quiz nào trong session
 
   // ─── Ref luôn giữ giá trị lastWatchedTime mới nhất (tránh closure stale) ───
   const lastWatchedTimeRef = useRef(lastWatchedTime);
+
+  // ─── Quiz state ──────────────────────────────────────────────────────────
+  const [activeQuiz, setActiveQuiz]         = useState(null);  // { quizIndex, quiz }
+  const [quizBlocked, setQuizBlocked]       = useState(false);
+  const [completedQuizzes, setCompletedQuizzes] = useState([]); // [{ lectureId, quizIndex }]
+
+  const quizzes = currentLecture?.quizzes || [];
+
+  const isQuizDone = useCallback((quizIndex) => {
+    if (!currentLecture?._id) return false;
+    return completedQuizzes.some(
+      q => String(q.lectureId) === String(currentLecture._id) && q.quizIndex === quizIndex
+    );
+  }, [completedQuizzes, currentLecture?._id]);
 
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
@@ -189,6 +210,88 @@ const VideoPlayer = ({
     return () => subscription?.remove();
   }, [player, onComplete]);
 
+  // ─── Reset quiz state khi đổi bài giảng ─────────────────────────────────────
+  useEffect(() => {
+    quizTriggeredRef.current.clear();
+    setActiveQuiz(null);
+    setQuizBlocked(false);
+  }, [currentLecture?._id]);
+
+  // ─── Quiz polling 500ms — kiểm tra timestamp khi video đang phát ─────────────
+  // expo-video không có seeking event reliable → dùng polling
+  useEffect(() => {
+    if (!player || !quizzes.length) return;
+
+    if (quizPollRef.current) clearInterval(quizPollRef.current);
+
+    quizPollRef.current = setInterval(() => {
+      if (!player) return;
+      let currentTime;
+      try {
+        currentTime = player.currentTime;
+      } catch (_) { return; }
+
+      if (currentTime == null) return;
+
+      for (let i = 0; i < quizzes.length; i++) {
+        const quiz = quizzes[i];
+        if (!quiz.isActive) continue;
+
+        const ts = Number(quiz.timestamp);
+        const inWindow = currentTime >= ts && currentTime <= ts + 2.5;
+
+        if (inWindow && !isQuizDone(i) && !quizTriggeredRef.current.has(i)) {
+          quizTriggeredRef.current.add(i);
+          // Pause video khi quiz xuất hiện
+          try { player.pause(); } catch (_) {}
+          setActiveQuiz({ quizIndex: i, quiz });
+          setQuizBlocked(true);
+          break;
+        }
+      }
+    }, 500);
+
+    return () => {
+      if (quizPollRef.current) {
+        clearInterval(quizPollRef.current);
+        quizPollRef.current = null;
+      }
+    };
+  }, [player, quizzes, isQuizDone]);
+
+  // ─── submitAnswer (mobile) ────────────────────────────────────────────────────
+  const handleQuizSubmit = useCallback(async (answer) => {
+    if (!activeQuiz || !courseSlug || !currentLecture?._id) return { correct: false, hint: null };
+    try {
+      const res = await learningApi.submitQuizAnswer({
+        courseSlug,
+        lectureId: currentLecture._id,
+        quizIndex: activeQuiz.quizIndex,
+        answer,
+      });
+      const { correct, hint } = res.data.data;
+
+      if (correct) {
+        const lectureId = String(currentLecture._id);
+        const quizIndex = activeQuiz.quizIndex;
+        setCompletedQuizzes(prev => {
+          const already = prev.some(q => q.lectureId === lectureId && q.quizIndex === quizIndex);
+          return already ? prev : [...prev, { lectureId, quizIndex }];
+        });
+      }
+      return { correct, hint: hint || null };
+    } catch (_) {
+      return { correct: false, hint: null };
+    }
+  }, [activeQuiz, courseSlug, currentLecture?._id]);
+
+  const handleQuizCorrect = useCallback(() => {
+    setActiveQuiz(null);
+    setQuizBlocked(false);
+    // Resume video sau khi trả lời đúng
+    try { player?.play(); } catch (_) {}
+  }, [player]);
+
   // ─── Fullscreen handler ────────────────────────────────────────────────────────
   const handleFullscreen = useCallback(() => {
     if (!videoViewRef.current || !videoUrl) return;
@@ -289,9 +392,19 @@ const VideoPlayer = ({
           <Maximize2 size={16} color="#fff" />
         </TouchableOpacity>
       )}
+
+      {/* ── Quiz Overlay ───────────────────────────────────────────────────── */}
+      {activeQuiz && (
+        <VideoQuizOverlayMobile
+          quiz={activeQuiz.quiz}
+          onSubmit={handleQuizSubmit}
+          onCorrect={handleQuizCorrect}
+        />
+      )}
     </View>
   );
 };
+
 
 const PLAYER_HEIGHT = 230;
 

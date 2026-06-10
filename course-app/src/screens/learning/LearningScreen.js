@@ -188,6 +188,7 @@ const LearningScreen = ({ route, navigation }) => {
         <VideoPlayer
           currentLecture={currentLecture}
           courseId={course._id}
+          courseSlug={slug}
           thumbnail={course.thumbnail}
           lastWatchedTime={lastWatchedTime}
           onProgress={handleVideoProgress}

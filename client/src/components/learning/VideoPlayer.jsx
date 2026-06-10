@@ -15,11 +15,15 @@ import {
   RefreshCw,
   BookOpen,
   FileText,
-  MessageSquare, // <== THÊM MessageSquare
+  MessageSquare,
 } from "lucide-react";
 import { courseApi } from "../../api/courseApi";
-import CourseDiscussion from "../../features/discussion/CourseDiscussion"; // <== THÊM
+import CourseDiscussion from "../../features/discussion/CourseDiscussion";
 import { useLocation } from "react-router-dom";
+import { useVideoQuiz } from "../../features/learning/useVideoQuiz";
+import VideoQuizOverlay from "./VideoQuizOverlay";
+import { toast } from "react-toastify";
+
 
 // ======================== VIDEO.JS PLAYER ========================
 
@@ -30,10 +34,12 @@ import { useLocation } from "react-router-dom";
  * @prop {number}   startTime    - Thời điểm bắt đầu (giây) khi resume
  * @prop {Function} onReady
  * @prop {Function} onTimeUpdate - (currentTime) => void
+ * @prop {Function} onSeeking    - (seekTo) => void  — kiểm tra quiz block
  * @prop {Function} onProgress   - (currentTime) => void — gọi mỗi 10s
  * @prop {Function} onEnded
+ * @prop {Function} onPlayerReady - cb(player) — expose player ref ra ngoài
  */
-const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onProgress, onEnded }) => {
+const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSeeking, onProgress, onEnded, onPlayerReady }) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
@@ -75,10 +81,16 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onPr
 
       playerRef.current.on("ready", () => {
         if (onReady) onReady(playerRef.current);
+        if (onPlayerReady) onPlayerReady(playerRef.current);
       });
 
       playerRef.current.on("timeupdate", () => {
         if (onTimeUpdate) onTimeUpdate(playerRef.current.currentTime());
+      });
+
+      // ── Seek blocking cho quiz ─────────────────────────────────────────
+      playerRef.current.on("seeking", () => {
+        if (onSeeking) onSeeking(playerRef.current.currentTime(), playerRef.current);
       });
 
       playerRef.current.on("ended", () => {
@@ -125,8 +137,6 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onPr
   }, []);
 
   // ─── Effect: load source mới ─────────────────────────────────────────────
-  // Mỗi khi src thay đổi → load lại + đăng ký seek sau loadedmetadata
-  // Đọc startTimeRef (không phải startTime trực tiếp) để không stale
   useEffect(() => {
     if (!playerRef.current || !src) return;
 
@@ -141,11 +151,8 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onPr
     });
   }, [src]);
 
-  // ─── Effect: startTime prop thay đổi (fetchVideoProgress trả về sau) ─────
-  // FIX chính: khi lastWatchedTime fetch xong, startTime prop mới cập nhật
-  // → sync ref + seek ngay nếu player/video đã sẵn sàng
+  // ─── Effect: startTime prop thay đổi ─────────────────────────────────────
   useEffect(() => {
-    // Luôn sync ref trước (để loadedmetadata handler từ [src] effect đọc đúng)
     startTimeRef.current = startTime;
 
     if (!playerRef.current || startTime <= 0) return;
@@ -221,6 +228,7 @@ const ResourceItem = ({ resource }) => {
 const VideoPlayer = ({
   lecture,
   courseId,
+  courseSlug,       // ── THÊM: dùng cho quiz API
   lastWatchedTime,
   onNext,
   onPrevious,
@@ -231,7 +239,42 @@ const VideoPlayer = ({
   isEnrolled,
   isInstructor,
 }) => {
-  const location = useLocation(); // Thêm useLocation
+  const location = useLocation();
+
+  // ─── Quiz logic ───────────────────────────────────────────────────────────
+  const quizzes = lecture?.quizzes || [];
+  const playerInstanceRef = useRef(null); // giữ video.js player instance
+
+  const {
+    onTimeUpdate: quizTimeUpdate,
+    checkSeekBlock,
+    submitAnswer,
+    reset: resetQuiz,
+    activeQuiz,
+    quizBlocked,
+  } = useVideoQuiz(courseSlug, lecture?._id, quizzes);
+
+  // Reset quiz khi đổi bài giảng
+  useEffect(() => {
+    resetQuiz();
+  }, [lecture?._id, resetQuiz]);
+
+  // Pause video khi có quiz active
+  useEffect(() => {
+    if (quizBlocked && playerInstanceRef.current) {
+      try { playerInstanceRef.current.pause(); } catch (_) {}
+    }
+  }, [quizBlocked]);
+
+  // Handler: seeking event — chặn seek qua quiz chưa làm
+  const handleSeeking = useCallback((seekTo, player) => {
+    const { blocked, revertTo } = checkSeekBlock(seekTo);
+    if (blocked && player) {
+      try { player.currentTime(revertTo); } catch (_) {}
+      toast.warning('⚠️ Hãy trả lời câu hỏi trước khi xem tiếp!', { toastId: 'quiz-block', autoClose: 2500 });
+    }
+  }, [checkSeekBlock]);
+
 
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
@@ -343,7 +386,7 @@ const VideoPlayer = ({
         ) : videoUrl ? (
           <>
             {/* Resume badge khi có lastWatchedTime > 10s */}
-            {lastWatchedTime > 10 && (
+            {lastWatchedTime > 10 && !quizBlocked && (
               <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-rose-600/90 backdrop-blur-sm rounded-full px-3 py-1 pointer-events-none">
                 <span className="text-white text-xs font-semibold">
                   ▶ Tiếp tục từ {Math.floor(lastWatchedTime / 60)}:{String(Math.floor(lastWatchedTime % 60)).padStart(2, '0')}
@@ -355,19 +398,27 @@ const VideoPlayer = ({
               src={videoUrl}
               poster={lecture.thumbnail || ""}
               startTime={lastWatchedTime || 0}
+              onTimeUpdate={quizTimeUpdate}
+              onSeeking={handleSeeking}
+              onPlayerReady={(player) => { playerInstanceRef.current = player; }}
               onProgress={onVideoProgress}
               onEnded={() => {
                 if (!isCompleted) onToggleComplete?.();
               }}
             />
-            {/* {isCFUrl && (
-              <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2.5 py-1 pointer-events-none">
-                <Cloud size={11} className="text-blue-400" />
-                <span className="text-white text-xs font-medium">
-                  CloudFront CDN
-                </span>
-              </div>
-            )} */}
+            {/* ── Quiz Overlay ──────────────────────────────────────────── */}
+            {activeQuiz && (
+              <VideoQuizOverlay
+                quiz={activeQuiz.quiz}
+                onSubmit={(answer) => submitAnswer(activeQuiz.quizIndex, answer)}
+                onCorrect={() => {
+                  // Resume video sau khi trả lời đúng
+                  if (playerInstanceRef.current) {
+                    try { playerInstanceRef.current.play(); } catch (_) {}
+                  }
+                }}
+              />
+            )}
           </>
         ) : (
           <div

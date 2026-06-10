@@ -593,12 +593,22 @@ export const approveRevision = async (revisionId, adminId) => {
           duration: Number(lecData.duration) || 0,
           order: lecData.order || 0,
           isPreviewFree: lecData.isPreviewFree || false,
-          resources: lecData.resources || []
+          resources: lecData.resources || [],
+          // ── Copy quiz data từ revision ──────────────────────────────────────
+          quizzes: (lecData.quizzes || []).map(q => ({
+            question:      q.question,
+            options:       q.options || [],
+            correctAnswer: q.correctAnswer,
+            hint:          q.hint || '',
+            timestamp:     Number(q.timestamp) || 0,
+            isActive:      q.isActive !== false,
+          })),
         });
         lectureIds.push(newLecture._id);
         totalLectures++;
         totalDuration += newLecture.duration;
       }
+
 
       // Tạo Section (chưa có course, sẽ set sau)
       const newSection = await Section.create({
@@ -692,12 +702,22 @@ export const approveRevision = async (revisionId, adminId) => {
           duration: Number(lecData.duration) || 0,
           order: lecData.order || 0,
           isPreviewFree: lecData.isPreviewFree || false,
-          resources: lecData.resources || []
+          resources: lecData.resources || [],
+          // ── Copy quiz data từ revision ──────────────────────────────────────
+          quizzes: (lecData.quizzes || []).map(q => ({
+            question:      q.question,
+            options:       q.options || [],
+            correctAnswer: q.correctAnswer,
+            hint:          q.hint || '',
+            timestamp:     Number(q.timestamp) || 0,
+            isActive:      q.isActive !== false,
+          })),
         });
         lectureIds.push(newLecture._id);
         totalLectures++;
         totalDuration += newLecture.duration;
       }
+
 
       const newSection = await Section.create({
         title: sectionData.title,
@@ -1188,3 +1208,65 @@ export const reviewInstructorApplication = async (applicationId, action, reason)
 
   throw new Error("Invalid action");
 };
+
+// ─── getQuizzesPreview — Admin xem tất cả Quiz trong khóa học ────────────────
+/**
+ * Lấy preview toàn bộ quiz của một khóa học (theo course._id)
+ * Dùng để admin kiểm duyệt nội dung trước khi approve revision
+ */
+export const getQuizzesPreview = async (courseId) => {
+  const course = await Course.findById(courseId)
+    .populate({
+      path: 'sections',
+      populate: {
+        path: 'lectures',
+        select: 'title quizzes duration order',
+      },
+    })
+    .lean();
+
+  if (!course) {
+    const error = new Error('Không tìm thấy khóa học');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  let totalQuizzes = 0;
+  let lecturesWithQuiz = 0;
+
+  const sections = (course.sections || []).map(section => ({
+    sectionTitle: section.title,
+    lectures: (section.lectures || []).map(lecture => {
+      const activeQuizzes = (lecture.quizzes || []).filter(q => q.isActive !== false);
+      if (activeQuizzes.length > 0) lecturesWithQuiz++;
+      totalQuizzes += activeQuizzes.length;
+
+      return {
+        lectureId:    lecture._id,
+        lectureTitle: lecture.title,
+        duration:     lecture.duration,
+        quizzes:      activeQuizzes.map(q => ({
+          _id:           q._id,
+          question:      q.question,
+          options:       q.options,
+          correctAnswer: q.correctAnswer, // Admin được phép xem đáp án đúng
+          hint:          q.hint,
+          timestamp:     q.timestamp,
+          isActive:      q.isActive,
+        })),
+      };
+    }),
+  }));
+
+  return {
+    courseTitle: course.title,
+    sections,
+    stats: {
+      totalQuizzes,
+      lecturesWithQuiz,
+      avgQuizPerLecture: lecturesWithQuiz > 0
+        ? parseFloat((totalQuizzes / lecturesWithQuiz).toFixed(1))
+        : 0,
+    },
+  };
+};

@@ -9,6 +9,10 @@ const initialState = {
   currentLecture: null,   // Bài học đang xem
   // ─── Video progress tracking ───────────────────────────────────────────────
   lastWatchedTime: 0,     // last_watched_time của bài đang xem (giây)
+  // ─── Interactive Quiz state ───────────────────────────────────────────
+  completedQuizzes: [],   // [{ lectureId, quizIndex }] — quiz đã đạt
+  activeQuiz: null,       // { quizIndex, quiz } — quiz đang hiển thị
+  quizBlocked: false,     // Video đang bị block bởi quiz
   isLoading: false,
   isError: false,
 };
@@ -78,6 +82,9 @@ export const learningSlice = createSlice({
     setCurrentLecture: (state, action) => {
       state.currentLecture = action.payload;
       state.lastWatchedTime = 0; // Reset khi chuyển bài
+      // Reset quiz state khi chuyển bài
+      state.activeQuiz = null;
+      state.quizBlocked = false;
     },
     resetLearning: (state) => {
       state.course = null;
@@ -85,10 +92,38 @@ export const learningSlice = createSlice({
       state.currentLecture = null;
       state.sections = [];
       state.lastWatchedTime = 0;
+      state.completedQuizzes = [];
+      state.activeQuiz = null;
+      state.quizBlocked = false;
     },
     /** Cập nhật lastWatchedTime cục bộ (dùng cho UI, không gọi API) */
     setLastWatchedTime: (state, action) => {
       state.lastWatchedTime = action.payload;
+    },
+    // ─── Quiz reducers ────────────────────────────────────────────────────────
+    /** Hiển thị quiz overlay và block video */
+    showQuiz: (state, action) => {
+      // action.payload: { quizIndex, quiz }
+      state.activeQuiz = action.payload;
+      state.quizBlocked = true;
+    },
+    /** Đóng quiz overlay (không dùng trực tiếp — chỉ khi admin deactivate) */
+    dismissQuiz: (state) => {
+      state.activeQuiz = null;
+      state.quizBlocked = false;
+    },
+    /** Đánh dấu quiz đã hoàn thành đúng, resume video */
+    markQuizComplete: (state, action) => {
+      // action.payload: { lectureId, quizIndex }
+      const { lectureId, quizIndex } = action.payload;
+      const exists = state.completedQuizzes.some(
+        q => q.lectureId === lectureId && q.quizIndex === quizIndex
+      );
+      if (!exists) {
+        state.completedQuizzes.push({ lectureId, quizIndex });
+      }
+      state.activeQuiz = null;
+      state.quizBlocked = false;
     },
   },
   extraReducers: (builder) => {
@@ -105,7 +140,10 @@ export const learningSlice = createSlice({
         state.sections = action.payload.course.sections || [];
         state.progress = action.payload.progress;
         state.currentLecture = null;
+        // Load danh sách quiz đã hoàn thành từ server
+        state.completedQuizzes = action.payload.progress?.completedQuizzes || [];
       })
+
       .addCase(fetchLearningCourse.rejected, (state) => {
         state.isLoading = false;
         state.isError = true;
@@ -131,5 +169,12 @@ export const learningSlice = createSlice({
   },
 });
 
-export const { setCurrentLecture, resetLearning, setLastWatchedTime } = learningSlice.actions;
-export default learningSlice.reducer;
+export const {
+  setCurrentLecture,
+  resetLearning,
+  setLastWatchedTime,
+  showQuiz,
+  dismissQuiz,
+  markQuizComplete,
+} = learningSlice.actions;
+export default learningSlice.reducer;

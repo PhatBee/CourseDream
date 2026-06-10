@@ -40,10 +40,21 @@ const getVideoProgress = (courseSlug, lectureId) => {
   return axiosClient.get(`${progressPath}/video/${courseSlug}/${lectureId}`);
 };
 
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+const submitQuizAnswer = ({ courseSlug, lectureId, quizIndex, answer }) => {
+  return axiosClient.post(`${progressPath}/quiz-answer`, {
+    courseSlug,
+    lectureId,
+    quizIndex,
+    answer,
+  });
+};
+
 export const learningApi = {
   getCourseContent,
   getProgress,
   toggleLectureCompletion,
   saveVideoProgress,
   getVideoProgress,
-};
+  submitQuizAnswer,
+};

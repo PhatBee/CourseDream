@@ -336,4 +336,19 @@ export const getAllCourses = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};
+
+/**
+ * @desc    Admin xem preview tất cả Quiz trong một khóa học (để kiểm duyệt)
+ * @route   GET /api/admin/courses/:courseId/quizzes-preview
+ */
+export const getQuizzesPreview = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const result = await adminService.getQuizzesPreview(courseId);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+

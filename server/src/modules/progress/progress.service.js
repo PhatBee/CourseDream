@@ -1,6 +1,8 @@
 import Progress from './progress.model.js';
 import Course from '../course/course.model.js';
+import Lecture from '../course/lecture.model.js';
 import notificationService from '../notification/notification.service.js';
+
 
 const getCourseBySlug = async (slug) => {
   const course = await Course.findOne({ slug }).select('_id title totalLectures');
@@ -147,3 +149,76 @@ export const getVideoProgress = async (userId, courseSlug, lectureId) => {
 
   return { lectureId, watchedSeconds: entry ? entry.watchedSeconds : 0 };
 };
+
+// ─── submitQuizAnswer — Kiểm tra đáp án quiz & lưu tiến độ ─────────────────
+/**
+ * @param {string} userId
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ * @param {number} quizIndex   - vị trí quiz trong lecture.quizzes[]
+ * @param {string} answer      - 'A' | 'B' | 'C' | 'D'
+ * @returns {{ correct: boolean, hint: string|null, message: string }}
+ */
+export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex, answer) => {
+  // 1. Tìm lecture
+  const lecture = await Lecture.findById(lectureId).select('quizzes').lean();
+  if (!lecture) {
+    const error = new Error('Bài giảng không tồn tại');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const quiz = lecture.quizzes?.[quizIndex];
+  if (!quiz || !quiz.isActive) {
+    const error = new Error('Câu hỏi không tồn tại hoặc đã bị vô hiệu hoá');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // 2. So sánh đáp án — KHÔNG trả về correctAnswer nếu sai
+  const correct = quiz.correctAnswer === answer;
+
+  if (correct) {
+    // 3. Lưu tiến độ quiz (upsert progress document nếu chưa có)
+    const course = await getCourseBySlug(courseSlug);
+
+    // Tránh duplicate: chỉ push nếu chưa có entry lectureId + quizIndex này
+    const alreadyDone = await Progress.findOne({
+      student: userId,
+      course: course._id,
+      'completedQuizzes.lectureId': lectureId,
+      'completedQuizzes.quizIndex': quizIndex,
+    });
+
+    if (!alreadyDone) {
+      await Progress.findOneAndUpdate(
+        { student: userId, course: course._id },
+        {
+          $setOnInsert: {
+            student: userId,
+            course: course._id,
+            completedLectures: [],
+            watchTimes: [],
+            completedQuizzes: [],
+            percentage: 0,
+          },
+          $push: {
+            completedQuizzes: {
+              lectureId,
+              quizIndex,
+              answeredAt: new Date(),
+            },
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
+  }
+
+  return {
+    correct,
+    // Chỉ trả hint khi sai — không bao giờ tiết lộ correctAnswer
+    hint: correct ? null : (quiz.hint || null),
+    message: correct ? 'Chính xác! Tiếp tục xem video.' : 'Chưa đúng, hãy thử lại!',
+  };
+};
