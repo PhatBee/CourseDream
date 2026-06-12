@@ -11,10 +11,11 @@ import {
 import {
   ChevronDown, ChevronUp, Play, X, CheckCircle, ArrowLeft,
   User, Tag, DollarSign, Globe, Layers, Clock, Video,
-  BookOpen, Award, List, Cloud
+  BookOpen, Award, List, Cloud, HelpCircle
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import Avatar from '../../components/common/Avatar';
+import QuizPreviewList from '../../components/admin/QuizPreviewList';
 
 // ======================== MODAL COMPONENTS ========================
 
@@ -175,12 +176,12 @@ const CloudFrontVideoPlayer = ({ url, onClose }) => {
             title="Video preview"
           />
         )}
-        {isCloudFront && (
+        {/* {isCloudFront && (
           <div className="flex items-center gap-2 mt-3 justify-center">
             <Cloud size={14} className="text-blue-400" />
             <span className="text-white/60 text-xs">Phát từ AWS CloudFront CDN</span>
           </div>
-        )}
+        )} */}
       </div>
     </div>,
     document.body
@@ -340,11 +341,11 @@ const AdminPendingCourseDetail = () => {
                   alt={revision.title}
                   className="w-full aspect-video object-cover"
                 />
-                {revision.thumbnail.includes('cloudfront.net') && (
+                {/* {revision.thumbnail.includes('cloudfront.net') && (
                   <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
                     <Cloud size={11} /> AWS CloudFront
                   </div>
-                )}
+                )} */}
                 {(revision.previewUrl) && (
                   <button
                     onClick={() => setVideoPreview(revision.previewUrl)}
@@ -363,10 +364,10 @@ const AdminPendingCourseDetail = () => {
               <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
                 <BookOpen size={18} className="text-rose-500" /> Mô tả khóa học
               </h2>
-              <p className="text-gray-600 text-sm leading-relaxed mb-4">{revision.shortDescription}</p>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4 text-justify">{revision.shortDescription}</p>
               {revision.description && (
                 <div
-                  className="prose prose-sm max-w-none text-gray-600"
+                  className="prose prose-sm max-w-none text-gray-600 text-justify"
                   dangerouslySetInnerHTML={{ __html: revision.description }}
                 />
               )}
@@ -380,7 +381,7 @@ const AdminPendingCourseDetail = () => {
                 </h2>
                 <ul className="space-y-2">
                   {revision.learnOutcomes.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <li key={i} className="flex items-start gap-2 text-sm text-justify">
                       <CheckCircle size={15} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-700">{item}</span>
                     </li>
@@ -443,7 +444,7 @@ const AdminPendingCourseDetail = () => {
                           {section.lectures.map((lecture, lIdx) => (
                             <li key={lIdx} className="p-3.5 hover:bg-gray-50 transition-colors">
                               {/* Lecture Header Row */}
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between text-justify">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                   <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                                     <Play size={11} className="text-gray-400" />
@@ -457,14 +458,21 @@ const AdminPendingCourseDetail = () => {
                                       {lecture.isPreviewFree && (
                                         <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-xs rounded font-medium">Preview</span>
                                       )}
-                                      {lecture.videoUrl && isVideoS3(lecture.videoUrl) && (
+                                      {/* {lecture.videoUrl && isVideoS3(lecture.videoUrl) && (
                                         <span className="flex items-center gap-1 text-xs text-blue-500">
                                           <Cloud size={10} /> S3
                                         </span>
-                                      )}
+                                      )} */}
                                       {lecture.resources?.length > 0 && (
                                         <span className="text-xs text-indigo-500 font-medium">
                                           📎 {lecture.resources.length} tài liệu
+                                        </span>
+                                      )}
+                                      {/* Quiz badge */}
+                                      {lecture.quizzes?.filter(q => q.isActive !== false).length > 0 && (
+                                        <span className="inline-flex items-center gap-1 text-xs text-violet-600 font-bold px-1.5 py-0.5 bg-violet-50 rounded border border-violet-200">
+                                          <HelpCircle size={9} />
+                                          {lecture.quizzes.filter(q => q.isActive !== false).length} quiz
                                         </span>
                                       )}
                                     </div>
@@ -483,9 +491,9 @@ const AdminPendingCourseDetail = () => {
                               {/* Resources Section */}
                               {lecture.resources?.length > 0 && (
                                 <div className="mt-2 ml-9 space-y-1.5">
-                                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Tài liệu đính kèm</p>
+                                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 text-justify">Tài liệu đính kèm</p>
                                   {lecture.resources.map((res, rIdx) => (
-                                    <div key={rIdx} className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                                    <div key={rIdx} className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg border border-indigo-100 text-justify">
                                       {res.type === 'link' ? (
                                         <>
                                           <span className="text-indigo-400 flex-shrink-0">🔗</span>
@@ -512,14 +520,14 @@ const AdminPendingCourseDetail = () => {
                                       ) : (
                                         <>
                                           <span className="text-indigo-400 flex-shrink-0">📄</span>
-                                          <div className="flex-1 min-w-0">
+                                          {/* <div className="flex-1 min-w-0">
                                             <p className="text-xs font-medium text-gray-700 truncate">{res.title || 'Tài liệu'}</p>
                                             {res.url && (
                                               <span className="text-xs text-gray-400 truncate block">
                                                 {res.url.includes('cloudfront.net') ? '☁ AWS CloudFront' : res.url}
                                               </span>
                                             )}
-                                          </div>
+                                          </div> */}
                                           {res.url && (
                                             <a
                                               href={res.url}
@@ -537,6 +545,11 @@ const AdminPendingCourseDetail = () => {
                                   ))}
                                 </div>
                               )}
+
+                              {/* ── Quiz Preview Section ─────────────────────────────── */}
+                              {lecture.quizzes?.length > 0 && (
+                                <QuizPreviewList quizzes={lecture.quizzes} />
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -548,7 +561,7 @@ const AdminPendingCourseDetail = () => {
             )}
 
             {/* Compare with original (Update mode) */}
-            {type === 'update' && originalCourse && (
+            {/* {type === 'update' && originalCourse && (
               <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6">
                 <h2 className="text-lg font-bold text-amber-800 mb-4 flex items-center gap-2">
                   📋 So sánh với khóa học hiện tại
@@ -569,7 +582,7 @@ const AdminPendingCourseDetail = () => {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* ===== RIGHT COLUMN: Sidebar ===== */}
@@ -578,7 +591,7 @@ const AdminPendingCourseDetail = () => {
             {/* Course Info Card */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Thông tin khóa học</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 text-justify">
                 <InfoItem icon={DollarSign} label="Giá gốc" value={formatVND(revision.price)} />
                 <InfoItem icon={DollarSign} label="Giá khuyến mãi" value={formatVND(revision.priceDiscount)} />
                 <InfoItem icon={Award} label="Cấp độ" value={revision.level} />
