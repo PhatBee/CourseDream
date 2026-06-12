@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Animated,
+  Modal,
+  ScrollView,
+  SafeAreaView,
 } from 'react-native';
 
 /**
@@ -50,114 +52,135 @@ const VideoQuizOverlayMobile = ({ quiz, onSubmit, onCorrect }) => {
   };
 
   return (
-    // Overlay full màn hình
-    <View style={styles.backdrop}>
-      <View style={styles.card}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerLabel}>❓ Câu hỏi kiểm tra</Text>
-          <Text style={styles.headerSub}>Trả lời đúng để tiếp tục xem video</Text>
-        </View>
+    <Modal
+      visible={true}
+      transparent={true}
+      animationType="fade"
+      supportedOrientations={['portrait', 'landscape']}
+    >
+      {/* Overlay full màn hình */}
+      <View style={styles.backdrop}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.card}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.headerLabel}>❓ Câu hỏi kiểm tra</Text>
+              <Text style={styles.headerSub}>Trả lời đúng để tiếp tục xem video</Text>
+            </View>
 
-        {/* Question */}
-        <Text style={styles.question}>{quiz.question}</Text>
+            {/* Scrollable Content inside card */}
+            <ScrollView
+              style={styles.scrollContainer}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={true}
+            >
+              {/* Question */}
+              <Text style={styles.question}>{quiz.question}</Text>
 
-        {/* Options */}
-        <View style={styles.optionsContainer}>
-          {(quiz.options || []).map((opt) => {
-            const isSelected = selected === opt.id;
-            const isWrong    = feedback === 'wrong' && isSelected;
+              {/* Options */}
+              <View style={styles.optionsContainer}>
+                {(quiz.options || []).map((opt) => {
+                  const isSelected = selected === opt.id;
+                  const isWrong    = feedback === 'wrong' && isSelected;
 
-            let btnStyle    = styles.optionBtn;
-            let textStyle   = styles.optionText;
-            let badgeStyle  = styles.optionBadge;
-            let badgeText   = styles.optionBadgeText;
+                  let btnStyle    = styles.optionBtn;
+                  let textStyle   = styles.optionText;
+                  let badgeStyle  = styles.optionBadge;
+                  let badgeText   = styles.optionBadgeText;
 
-            if (isSelected) {
-              btnStyle   = [styles.optionBtn, styles.optionBtnSelected];
-              badgeStyle = [styles.optionBadge, styles.optionBadgeSelected];
-              badgeText  = [styles.optionBadgeText, styles.optionBadgeTextSelected];
-            }
-            if (isWrong) {
-              btnStyle   = [styles.optionBtn, styles.optionBtnWrong];
-              textStyle  = [styles.optionText, styles.optionTextWrong];
-            }
+                  if (isSelected) {
+                    btnStyle   = [styles.optionBtn, styles.optionBtnSelected];
+                    badgeStyle = [styles.optionBadge, styles.optionBadgeSelected];
+                    badgeText  = [styles.optionBadgeText, styles.optionBadgeTextSelected];
+                  }
+                  if (isWrong) {
+                    btnStyle   = [styles.optionBtn, styles.optionBtnWrong];
+                    textStyle  = [styles.optionText, styles.optionTextWrong];
+                  }
 
-            return (
-              <TouchableOpacity
-                key={opt.id}
-                onPress={() => handleSelect(opt.id)}
-                style={btnStyle}
-                disabled={feedback === 'correct'}
-                activeOpacity={0.7}
-              >
-                <View style={badgeStyle}>
-                  <Text style={badgeText}>{opt.id}</Text>
+                  return (
+                    <TouchableOpacity
+                      key={opt.id}
+                      onPress={() => handleSelect(opt.id)}
+                      style={btnStyle}
+                      disabled={feedback === 'correct'}
+                      activeOpacity={0.7}
+                    >
+                      <View style={badgeStyle}>
+                        <Text style={badgeText}>{opt.id}</Text>
+                      </View>
+                      <Text style={textStyle}>{opt.text}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Hint */}
+              {hint ? (
+                <View style={styles.hintBox}>
+                  <Text style={styles.hintText}>💡 {hint}</Text>
                 </View>
-                <Text style={textStyle}>{opt.text}</Text>
+              ) : null}
+
+              {/* Correct feedback */}
+              {feedback === 'correct' ? (
+                <View style={styles.correctBox}>
+                  <Text style={styles.correctText}>✅ Chính xác! Video sẽ tiếp tục phát...</Text>
+                </View>
+              ) : null}
+
+              {/* Wrong (no hint) feedback */}
+              {feedback === 'wrong' && !hint ? (
+                <View style={styles.wrongBox}>
+                  <Text style={styles.wrongText}>❌ Chưa đúng rồi, hãy thử lại!</Text>
+                </View>
+              ) : null}
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                onPress={handleSubmit}
+                disabled={!selected || feedback === 'correct' || isSubmitting}
+                style={[
+                  styles.submitBtn,
+                  (!selected || feedback === 'correct' || isSubmitting) && styles.submitBtnDisabled,
+                ]}
+                activeOpacity={0.8}
+              >
+                {isSubmitting
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.submitBtnText}>
+                      {isSubmitting ? 'Đang kiểm tra...' : 'Xác nhận đáp án'}
+                    </Text>
+                }
               </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Hint */}
-        {hint ? (
-          <View style={styles.hintBox}>
-            <Text style={styles.hintText}>💡 {hint}</Text>
+            </ScrollView>
           </View>
-        ) : null}
-
-        {/* Correct feedback */}
-        {feedback === 'correct' ? (
-          <View style={styles.correctBox}>
-            <Text style={styles.correctText}>✅ Chính xác! Video sẽ tiếp tục phát...</Text>
-          </View>
-        ) : null}
-
-        {/* Wrong (no hint) feedback */}
-        {feedback === 'wrong' && !hint ? (
-          <View style={styles.wrongBox}>
-            <Text style={styles.wrongText}>❌ Chưa đúng rồi, hãy thử lại!</Text>
-          </View>
-        ) : null}
-
-        {/* Submit Button */}
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={!selected || feedback === 'correct' || isSubmitting}
-          style={[
-            styles.submitBtn,
-            (!selected || feedback === 'correct' || isSubmitting) && styles.submitBtnDisabled,
-          ]}
-          activeOpacity={0.8}
-        >
-          {isSubmitting
-            ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={styles.submitBtnText}>
-                {isSubmitting ? 'Đang kiểm tra...' : 'Xác nhận đáp án'}
-              </Text>
-          }
-        </TouchableOpacity>
+        </SafeAreaView>
       </View>
-    </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 100,
     padding: 16,
+  },
+  safeArea: {
+    width: '100%',
+    maxWidth: 420,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
     width: '100%',
-    maxWidth: 420,
+    maxHeight: '90%', // Tránh tràn màn hình khi xoay ngang
   },
   header: {
     backgroundColor: '#e11d48',
@@ -173,6 +196,12 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
     marginTop: 2,
+  },
+  scrollContainer: {
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 8,
   },
   question: {
     fontSize: 15,
