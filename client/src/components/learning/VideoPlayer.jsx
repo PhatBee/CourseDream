@@ -22,6 +22,7 @@ import CourseDiscussion from "../../features/discussion/CourseDiscussion";
 import { useLocation } from "react-router-dom";
 import { useVideoQuiz } from "../../features/learning/useVideoQuiz";
 import VideoQuizOverlay from "./VideoQuizOverlay";
+import QuizProgressMarkers from "./QuizProgressMarkers";
 import { toast } from "react-toastify";
 
 
@@ -252,6 +253,7 @@ const VideoPlayer = ({
     reset: resetQuiz,
     activeQuiz,
     quizBlocked,
+    completedQuizzes, // dùng để tô màu markers đã hoàn thành
   } = useVideoQuiz(courseSlug, lecture?._id, quizzes);
 
   // Reset quiz khi đổi bài giảng
@@ -280,6 +282,10 @@ const VideoPlayer = ({
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview"); // 'overview' | 'resources'
+
+  // ─── Quiz Markers state ───────────────────────────────────────────────────
+  const [videoDuration, setVideoDuration] = useState(0); // tổng thời lượng video
+  const [markerCurrentTime, setMarkerCurrentTime] = useState(0); // currentTime cho markers
 
   const fetchVideoUrl = useCallback(async () => {
     if (!lecture?._id || !courseId) return;
@@ -398,14 +404,38 @@ const VideoPlayer = ({
               src={videoUrl}
               poster={lecture.thumbnail || ""}
               startTime={lastWatchedTime || 0}
-              onTimeUpdate={quizTimeUpdate}
+              onTimeUpdate={(t) => {
+                quizTimeUpdate(t);
+                setMarkerCurrentTime(t);
+              }}
               onSeeking={handleSeeking}
-              onPlayerReady={(player) => { playerInstanceRef.current = player; }}
+              onPlayerReady={(player) => {
+                playerInstanceRef.current = player;
+                // Lấy duration khi metadata đã load
+                const updateDuration = () => {
+                  const d = player.duration();
+                  if (d && isFinite(d) && d > 0) setVideoDuration(d);
+                };
+                player.on('loadedmetadata', updateDuration);
+                player.on('durationchange', updateDuration);
+                updateDuration(); // Thử lấy ngay nếu đã sẵn sàng
+              }}
               onProgress={onVideoProgress}
               onEnded={() => {
                 if (!isCompleted) onToggleComplete?.();
               }}
             />
+            {/* ── Quiz Progress Markers ─────────────────────────────────── */}
+            {quizzes.length > 0 && videoDuration > 0 && (
+              <QuizProgressMarkers
+                playerRef={playerInstanceRef}
+                quizzes={quizzes}
+                videoDuration={videoDuration || lecture?.duration}
+                currentTime={markerCurrentTime}
+                completedQuizzes={completedQuizzes}
+                lectureId={lecture?._id}
+              />
+            )}
             {/* ── Quiz Overlay ──────────────────────────────────────────── */}
             {activeQuiz && (
               <VideoQuizOverlay

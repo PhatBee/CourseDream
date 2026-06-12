@@ -126,5 +126,6 @@ export function useVideoQuiz(courseSlug, lectureId, quizzes = []) {
     activeQuiz,
     quizBlocked,
     isQuizDone,
+    completedQuizzes, // expose để VideoPlayer pass xuống QuizProgressMarkers
   };
 }
