@@ -127,6 +127,7 @@ const LearningPage = () => {
       progress={progress}
       currentLecture={currentLecture}
       lastWatchedTime={lastWatchedTime}
+      courseSlug={slug}
       onBack={handleBackToOverview}
       onNext={() => handleNavigateLecture("next")}
       onPrev={() => handleNavigateLecture("prev")}
@@ -137,6 +138,7 @@ const LearningPage = () => {
       isEnrolled={isEnrolled}
       isInstructor={isInstructor}
     />
+
   );
 };
 

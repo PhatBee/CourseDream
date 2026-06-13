@@ -119,4 +119,15 @@ router.patch('/courses/:courseId/suspend', adminController.suspendCourse);
 // Restore từ suspended
 router.patch('/courses/:courseId/restore', adminController.restoreSuspendedCourse);
 
-export default router;
+// Publish lại từ unpublished → published
+router.patch('/courses/:courseId/republish', adminController.republishCourse);
+
+/**
+ * @route   GET /api/admin/courses/:courseId/quizzes-preview
+ * @desc    Admin xem preview tất cả Quiz trong khóa học (để kiểm duyệt)
+ * @access  Admin
+ */
+router.get('/courses/:courseId/quizzes-preview', adminController.getQuizzesPreview);
+
+export default router;
+

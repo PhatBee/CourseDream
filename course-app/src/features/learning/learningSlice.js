@@ -105,6 +105,25 @@ export const learningSlice = createSlice({
     setLastWatchedTime: (state, action) => {
       state.lastWatchedTime = action.payload;
     },
+    markQuizComplete: (state, action) => {
+      const { lectureId, quizIndex } = action.payload;
+      if (!state.progress) {
+        state.progress = { completedLectures: [], completedQuizzes: [], percentage: 0 };
+      }
+      if (!state.progress.completedQuizzes) {
+        state.progress.completedQuizzes = [];
+      }
+      const exists = state.progress.completedQuizzes.some(
+        q => String(q.lectureId) === String(lectureId) && q.quizIndex === quizIndex
+      );
+      if (!exists) {
+        state.progress.completedQuizzes.push({
+          lectureId,
+          quizIndex,
+          answeredAt: new Date().toISOString()
+        });
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -158,10 +177,10 @@ export const learningSlice = createSlice({
 
       // saveVideoProgress — silent update
       .addCase(saveVideoProgress.fulfilled, (state, action) => {
-        // Có thể cập nhật local state nếu cần
+        state.lastWatchedTime = action.payload?.watchedSeconds ?? state.lastWatchedTime;
       });
   },
 });
 
-export const { setCurrentLecture, resetLearning, setLastWatchedTime } = learningSlice.actions;
+export const { setCurrentLecture, resetLearning, setLastWatchedTime, markQuizComplete } = learningSlice.actions;
 export default learningSlice.reducer;

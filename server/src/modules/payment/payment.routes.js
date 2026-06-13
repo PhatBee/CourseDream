@@ -12,7 +12,7 @@ router.post('/create_payment_url', verifyToken, paymentController.createPaymentU
 router.get('/vnpay_return', paymentController.vnpayReturn);
 
 router.post('/create_momo_url', verifyToken, paymentController.createMomoPaymentUrl);
-router.get('/momo_return', paymentController.momoReturn);
+router.all('/momo_return', paymentController.momoReturn);
 
 router.post('/create_zalopay_url', verifyToken, paymentController.createZaloPayPaymentUrl);
 router.get('/zalopay_return', paymentController.zalopayReturn);

@@ -32,4 +32,11 @@ router.get('/:courseSlug', progressController.getProgress);
  */
 router.post('/toggle', progressController.toggleLectureCompletion);
 
-export default router;
+/**
+ * @route   POST /api/progress/quiz-answer
+ * @desc    Học viên submit đáp án quiz (validate server-side)
+ * @body    { courseSlug, lectureId, quizIndex, answer }
+ */
+router.post('/quiz-answer', progressController.submitQuizAnswer);
+
+export default router;

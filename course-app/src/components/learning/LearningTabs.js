@@ -23,8 +23,8 @@ const LearningTabs = ({ activeTab, setActiveTab, resourceCount = 0 }) => {
   ];
 
   return (
-    <ScrollView 
-      horizontal 
+    <ScrollView
+      horizontal
       showsHorizontalScrollIndicator={false}
       style={styles.scrollView}
       contentContainerStyle={styles.tabContainer}

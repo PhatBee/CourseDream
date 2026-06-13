@@ -5,6 +5,7 @@ import ApplicationDetailModal from '../../components/admin/ApplicationDetailModa
 import { toast, Toaster } from 'react-hot-toast';
 import { Search, Eye } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
+import Avatar from '../../components/common/Avatar';
 
 const InstructorsManagement = () => {
     const [activeTab, setActiveTab] = useState('list'); // 'list' (All Instructors) | 'pending' (Applications)
@@ -109,7 +110,7 @@ const InstructorsManagement = () => {
                                                 <tr key={app._id} className="hover:bg-gray-50 transition">
                                                     <td className="px-4 py-3">
                                                         <div className="flex items-center gap-3">
-                                                            <img src={app.user?.avatar || "/default-avatar.png"} alt="" className="w-8 h-8 rounded-full object-cover" />
+                                                            <Avatar src={app.user?.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
                                                             <span className="font-medium text-gray-900">{app.user?.name}</span>
                                                         </div>
                                                     </td>

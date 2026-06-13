@@ -310,6 +310,22 @@ export const restoreSuspendedCourse = async (req, res, next) => {
 };
 
 /**
+ * Publish lại khóa học từ unpublished → published
+ * @route   PATCH /api/admin/courses/:courseId/republish
+ */
+export const republishCourse = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const adminId = req.user._id;
+
+    const result = await adminService.republishCourse(courseId, adminId);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Lấy danh sách tất cả courses (có filter status) cho Admin quản lý
  * @route   GET /api/admin/courses
  */
@@ -320,4 +336,19 @@ export const getAllCourses = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};
+
+/**
+ * @desc    Admin xem preview tất cả Quiz trong một khóa học (để kiểm duyệt)
+ * @route   GET /api/admin/courses/:courseId/quizzes-preview
+ */
+export const getQuizzesPreview = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const result = await adminService.getQuizzesPreview(courseId);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+

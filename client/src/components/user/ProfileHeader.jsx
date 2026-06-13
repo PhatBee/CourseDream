@@ -2,6 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { toggleViewMode } from '../../features/auth/authSlice';
+import Avatar from '../common/Avatar';
 
 const ProfileHeader = () => {
   const dispatch = useDispatch();
@@ -33,8 +34,8 @@ const ProfileHeader = () => {
 
         {/* Cột trái: Thông tin User */}
         <div className="flex items-center">
-          <img
-            src={user.avatar || "/src/assets/img/icons/apple-icon.png"}
+          <Avatar
+            src={user.avatar}
             className="w-20 h-20 rounded-full border-2 border-white object-cover mr-4"
           />
           <div>

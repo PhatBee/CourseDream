@@ -9,6 +9,7 @@ import StarRating from '../common/StarRating';
 import ReportModal from '../common/ReportModal';
 import CoursePreviewPlayer from './CoursePreviewPlayer';
 import { sendReport, resetReportState } from '../../features/report/reportSlice';
+import Avatar from '../common/Avatar';
 
 const CourseHeader = ({ course, reviewCount }) => {
   const [reportOpen, setReportOpen] = useState(false);
@@ -111,9 +112,9 @@ const CourseHeader = ({ course, reviewCount }) => {
           {/* Instructor */}
           <div className="flex items-center justify-between border-t border-gray-100 pt-4">
             <div className="flex items-center gap-3">
-              <img
+              <Avatar
                 className="w-11 h-11 rounded-full object-cover border-2 border-rose-100 shadow-sm"
-                src={instructor.avatar || '/default-avatar.svg'}
+                src={instructor.avatar}
                 alt={instructor.name || 'Instructor'}
                 crossOrigin="anonymous"
                 referrerPolicy="no-referrer"

@@ -5,6 +5,7 @@ import { getCart, removeFromCart, clearCart } from "../features/cart/cartSlice";
 import { toast } from "react-hot-toast";
 import { Trash2, ShoppingBag, ArrowLeft, Star } from "lucide-react";
 import Spinner from "../components/common/Spinner";
+import Avatar from "../components/common/Avatar";
 
 const formatPrice = (price) => {
     if (price === 0) return 'FREE';
@@ -162,8 +163,8 @@ export default function Cart() {
                                                     {/* Instructor */}
                                                     {course.instructor && (
                                                         <div className="flex items-center gap-2 mb-2">
-                                                            <img
-                                                                src={course.instructor.avatar || '/default-avatar.svg'}
+                                                            <Avatar
+                                                                src={course.instructor.avatar}
                                                                 className="w-8 h-8 rounded-full object-cover"
                                                                 alt={course.instructor.name}
                                                                 crossOrigin="anonymous"

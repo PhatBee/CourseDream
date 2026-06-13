@@ -85,6 +85,11 @@ const getAllCourses = (params) => {
     return axiosClient.get(`${path}/courses`, { params });
 };
 
+// Republish: unpublished → published
+const republishCourse = (courseId) => {
+    return axiosClient.patch(`${path}/courses/${courseId}/republish`);
+};
+
 export const adminApi = {
     getDashboardStats,
     getRevenueAnalytics,
@@ -104,4 +109,5 @@ export const adminApi = {
     suspendCourse,
     restoreCourse,
     getAllCourses,
+    republishCourse,
 };

@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateProfile, reset, getProfile } from '../../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 import defaultAvatar from '../../assets/img/icons/apple-icon.png';
+import Avatar from '../common/Avatar';
 
 const EditProfile = () => {
     const dispatch = useDispatch();
@@ -93,7 +94,7 @@ const EditProfile = () => {
 
             {/* Avatar Section */}
             <div className="flex items-center gap-6 mb-8">
-                <img src={preview} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+                <Avatar src={preview} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
                 <div>
                     <h5 className="font-bold text-gray-800 text-lg">Profile Photo</h5>
                     <p className="text-sm text-gray-500 mb-3">Allowed JPG, GIF or PNG. Max size of 2MB</p>

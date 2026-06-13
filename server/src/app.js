@@ -49,6 +49,14 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 
+// Bypass Ngrok browser warning page (ERR_NGROK_6024)
+// Ngrok free tier hiển thị trang cảnh báo khi nhận browser request.
+// Header này bắt Ngrok forward thẳng đến Express mà không qua trang interstitial.
+app.use((req, res, next) => {
+  res.setHeader('ngrok-skip-browser-warning', 'true');
+  next();
+});
+
 // Đảm bảo DB đã kết nối trước khi xử lý API requests
 app.use("/api", ensureDbConnection);
 

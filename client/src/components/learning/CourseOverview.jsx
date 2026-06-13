@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PlayCircle, CheckCircle, ChevronDown, ChevronUp, Circle, Clock } from 'lucide-react';
 import StarRating from '../common/StarRating';
+import Avatar from '../common/Avatar';
 
 const OverviewSection = ({ section, progress, onPlayLecture }) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -135,8 +136,8 @@ const CourseOverview = ({ course, progress, onPlayLecture }) => {
               <h3 className="text-lg font-bold text-gray-900 mb-3 leading-snug">{course.title}</h3>
 
               <div className="flex items-center gap-3 py-3 border-t border-gray-50 mt-3">
-                <img
-                  src={course.instructor?.avatar || "/default-avatar.svg"}
+                <Avatar
+                  src={course.instructor?.avatar}
                   alt="Instructor"
                   crossOrigin="anonymous"
                   referrerPolicy="no-referrer"

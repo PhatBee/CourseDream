@@ -18,10 +18,10 @@ export async function deleteCourseAndRelations(courseId) {
         session.startTransaction();
 
         // Xóa bằng object id
-        const course = await Course.findById(courseId).session(session);
+        // const course = await Course.findById(courseId).session(session);
 
         // Xóa bằng slug
-        // const course = await Course.findOne({ slug: courseId }).session(session);
+        const course = await Course.findOne({ slug: courseId }).session(session);
 
         if (!course) {
             throw new Error('Course không tồn tại');
@@ -97,6 +97,7 @@ export async function deleteCourseAndRelations(courseId) {
         };
     } catch (error) {
         await session.abortTransaction();
+        console.error(" ĐÃ XẢY RA LỖI KHI XÓA COURSE:", error);
         throw error;
     } finally {
         session.endSession();
@@ -105,9 +106,9 @@ export async function deleteCourseAndRelations(courseId) {
 
 export async function deleteCourseController(req, res) {
     try {
-        const { courseId } = req.params;
+        const { id } = req.params;
 
-        const result = await deleteCourseAndRelations(courseId);
+        const result = await deleteCourseAndRelations(id);
 
         return res.status(200).json({
             message: 'Xóa course và dữ liệu liên quan thành công',

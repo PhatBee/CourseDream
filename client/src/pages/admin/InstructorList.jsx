@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchInstructors, toggleBlockUser } from '../../features/admin/adminSlice';
 import { Search, MoreVertical, Mail, Phone, BookOpen, Users, Award } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
-import defaultAvatar from '../../assets/img/icons/apple-icon.png';
 import ActionMenu from '../../components/admin/common/ActionMenu';
 import BanUserModal from '../../components/admin/user/BanUserModal';
 import { toast } from 'react-toastify';
+import Avatar from '../../components/common/Avatar';
 
 const InstructorsManagement = () => {
   const dispatch = useDispatch();
@@ -90,8 +90,8 @@ const InstructorsManagement = () => {
                   {/* Avatar & Name */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={inst.avatar || defaultAvatar} 
+                      <Avatar 
+                        src={inst.avatar} 
                         alt="" 
                         className="w-10 h-10 rounded-full object-cover border border-gray-100"
                       />

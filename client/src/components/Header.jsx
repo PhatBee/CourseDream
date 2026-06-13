@@ -13,8 +13,8 @@ import {
   FileText,
 } from "lucide-react";
 import logo from "../assets/img/auth/logo.svg";
-import avatarDefault from "../assets/img/auth/logo.svg";
 import NotificationMenu from "./common/NotificationMenu";
+import Avatar from "./common/Avatar";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -147,8 +147,8 @@ const Header = () => {
                     onClick={() => setMenuOpen(!menuOpen)}
                     className="flex items-center gap-2"
                   >
-                    <img
-                      src={user.avatar || avatarDefault}
+                    <Avatar
+                      src={user.avatar}
                       alt="avatar"
                       className="h-9 w-9 rounded-full border"
                     />
@@ -165,8 +165,8 @@ const Header = () => {
                     >
                       {/* Header */}
                       <div className="flex items-center gap-3 border-b pb-3 mb-3">
-                        <img
-                          src={user.avatar || avatarDefault}
+                        <Avatar
+                          src={user.avatar}
                           alt="avatar"
                           className="h-10 w-10 rounded-full"
                         />
