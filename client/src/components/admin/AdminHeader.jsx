@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import defaultAvatar from '../../assets/img/icons/apple-icon.png';
 import NotificationMenu from '../common/NotificationMenu';
 import Avatar from '../common/Avatar';
 
