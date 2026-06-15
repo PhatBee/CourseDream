@@ -40,10 +40,27 @@ const getVideoProgress = (courseSlug, lectureId) => {
   return axiosClient.get(`${progressPath}/video/${courseSlug}/${lectureId}`);
 };
 
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Học viên submit đáp án quiz
+ * Server validate đáp án — KHÔNG trả về correctAnswer khi sai
+ * @param {{ courseSlug, lectureId, quizIndex, answer }} params
+ */
+const submitQuizAnswer = ({ courseSlug, lectureId, quizIndex, answer }) => {
+  return axiosClient.post(`${progressPath}/quiz-answer`, {
+    courseSlug,
+    lectureId,
+    quizIndex,
+    answer,
+  });
+};
+
 export const learningApi = {
   getCourseContent,
   getProgress,
   toggleLectureCompletion,
   saveVideoProgress,
   getVideoProgress,
-};
+  submitQuizAnswer,
+};

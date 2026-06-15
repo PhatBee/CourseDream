@@ -24,6 +24,13 @@ const initialState = {
     },
     adminApplications: [],
     adminAppPagination: { page: 1, limit: 10, totalPages: 1, total: 0 },
+    // Course management with revenue
+    adminCoursesList: {
+        courses: [],
+        stats: {},
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
+    },
+    adminCoursesLoading: false,
 };
 
 // 1. Thunk: Lấy số liệu tổng quan
@@ -179,6 +186,19 @@ export const fetchInstructorApplications = createAsyncThunk(
             return response.data; // { applications, pagination }
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data?.message);
+        }
+    }
+);
+
+// Thunk: Get All Courses for Admin (with revenue & students)
+export const fetchAdminCourses = createAsyncThunk(
+    'admin/fetchAdminCourses',
+    async (params, thunkAPI) => {
+        try {
+            const response = await adminApi.getAllCourses(params);
+            return response.data.data; // { courses, stats, pagination }
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message || 'Error fetching courses');
         }
     }
 );
@@ -360,6 +380,22 @@ const adminSlice = createSlice({
                     app => app._id !== action.payload.id
                 );
                 state.adminAppPagination.total -= 1;
+            })
+
+            // === Admin Courses List (with revenue) ===
+            .addCase(fetchAdminCourses.pending, (state) => {
+                state.adminCoursesLoading = true;
+            })
+            .addCase(fetchAdminCourses.fulfilled, (state, action) => {
+                state.adminCoursesLoading = false;
+                state.adminCoursesList.courses = action.payload.courses;
+                state.adminCoursesList.stats = action.payload.stats;
+                state.adminCoursesList.pagination = action.payload.pagination;
+            })
+            .addCase(fetchAdminCourses.rejected, (state, action) => {
+                state.adminCoursesLoading = false;
+                state.isError = true;
+                state.message = action.payload;
             });
 
     },

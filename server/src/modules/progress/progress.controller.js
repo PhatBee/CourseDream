@@ -1,5 +1,6 @@
 import * as progressService from './progress.service.js';
 
+
 // ─── GET /api/progress/:courseSlug ──────────────────────────────────────────
 export const getProgress = async (req, res, next) => {
   try {
@@ -86,3 +87,44 @@ export const getVideoProgress = async (req, res, next) => {
     next(error);
   }
 };
+
+// ─── POST /api/progress/quiz-answer ─────────────────────────────────────────
+/**
+ * @route   POST /api/progress/quiz-answer
+ * @desc    Học viên submit đáp án quiz — validate server-side, KHÔNG leak correctAnswer
+ * @body    { courseSlug, lectureId, quizIndex, answer }
+ */
+export const submitQuizAnswer = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { courseSlug, lectureId, quizIndex, answer } = req.body;
+
+    if (!courseSlug || !lectureId || quizIndex == null || !answer) {
+      const error = new Error('Thiếu courseSlug, lectureId, quizIndex hoặc answer');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const validAnswers = ['A', 'B', 'C', 'D'];
+    if (!validAnswers.includes(answer)) {
+      const error = new Error('Đáp án không hợp lệ (phải là A, B, C hoặc D)');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const result = await progressService.submitQuizAnswer(
+      userId,
+      courseSlug,
+      lectureId,
+      parseInt(quizIndex),
+      answer
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

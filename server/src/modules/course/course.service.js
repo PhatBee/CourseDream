@@ -165,7 +165,9 @@ export const getLearningDetails = async (slug, userId) => {
       populate: {
         path: "lectures",
         model: "Lecture",
-        select: "title videoUrl duration isPreviewFree order resources",
+        // ✅ FIX: Thêm quizzes vào select — student cần nhận quizzes khi học
+        // correctAnswer được lọc phía client (chỉ FE nhận timestamp, question, options, hint)
+        select: "title videoUrl duration isPreviewFree order resources quizzes",
         options: { sort: { order: 1 } },
       },
     })
@@ -176,6 +178,18 @@ export const getLearningDetails = async (slug, userId) => {
     const error = new Error("Không tìm thấy khóa học.");
     error.statusCode = 404;
     throw error;
+  }
+
+  // ✅ SECURITY: Strip correctAnswer khỏi quizzes trước khi gửi cho student
+  // correctAnswer chỉ được kiểm tra phía server qua POST /quiz-answer
+  if (course.sections) {
+    course.sections = course.sections.map(sec => ({
+      ...sec,
+      lectures: (sec.lectures || []).map(lec => ({
+        ...lec,
+        quizzes: (lec.quizzes || []).map(({ correctAnswer, ...safeQuiz }) => safeQuiz)
+      }))
+    }));
   }
 
   await Enrollment.findOneAndUpdate(
@@ -741,13 +755,23 @@ export const getCourseForEdit = async (slug, instructorId) => {
         duration: lec.duration,
         order: lec.order,
         isPreviewFree: lec.isPreviewFree,
-        resources: lec.resources?.map(res => ({
+        resources: (lec.resources || []).map(res => ({
           title: res.title,
           url: res.url,
           type: res.type
+        })),
+        // ✅ FIX: Clone quizzes khi lần đầu edit course đã publish
+        quizzes: (lec.quizzes || []).map(q => ({
+          question:      q.question      || '',
+          options:       (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
+          correctAnswer: q.correctAnswer || 'A',
+          hint:          q.hint          || '',
+          timestamp:     Number(q.timestamp) || 0,
+          isActive:      q.isActive !== false,
         }))
       }))
     }));
+
 
     return {
       title: populatedCourse.title,
@@ -947,19 +971,29 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
   const sectionsStruct = sectionsData.map(sec => ({
     title: sec.title,
     order: sec.order || 0,
-    lectures: sec.lectures.map(lec => ({
+    lectures: (sec.lectures || []).map(lec => ({
       title: lec.title,
-      videoUrl: lec.videoUrl,
+      videoUrl: lec.videoUrl || '',
       duration: Number(lec.duration) || 0,
       order: lec.order || 0,
       isPreviewFree: lec.isPreviewFree || false,
-      resources: lec.resources.map(res => ({
+      resources: (lec.resources || []).map(res => ({
         title: res.title,
-        url: res.url,
-        type: res.type
+        url: res.url || '',
+        type: res.type || 'link'
+      })),
+      // ✅ FIX: Lưu quizzes vào revision — trước đây bị bỏ sót hoàn toàn
+      quizzes: (lec.quizzes || []).map(q => ({
+        question:      q.question      || '',
+        options:       (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
+        correctAnswer: q.correctAnswer || 'A',
+        hint:          q.hint          || '',
+        timestamp:     Number(q.timestamp) || 0,
+        isActive:      q.isActive !== false,
       }))
     }))
   }));
+
 
   // 5. Xử lý Slug theo logic mới
   let finalSlug;

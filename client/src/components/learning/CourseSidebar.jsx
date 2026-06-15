@@ -106,13 +106,12 @@ const SectionItem = ({ section, sIdx, completedLectureIds = [], currentLectureId
 
                                 {/* Lecture Info */}
                                 <div className="flex-1 min-w-0">
-                                    <p className={`text-[13px] leading-snug font-medium line-clamp-2 ${
-                                        isActive
+                                    <p className={`text-[13px] leading-snug font-medium line-clamp-2 text-justify ${isActive
                                             ? 'text-rose-700'
                                             : isCompleted
                                                 ? 'text-gray-500'
                                                 : 'text-gray-700 group-hover:text-gray-900'
-                                    } transition-colors`}>
+                                        } transition-colors`}>
                                         {lIdx + 1}. {lecture.title}
                                     </p>
                                     <div className="flex items-center gap-2 mt-0.5">
