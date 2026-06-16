@@ -10,6 +10,7 @@ import Section from '../course/section.model.js';
 import InstructorApplication from '../user/instructorApplication.model.js';
 import InstructorProfile from '../user/InstructorProfile.model.js';
 import notificationService from "../notification/notification.service.js";
+import { generateCourseEmbedding } from '../../utils/ai.service.js';
 
 export const getPendingApplications = async () => {
   const applications = await User.find({
@@ -765,6 +766,18 @@ export const approveRevision = async (revisionId, adminId) => {
     await revision.save();
 
     resultCourse = liveCourse;
+  }
+
+  // --- GENERATE EMBEDDING ---
+  try {
+    const textToEmbed = `${resultCourse.title}. ${resultCourse.shortDescription}. ${resultCourse.description}`;
+    const embedding = await generateCourseEmbedding(textToEmbed);
+    if (embedding && embedding.length > 0) {
+      resultCourse.embedding = embedding;
+      await resultCourse.save();
+    }
+  } catch (error) {
+    console.error("Error generating embedding during approval:", error);
   }
 
   // ✅ Fix Bug 3: Cleanup - Archive tất cả revision còn lại của cùng instructor/course

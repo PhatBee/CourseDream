@@ -5,6 +5,7 @@ import { getWishlist, clearWishlistState } from '../features/wishlist/wishlistSl
 import Header from "../components/Header";
 import { fetchMyEnrollments, resetEnrollment } from '../features/enrollment/enrollmentSlice';
 import { Toaster } from 'react-hot-toast';
+import AIChatbox from '../components/common/AIChatbox';
 
 export default function MainLayout() {
   const dispatch = useDispatch();
@@ -28,6 +29,7 @@ export default function MainLayout() {
       <main className="pt-10">        
         <Outlet />
       </main>
+      <AIChatbox />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import reportRoutes from "./modules/report/report.routes.js";
 import notificationRoutes from "./modules/notification/notification.routes.js";
 import discussionRoutes from "./modules/discussion/discussion.routes.js";
 import promotionRoutes from "./modules/promotion/promotion.routes.js";
+import chatbotRoutes from "./modules/chatbot/chatbot.routes.js";
 import ensureDbConnection from "./middlewares/ensureDbConnection.js";
 
 const app = express();
@@ -98,6 +99,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/discussions", discussionRoutes);
 
 app.use("/api/promotions", promotionRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

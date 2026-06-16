@@ -10,6 +10,8 @@ import CoursesScreen from '../screens/course/CoursesScreen';
 import MyLearningScreen from '../screens/learning/MyLearningScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 import CartScreen from '../screens/cart/CartScreen';
+import AIChatScreen from '../screens/chat/AIChatScreen';
+import { Bot } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -56,7 +58,19 @@ const BottomTabNavigator = () => {
                 }}
             />
 
-            {/* 3. MY LEARNING TAB */}
+            {/* 3. AI CHAT TAB */}
+            <Tab.Screen
+                name="AIChatTab"
+                component={AIChatScreen}
+                options={{
+                    tabBarLabel: ({ color }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>AI Chat</Text>
+                    ),
+                    tabBarIcon: ({ color }) => <Bot size={24} color={color} />,
+                }}
+            />
+
+            {/* 4. MY LEARNING TAB */}
             <Tab.Screen
                 name="MyLearningTab"
                 component={MyLearningScreen}
@@ -68,7 +82,7 @@ const BottomTabNavigator = () => {
                 }}
             />
 
-            {/* 4. PROFILE TAB */}
+            {/* 5. PROFILE TAB */}
             <Tab.Screen
                 name="ProfileTab"
                 component={ProfileScreen}
