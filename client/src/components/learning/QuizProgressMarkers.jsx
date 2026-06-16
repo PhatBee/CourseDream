@@ -159,7 +159,6 @@ const QuizMarkerDot = ({ quiz, duration, isDone, isNear, index }) => {
             position: 'absolute',
             bottom: -5,
             left: '50%',
-            transform: 'translateX(-50%)',
             width: 8,
             height: 8,
             backgroundColor: 'rgba(17,24,39,0.95)',
