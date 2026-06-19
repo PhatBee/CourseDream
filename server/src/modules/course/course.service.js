@@ -208,6 +208,7 @@ export const getLearningDetails = async (slug, userId) => {
       course: course._id,
       completedLectures: [],
       percentage: 0,
+      completedQuizzes: [],
     };
   }
 
@@ -762,12 +763,12 @@ export const getCourseForEdit = async (slug, instructorId) => {
         })),
         // ✅ FIX: Clone quizzes khi lần đầu edit course đã publish
         quizzes: (lec.quizzes || []).map(q => ({
-          question:      q.question      || '',
-          options:       (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
+          question: q.question || '',
+          options: (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
           correctAnswer: q.correctAnswer || 'A',
-          hint:          q.hint          || '',
-          timestamp:     Number(q.timestamp) || 0,
-          isActive:      q.isActive !== false,
+          hint: q.hint || '',
+          timestamp: Number(q.timestamp) || 0,
+          isActive: q.isActive !== false,
         }))
       }))
     }));
@@ -984,12 +985,12 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
       })),
       // ✅ FIX: Lưu quizzes vào revision — trước đây bị bỏ sót hoàn toàn
       quizzes: (lec.quizzes || []).map(q => ({
-        question:      q.question      || '',
-        options:       (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
+        question: q.question || '',
+        options: (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
         correctAnswer: q.correctAnswer || 'A',
-        hint:          q.hint          || '',
-        timestamp:     Number(q.timestamp) || 0,
-        isActive:      q.isActive !== false,
+        hint: q.hint || '',
+        timestamp: Number(q.timestamp) || 0,
+        isActive: q.isActive !== false,
       }))
     }))
   }));

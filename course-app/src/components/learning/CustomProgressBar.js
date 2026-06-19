@@ -149,7 +149,9 @@ const CustomProgressBar = ({
           {trackWidth > 0 && activeQuizzes.map((quiz, idx) => {
             const quizIndex = quizzes.indexOf(quiz);
             const isDone = completedQuizzes.some(
-              q => String(q.lectureId) === String(lectureId) && q.quizIndex === quizIndex
+              q => String(q.lectureId) === String(lectureId)
+                && q.quizIndex === quizIndex
+                && q.isCorrect !== false
             );
             const markerPct = duration > 0 ? (quiz.timestamp / duration) * 100 : 0;
             const cappedMarkerPct = Math.min(Math.max(markerPct, 0.5), 99.5);

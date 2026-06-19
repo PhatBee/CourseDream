@@ -177,51 +177,70 @@ export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex,
 
   // 2. So sánh đáp án — KHÔNG trả về correctAnswer nếu sai
   const correct = quiz.correctAnswer === answer;
+  const course = await getCourseBySlug(courseSlug);
 
-  if (correct) {
-    // 3. Lưu tiến độ quiz (upsert progress document nếu chưa có)
-    const course = await getCourseBySlug(courseSlug);
+  // 3. Đảm bảo progress document tồn tại
+  await Progress.findOneAndUpdate(
+    { student: userId, course: course._id },
+    {
+      $setOnInsert: {
+        student: userId,
+        course: course._id,
+        completedLectures: [],
+        watchTimes: [],
+        completedQuizzes: [],
+        percentage: 0,
+      }
+    },
+    { upsert: true, new: true }
+  );
 
-    // Tránh duplicate: chỉ push nếu chưa có entry lectureId + quizIndex này
-    const alreadyDone = await Progress.findOne({
-      student: userId,
-      course: course._id,
-      'completedQuizzes.lectureId': lectureId,
-      'completedQuizzes.quizIndex': quizIndex,
-    });
+  // 4. Kiểm tra đã có entry cho quiz này chưa
+  const existingProgress = await Progress.findOne({
+    student: userId,
+    course: course._id,
+    'completedQuizzes.lectureId': lectureId,
+    'completedQuizzes.quizIndex': quizIndex,
+  });
 
-    if (!alreadyDone) {
-      // 1. Create or ensure the base document exists with $setOnInsert
-      await Progress.findOneAndUpdate(
-        { student: userId, course: course._id },
-        {
-          $setOnInsert: {
-            student: userId,
-            course: course._id,
-            completedLectures: [],
-            watchTimes: [],
-            completedQuizzes: [],
-            percentage: 0,
-          }
+  if (existingProgress) {
+    // Đã có entry → cập nhật (tăng attempts, update answer)
+    await Progress.updateOne(
+      {
+        student: userId,
+        course: course._id,
+        'completedQuizzes.lectureId': lectureId,
+        'completedQuizzes.quizIndex': quizIndex,
+      },
+      {
+        $set: {
+          'completedQuizzes.$.selectedAnswer': answer,
+          'completedQuizzes.$.isCorrect': correct,
+          'completedQuizzes.$.answeredAt': new Date(),
         },
-        { upsert: true, new: true }
-      );
-
-      // 2. Push the completed quiz into the array
-      await Progress.findOneAndUpdate(
-        { student: userId, course: course._id },
-        {
-          $push: {
-            completedQuizzes: {
-              lectureId,
-              quizIndex,
-              answeredAt: new Date(),
-            },
+        $inc: {
+          'completedQuizzes.$.attempts': 1,
+        },
+      }
+    );
+  } else {
+    // Chưa có entry → push mới
+    await Progress.findOneAndUpdate(
+      { student: userId, course: course._id },
+      {
+        $push: {
+          completedQuizzes: {
+            lectureId,
+            quizIndex,
+            selectedAnswer: answer,
+            isCorrect: correct,
+            attempts: 1,
+            answeredAt: new Date(),
           },
         },
-        { new: true }
-      );
-    }
+      },
+      { new: true }
+    );
   }
 
   return {
@@ -231,3 +250,90 @@ export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex,
     message: correct ? 'Chính xác! Tiếp tục xem video.' : 'Chưa đúng, hãy thử lại!',
   };
 };
+
+// ─── resetQuiz — Reset 1 quiz cụ thể để làm lại ─────────────────────────────
+/**
+ * @param {string} userId
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ * @param {number} quizIndex
+ */
+export const resetQuiz = async (userId, courseSlug, lectureId, quizIndex) => {
+  const course = await getCourseBySlug(courseSlug);
+
+  const result = await Progress.findOneAndUpdate(
+    { student: userId, course: course._id },
+    {
+      $pull: {
+        completedQuizzes: { lectureId, quizIndex },
+      },
+    },
+    { new: true }
+  );
+
+  if (!result) {
+    const error = new Error('Không tìm thấy tiến độ học tập');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return {
+    message: `Đã reset quiz #${quizIndex + 1}. Bạn có thể làm lại.`,
+    completedQuizzes: result.completedQuizzes,
+  };
+};
+
+// ─── resetAllQuizzes — Reset toàn bộ quiz của 1 lecture ──────────────────────
+/**
+ * @param {string} userId
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ */
+export const resetAllQuizzes = async (userId, courseSlug, lectureId) => {
+  const course = await getCourseBySlug(courseSlug);
+
+  const result = await Progress.findOneAndUpdate(
+    { student: userId, course: course._id },
+    {
+      $pull: {
+        completedQuizzes: { lectureId },
+      },
+    },
+    { new: true }
+  );
+
+  if (!result) {
+    const error = new Error('Không tìm thấy tiến độ học tập');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return {
+    message: 'Đã reset tất cả quiz trong bài giảng này.',
+    completedQuizzes: result.completedQuizzes,
+  };
+};
+
+// ─── getQuizHistory — Lấy lịch sử quiz đã làm cho 1 lecture ─────────────────
+/**
+ * @param {string} userId
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ * @returns {{ quizHistory: Array }}
+ */
+export const getQuizHistory = async (userId, courseSlug, lectureId) => {
+  const course = await getCourseBySlug(courseSlug);
+  const progress = await Progress.findOne(
+    { student: userId, course: course._id },
+    { completedQuizzes: 1 }
+  );
+
+  if (!progress) return { quizHistory: [] };
+
+  const history = progress.completedQuizzes.filter(
+    q => String(q.lectureId) === String(lectureId)
+  );
+
+  return { quizHistory: history };
+};
+

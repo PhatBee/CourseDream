@@ -10,7 +10,7 @@ const initialState = {
   // ─── Video progress tracking ───────────────────────────────────────────────
   lastWatchedTime: 0,     // last_watched_time của bài đang xem (giây)
   // ─── Interactive Quiz state ───────────────────────────────────────────
-  completedQuizzes: [],   // [{ lectureId, quizIndex }] — quiz đã đạt
+  completedQuizzes: [],   // [{ lectureId, quizIndex, selectedAnswer, isCorrect, attempts }]
   activeQuiz: null,       // { quizIndex, quiz } — quiz đang hiển thị
   quizBlocked: false,     // Video đang bị block bởi quiz
   isLoading: false,
@@ -114,16 +114,42 @@ export const learningSlice = createSlice({
     },
     /** Đánh dấu quiz đã hoàn thành đúng, resume video */
     markQuizComplete: (state, action) => {
-      // action.payload: { lectureId, quizIndex }
-      const { lectureId, quizIndex } = action.payload;
-      const exists = state.completedQuizzes.some(
-        q => q.lectureId === lectureId && q.quizIndex === quizIndex
+      // action.payload: { lectureId, quizIndex, selectedAnswer }
+      const { lectureId, quizIndex, selectedAnswer } = action.payload;
+      const existingIdx = state.completedQuizzes.findIndex(
+        q => String(q.lectureId) === String(lectureId) && q.quizIndex === quizIndex
       );
-      if (!exists) {
-        state.completedQuizzes.push({ lectureId, quizIndex });
+      if (existingIdx >= 0) {
+        // Update existing entry
+        state.completedQuizzes[existingIdx].isCorrect = true;
+        state.completedQuizzes[existingIdx].selectedAnswer = selectedAnswer || '';
+        state.completedQuizzes[existingIdx].attempts = (state.completedQuizzes[existingIdx].attempts || 0) + 1;
+      } else {
+        state.completedQuizzes.push({
+          lectureId,
+          quizIndex,
+          selectedAnswer: selectedAnswer || '',
+          isCorrect: true,
+          attempts: 1,
+        });
       }
+      // ✅ FIX: Mở khóa ngay lập tức sau khi trả lời đúng
       state.activeQuiz = null;
       state.quizBlocked = false;
+    },
+    /** Remove 1 quiz khỏi completedQuizzes (cho reset/retake) */
+    removeQuizComplete: (state, action) => {
+      const { lectureId, quizIndex } = action.payload;
+      state.completedQuizzes = state.completedQuizzes.filter(
+        q => !(String(q.lectureId) === String(lectureId) && q.quizIndex === quizIndex)
+      );
+    },
+    /** Remove tất cả quiz của 1 lecture khỏi completedQuizzes */
+    removeAllQuizzesForLecture: (state, action) => {
+      const { lectureId } = action.payload;
+      state.completedQuizzes = state.completedQuizzes.filter(
+        q => String(q.lectureId) !== String(lectureId)
+      );
     },
   },
   extraReducers: (builder) => {
@@ -140,8 +166,9 @@ export const learningSlice = createSlice({
         state.sections = action.payload.course.sections || [];
         state.progress = action.payload.progress;
         state.currentLecture = null;
-        // Load danh sách quiz đã hoàn thành từ server
-        state.completedQuizzes = action.payload.progress?.completedQuizzes || [];
+        // Load danh sách quiz đã hoàn thành từ server (chỉ lấy quiz đúng cho seek-block)
+        const allQuizzes = action.payload.progress?.completedQuizzes || [];
+        state.completedQuizzes = allQuizzes;
       })
 
       .addCase(fetchLearningCourse.rejected, (state) => {
@@ -176,5 +203,7 @@ export const {
   showQuiz,
   dismissQuiz,
   markQuizComplete,
+  removeQuizComplete,
+  removeAllQuizzesForLecture,
 } = learningSlice.actions;
-export default learningSlice.reducer;
+export default learningSlice.reducer;

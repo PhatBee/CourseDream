@@ -213,11 +213,16 @@ const QuizProgressMarkers = ({
   lectureId,
 }) => {
   const containerRef = useRef(null);
-  const mountedRef = useRef(false);
 
   // ── Inject container vào DOM của Video.js ─────────────────────────────────
+  // ✅ FIX v2: Không dùng mountedRef — kiểm tra containerRef trực tiếp
+  // Khi Video.js dispose (đổi bài), container bị xóa → containerRef.current trở về null
+  // → useEffect chạy lại → inject mới
   useEffect(() => {
-    if (!playerRef?.current || mountedRef.current || !quizzes.length) return;
+    if (!playerRef?.current || !quizzes.length) return;
+
+    // Nếu container vẫn còn trong DOM, không cần inject lại
+    if (containerRef.current && containerRef.current.parentNode) return;
 
     const tryMount = () => {
       const player = playerRef.current;
@@ -230,6 +235,10 @@ const QuizProgressMarkers = ({
         setTimeout(tryMount, 200);
         return;
       }
+
+      // Xóa container cũ nếu còn sót
+      const existing = progressHolder.querySelector('.vjs-quiz-markers-container');
+      if (existing) existing.remove();
 
       // Đảm bảo .vjs-progress-holder có position relative
       progressHolder.style.position = 'relative';
@@ -247,7 +256,6 @@ const QuizProgressMarkers = ({
       `;
       progressHolder.appendChild(container);
       containerRef.current = container;
-      mountedRef.current = true;
     };
 
     // Đảm bảo player đã ready
@@ -264,9 +272,8 @@ const QuizProgressMarkers = ({
         containerRef.current.parentNode.removeChild(containerRef.current);
       }
       containerRef.current = null;
-      mountedRef.current = false;
     };
-  }, [playerRef, quizzes.length, lectureId]);
+  }, [playerRef, quizzes.length, lectureId, videoDuration]); // ✅ FIX: thêm videoDuration trigger re-mount khi metadata load
 
   // ── CSS animations (inject một lần vào <head>) ────────────────────────────
   useEffect(() => {
@@ -320,7 +327,9 @@ const QuizProgressMarkers = ({
         {activeQuizzes.map((quiz, idx) => {
           const quizIndex = quizzes.indexOf(quiz);
           const isDone = completedQuizzes.some(
-            q => String(q.lectureId) === String(lectureId) && q.quizIndex === quizIndex
+            q => String(q.lectureId) === String(lectureId)
+              && q.quizIndex === quizIndex
+              && q.isCorrect !== false // backward-compat
           );
           const ts = Number(quiz.timestamp);
           const isNear = Math.abs(currentTime - ts) <= 3 && !isDone;

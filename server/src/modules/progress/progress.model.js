@@ -10,11 +10,14 @@ const VideoWatchTimeSchema = new mongoose.Schema({
 }, { _id: false });
 
 /**
- * CompletedQuiz — lưu quiz đã trả lời đúng của học viên
+ * CompletedQuiz — lưu quiz đã trả lời của học viên (bao gồm lịch sử)
  */
 const CompletedQuizSchema = new mongoose.Schema({
   lectureId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lecture', required: true },
-  quizIndex: { type: Number, required: true }, // vị trí trong lecture.quizzes[]
+  quizIndex: { type: Number, required: true },        // vị trí trong lecture.quizzes[]
+  selectedAnswer: { type: String, default: '' },       // Đáp án đã chọn (A/B/C/D)
+  isCorrect: { type: Boolean, default: true },         // Kết quả (backward-compat: mặc định true)
+  attempts: { type: Number, default: 1 },              // Số lần thử
   answeredAt: { type: Date, default: Date.now },
 }, { _id: false });
 

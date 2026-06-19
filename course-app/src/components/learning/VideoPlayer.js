@@ -24,7 +24,7 @@ import {
 import { courseApi } from '../../api/courseApi';
 import { learningApi } from '../../api/learningApi';
 import { useDispatch, useSelector } from 'react-redux';
-import { markQuizComplete } from '../../features/learning/learningSlice';
+import { markQuizComplete, showQuiz } from '../../features/learning/learningSlice';
 import VideoQuizOverlayMobile from './VideoQuizOverlayMobile';
 import QuizProgressMarkersMobile from './QuizProgressMarkersMobile';
 import CustomProgressBar from './CustomProgressBar';
@@ -56,7 +56,8 @@ const VideoPlayer = ({
 
   const dispatch = useDispatch();
   const progress = useSelector((state) => state.learning.progress);
-  const completedQuizzes = progress?.completedQuizzes || [];
+  const completedQuizzes = useSelector((state) => state.learning.completedQuizzes) || [];
+  const isLoadingProgress = useSelector((state) => state.learning.isLoading);
 
   // ─── Ref luôn giữ giá trị lastWatchedTime mới nhất (tránh closure stale) ───
   const lastWatchedTimeRef = useRef(lastWatchedTime);
@@ -66,6 +67,21 @@ const VideoPlayer = ({
   // ─── Quiz state ──────────────────────────────────────────────────────────
   const [activeQuiz, setActiveQuiz]         = useState(null);  // { quizIndex, quiz }
   const [quizBlocked, setQuizBlocked]       = useState(false);
+
+  // ✅ FIX: Dùng refs cho activeQuiz, quizBlocked, completedQuizzes và isLoadingProgress bên trong timeUpdate listener
+  //    → tránh dependency array re-subscribe gây race condition
+  //    → tránh closure stale khi completedQuizzes chưa load từ server
+  const activeQuizRef = useRef(null);
+  const quizBlockedRef = useRef(false);
+  const completedQuizzesRef = useRef(completedQuizzes); // ✅ FIX: Ref cho completedQuizzes
+  const isLoadingProgressRef = useRef(isLoadingProgress); // ✅ FIX: Ref cho isLoadingProgress
+  const lastKnownTimeRef = useRef(0); // ✅ FIX: Vị trí trước khi seek
+
+  // Sync refs với state
+  useEffect(() => { activeQuizRef.current = activeQuiz; }, [activeQuiz]);
+  useEffect(() => { quizBlockedRef.current = quizBlocked; }, [quizBlocked]);
+  useEffect(() => { completedQuizzesRef.current = completedQuizzes; }, [completedQuizzes]);
+  useEffect(() => { isLoadingProgressRef.current = isLoadingProgress; }, [isLoadingProgress]);
 
   // Reset initialSeekDone khi đổi bài mới
   useEffect(() => {
@@ -77,7 +93,9 @@ const VideoPlayer = ({
   const isQuizDone = useCallback((quizIndex) => {
     if (!currentLecture?._id) return false;
     return completedQuizzes.some(
-      q => String(q.lectureId) === String(currentLecture._id) && q.quizIndex === quizIndex
+      q => String(q.lectureId) === String(currentLecture._id)
+        && q.quizIndex === quizIndex
+        && q.isCorrect !== false // backward-compat
     );
   }, [completedQuizzes, currentLecture?._id]);
 
@@ -143,9 +161,37 @@ const VideoPlayer = ({
     }
   };
 
+  // ✅ FIX: Forward seek restriction helper
+  const findBlockedQuiz = useCallback((fromTime, toTime) => {
+    if (!quizzes.length || toTime <= fromTime) return null;
+    const sorted = [...quizzes]
+      .map((q, i) => ({ ...q, index: i }))
+      .filter(q => q.isActive !== false)
+      .sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+    for (const quiz of sorted) {
+      const ts = Number(quiz.timestamp);
+      if (!isQuizDone(quiz.index) && ts > fromTime && toTime > ts) {
+        return { quiz, revertTo: Math.max(0, ts - 1) };
+      }
+    }
+    return null;
+  }, [quizzes, isQuizDone]);
+
   const handleSeek = (seconds) => {
     if (player) {
       try {
+        const fromTime = lastKnownTimeRef.current;
+        // ✅ FIX: Check forward seek restriction
+        if (seconds > fromTime) {
+          const blocked = findBlockedQuiz(fromTime, seconds);
+          if (blocked) {
+            isSeekingRef.current = true;
+            setMarkerCurrentTime(blocked.revertTo);
+            player.currentTime = blocked.revertTo;
+            setTimeout(() => { isSeekingRef.current = false; }, 800);
+            return;
+          }
+        }
         isSeekingRef.current = true;
         setMarkerCurrentTime(seconds);
         player.currentTime = seconds;
@@ -178,8 +224,19 @@ const VideoPlayer = ({
   const handleForward5s = () => {
     if (player) {
       try {
+        const fromTime = player.currentTime;
+        const target = Math.min(videoDuration || player.duration || 0, fromTime + 5);
+        // ✅ FIX: Check quiz block for +5s forward too
+        const blocked = findBlockedQuiz(fromTime, target);
+        if (blocked) {
+          isSeekingRef.current = true;
+          setMarkerCurrentTime(blocked.revertTo);
+          player.currentTime = blocked.revertTo;
+          resetControlsTimeout();
+          setTimeout(() => { isSeekingRef.current = false; }, 800);
+          return;
+        }
         isSeekingRef.current = true;
-        const target = Math.min(videoDuration || player.duration || 0, player.currentTime + 5);
         setMarkerCurrentTime(target);
         player.currentTime = target;
         resetControlsTimeout();
@@ -303,13 +360,17 @@ const VideoPlayer = ({
         const dur = player.duration;
         if (ct != null) {
           setMarkerCurrentTime(ct);
+          lastKnownTimeRef.current = ct; // ✅ FIX: Track position
           if (dur && isFinite(dur) && dur > 0) {
             setVideoDuration(dur);
             setPlayedPercent((ct / dur) * 100);
           }
 
-          // Gatekeeper logic check
-          if (activeQuiz || quizBlocked || !quizzes.length) return;
+          // ✅ FIX: Dùng refs thay vì state/closure → tránh race condition. Bỏ qua nếu đang tải tiến độ/khóa học.
+          if (activeQuizRef.current || quizBlockedRef.current || !quizzes.length || isLoadingProgressRef.current) return;
+
+          // ✅ FIX: Đọc completedQuizzes từ ref (luôn cập nhật nhất)
+          const currentCompletedQuizzes = completedQuizzesRef.current || [];
 
           // Sắp xếp các quiz theo thứ tự thời gian tăng dần
           const sortedQuizzes = [...quizzes]
@@ -319,12 +380,16 @@ const VideoPlayer = ({
 
           for (const quiz of sortedQuizzes) {
             const ts = Number(quiz.timestamp);
-            const isDone = completedQuizzes.some(
-              (q) => String(q.lectureId) === String(currentLecture?._id) && q.quizIndex === quiz.index
+            const isDone = currentCompletedQuizzes.some(
+              (q) => String(q.lectureId) === String(currentLecture?._id)
+                && q.quizIndex === quiz.index
+                && q.isCorrect !== false
             );
 
-            // Nếu thời gian phát video vượt qua mốc Quiz chưa làm (phát bình thường hoặc tua)
-            if (ct >= ts && !isDone) {
+            // ✅ FIX: Chỉ trigger khi video phát bình thường qua mốc (cửa sổ nhỏ),
+            //    không trigger lại nếu đã triggered trong session này
+            const inWindow = ct >= ts && ct <= ts + 2.5;
+            if (inWindow && !isDone && !quizTriggeredRef.current.has(quiz.index)) {
               // Pause video và kéo ngược về đúng giây của Quiz
               try {
                 player.pause();
@@ -339,6 +404,7 @@ const VideoPlayer = ({
                 }
               } catch (_) {}
 
+              quizTriggeredRef.current.add(quiz.index); // ✅ FIX: Đánh dấu đã trigger
               setActiveQuiz({ quizIndex: quiz.index, quiz });
               setQuizBlocked(true);
               break;
@@ -353,7 +419,7 @@ const VideoPlayer = ({
     return () => {
       subscription?.remove();
     };
-  }, [player, quizzes, completedQuizzes, currentLecture?._id, activeQuiz, quizBlocked]);
+  }, [player, quizzes, currentLecture?._id]); // ✅ FIX: Removed completedQuizzes from deps — read from ref instead
 
   // ─── Interval gửi onProgress mỗi 10s ─────────────────────────────────────────
   useEffect(() => {
@@ -441,8 +507,10 @@ const VideoPlayer = ({
   const handleQuizCorrect = useCallback(() => {
     setActiveQuiz(null);
     setQuizBlocked(false);
-    // Resume video sau khi trả lời đúng
-    try { player?.play(); } catch (_) {}
+    // ✅ FIX: Debounce 200ms trước khi resume → đợi completedQuizzes update trong Redux
+    setTimeout(() => {
+      try { player?.play(); } catch (_) {}
+    }, 200);
   }, [player]);
 
   // ─── Fullscreen handler ────────────────────────────────────────────────────────

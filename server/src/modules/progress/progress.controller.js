@@ -127,4 +127,85 @@ export const submitQuizAnswer = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+// ─── DELETE /api/progress/quiz-reset ──────────────────────────────────────────
+/**
+ * @route   DELETE /api/progress/quiz-reset
+ * @desc    Reset 1 quiz cụ thể để làm lại
+ * @body    { courseSlug, lectureId, quizIndex }
+ */
+export const resetQuiz = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { courseSlug, lectureId, quizIndex } = req.body;
+
+    if (!courseSlug || !lectureId || quizIndex == null) {
+      const error = new Error('Thiếu courseSlug, lectureId hoặc quizIndex');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const result = await progressService.resetQuiz(
+      userId,
+      courseSlug,
+      lectureId,
+      parseInt(quizIndex)
+    );
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── DELETE /api/progress/quiz-reset-all ──────────────────────────────────────
+/**
+ * @route   DELETE /api/progress/quiz-reset-all
+ * @desc    Reset tất cả quiz của 1 bài giảng
+ * @body    { courseSlug, lectureId }
+ */
+export const resetAllQuizzes = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { courseSlug, lectureId } = req.body;
+
+    if (!courseSlug || !lectureId) {
+      const error = new Error('Thiếu courseSlug hoặc lectureId');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const result = await progressService.resetAllQuizzes(
+      userId,
+      courseSlug,
+      lectureId
+    );
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── GET /api/progress/quiz-history/:courseSlug/:lectureId ────────────────────
+/**
+ * @route   GET /api/progress/quiz-history/:courseSlug/:lectureId
+ * @desc    Lấy lịch sử quiz đã làm của 1 bài giảng
+ */
+export const getQuizHistory = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { courseSlug, lectureId } = req.params;
+
+    const result = await progressService.getQuizHistory(
+      userId,
+      courseSlug,
+      lectureId
+    );
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
 };

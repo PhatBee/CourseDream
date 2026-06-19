@@ -36,11 +36,12 @@ import { toast } from "react-toastify";
  * @prop {Function} onReady
  * @prop {Function} onTimeUpdate - (currentTime) => void
  * @prop {Function} onSeeking    - (seekTo) => void  — kiểm tra quiz block
+ * @prop {Function} onSeeked     - (seekTo) => void  — cập nhật vị trí đã seek xong
  * @prop {Function} onProgress   - (currentTime) => void — gọi mỗi 10s
  * @prop {Function} onEnded
  * @prop {Function} onPlayerReady - cb(player) — expose player ref ra ngoài
  */
-const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSeeking, onProgress, onEnded, onPlayerReady }) => {
+const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSeeking, onSeeked, onProgress, onEnded, onPlayerReady }) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
@@ -92,6 +93,10 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSe
       // ── Seek blocking cho quiz ─────────────────────────────────────────
       playerRef.current.on("seeking", () => {
         if (onSeeking) onSeeking(playerRef.current.currentTime(), playerRef.current);
+      });
+
+      playerRef.current.on("seeked", () => {
+        if (onSeeked) onSeeked(playerRef.current.currentTime());
       });
 
       playerRef.current.on("ended", () => {
@@ -248,18 +253,29 @@ const VideoPlayer = ({
 
   const {
     onTimeUpdate: quizTimeUpdate,
+    onSeeked: quizSeeked,
     checkSeekBlock,
     submitAnswer,
+    resetQuizAttempt,
+    resetAllQuizAttempts,
     reset: resetQuiz,
     activeQuiz,
     quizBlocked,
     completedQuizzes, // dùng để tô màu markers đã hoàn thành
+    lastKnownTimeRef, // ✅ FIX: vị trí trước khi seek
   } = useVideoQuiz(courseSlug, lecture?._id, quizzes);
 
   // Reset quiz khi đổi bài giảng
   useEffect(() => {
     resetQuiz();
   }, [lecture?._id, resetQuiz]);
+
+  // Sync lastKnownTimeRef với lastWatchedTime khi thay đổi bài giảng hoặc có tiến độ đã lưu
+  useEffect(() => {
+    if (lastKnownTimeRef) {
+      lastKnownTimeRef.current = lastWatchedTime || 0;
+    }
+  }, [lastWatchedTime, lecture?._id, lastKnownTimeRef]);
 
   // Pause video khi có quiz active
   useEffect(() => {
@@ -268,14 +284,16 @@ const VideoPlayer = ({
     }
   }, [quizBlocked]);
 
-  // Handler: seeking event — chặn seek qua quiz chưa làm
+  // Handler: seeking event — chặn FORWARD seek qua quiz chưa làm
+  // ✅ FIX v2: Truyền lastKnownTimeRef để chỉ chặn forward seek
   const handleSeeking = useCallback((seekTo, player) => {
-    const { blocked, revertTo } = checkSeekBlock(seekTo);
+    const beforeTime = lastKnownTimeRef?.current ?? 0;
+    const { blocked, revertTo } = checkSeekBlock(seekTo, beforeTime);
     if (blocked && player) {
       try { player.currentTime(revertTo); } catch (_) {}
       toast.warning('⚠️ Hãy trả lời câu hỏi trước khi xem tiếp!', { toastId: 'quiz-block', autoClose: 2500 });
     }
-  }, [checkSeekBlock]);
+  }, [checkSeekBlock, lastKnownTimeRef]);
 
 
   const [videoUrl, setVideoUrl] = useState(null);
@@ -409,6 +427,7 @@ const VideoPlayer = ({
                 setMarkerCurrentTime(t);
               }}
               onSeeking={handleSeeking}
+              onSeeked={quizSeeked}
               onPlayerReady={(player) => {
                 playerInstanceRef.current = player;
                 // Lấy duration khi metadata đã load
@@ -442,10 +461,13 @@ const VideoPlayer = ({
                 quiz={activeQuiz.quiz}
                 onSubmit={(answer) => submitAnswer(activeQuiz.quizIndex, answer)}
                 onCorrect={() => {
-                  // Resume video sau khi trả lời đúng
-                  if (playerInstanceRef.current) {
-                    try { playerInstanceRef.current.play(); } catch (_) {}
-                  }
+                  // ✅ FIX: Delay nhỏ trước khi resume → tránh race condition
+                  // markQuizComplete dispatch xong mới play → checkSeekBlock sẽ thấy quiz đã done
+                  setTimeout(() => {
+                    if (playerInstanceRef.current) {
+                      try { playerInstanceRef.current.play(); } catch (_) {}
+                    }
+                  }, 150);
                 }}
               />
             )}

@@ -24,6 +24,7 @@ const VideoQuizOverlayMobile = ({ quiz, onSubmit, onCorrect }) => {
   const [feedback, setFeedback]       = useState(null); // null | 'correct' | 'wrong'
   const [hint, setHint]               = useState(null);
   const [isSubmitting, setSubmitting] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
 
   if (!quiz) return null;
 
@@ -37,6 +38,7 @@ const VideoQuizOverlayMobile = ({ quiz, onSubmit, onCorrect }) => {
   const handleSubmit = async () => {
     if (!selected || isSubmitting || feedback === 'correct') return;
     setSubmitting(true);
+    setAttemptCount(prev => prev + 1);
 
     const result = await onSubmit(selected);
 
@@ -133,6 +135,16 @@ const VideoQuizOverlayMobile = ({ quiz, onSubmit, onCorrect }) => {
               {feedback === 'wrong' && !hint ? (
                 <View style={styles.wrongBox}>
                   <Text style={styles.wrongText}>❌ Chưa đúng rồi, hãy thử lại!</Text>
+                  {attemptCount > 1 && (
+                    <Text style={styles.attemptText}>Lần thử thứ {attemptCount}</Text>
+                  )}
+                </View>
+              ) : null}
+
+              {/* Attempt count with hint */}
+              {feedback === 'wrong' && hint && attemptCount > 1 ? (
+                <View style={styles.attemptBox}>
+                  <Text style={styles.attemptText}>Lần thử thứ {attemptCount}</Text>
                 </View>
               ) : null}
 
@@ -153,6 +165,17 @@ const VideoQuizOverlayMobile = ({ quiz, onSubmit, onCorrect }) => {
                     </Text>
                 }
               </TouchableOpacity>
+
+              {/* ✅ Manual Continue Button — backup khi setTimeout không trigger */}
+              {feedback === 'correct' ? (
+                <TouchableOpacity
+                  onPress={onCorrect}
+                  style={styles.continueBtn}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.continueBtnText}>✅ Tiếp tục xem video</Text>
+                </TouchableOpacity>
+              ) : null}
             </ScrollView>
           </View>
         </SafeAreaView>
@@ -320,6 +343,31 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   submitBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  attemptText: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 3,
+  },
+  attemptBox: {
+    marginHorizontal: 16,
+    marginBottom: 4,
+    alignItems: 'center',
+  },
+  continueBtn: {
+    margin: 16,
+    marginTop: 4,
+    backgroundColor: '#059669',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  continueBtnText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 15,

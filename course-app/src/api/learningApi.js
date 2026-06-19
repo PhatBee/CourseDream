@@ -50,6 +50,31 @@ const submitQuizAnswer = ({ courseSlug, lectureId, quizIndex, answer }) => {
   });
 };
 
+/**
+ * Reset 1 quiz cụ thể để làm lại
+ */
+const resetQuiz = ({ courseSlug, lectureId, quizIndex }) => {
+  return axiosClient.delete(`${progressPath}/quiz-reset`, {
+    data: { courseSlug, lectureId, quizIndex },
+  });
+};
+
+/**
+ * Reset tất cả quiz của 1 bài giảng
+ */
+const resetAllQuizzes = ({ courseSlug, lectureId }) => {
+  return axiosClient.delete(`${progressPath}/quiz-reset-all`, {
+    data: { courseSlug, lectureId },
+  });
+};
+
+/**
+ * Lấy lịch sử quiz đã làm của 1 bài giảng
+ */
+const getQuizHistory = (courseSlug, lectureId) => {
+  return axiosClient.get(`${progressPath}/quiz-history/${courseSlug}/${lectureId}`);
+};
+
 export const learningApi = {
   getCourseContent,
   getProgress,
@@ -57,4 +82,8 @@ export const learningApi = {
   saveVideoProgress,
   getVideoProgress,
   submitQuizAnswer,
-};
+  resetQuiz,
+  resetAllQuizzes,
+  getQuizHistory,
+};
+
