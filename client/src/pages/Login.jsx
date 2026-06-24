@@ -64,7 +64,7 @@ const Login = () => {
 
       if (user?.role === "admin") navigate("/admin/dashboard");
       else if (user?.role === "instructor")
-        navigate("/profile/instructor/dashboard");
+        navigate("/instructor/dashboard");
       else navigate("/");
     }
   }, [user, isError, isSuccess, message, banReason, navigate, dispatch]);

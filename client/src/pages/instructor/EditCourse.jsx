@@ -107,7 +107,7 @@ const EditCoursePage = () => {
             } catch (error) {
                 console.error(error);
                 toast.error('Không thể tải dữ liệu khóa học hoặc bạn không có quyền sửa.');
-                navigate('/profile/instructor/courses');
+                navigate('/instructor/courses');
             } finally {
                 setIsFetching(false);
             }
@@ -263,7 +263,7 @@ const EditCoursePage = () => {
     };
     const handleModalExit = () => {
         setIsCancelModalOpen(false);
-        navigate('/profile/instructor/courses');
+        navigate('/instructor/courses');
     };
 
     // ============================================================

@@ -26,15 +26,21 @@ const InfoCard = ({ icon, label, value }) => (
     </div>
 );
 
-const MyProfile = () => {
+const MyProfile = ({ isInstructorView = false }) => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
-        dispatch(getProfile());
-    }, [dispatch]);
+        if (!user) {
+            dispatch(getProfile());
+        }
+    }, [dispatch, user]);
 
     if (!user) return null;
+
+    const editLink = isInstructorView 
+        ? "/instructor/profile/settings/edit" 
+        : "/profile/settings/edit";
 
     return (
         <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 md:p-8 text-left">
@@ -45,7 +51,7 @@ const MyProfile = () => {
                     <p className="text-sm text-gray-500 mt-1">Manage your personal information</p>
                 </div>
                 <Link
-                    to="/profile/settings/edit"
+                    to={editLink}
                     className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                     title="Edit Profile"
                 >

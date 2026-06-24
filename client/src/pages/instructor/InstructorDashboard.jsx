@@ -31,50 +31,61 @@ const InstructorDashboard = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 text-left">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800">Instructor Dashboard</h2>
-        <p className="text-gray-500">Welcome back! Here's what's happening with your courses today.</p>
-      </div>
 
       {/* 1. Thống kê tổng quan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
-          icon={Book} 
-          label="Total Courses" 
-          value={stats?.totalCourses || 0} 
-          color="text-blue-600" 
+          icon={Book}
+          label="Total Courses"
+          value={stats?.totalCourses || 0}
+          color="text-blue-600"
           bgColor="bg-blue-50"
         />
         <StatCard 
-          icon={Users} 
-          label="Total Students" 
-          value={stats?.totalStudents || 0} 
-          color="text-purple-600" 
+          icon={Users}
+          label="Total Students"
+          value={stats?.totalStudents || 0}
+          color="text-purple-600"
           bgColor="bg-purple-50"
         />
         <StatCard 
-          icon={TrendingUp} 
-          label="New Enrollments (Today)" 
-          value={stats?.todayEnrollments || 0} 
-          color="text-emerald-600" 
+          icon={TrendingUp}
+          label="New Enrollments (Today)"
+          value={stats?.todayEnrollments || 0}
+          color="text-emerald-600"
           bgColor="bg-emerald-50"
         />
       </div>
 
+      {/* Profile CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">Instructor Profile</h3>
+          <p className="text-sm text-gray-500 mt-0.5">Update your public instructor information</p>
+        </div>
+        <Link
+          to="/instructor/profile/settings/edit"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-xl font-semibold text-sm hover:bg-rose-700 transition-all shadow-md shadow-rose-200"
+        >
+          Edit Profile
+        </Link>
+      </div>
+
       {/* 2. Khóa học gần đây */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <h3 className="font-bold text-gray-800 text-lg flex items-center">
             <PlayCircle className="mr-2 text-rose-500" size={20} />
             Recently Updated Courses
           </h3>
           <Link 
-            to="/profile/instructor/courses" 
+            to="/instructor/courses" 
             className="text-rose-600 text-sm font-bold flex items-center hover:text-rose-700 transition-colors"
           >
             See Your Courses <ArrowRight size={16} className="ml-1" />
           </Link>
         </div>
+
 
         <div className="divide-y divide-gray-100">
           {recentCourses.length > 0 ? (

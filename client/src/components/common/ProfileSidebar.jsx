@@ -42,9 +42,7 @@ const ProfileSidebar = () => {
     navigate("/login");
   };
 
-  const dashboardLink = viewMode === 'instructor' 
-    ? "/profile/instructor/dashboard" 
-    : "/profile/dashboard";
+  const dashboardLink = "/profile/dashboard";
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sticky top-24 text-left">
@@ -65,12 +63,7 @@ const ProfileSidebar = () => {
             </>
           )}
 
-          {/* Chế độ xem của Giảng viên */}
-          {viewMode === 'instructor' && (
-            <>
-              <SidebarLink to="/profile/instructor/courses" icon={<Book size={20} />} label="My Courses" />
-            </>
-          )}
+
         </ul>
       </div>
 

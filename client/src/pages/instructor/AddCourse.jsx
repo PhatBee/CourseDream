@@ -186,10 +186,10 @@ const AddCoursePage = () => {
 
             if (createNewCourse.fulfilled.match(resultAction)) {
                 toast.success(
-                    isDraft ? '✅ Đã lưu nháp!' : '🎉 Đã gửi khóa học lên chờ Admin duyệt!',
+                    isDraft ? 'Đã lưu nháp!' : 'Đã gửi khóa học lên chờ Admin duyệt!',
                     { id: toastId, duration: 3000 }
                 );
-                navigate('/profile/instructor/courses');
+                navigate('/instructor/courses');
             } else {
                 toast.error(resultAction.payload || 'Thất bại', { id: toastId });
             }
@@ -210,7 +210,7 @@ const AddCoursePage = () => {
 
     const handleModalExit = () => {
         setIsCancelModalOpen(false);
-        navigate('/profile/instructor/courses');
+        navigate('/instructor/courses');
     };
 
     const handleOpenLessonModal = (sIdx, lIdx) => {
