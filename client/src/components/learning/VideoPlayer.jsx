@@ -23,6 +23,7 @@ import { useLocation } from "react-router-dom";
 import { useVideoQuiz } from "../../features/learning/useVideoQuiz";
 import VideoQuizOverlay from "./VideoQuizOverlay";
 import QuizProgressMarkers from "./QuizProgressMarkers";
+import QuizReviewModal from "./QuizReviewModal";
 import { toast } from "react-toastify";
 
 
@@ -250,6 +251,7 @@ const VideoPlayer = ({
   // ─── Quiz logic ───────────────────────────────────────────────────────────
   const quizzes = lecture?.quizzes || [];
   const playerInstanceRef = useRef(null); // giữ video.js player instance
+  const [isReviewOpen, setIsReviewOpen] = useState(false); // Quiz Review panel
 
   const {
     onTimeUpdate: quizTimeUpdate,
@@ -294,6 +296,18 @@ const VideoPlayer = ({
       toast.warning('⚠️ Hãy trả lời câu hỏi trước khi xem tiếp!', { toastId: 'quiz-block', autoClose: 2500 });
     }
   }, [checkSeekBlock, lastKnownTimeRef]);
+
+  // ─── handleRetakeQuiz — tua video về vị trí quiz sau khi reset ────────────
+  const handleRetakeQuiz = useCallback((quizIndex) => {
+    const quiz = quizzes[quizIndex];
+    if (!quiz || !playerInstanceRef.current) return;
+    const ts = Number(quiz.timestamp);
+    try {
+      // Tua về 1s trước quiz để onTimeUpdate có thể trigger lại
+      playerInstanceRef.current.currentTime(Math.max(0, ts - 1));
+      playerInstanceRef.current.play();
+    } catch (_) {}
+  }, [quizzes]);
 
 
   const [videoUrl, setVideoUrl] = useState(null);
@@ -382,6 +396,7 @@ const VideoPlayer = ({
   const isCFUrl = videoUrl && videoUrl.includes("cloudfront.net");
 
   return (
+    <>
     <div className="flex flex-col bg-white min-h-full">
       {/* ===== VIDEO AREA (dark background, aspect-ratio cố định) ===== */}
       <div className="w-full bg-black relative">
@@ -514,6 +529,19 @@ const VideoPlayer = ({
               />
               {isCompleted ? "Đã hoàn thành" : "Hoàn thành bài học"}
             </button>
+
+            {/* Quiz Review Button — chỉ hiện khi có quiz active */}
+            {quizzes.filter(q => q.isActive !== false).length > 0 && (
+              <button
+                id="quiz-review-btn"
+                onClick={() => setIsReviewOpen(true)}
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
+                           bg-indigo-50 text-indigo-700 border border-indigo-200
+                           hover:bg-indigo-100 transition-all shadow-sm"
+              >
+                📋 Xem lại câu hỏi ({quizzes.filter(q => q.isActive !== false).length})
+              </button>
+            )}
           </div>
 
           {/* Prev / Next Navigation */}
@@ -635,6 +663,18 @@ const VideoPlayer = ({
         </div>
       </div>
     </div>
+
+    {/* ── Quiz Review Panel (ngoài flex container để không bị clip) ── */}
+    <QuizReviewModal
+      isOpen={isReviewOpen}
+      onClose={() => setIsReviewOpen(false)}
+      courseSlug={courseSlug}
+      lectureId={lecture?._id}
+      quizzes={quizzes}
+      onRetake={handleRetakeQuiz}
+      onRetakeAll={resetAllQuizAttempts}
+    />
+    </>
   );
 };
 

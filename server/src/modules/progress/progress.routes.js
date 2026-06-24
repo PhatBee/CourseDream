@@ -54,6 +54,13 @@ router.delete('/quiz-reset-all', progressController.resetAllQuizzes);
 router.get('/quiz-history/:courseSlug/:lectureId', progressController.getQuizHistory);
 
 /**
+ * @route   GET /api/progress/quiz-review/:courseSlug/:lectureId
+ * @desc    Lấy dữ liệu đầy đủ cho Review Mode (câu hỏi + đáp án đúng + giải thích)
+ * @note    correctAnswer chỉ được trả về cho quiz mà user đã trả lời (bảo mật)
+ */
+router.get('/quiz-review/:courseSlug/:lectureId', progressController.getQuizReview);
+
+/**
  * @route   GET /api/progress/:courseSlug
  * @desc    Lấy thông tin tiến độ học tập theo SLUG
  */

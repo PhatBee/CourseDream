@@ -13,6 +13,9 @@ const initialState = {
   completedQuizzes: [],   // [{ lectureId, quizIndex, selectedAnswer, isCorrect, attempts }]
   activeQuiz: null,       // { quizIndex, quiz } — quiz đang hiển thị
   quizBlocked: false,     // Video đang bị block bởi quiz
+  // ─── Quiz Review Mode ─────────────────────────────────────────────────
+  quizReviewData: [],     // Dữ liệu review: câu hỏi + đáp án đúng + attempt history
+  isLoadingReview: false, // Loading state riêng cho review modal
   isLoading: false,
   isError: false,
 };
@@ -69,6 +72,19 @@ export const saveVideoProgress = createAsyncThunk(
       return { watchedSeconds };
     } catch (error) {
       // Silent fail — không làm phiền user khi lưu định kỳ thất bại
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+// ─── Thunk: Lấy dữ liệu Review Mode (quiz + đáp án đúng + lịch sử làm bài) ──
+export const fetchQuizReview = createAsyncThunk(
+  'learning/fetchQuizReview',
+  async ({ courseSlug, lectureId }, thunkAPI) => {
+    try {
+      const response = await learningApi.getQuizReview(courseSlug, lectureId);
+      return response.data.data; // { reviewData, lectureId }
+    } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
   }
@@ -192,6 +208,19 @@ export const learningSlice = createSlice({
       // saveVideoProgress — cập nhật lastWatchedTime local (tùy chọn)
       .addCase(saveVideoProgress.fulfilled, (state, action) => {
         // Có thể cập nhật lastWatchedTime từ response nếu cần
+      })
+
+      // fetchQuizReview — load dữ liệu cho Review Modal
+      .addCase(fetchQuizReview.pending, (state) => {
+        state.isLoadingReview = true;
+      })
+      .addCase(fetchQuizReview.fulfilled, (state, action) => {
+        state.isLoadingReview = false;
+        state.quizReviewData = action.payload?.reviewData || [];
+      })
+      .addCase(fetchQuizReview.rejected, (state) => {
+        state.isLoadingReview = false;
+        state.quizReviewData = [];
       });
   },
 });

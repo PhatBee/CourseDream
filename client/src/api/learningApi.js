@@ -85,6 +85,16 @@ const getQuizHistory = (courseSlug, lectureId) => {
   return axiosClient.get(`${progressPath}/quiz-history/${courseSlug}/${lectureId}`);
 };
 
+/**
+ * Lấy dữ liệu đầy đủ cho Review Mode:
+ * câu hỏi, đáp án đã chọn, đáp án đúng, giải thích (chỉ cho quiz đã làm)
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ */
+const getQuizReview = (courseSlug, lectureId) => {
+  return axiosClient.get(`${progressPath}/quiz-review/${courseSlug}/${lectureId}`);
+};
+
 export const learningApi = {
   getCourseContent,
   getProgress,
@@ -95,4 +105,5 @@ export const learningApi = {
   resetQuiz,
   resetAllQuizzes,
   getQuizHistory,
+  getQuizReview,
 };

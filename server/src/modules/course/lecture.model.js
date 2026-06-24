@@ -18,6 +18,7 @@ const QuizSchema = new mongoose.Schema({
   options:       { type: [QuizOptionSchema], default: [] },
   correctAnswer: { type: String, required: true }, // 'A' | 'B' | 'C' | 'D'
   hint:          { type: String, default: '' },     // Gợi ý khi trả lời sai
+  explanation:   { type: String, default: '' },     // Giải thích đáp án đúng — chỉ hiển thị trong Review Mode sau khi làm xong
   timestamp:     { type: Number, required: true, default: 0 }, // Giây trong video
   isActive:      { type: Boolean, default: true },  // Admin có thể vô hiệu hoá
 }, { timestamps: true });

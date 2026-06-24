@@ -337,3 +337,75 @@ export const getQuizHistory = async (userId, courseSlug, lectureId) => {
   return { quizHistory: history };
 };
 
+
+// ─── getQuizReview — Dữ liệu đầy đủ cho Review Mode ─────────────────────────
+/**
+ * Join completedQuizzes (Progress) với quizzes (Lecture) để render Review UI.
+ *
+ * ⚠️ SECURITY: Chỉ tiết lộ correctAnswer và explanation khi quiz đã được
+ *    ghi nhận trong completedQuizzes của user (đã trả lời). Không bao giờ
+ *    trả về correctAnswer cho quiz chưa làm.
+ *
+ * @param {string} userId
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ * @returns {{ reviewData: Array, lectureId: string }}
+ */
+export const getQuizReview = async (userId, courseSlug, lectureId) => {
+  // 1. Lấy dữ liệu lecture (câu hỏi + đáp án đúng + giải thích)
+  const lecture = await Lecture.findById(lectureId)
+    .select('quizzes')
+    .lean();
+
+  if (!lecture) {
+    const err = new Error('Bài giảng không tồn tại');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // 2. Lấy lịch sử làm bài từ Progress
+  const course = await getCourseBySlug(courseSlug);
+  const progress = await Progress.findOne(
+    { student: userId, course: course._id },
+    { completedQuizzes: 1 }
+  );
+
+  // 3. Build map: quizIndex → attemptData (chỉ cho lecture này)
+  const attemptMap = {};
+  if (progress?.completedQuizzes) {
+    progress.completedQuizzes
+      .filter(q => String(q.lectureId) === String(lectureId))
+      .forEach(q => {
+        attemptMap[q.quizIndex] = {
+          selectedAnswer: q.selectedAnswer,
+          isCorrect:      q.isCorrect,
+          attempts:       q.attempts,
+          answeredAt:     q.answeredAt,
+        };
+      });
+  }
+
+  // 4. Merge: quiz từ lecture + attempt data từ progress
+  //    ⚠️ CHỈ trả về correctAnswer nếu user đã làm quiz đó
+  const reviewData = (lecture.quizzes || []).map((quiz, idx) => {
+    const attempt = attemptMap[idx];
+    const hasAttempted = Boolean(attempt);
+
+    return {
+      quizIndex:      idx,
+      question:       quiz.question,
+      options:        quiz.options,
+      timestamp:      quiz.timestamp,
+      isActive:       quiz.isActive,
+      // Gợi ý: chỉ trả về khi đã làm (tránh user dùng hint để đoán mà không thử)
+      hint:           hasAttempted ? (quiz.hint || null) : null,
+      // ⚠️ SECURITY: Chỉ reveal correctAnswer sau khi đã trả lời
+      correctAnswer:  hasAttempted ? quiz.correctAnswer : null,
+      explanation:    hasAttempted ? (quiz.explanation || null) : null,
+      // Attempt data (null nếu chưa làm)
+      attempt:        hasAttempted ? attempt : null,
+    };
+  });
+
+  return { reviewData, lectureId };
+};

@@ -27,6 +27,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { markQuizComplete, showQuiz } from '../../features/learning/learningSlice';
 import VideoQuizOverlayMobile from './VideoQuizOverlayMobile';
 import QuizProgressMarkersMobile from './QuizProgressMarkersMobile';
+import QuizReviewSheetMobile from './QuizReviewSheetMobile';
 import CustomProgressBar from './CustomProgressBar';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
@@ -67,6 +68,7 @@ const VideoPlayer = ({
   // ─── Quiz state ──────────────────────────────────────────────────────────
   const [activeQuiz, setActiveQuiz]         = useState(null);  // { quizIndex, quiz }
   const [quizBlocked, setQuizBlocked]       = useState(false);
+  const [isReviewOpen, setIsReviewOpen]     = useState(false); // Quiz Review sheet
 
   // ✅ FIX: Dùng refs cho activeQuiz, quizBlocked, completedQuizzes và isLoadingProgress bên trong timeUpdate listener
   //    → tránh dependency array re-subscribe gây race condition
@@ -513,6 +515,17 @@ const VideoPlayer = ({
     }, 200);
   }, [player]);
 
+  // ─── handleRetakeQuiz — tua video về vị trí quiz sau khi reset ────────────
+  const handleRetakeQuiz = useCallback((quizIndex) => {
+    const quiz = quizzes[quizIndex];
+    if (!quiz || !player) return;
+    const ts = Number(quiz.timestamp);
+    try {
+      player.currentTime = Math.max(0, ts - 1);
+      player.play();
+    } catch (_) {}
+  }, [quizzes, player]);
+
   // ─── Fullscreen handler ────────────────────────────────────────────────────────
   const handleFullscreen = useCallback(() => {
     if (!videoViewRef.current || !videoUrl) return;
@@ -688,6 +701,20 @@ const VideoPlayer = ({
         </View>
       )}
 
+      {/* Nút Xem lại câu hỏi — hiện khi có quiz và không fullscreen */}
+      {!isFullscreen && !activeQuiz && quizzes.filter(q => q.isActive !== false).length > 0 && (
+        <TouchableOpacity
+          style={styles.reviewBtn}
+          onPress={() => setIsReviewOpen(true)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.reviewBtnText}>
+            📋 {quizzes.filter(q => q.isActive !== false).length}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+
       {/* ── Quiz Overlay — Sử dụng Modal hiển thị đè toàn màn hình ── */}
       {activeQuiz && (
         <VideoQuizOverlayMobile
@@ -696,6 +723,20 @@ const VideoPlayer = ({
           onCorrect={handleQuizCorrect}
         />
       )}
+
+      {/* ── Quiz Review Sheet ── */}
+      <QuizReviewSheetMobile
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        courseSlug={courseSlug}
+        lectureId={currentLecture?._id}
+        quizzes={quizzes}
+        onRetake={handleRetakeQuiz}
+        onRetakeAll={() => {
+          // Reset triggeredRef khi retake all
+          quizTriggeredRef.current.clear();
+        }}
+      />
     </View>
   );
 };
@@ -838,6 +879,25 @@ const styles = StyleSheet.create({
     zIndex: 12,
   },
   resumeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  // Nút Xem lại câu hỏi (góc trên bên trái video)
+  reviewBtn: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(79,70,229,0.88)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    zIndex: 12,
+  },
+  reviewBtnText: {
     color: '#fff',
     fontSize: 11,
     fontWeight: '700',

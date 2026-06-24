@@ -143,33 +143,48 @@ export function useVideoQuiz(courseSlug, lectureId, quizzes = []) {
     }
   }, [courseSlug, lectureId, dispatch]);
 
-  // ─── resetQuizAttempt — reset 1 quiz để làm lại ──────────────────────────────
+  // ─── resetQuizAttempt — reset 1 quiz để làm lại (non-optimistic) ─────────────
+  /**
+   * Non-optimistic: chờ server confirm trước, rồi mới cập nhật Redux.
+   * Trả về { success: boolean } để caller biết kết quả.
+   */
   const resetQuizAttempt = useCallback(async (quizIndex) => {
-    if (!courseSlug || !lectureId) return;
+    if (!courseSlug || !lectureId) return { success: false };
     try {
       await learningApi.resetQuiz({ courseSlug, lectureId, quizIndex });
+      // ✅ Chỉ dispatch SAU khi server thành công
       dispatch(removeQuizComplete({ lectureId, quizIndex }));
       // ✅ FIX: Xóa khỏi triggeredRef để quiz có thể trigger lại
       triggeredRef.current.delete(quizIndex);
-      toast.success('Đã reset quiz. Bạn có thể làm lại!', { toastId: 'quiz-reset' });
+      toast.success('↺ Đã reset! Tua video về vị trí câu hỏi để làm lại.', { toastId: 'quiz-reset', autoClose: 4000 });
+      return { success: true };
     } catch (err) {
-      toast.error('Không thể reset quiz', { toastId: 'quiz-reset-err' });
+      toast.error('Không thể reset quiz. Vui lòng thử lại.', { toastId: 'quiz-reset-err' });
+      return { success: false };
     }
   }, [courseSlug, lectureId, dispatch]);
 
-  // ─── resetAllQuizAttempts — reset toàn bộ quiz của lecture ────────────────────
+  // ─── resetAllQuizAttempts — reset toàn bộ quiz của lecture (non-optimistic) ──
+  /**
+   * Non-optimistic: chờ server confirm trước, rồi mới cập nhật Redux.
+   * Trả về { success: boolean } để caller biết kết quả.
+   */
   const resetAllQuizAttempts = useCallback(async () => {
-    if (!courseSlug || !lectureId) return;
+    if (!courseSlug || !lectureId) return { success: false };
     try {
       await learningApi.resetAllQuizzes({ courseSlug, lectureId });
+      // ✅ Chỉ dispatch SAU khi server thành công
       dispatch(removeAllQuizzesForLecture({ lectureId }));
       // ✅ FIX: Clear tất cả triggered
       triggeredRef.current.clear();
-      toast.success('Đã reset tất cả quiz trong bài giảng!', { toastId: 'quiz-reset-all' });
+      toast.success('↺ Đã reset tất cả quiz! Tua video để làm lại từ đầu.', { toastId: 'quiz-reset-all', autoClose: 4000 });
+      return { success: true };
     } catch (err) {
-      toast.error('Không thể reset quiz', { toastId: 'quiz-reset-all-err' });
+      toast.error('Không thể reset tất cả quiz. Vui lòng thử lại.', { toastId: 'quiz-reset-all-err' });
+      return { success: false };
     }
   }, [courseSlug, lectureId, dispatch]);
+
 
   // ─── reset — gọi khi đổi bài giảng ──────────────────────────────────────────
   const reset = useCallback(() => {

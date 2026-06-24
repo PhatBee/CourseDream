@@ -208,4 +208,30 @@ export const getQuizHistory = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};
+
+// ─── GET /api/progress/quiz-review/:courseSlug/:lectureId ─────────────────────
+/**
+ * @route   GET /api/progress/quiz-review/:courseSlug/:lectureId
+ * @desc    Lấy dữ liệu đầy đủ cho Review Mode:
+ *          - Toàn bộ câu hỏi (kể cả chưa làm)
+ *          - Đáp án đã chọn, đáp án đúng, giải thích — CHỈ cho quiz đã làm
+ * @security Yêu cầu đăng nhập. correctAnswer chỉ trả về cho quiz đã trả lời.
+ */
+export const getQuizReview = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { courseSlug, lectureId } = req.params;
+
+    if (!courseSlug || !lectureId) {
+      const error = new Error('Thiếu courseSlug hoặc lectureId');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const result = await progressService.getQuizReview(userId, courseSlug, lectureId);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
