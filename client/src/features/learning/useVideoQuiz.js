@@ -8,11 +8,12 @@ import { toast } from 'react-toastify';
 /**
  * Hook quản lý toàn bộ logic Interactive Video Quiz cho VideoPlayer (web)
  *
- * ✅ FIX v2:
- *   - checkSeekBlock giờ nhận currentTimeBefore → chỉ chặn FORWARD seek
- *   - lastKnownTimeRef theo dõi vị trí trước khi seek
- *   - triggeredRef được xóa khi quiz reset (retake)
- *   - Thêm resetQuizAttempt / resetAllQuizAttempts cho Retake feature
+ * ✅ FIX v3 — Race Condition Fix:
+ *   - isSeekingRef: flag đóng băng lastKnownTimeRef trong suốt quá trình seek
+ *     → ngăn timeupdate ghi đè "beforeTime" khi user click timeline
+ *   - pendingRetakeRef: đảm bảo quiz hiện lại 100% sau retake, không phụ thuộc
+ *     vào timeupdate window timing hay bước nhảy của Video.js
+ *   - notifySeekStart / notifySeekEnd: API để VideoJSPlayer báo hiệu trạng thái seek
  *
  * @param {string} courseSlug
  * @param {string} lectureId
@@ -25,8 +26,17 @@ export function useVideoQuiz(courseSlug, lectureId, quizzes = []) {
   // Set lưu quizIndex đã TRIGGER trong session này (tránh re-trigger khi replay vùng timestamp)
   const triggeredRef = useRef(new Set());
 
-  // ✅ FIX: Lưu vị trí video TRƯỚC khi seek để phân biệt forward/backward
+  // ✅ FIX v3 — Lưu vị trí video TRƯỚC khi seek (giá trị "beforeTime" đáng tin cậy)
   const lastKnownTimeRef = useRef(0);
+
+  // ✅ FIX v3 — Flag: đang trong quá trình seek? → đóng băng lastKnownTimeRef
+  // Được set = true tại onSeekStart (TRƯỚC khi seeking/timeupdate bắn)
+  // Được set = false tại onSeekEnd (sau khi seeked hoàn thành)
+  const isSeekingRef = useRef(false);
+
+  // ✅ FIX v3 — Khi retake quiz, lưu quizIndex cần trigger ngay lập tức
+  // thay vì chờ timeupdate window (giải quyết vấn đề bước nhảy > 1.5s)
+  const pendingRetakeRef = useRef(null);
 
   // ─── Kiểm tra quiz đã hoàn thành ĐÚNG (so sánh với state từ server) ────────
   const isQuizDone = useCallback((quizIndex) => {
@@ -38,22 +48,70 @@ export function useVideoQuiz(courseSlug, lectureId, quizzes = []) {
     );
   }, [completedQuizzes, lectureId]);
 
+  // ─── notifySeekStart — gọi từ VideoJSPlayer tại sự kiện "seeking" ────────────
+  /**
+   * ✅ FIX v3: Đóng băng lastKnownTimeRef NGAY KHI user bắt đầu seek.
+   * Phải gọi TRƯỚC khi timeupdate có cơ hội ghi đè giá trị.
+   * VideoJSPlayer sẽ gọi hàm này trong handler "seeking" (ưu tiên cao nhất).
+   */
+  const notifySeekStart = useCallback(() => {
+    isSeekingRef.current = true;
+    // lastKnownTimeRef.current giữ nguyên — không thay đổi trong suốt quá trình seek
+  }, []);
+
+  // ─── notifySeekEnd — gọi từ VideoJSPlayer tại sự kiện "seeked" ───────────────
+  /**
+   * ✅ FIX v3: Cập nhật lastKnownTimeRef với vị trí sau seek, mở khóa flag.
+   */
+  const notifySeekEnd = useCallback((currentTimeSec) => {
+    lastKnownTimeRef.current = currentTimeSec;
+    isSeekingRef.current = false;
+  }, []);
+
   // ─── onTimeUpdate — gắn vào video element ────────────────────────────────────
   /**
    * Gọi từ onTimeUpdate event của video.
-   * Cửa sổ trigger: [timestamp, timestamp + 2.5] giây.
-   * ✅ FIX: Chỉ cập nhật lastKnownTimeRef khi phát bình thường (không nhảy forward > 1.5s) hoặc tua ngược.
+   *
+   * ✅ FIX v3: Hoàn toàn bỏ qua cập nhật lastKnownTimeRef khi isSeekingRef = true.
+   * Điều này triệt tiêu race condition giữa timeupdate và seeking:
+   *   - Khi user click timeline: seeking → isSeekingRef = true → timeupdate bị ignore
+   *   - checkSeekBlock đọc lastKnownTimeRef vẫn là vị trí trước khi seek → chặn đúng
+   *
+   * ✅ FIX v3: Kiểm tra pendingRetakeRef để trigger quiz ngay lập tức sau retake
+   * (không phụ thuộc vào timeupdate có nằm trong window [ts, ts+2.5] hay không).
    */
   const onTimeUpdate = useCallback((currentTimeSec) => {
-    const diff = currentTimeSec - lastKnownTimeRef.current;
-    const isNormalProgression = (diff > 0 && diff < 1.5) || diff < 0;
-
-    if (isNormalProgression) {
-      lastKnownTimeRef.current = currentTimeSec;
+    // ✅ Không cập nhật lastKnownTimeRef khi đang trong quá trình seek
+    if (!isSeekingRef.current) {
+      const diff = currentTimeSec - lastKnownTimeRef.current;
+      // Chỉ cập nhật khi phát tự nhiên (tiến đều ≤ 1.5s) hoặc backward (revert từ block)
+      const isNormalProgression = (diff > 0 && diff < 1.5) || diff < 0;
+      if (isNormalProgression) {
+        lastKnownTimeRef.current = currentTimeSec;
+      }
     }
 
     if (quizBlocked || !quizzes.length) return;
 
+    // ✅ FIX v3: Ưu tiên kiểm tra pendingRetakeRef — trigger ngay nếu đang ở vùng quiz
+    if (pendingRetakeRef.current !== null) {
+      const retakeIdx = pendingRetakeRef.current;
+      const quiz = quizzes[retakeIdx];
+      if (quiz && quiz.isActive !== false) {
+        const ts = Number(quiz.timestamp);
+        // Trigger nếu video đã đến gần vùng quiz (rộng hơn: ts-0.5 đến ts+3)
+        if (currentTimeSec >= ts - 0.5 && currentTimeSec <= ts + 3) {
+          pendingRetakeRef.current = null; // clear pending
+          triggeredRef.current.add(retakeIdx);
+          dispatch(showQuiz({ quizIndex: retakeIdx, quiz }));
+          return;
+        }
+      } else {
+        pendingRetakeRef.current = null; // quiz không hợp lệ → clear
+      }
+    }
+
+    // Kiểm tra quiz thông thường theo window [ts, ts+2.5]
     for (let i = 0; i < quizzes.length; i++) {
       const quiz = quizzes[i];
       if (quiz.isActive === false) continue;
@@ -70,26 +128,32 @@ export function useVideoQuiz(courseSlug, lectureId, quizzes = []) {
   }, [quizzes, quizBlocked, isQuizDone, dispatch]);
 
   // ─── onSeeked — gọi từ seeked event sau khi seek hoàn thành ────────────────────
+  /**
+   * Alias cho notifySeekEnd — dùng để backward-compatible với VideoJSPlayer cũ.
+   * Trong VideoJSPlayer mới, gọi notifySeekEnd trực tiếp.
+   */
   const onSeeked = useCallback((currentTimeSec) => {
-    lastKnownTimeRef.current = currentTimeSec;
-  }, []);
+    notifySeekEnd(currentTimeSec);
+  }, [notifySeekEnd]);
 
   // ─── checkSeekBlock — gọi từ onSeeking event ─────────────────────────────────
   /**
-   * ✅ FIX v2: Nhận thêm currentTimeBefore — chỉ chặn FORWARD seek
-   * Nếu user tua NGƯỢC (backward) thì KHÔNG bao giờ chặn.
+   * ✅ FIX v3: Không cần nhận currentTimeBefore nữa vì isSeekingRef đã đảm bảo
+   * lastKnownTimeRef không bị ghi đè khi timeupdate chạy song song.
+   * Vẫn hỗ trợ truyền currentTimeBefore để backward-compatible.
    *
-   * @param {number} seekToSec        - giây user muốn tua đến
-   * @param {number} [currentTimeBefore] - giây trước khi seek (từ lastKnownTimeRef)
+   * @param {number} seekToSec           - giây user muốn tua đến
+   * @param {number} [currentTimeBefore] - giây trước khi seek (optional override)
    * @returns {{ blocked: boolean, revertTo: number|null, blockedQuiz: object|null }}
    */
   const checkSeekBlock = useCallback((seekToSec, currentTimeBefore) => {
     if (!quizzes.length) return { blocked: false, revertTo: null, blockedQuiz: null };
 
-    // Nếu không truyền currentTimeBefore, dùng lastKnownTimeRef
+    // ✅ FIX v3: lastKnownTimeRef đã được đóng băng trước khi hàm này chạy
+    // (do notifySeekStart được gọi trong handler "seeking" TRƯỚC checkSeekBlock)
     const beforeTime = currentTimeBefore ?? lastKnownTimeRef.current;
 
-    // ✅ FIX: Chỉ chặn FORWARD seek (seekTo > beforeTime)
+    // Chỉ chặn FORWARD seek (seekTo > beforeTime)
     // Backward seek luôn được phép
     if (seekToSec <= beforeTime) {
       return { blocked: false, revertTo: null, blockedQuiz: null };
@@ -190,12 +254,16 @@ export function useVideoQuiz(courseSlug, lectureId, quizzes = []) {
   const reset = useCallback(() => {
     triggeredRef.current.clear();
     lastKnownTimeRef.current = 0;
+    isSeekingRef.current = false;
+    pendingRetakeRef.current = null;
   }, []);
 
   return {
     onTimeUpdate,
     onSeeked,
     checkSeekBlock,
+    notifySeekStart,   // ✅ NEW: gọi từ VideoJSPlayer tại handler "seeking"
+    notifySeekEnd,     // ✅ NEW: gọi từ VideoJSPlayer tại handler "seeked"
     submitAnswer,
     resetQuizAttempt,
     resetAllQuizAttempts,
@@ -203,7 +271,8 @@ export function useVideoQuiz(courseSlug, lectureId, quizzes = []) {
     activeQuiz,
     quizBlocked,
     isQuizDone,
-    completedQuizzes, // expose để VideoPlayer pass xuống QuizProgressMarkers
-    lastKnownTimeRef, // expose để VideoPlayer dùng trong handleSeeking
+    completedQuizzes,  // expose để VideoPlayer pass xuống QuizProgressMarkers
+    lastKnownTimeRef,  // expose để VideoPlayer dùng trong handleSeeking
+    pendingRetakeRef,  // ✅ NEW: expose để handleRetakeQuiz set giá trị
   };
 }
