@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   StyleSheet,
@@ -27,7 +27,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { markQuizComplete, showQuiz } from '../../features/learning/learningSlice';
 import VideoQuizOverlayMobile from './VideoQuizOverlayMobile';
 import QuizProgressMarkersMobile from './QuizProgressMarkersMobile';
-import QuizReviewSheetMobile from './QuizReviewSheetMobile';
 import CustomProgressBar from './CustomProgressBar';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
@@ -39,10 +38,11 @@ import * as ScreenOrientation from 'expo-screen-orientation';
  * ─ Gửi onProgress mỗi 10s khi đang phát
  * ─ Interactive Quiz: poll currentTime mỗi 500ms, block seek
  *
- * FIX: lastWatchedTimeRef tránh closure stale trong useEffect([videoUrl]).
- * useEffect([lastWatchedTime]) reactive seek khi fetchVideoProgress trả về sau.
+ * Exposed via ref (useImperativeHandle):
+ *   seekToQuiz(timestamp) — tua về ts-1, play, xóa triggered cache
  */
-const VideoPlayer = ({
+const VideoPlayer = forwardRef((
+  {
   currentLecture,
   courseId,
   courseSlug,       // ── THÊM: dùng cho quiz API
@@ -50,7 +50,7 @@ const VideoPlayer = ({
   lastWatchedTime = 0,
   onProgress,
   onComplete,
-}) => {
+}, ref) => {
   const videoViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const quizTriggeredRef = useRef(new Set()); // ── Đã trigger quiz nào trong session
@@ -68,7 +68,7 @@ const VideoPlayer = ({
   // ─── Quiz state ──────────────────────────────────────────────────────────
   const [activeQuiz, setActiveQuiz]         = useState(null);  // { quizIndex, quiz }
   const [quizBlocked, setQuizBlocked]       = useState(false);
-  const [isReviewOpen, setIsReviewOpen]     = useState(false); // Quiz Review sheet
+  // ✅ isReviewOpen đã được chuyển lên LearningScreen — VideoPlayer không còn quản lý
 
   // ✅ FIX: Dùng refs cho activeQuiz, quizBlocked, completedQuizzes và isLoadingProgress bên trong timeUpdate listener
   //    → tránh dependency array re-subscribe gây race condition
@@ -520,20 +520,40 @@ const VideoPlayer = ({
     }, 200);
   }, [player]);
 
-  // ─── handleRetakeQuiz — tua video về vị trí quiz sau khi reset ────────────
+  // ─── seekToQuiz — exposed via useImperativeHandle ────────────────────────
   /**
-   * ✅ FIX: Xóa quizIndex khỏi quizTriggeredRef TRƯỚC khi seek.
-   * Nếu không xóa, listener timeUpdate lầm tưởng quiz đã trigger trong session
-   * này và bỏ qua → VideoQuizOverlayMobile không bao giờ hiện lại.
+   * ✅ API công khai (ref): LearningScreen gọi videoPlayerRef.current.seekToQuiz(ts)
+   * sau khi QuizReviewSheetMobile kích hoạt onRetake.
+   *
+   * Thực hiện:
+   *   1. Xóa quizIndex khỏi quizTriggeredRef → listener timeUpdate có thể trigger lại
+   *   2. Tua về ts - 1 giây → phát
    */
+  useImperativeHandle(ref, () => ({
+    seekToQuiz(ts) {
+      if (!player) return;
+      const targetTs = Number(ts);
+      // Tìm quizIndex tương ứng với timestamp để xóa khỏi triggeredRef
+      const matchIdx = quizzes.findIndex(q => Number(q.timestamp) === targetTs);
+      if (matchIdx !== -1) {
+        quizTriggeredRef.current.delete(matchIdx);
+      }
+      try {
+        player.currentTime = Math.max(0, targetTs - 1);
+        player.play();
+      } catch (_) {}
+    },
+  }), [player, quizzes]);
+
+  // ─── handleRetakeQuiz (nội bộ — hiện không dùng vì Modal đã lên LearningScreen) ─
+  // Giữ lại để onRetakeAll vẫn có thể clear triggeredRef
   const handleRetakeQuiz = useCallback((quizIndex) => {
     const quiz = quizzes[quizIndex];
     if (!quiz || !player) return;
     const ts = Number(quiz.timestamp);
     try {
-      // ✅ Bước 1: Giải phóng quizIndex khỏi triggered set
+      // ✅ FIX: Giải phóng quizIndex khỏi triggered set
       quizTriggeredRef.current.delete(quizIndex);
-      // ✅ Bước 2: Tua về 1s trước mốc quiz và phát
       player.currentTime = Math.max(0, ts - 1);
       player.play();
     } catch (_) {}
@@ -714,18 +734,7 @@ const VideoPlayer = ({
         </View>
       )}
 
-      {/* Nút Xem lại câu hỏi — hiện khi có quiz và không fullscreen */}
-      {!isFullscreen && !activeQuiz && quizzes.filter(q => q.isActive !== false).length > 0 && (
-        <TouchableOpacity
-          style={styles.reviewBtn}
-          onPress={() => setIsReviewOpen(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.reviewBtnText}>
-            📋 {quizzes.filter(q => q.isActive !== false).length}
-          </Text>
-        </TouchableOpacity>
-      )}
+      {/* Nút Xem lại câu hỏi — ĐÃ CHUYỂN lên LearningScreen (infoBar) */}
 
 
       {/* ── Quiz Overlay — Sử dụng Modal hiển thị đè toàn màn hình ── */}
@@ -736,23 +745,9 @@ const VideoPlayer = ({
           onCorrect={handleQuizCorrect}
         />
       )}
-
-      {/* ── Quiz Review Sheet ── */}
-      <QuizReviewSheetMobile
-        isOpen={isReviewOpen}
-        onClose={() => setIsReviewOpen(false)}
-        courseSlug={courseSlug}
-        lectureId={currentLecture?._id}
-        quizzes={quizzes}
-        onRetake={handleRetakeQuiz}
-        onRetakeAll={() => {
-          // Reset triggeredRef khi retake all
-          quizTriggeredRef.current.clear();
-        }}
-      />
     </View>
   );
-};
+});
 
 
 const PLAYER_HEIGHT = 230;
@@ -896,25 +891,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  // Nút Xem lại câu hỏi (góc trên bên trái video)
-  reviewBtn: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(79,70,229,0.88)',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    zIndex: 12,
-  },
-  reviewBtnText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
+  // Nút Xem lại câu hỏi — ĐÃ XÓA (chuyển lên LearningScreen)
 });
 
 export default VideoPlayer;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ import {
   saveVideoProgress,
 } from '../../features/learning/learningSlice';
 import VideoPlayer from '../../components/learning/VideoPlayer';
+import QuizReviewSheetMobile from '../../components/learning/QuizReviewSheetMobile';
 import LearningTabs from '../../components/learning/LearningTabs';
 import CurriculumList from '../../components/learning/CurriculumList';
 import DiscussionMobile from '../../components/course/DiscussionMobile';
@@ -77,6 +78,12 @@ const LearningScreen = ({ route, navigation }) => {
   const [activeTab, setActiveTab] = useState(
     discussionId ? "Discussion" : "Lectures",
   );
+
+  // ─── Refs và state cho Quiz Review ───────────────────────────────────────────
+  // videoPlayerRef: điều khiển VideoPlayer (seekToQuiz) từ bên ngoài
+  const videoPlayerRef = useRef(null);
+  // isReviewOpen: trạng thái mở/đóng QuizReviewSheetMobile
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   const { course, sections, currentLecture, progress, isLoading, lastWatchedTime } = useSelector(
     (state) => state.learning
@@ -186,6 +193,7 @@ const LearningScreen = ({ route, navigation }) => {
         </TouchableOpacity>
 
         <VideoPlayer
+          ref={videoPlayerRef}
           currentLecture={currentLecture}
           courseId={course._id}
           courseSlug={slug}
@@ -223,6 +231,19 @@ const LearningScreen = ({ route, navigation }) => {
               {isCompleted ? 'Đã xong' : 'Hoàn thành'}
             </Text>
           </TouchableOpacity>
+
+          {/* ✅ Nút Xem lại câu hỏi — chỉ hiện khi bài học có quiz */}
+          {(currentLecture?.quizzes?.filter(q => q.isActive !== false).length > 0) && (
+            <TouchableOpacity
+              onPress={() => setIsReviewOpen(true)}
+              style={styles.quizReviewBtn}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.quizReviewBtnText}>
+                📋 {currentLecture.quizzes.filter(q => q.isActive !== false).length}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -344,6 +365,29 @@ const LearningScreen = ({ route, navigation }) => {
           )
         )}
       </View>
+
+      {/* ✅ QuizReviewSheetMobile — quản lý tại LearningScreen (Component cha) */}
+      {currentLecture && (
+        <QuizReviewSheetMobile
+          isOpen={isReviewOpen}
+          onClose={() => setIsReviewOpen(false)}
+          courseSlug={slug}
+          lectureId={currentLecture._id}
+          quizzes={currentLecture?.quizzes || []}
+          onRetake={(quizIndex) => {
+            // Tìm timestamp tương ứng với quizIndex
+            const quiz = (currentLecture?.quizzes || [])[quizIndex];
+            if (!quiz) return;
+            const ts = Number(quiz.timestamp);
+            // Điều khiển VideoPlayer qua ref: tua về vị trí quiz
+            videoPlayerRef.current?.seekToQuiz(ts);
+          }}
+          onRetakeAll={() => {
+            // seekToQuiz sẽ được gọi bởi từng QuizReviewItem’s onRetake
+            // không cần thêm gì ở đây
+          }}
+        />
+      )}
     </View>
   );
 };
@@ -409,6 +453,25 @@ const styles = StyleSheet.create({
   },
   completeBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   completeBtnTextDone: { color: '#10b981' },
+
+  // ✅ Nút Xem lại câu hỏi (trong infoBar)
+  quizReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#eef2ff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+    marginLeft: 6,
+  },
+  quizReviewBtnText: {
+    color: '#4f46e5',
+    fontSize: 12,
+    fontWeight: '700',
+  },
 
   // ── Prev/Next ──
   navRow: {
