@@ -10,6 +10,10 @@ import SetPassword from "../pages/SetPassword";
 import CourseDetail from "../pages/CourseDetail";
 // import Header from '../components/Header'; // Không dùng trực tiếp ở đây
 import ProfileLayout from "../layouts/ProfileLayout";
+import InstructorLayout from "../layouts/InstructorLayout";
+import InstructorProfileLayout from "../layouts/InstructorProfileLayout";
+import InstructorSettingsLayout from "../layouts/InstructorSettingsLayout";
+
 import MyProfile from "../components/profile/MyProfile";
 import SettingsPage from "../pages/SettingsPage";
 import EditProfile from "../components/profile/EditProfile";
@@ -73,7 +77,7 @@ export default function AppRoutes() {
     });
 
     return () => socket.disconnect();
-  }, [user]);
+  }, [user?._id]);
 
   return (
     <BrowserRouter>
@@ -124,33 +128,35 @@ export default function AppRoutes() {
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
 
-            <Route
-              element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}
-            >
-              <Route
-                path="instructor/courses"
-                element={<InstructorCourses />}
-              />
-              <Route
-                path="instructor/dashboard"
-                element={<InstructorDashboard />}
-              />
-            </Route>
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
           </Route>
         </Route>
 
-        <Route
-          element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}
-        >
-          <Route path="instructor/add-course" element={<AddCoursePage />} />
-          <Route
-            path="instructor/courses/:slug/edit"
-            element={<EditCoursePage />}
-          />
+        <Route element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}>
+          <Route path="/instructor" element={<InstructorLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<InstructorDashboard />} />
+            <Route path="courses" element={<InstructorCourses />} />
+            <Route path="add-course" element={<AddCoursePage />} />
+            <Route path="courses/:slug/edit" element={<EditCoursePage />} />
+
+            {/* Instructor Profile*/}
+            <Route path="profile" element={<InstructorProfileLayout />}>
+              <Route index element={<MyProfile isInstructorView={true} />} />
+
+              <Route path="settings" element={<InstructorSettingsLayout />}>
+                <Route index element={<Navigate to="edit" replace />} />
+                <Route path="edit" element={<EditProfile />} />
+                <Route path="security" element={<ChangePassword />} />
+                <Route path="instructor-profile" element={<InstructorInfoEdit />} />
+                <Route path="social-payout" element={<SocialPayoutEdit />} />
+              </Route>
+            </Route>
+          </Route>
         </Route>
+
 
         {/* No header Routes */}
         <Route path="/login" element={<Login />} />
