@@ -303,5 +303,4 @@ export const {
   removeQuizComplete,
   removeAllQuizzesForLecture,
 } = learningSlice.actions;
-export { fetchQuizReview };
 export default learningSlice.reducer;

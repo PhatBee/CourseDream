@@ -383,9 +383,14 @@ const VideoPlayer = ({
           for (const quiz of sortedQuizzes) {
             const ts = Number(quiz.timestamp);
             const isDone = currentCompletedQuizzes.some(
-              (q) => String(q.lectureId) === String(currentLecture?._id)
-                && q.quizIndex === quiz.index
-                && q.isCorrect !== false
+              // ✅ FIX: Ép kiểu an toàn — MongoDB có thể trả về quizIndex là String hoặc Number.
+              // Hỗ trợ cả q.lectureId (chuẩn) và q.lecture (fallback từ populate).
+              (q) => {
+                const qLectureId = String(q.lectureId || q.lecture || '');
+                const qLectureMatch = qLectureId === String(currentLecture?._id);
+                const qIndexMatch = Number(q.quizIndex) === Number(quiz.index);
+                return qLectureMatch && qIndexMatch && q.isCorrect !== false;
+              }
             );
 
             // ✅ FIX: Chỉ trigger khi video phát bình thường qua mốc (cửa sổ nhỏ),
@@ -516,11 +521,19 @@ const VideoPlayer = ({
   }, [player]);
 
   // ─── handleRetakeQuiz — tua video về vị trí quiz sau khi reset ────────────
+  /**
+   * ✅ FIX: Xóa quizIndex khỏi quizTriggeredRef TRƯỚC khi seek.
+   * Nếu không xóa, listener timeUpdate lầm tưởng quiz đã trigger trong session
+   * này và bỏ qua → VideoQuizOverlayMobile không bao giờ hiện lại.
+   */
   const handleRetakeQuiz = useCallback((quizIndex) => {
     const quiz = quizzes[quizIndex];
     if (!quiz || !player) return;
     const ts = Number(quiz.timestamp);
     try {
+      // ✅ Bước 1: Giải phóng quizIndex khỏi triggered set
+      quizTriggeredRef.current.delete(quizIndex);
+      // ✅ Bước 2: Tua về 1s trước mốc quiz và phát
       player.currentTime = Math.max(0, ts - 1);
       player.play();
     } catch (_) {}
