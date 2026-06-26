@@ -43,9 +43,12 @@ const InstructorBio = ({ instructor = {} }) => {
           />
         </div>
         <div className="flex-1">
-          <Link to={`/instructor/${name}`} className="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors">
+          {/* Name */}
+          {/* Bỏ Link */}
+          <p className="text-lg font-bold text-gray-900 transition-colors">
             {name}
-          </Link>
+          </p>
+          {/* Headline */}
           {headline && <p className="text-blue-600 font-medium text-sm mb-2">{headline}</p>}
 
           {/* Stats */}
