@@ -223,12 +223,12 @@ const EditCoursePage = () => {
                     })),
                     // ✅ FIX: Đưa quizzes vào payload — trước đây bị bỏ sót
                     quizzes: (lec.quizzes || []).map(q => ({
-                        question:      q.question      || '',
-                        options:       (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
+                        question: q.question || '',
+                        options: (q.options || []).map(o => ({ id: o.id, text: o.text || '' })),
                         correctAnswer: q.correctAnswer || 'A',
-                        hint:          q.hint          || '',
-                        timestamp:     Number(q.timestamp) || 0,
-                        isActive:      q.isActive !== false, // default true
+                        hint: q.hint || '',
+                        timestamp: Number(q.timestamp) || 0,
+                        isActive: q.isActive !== false, // default true
                     }))
                 }))
             }));
@@ -243,7 +243,7 @@ const EditCoursePage = () => {
                     isDraft ? '✅ Đã lưu nháp!' : '🎉 Đã gửi lên chờ Admin duyệt!',
                     { id: toastId, duration: 3000 }
                 );
-                navigate('/profile/instructor/courses');
+                navigate('/instructor/courses');
             } else {
                 toast.error(resultAction.payload || 'Thất bại', { id: toastId });
             }
