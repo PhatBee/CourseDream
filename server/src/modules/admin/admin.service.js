@@ -47,7 +47,7 @@ export const reviewApplication = async (targetUserId, decision, adminNotes) => {
       type: "system",
       title: "Hồ sơ giảng viên được duyệt",
       message: "Chúc mừng! Yêu cầu trở thành giảng viên của bạn đã được phê duyệt. Bạn có thể bắt đầu tạo khóa học ngay bây giờ.",
-      metadata: { adminNote: adminNotes }
+      metadata: { adminNote: adminNotes, url: '/profile/instructor/courses' }
     }).catch(err => console.error("Lỗi gửi thông báo:", err));
 
   } else if (decision === 'reject') {
@@ -802,8 +802,11 @@ export const approveRevision = async (revisionId, adminId) => {
     type: "system",
     title: "Khóa học đã được duyệt",
     message: `Khóa học "${revision.data.title}" của bạn đã được admin duyệt.`,
-    relatedId: revision._id,
-    courseSlug: revision.data.slug || undefined
+    metadata: {
+      courseId: revision._id,
+      courseSlug: revision.data.slug || undefined,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -843,8 +846,11 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
     type: "system",
     title: "Khóa học bị từ chối",
     message: `Khóa học "${revision.data.title}" của bạn đã bị từ chối. Lý do: ${reviewMessage}`,
-    relatedId: revision._id,
-    courseSlug: revision.data.slug || undefined
+    metadata: {
+      courseId: revision._id,
+      courseSlug: revision.data.slug || undefined,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -899,8 +905,11 @@ export const requestRevisionChanges = async (revisionId, reviewMessage, adminId)
     type: 'system',
     title: '⚠️ Khóa học cần chỉnh sửa',
     message: `Khóa học "${revision.data.title}" cần chỉnh sửa trước khi được duyệt. Phản hồi: ${reviewMessage}`,
-    relatedId: revision._id,
-    courseSlug: revision.data.slug || undefined
+    metadata: {
+      courseId: revision._id,
+      courseSlug: revision.data.slug || undefined,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -939,8 +948,11 @@ export const unpublishCourse = async (courseId, adminId, reason = '') => {
     type: 'system',
     title: 'Khóa học đã bị ẩn khỏi marketplace',
     message: `Khóa học "${course.title}" đã bị admin unpublish.${reason ? ` Lý do: ${reason}` : ''} Học viên hiện tại vẫn có thể truy cập.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -986,8 +998,11 @@ export const suspendCourse = async (courseId, adminId, reason) => {
     type: 'system',
     title: '🚫 Khóa học bị đình chỉ vi phạm chính sách',
     message: `Khóa học "${course.title}" đã bị đình chỉ. Lý do: ${reason}. Vui lòng liên hệ Admin để được hỗ trợ.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -1023,8 +1038,11 @@ export const restoreSuspendedCourse = async (courseId, adminId) => {
     type: 'system',
     title: 'Khóa học đã được khôi phục',
     message: `Khóa học "${course.title}" đã được admin khôi phục về trạng thái Unpublished. Bạn có thể liên hệ Admin để publish lại.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return { message: 'Đã khôi phục khóa học về trạng thái Unpublished.' };
@@ -1058,9 +1076,12 @@ export const republishCourse = async (courseId, adminId) => {
     sender: adminId,
     type: 'system',
     title: '✅ Khóa học đã được publish lại',
-    message: `Khóa học "${course.title}" đã được admin publish trở lại marketplace.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    message: `Khóa học "${course.title}" đã được admin hiển thị lại trên marketplace. Học viên mới có thể tiếp tục đăng ký.`,
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return { message: 'Đã publish lại khóa học thành công.' };
@@ -1282,4 +1303,4 @@ export const getQuizzesPreview = async (courseId) => {
         : 0,
     },
   };
-};
+};

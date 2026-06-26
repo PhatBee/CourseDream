@@ -250,6 +250,7 @@ export default function Checkout() {
       }
     } catch (error) {
       console.error("Payment error:", error);
+      toast.dismiss();
       toast.error(error.response?.data?.message || "Lỗi khi xử lý thanh toán");
       setIsProcessing(false);
     }
@@ -258,14 +259,19 @@ export default function Checkout() {
   // Khi user chọn mã
   const [selectedPromotion, setSelectedPromotion] = useState(null);
 
-  const handleSelectPromotion = (promo) => {
+  const handleSelectPromotion = async (promo) => {
     if (selectedPromotion === promo.code) {
       handleRemovePromotion();
     } else {
       setSelectedPromotion(promo.code);
-      dispatch(
-        previewPromotionThunk({ code: promo.code, courseIds })
-      );
+      try {
+        await dispatch(
+          previewPromotionThunk({ code: promo.code, courseIds })
+        ).unwrap();
+      } catch (error) {
+        toast.error(error || "Mã giảm đã hết hoặc hết hạn");
+        setSelectedPromotion(null);
+      }
     }
   };
 
