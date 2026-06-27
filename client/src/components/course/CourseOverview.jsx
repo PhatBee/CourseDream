@@ -167,7 +167,7 @@ const CourseOverview = ({ course }) => {
             {requirements.map((item, index) => (
               <li key={index} className="flex items-start">
                 <span className="text-amber-600 mr-2 font-bold">•</span>
-                <span className="text-gray-700">{item}</span>
+                <span className="text-gray-700 text-justify">{item}</span>
               </li>
             ))}
           </ul>
