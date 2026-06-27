@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 import { useSelector, useDispatch } from "react-redux";
-import { setNewPassword, clearReset, clearStatus  } from "../features/auth/authSlice";
+import { setNewPassword, clearReset, clearStatus } from "../features/auth/authSlice";
 
 import auth1 from "../assets/img/auth/auth-1.svg";
 import logo from "../assets/img/auth/logo.svg";
 
 const SetPassword = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const navigate = useNavigate();
@@ -16,11 +19,11 @@ const SetPassword = () => {
 
   // Setup Redux
   const dispatch = useDispatch();
-  const { 
-    isLoading, 
-    isError, 
-    isSetPasswordSuccess, 
-    message, 
+  const {
+    isLoading,
+    isError,
+    isSetPasswordSuccess,
+    message,
     resetToken // <-- Lấy token
   } = useSelector((state) => state.auth);
 
@@ -38,7 +41,7 @@ const SetPassword = () => {
       toast.error(message || "Đặt lại mật khẩu thất bại");
       dispatch(clearStatus());
     }
-    
+
     // Khi setPassword() thành công
     if (isSetPasswordSuccess) {
       isRedirecting.current = true; // Đánh dấu đang chuyển hướng
@@ -125,16 +128,20 @@ const SetPassword = () => {
                 <div className="relative">
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-[15px] outline-none
                                focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
                   />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                    <i className="isax isax-eye-slash text-sm" />
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors z-10"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
 
                 {/* Strength bar (4 mức: poor/weak/strong/heavy) */}
@@ -163,16 +170,20 @@ const SetPassword = () => {
                 <div className="relative">
                   <input
                     id="confirm"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     required
                     className="block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-[15px] outline-none
                                focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
                   />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                    <i className="isax isax-eye-slash text-sm" />
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors z-10"
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               </div>
 

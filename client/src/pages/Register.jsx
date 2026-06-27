@@ -5,6 +5,7 @@ import { register, reset, setRegistrationEmail, googleLogin, facebookLogin } fro
 import FacebookLogin from '@greatsumini/react-facebook-login';
 import { GoogleLogin } from '@react-oauth/google';
 import { toast } from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 import authImg from "../assets/img/auth/auth-1.svg";
 import logo from "../assets/img/auth/logo.svg";
@@ -18,6 +19,8 @@ const Register = () => {
     password: "",
     confirmPassword: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { name, email, password, confirmPassword } = formData;
 
   const navigate = useNavigate();
@@ -203,7 +206,7 @@ const Register = () => {
                 </label>
                 <div className="relative">
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
                     value={password}
@@ -212,9 +215,13 @@ const Register = () => {
                     className="block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-[15px] outline-none
                                focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
                   />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                    <i className="isax isax-eye-slash text-sm" />
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors z-10"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               </div>
 
@@ -228,7 +235,7 @@ const Register = () => {
                 </label>
                 <div className="relative">
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
                     value={confirmPassword}
@@ -237,9 +244,13 @@ const Register = () => {
                     className="block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-[15px] outline-none
                                focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
                   />
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                    <i className="isax isax-eye-slash text-sm" />
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors z-10"
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               </div>
 
