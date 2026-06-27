@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
@@ -12,6 +12,7 @@ const SetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const navigate = useNavigate();
+  const isRedirecting = useRef(false); // Flag tránh race condition khi clearReset()
 
   // Setup Redux
   const dispatch = useDispatch();
@@ -25,8 +26,8 @@ const SetPassword = () => {
 
   // useEffect xử lý state
   useEffect(() => {
-    // Nếu không có token, không cho ở lại trang này
-    if (!resetToken) {
+    // Nếu không có token và không phải đang chuyển hướng sau khi đổi mật khẩu thành công
+    if (!resetToken && !isRedirecting.current) {
       toast.error("Phiên đặt lại mật khẩu không hợp lệ.");
       navigate("/forgot-password");
     }
@@ -40,6 +41,7 @@ const SetPassword = () => {
     
     // Khi setPassword() thành công
     if (isSetPasswordSuccess) {
+      isRedirecting.current = true; // Đánh dấu đang chuyển hướng
       toast.success(message); // "Đặt lại mật khẩu thành công!"
       dispatch(clearReset()); // Xóa state (token, email)
       navigate("/login"); // Về trang đăng nhập
