@@ -106,6 +106,32 @@ export const verifyOTP = async (req, res, next) => {
 };
 
 /**
+ * @desc    Gửi lại OTP đăng ký tài khoản
+ * @route   POST /api/auth/resend-otp
+ * @access  Public
+ */
+export const resendOTP = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            const error = new Error('Vui lòng cung cấp email.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const result = await authService.resendOTP({ email });
+
+        res.status(200).json({
+            message: 'Mã OTP mới đã được gửi. Vui lòng kiểm tra email.',
+            email: result.email,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * @desc    Đăng nhập người dùng
  * @route   POST /api/auth/login
  * @access  Public

@@ -244,6 +244,50 @@ export const verifyOTP = async ({ email, otp }) => {
 };
 
 /**
+ * Service: Gửi lại OTP đăng ký tài khoản
+ */
+export const resendOTP = async ({ email }) => {
+    // 1. Tìm user bằng email
+    const user = await User.findOne({ email });
+    if (!user) {
+        const error = new Error('Email không tồn tại hoặc chưa đăng ký.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. Kiểm tra trạng thái kích hoạt
+    if (user.isVerified) {
+        const error = new Error('Tài khoản này đã được kích hoạt. Vui lòng đăng nhập.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 3. Tạo OTP mới và thời gian hết hạn mới (15 phút)
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    // 4. Gửi email chứa OTP mới
+    try {
+        await sendEmail({
+            to: user.email,
+            subject: 'Mã xác thực đăng ký DreamsLMS (Gửi lại)',
+            html: `<p>Chào ${user.name},</p>
+             <p>Mã OTP mới của bạn là: <strong>${otp}</strong></p>
+             <p>Mã này sẽ hết hạn sau 15 phút.</p>`,
+        });
+
+        return { email: user.email };
+    } catch (emailError) {
+        console.error("Lỗi gửi email:", emailError);
+        const error = new Error('Không thể gửi email. Vui lòng thử lại.');
+        error.statusCode = 500;
+        throw error;
+    }
+};
+
+/**
  * Service: Đăng nhập người dùng
  */
 export const login = async ({ email, password }) => {

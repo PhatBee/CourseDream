@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { verifyOTP, reset } from "../features/auth/authSlice";
+import { verifyOTP, reset, resendOTP } from "../features/auth/authSlice";
 import { toast } from "react-hot-toast";
 
 // (Bạn có thể dùng lại các ảnh tương tự trang Register)
@@ -19,6 +19,8 @@ const VerifyOTP = () => {
     isError, 
     message, 
     isVerifySuccess, // <-- Dùng cờ riêng
+    isResendSuccess,
+    isResendLoading,
     registrationEmail // <-- Lấy email từ state
   } = useSelector(
     (state) => state.auth
@@ -32,10 +34,10 @@ const VerifyOTP = () => {
     }
   }, [registrationEmail, navigate]);
 
-  // Toast + điều hướng sau khi XÁC THỰC
+  // Toast + điều hướng sau khi XÁC THỰC hoặc GỬI LẠI OTP
   useEffect(() => {
     if (isError) {
-      toast.error(message || "Xác thực thất bại");
+      toast.error(message || "Có lỗi xảy ra");
       dispatch(reset());
     }
     
@@ -45,7 +47,21 @@ const VerifyOTP = () => {
       dispatch(reset());
       navigate("/login"); // Chuyển sang trang đăng nhập
     }
-  }, [isError, isVerifySuccess, message, navigate, dispatch]);
+
+    // Khi resendOTP() thành công
+    if (isResendSuccess && message) {
+      toast.success(message);
+      dispatch(reset());
+    }
+  }, [isError, isVerifySuccess, isResendSuccess, message, navigate, dispatch]);
+
+  const handleResend = () => {
+    if (!registrationEmail) {
+      toast.error("Không tìm thấy email đăng ký.");
+      return;
+    }
+    dispatch(resendOTP(registrationEmail));
+  };
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -140,10 +156,15 @@ const VerifyOTP = () => {
             </form>
             
             <p className="mb-10 text-center text-sm text-gray-600 mt-6">
-              Chưa nhận được mã?
-              <Link to="/register" className="ml-1 text-rose-500">
-                Gửi lại
-              </Link>
+              Chưa nhận được mã?{" "}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isLoading || isResendLoading}
+                className="ml-1 text-rose-500 hover:underline font-semibold focus:outline-none disabled:opacity-50"
+              >
+                {isResendLoading ? "Đang gửi lại..." : "Gửi lại"}
+              </button>
             </p>
           </div>
         </div>
