@@ -41,7 +41,7 @@ const QuizMarkerDot = ({ quiz, duration, isDone, isNear, index }) => {
         position: 'absolute',
         left: `calc(${pct}% - 6px)`,
         top: '50%',
-        transform: 'translateY(-50%)',
+        // transform: 'translateY(-50%)',
         zIndex: 20,
         // Đảm bảo không bị clip bởi overflow:hidden của progress bar
         pointerEvents: 'auto',
