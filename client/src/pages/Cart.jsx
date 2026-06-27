@@ -98,7 +98,7 @@ export default function Cart() {
                         Hãy thêm khóa học vào giỏ hàng để bắt đầu học tập!
                     </p>
                     <Link
-                        to="/"
+                        to="/courses"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                     >
                         <ArrowLeft size={20} />
