@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { verifyOTP, reset, resendOTP } from "../features/auth/authSlice";
@@ -13,6 +13,7 @@ const VerifyOTP = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const isRedirecting = useRef(false); // Flag tránh race condition khi clear/reset registrationEmail
   
   const { 
     isLoading, 
@@ -28,11 +29,12 @@ const VerifyOTP = () => {
 
   // Nếu không có email (ví dụ: user tự gõ /verify-otp), đá về trang đăng ký
   useEffect(() => {
-    if (!registrationEmail) {
+    // Chỉ kiểm tra khi chưa xác thực thành công và không phải đang chuyển hướng
+    if (!registrationEmail && !isVerifySuccess && !isRedirecting.current) {
       toast.error("Vui lòng đăng ký trước.");
       navigate("/register");
     }
-  }, [registrationEmail, navigate]);
+  }, [registrationEmail, isVerifySuccess, navigate]);
 
   // Toast + điều hướng sau khi XÁC THỰC hoặc GỬI LẠI OTP
   useEffect(() => {
@@ -43,6 +45,7 @@ const VerifyOTP = () => {
     
     // Khi verifyOTP() thành công
     if (isVerifySuccess && message) {
+      isRedirecting.current = true; // Đánh dấu đang chuyển hướng thành công
       toast.success(message); // "Xác thực thành công! Vui lòng đăng nhập."
       dispatch(reset());
       navigate("/login"); // Chuyển sang trang đăng nhập
