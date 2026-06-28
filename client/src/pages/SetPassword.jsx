@@ -85,12 +85,12 @@ const SetPassword = () => {
                 />
               </div>
               <h3 className="text-[34px] leading-snug font-semibold mb-3">
-                Welcome to <br />
+                Chào mừng bạn đến với <br />
                 Dreams<span className="text-rose-500">LMS</span> Courses.
               </h3>
               <p className="text-gray-600 mx-auto max-w-[560px]">
-                Platform designed to help organizations, educators, and learners
-                manage, deliver, and track learning and training activities.
+                Nền tảng được thiết kế để giúp các tổ chức, nhà giáo dục và người học
+                quản lý, cung cấp và theo dõi các hoạt động học tập và đào tạo.
               </p>
               {/* Dots giả lập slider */}
               <div className="mt-10 flex items-center justify-center gap-2">
@@ -108,22 +108,22 @@ const SetPassword = () => {
             <div className="flex items-center justify-between">
               <img src={logo} alt="Logo" className="h-10 hidden sm:block" />
               <Link to="/" className="text-rose-500 underline underline-offset-2">
-                Back to Home
+                Trang chủ
               </Link>
             </div>
 
             <div className="mt-12">
-              <h1 className="text-[32px] sm:text-[40px] font-bold mb-2">Set Password</h1>
+              <h1 className="text-[32px] sm:text-[40px] font-bold mb-2">Đặt lại mật khẩu</h1>
               <p className="text-sm text-gray-600">
-                Your new password must be different from previous password
+                Mật khẩu mới phải khác mật khẩu cũ
               </p>
             </div>
 
             <form onSubmit={onSubmit} className="mt-8 space-y-6">
               {/* New Password */}
               <div>
-                <label htmlFor="password" className="mb-2 block text-[15px] font-medium">
-                  New Password <span className="text-rose-500">*</span>
+                <label htmlFor="password" className="mb-2 block text-[15px] font-medium text-left">
+                  Mật khẩu mới <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -153,19 +153,19 @@ const SetPassword = () => {
                     />
                   ))}
                 </div>
-                <div className="mt-2 text-xs text-gray-600">
-                  {strength === 0 && "Use at least 8 characters"}
-                  {strength === 1 && "Weak password"}
-                  {strength === 2 && "Fair password"}
-                  {strength === 3 && "Strong password"}
-                  {strength === 4 && "Very strong password"}
+                <div className="mt-2 text-xs text-gray-600 text-left">
+                  {strength === 0 && "Sử dụng ít nhất 8 ký tự"}
+                  {strength === 1 && "Mật khẩu yếu"}
+                  {strength === 2 && "Mật khẩu khá"}
+                  {strength === 3 && "Mật khẩu mạnh"}
+                  {strength === 4 && "Mật khẩu rất mạnh"}
                 </div>
               </div>
 
               {/* Confirm */}
               <div>
-                <label htmlFor="confirm" className="mb-2 block text-[15px] font-medium">
-                  Confirm Password <span className="text-rose-500">*</span>
+                <label htmlFor="confirm" className="mb-2 block text-[15px] font-medium text-left">
+                  Xác nhận mật khẩu <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -217,20 +217,20 @@ const SetPassword = () => {
                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                       />
                     </svg>
-                    Resetting…
+                    Đặt lại mật khẩu...
                   </>
                 ) : (
                   <>
-                    Reset Password <i className="isax isax-arrow-right-3" />
+                    Đặt lại mật khẩu <i className="isax isax-arrow-right-3" />
                   </>
                 )}
               </button>
             </form>
 
             <p className="mt-6 text-sm text-gray-700 text-center">
-              Remember Password?
+              Bạn đã nhớ mật khẩu?
               <Link to="/login" className="ml-1 text-rose-500">
-                Sign In
+                Đăng nhập
               </Link>
             </p>
           </div>

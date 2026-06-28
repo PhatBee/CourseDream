@@ -64,15 +64,15 @@ const ForgotPasswordScreen = ({ navigation }) => {
                             className="self-end mb-6"
                         >
                             <Text className="text-rose-500 text-base font-medium underline">
-                                Back to Login
+                                Quay lại trang đăng nhập
                             </Text>
                         </TouchableOpacity>
 
                         <Text className="text-[44px] leading-tight font-extrabold text-gray-900 tracking-tight">
-                            Forgot Password?
+                            Đặt lại mật khẩu?
                         </Text>
                         <Text className="text-gray-600 mt-2 text-base">
-                            Enter your email to reset your password
+                            Nhập email để đặt lại mật khẩu
                         </Text>
                     </View>
 
@@ -86,7 +86,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Enter your email"
+                                    placeholder="Nhập email của bạn"
                                     placeholderTextColor="#9CA3AF"
                                     value={email}
                                     onChangeText={setEmail}
@@ -112,7 +112,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Text className="text-white text-lg font-semibold">Submit</Text>
+                                    <Text className="text-white text-lg font-semibold">Xác nhận</Text>
                                     <ArrowRight size={20} color="#fff" />
                                 </>
                             )}
@@ -122,15 +122,15 @@ const ForgotPasswordScreen = ({ navigation }) => {
                     {/* Info Box */}
                     <View className="mt-8 p-4 bg-rose-50 rounded-2xl">
                         <Text className="text-gray-700 text-sm text-center">
-                            We'll send you an email with instructions to reset your password
+                            Chúng tôi sẽ gửi cho bạn một mã OTP để xác nhận đặt lại mật khẩu
                         </Text>
                     </View>
 
                     {/* Login Link */}
                     <View className="flex-row justify-center items-center mt-8">
-                        <Text className="text-sm text-gray-600">Remember Password? </Text>
+                        <Text className="text-sm text-gray-600">Bạn nhớ mật khẩu?</Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text className="text-rose-500 text-sm font-medium">Sign In</Text>
+                            <Text className="text-rose-500 text-sm font-medium">Đăng nhập</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

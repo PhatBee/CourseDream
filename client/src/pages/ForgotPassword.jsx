@@ -23,7 +23,7 @@ const ForgotPassword = () => {
       toast.error(message || "Gửi yêu cầu thất bại");
       dispatch(reset());
     }
-    
+
     // Khi forgotPassword() thành công
     if (isForgotSuccess) {
       toast.success(message); // "Mã OTP đã được gửi..."
@@ -54,12 +54,12 @@ const ForgotPassword = () => {
                 />
               </div>
               <h3 className="text-[34px] leading-snug font-semibold mb-3">
-                Welcome to <br />
+                Chào mừng đến với <br />
                 Dreams<span className="text-rose-500">LMS</span> Courses.
               </h3>
               <p className="text-gray-600 mx-auto max-w-[560px]">
-                Platform designed to help organizations, educators, and learners
-                manage, deliver, and track learning and training activities.
+                Nền tảng được thiết kế để giúp các tổ chức, nhà giáo dục và người học
+                quản lý, cung cấp và theo dõi các hoạt động học tập và đào tạo.
               </p>
               {/* Dots (giả lập slider như bản HTML) */}
               <div className="mt-10 flex items-center justify-center gap-2">
@@ -80,16 +80,16 @@ const ForgotPassword = () => {
                 to="/"
                 className="text-rose-500 underline underline-offset-2"
               >
-                Back to Home
+                Trang chủ
               </Link>
             </div>
 
             <div className="mt-12">
               <h1 className="text-[32px] sm:text-[40px] font-bold mb-3">
-                Forgot Password
+                Quên mật khẩu
               </h1>
               <p className="text-sm text-gray-600">
-                Enter your email to reset your password.
+                Nhập email của bạn để đặt lại mật khẩu.
               </p>
             </div>
 
@@ -97,7 +97,7 @@ const ForgotPassword = () => {
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-[15px] font-medium"
+                  className="mb-2 block text-[15px] font-medium text-left"
                 >
                   Email <span className="text-rose-500">*</span>
                 </label>
@@ -146,20 +146,20 @@ const ForgotPassword = () => {
                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                       />
                     </svg>
-                    Submitting...
+                    Đang gửi...
                   </>
                 ) : (
                   <>
-                    Submit <i className="isax isax-arrow-right-3" />
+                    Gửi <i className="isax isax-arrow-right-3" />
                   </>
                 )}
               </button>
             </form>
 
             <p className="mt-6 text-sm text-gray-700 text-center">
-              Remember Password?
+              Bạn nhớ mật khẩu?
               <Link to="/login" className="ml-1 text-rose-500">
-                Sign In
+                Đăng nhập
               </Link>
             </p>
           </div>
