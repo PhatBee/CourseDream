@@ -14,11 +14,11 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isRedirecting = useRef(false); // Flag tránh race condition khi clear/reset registrationEmail
-  
-  const { 
-    isLoading, 
-    isError, 
-    message, 
+
+  const {
+    isLoading,
+    isError,
+    message,
     isVerifySuccess, // <-- Dùng cờ riêng
     isResendSuccess,
     isResendLoading,
@@ -42,7 +42,7 @@ const VerifyOTP = () => {
       toast.error(message || "Có lỗi xảy ra");
       dispatch(reset());
     }
-    
+
     // Khi verifyOTP() thành công
     if (isVerifySuccess && message) {
       isRedirecting.current = true; // Đánh dấu đang chuyển hướng thành công
@@ -80,31 +80,31 @@ const VerifyOTP = () => {
       <div className="mx-auto flex min-h-screen w-full">
         {/* LEFT: banner (Giống Register.jsx) */}
         <div className="hidden lg:flex lg:w-1/2 bg-rose-50">
-                  <div className="flex w-full items-center justify-center p-12">
-                    <div className="max-w-[640px] w-full text-center">
-                      <div className="mb-10">
-                        <img
-                          src={authImg}
-                          alt="Illustration"
-                          className="mx-auto w-full max-w-[520px]"
-                        />
-                      </div>
-                      <h3 className="text-[34px] leading-snug font-semibold mb-3">
-                        Welcome to <br />
-                        Dreams<span className="text-rose-500">LMS</span> Courses.
-                      </h3>
-                      <p className="text-gray-600 mx-auto max-w-[560px]">
-                        Platform designed to help organizations, educators, and learners
-                        manage, deliver, and track learning and training activities.
-                      </p>
-                      <div className="mt-10 flex items-center justify-center gap-2">
-                        <span className="h-2 w-14 rounded-full bg-rose-500/90" />
-                        <span className="h-2 w-2 rounded-full bg-gray-300" />
-                        <span className="h-2 w-2 rounded-full bg-gray-300" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <div className="flex w-full items-center justify-center p-12">
+            <div className="max-w-[640px] w-full text-center">
+              <div className="mb-10">
+                <img
+                  src={authImg}
+                  alt="Illustration"
+                  className="mx-auto w-full max-w-[520px]"
+                />
+              </div>
+              <h3 className="text-[34px] leading-snug font-semibold mb-3">
+                Chào mừng đến với <br />
+                Dreams<span className="text-rose-500">LMS</span>.
+              </h3>
+              <p className="text-gray-600 mx-auto max-w-[560px]">
+                Nền tảng được thiết kế để giúp các tổ chức, nhà giáo dục và người học
+                quản lý, cung cấp và theo dõi các hoạt động học tập và đào tạo.
+              </p>
+              <div className="mt-10 flex items-center justify-center gap-2">
+                <span className="h-2 w-14 rounded-full bg-rose-500/90" />
+                <span className="h-2 w-2 rounded-full bg-gray-300" />
+                <span className="h-2 w-2 rounded-full bg-gray-300" />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* RIGHT: form */}
         <div className="w-full lg:w-1/2 flex">
@@ -113,7 +113,7 @@ const VerifyOTP = () => {
             <div className="flex items-center justify-between">
               <img src={logo} alt="Logo" className="h-10 hidden sm:block" />
               <Link to="/" className="text-rose-500 underline underline-offset-2 ml-auto">
-                Back to Home
+                Trang chủ
               </Link>
             </div>
 
@@ -157,7 +157,7 @@ const VerifyOTP = () => {
                 {isLoading ? "Đang xác thực..." : "Xác thực"}
               </button>
             </form>
-            
+
             <p className="mb-10 text-center text-sm text-gray-600 mt-6">
               Chưa nhận được mã?{" "}
               <button
