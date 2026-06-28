@@ -26,16 +26,16 @@ const HeroSection = () => {
           {/* Left Content: Căn trái toàn bộ */}
           <div className="w-full lg:w-1/2 space-y-6 text-left">
             <span className="font-bold text-rose-600 tracking-wider uppercase text-sm inline-block">
-              The Leader in Online Learning
+              Học mọi thứ, mọi lúc, mọi nơi
             </span>
 
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight">
-              Engaging & Accessible <br />
-              <span className="text-rose-500">Online Courses</span> For All
+              Khóa học trực tuyến <br />
+              <span className="text-rose-500">Dễ tiếp cận</span> & Hấp dẫn
             </h1>
 
             <p className="text-lg text-gray-600 max-w-xl leading-relaxed">
-              Our specialized online courses are designed to bring the classroom experience to you, no matter where you are.
+              Các khóa học trực tuyến chuyên biệt của chúng tôi được thiết kế để mang đến trải nghiệm lớp học đến cho bạn, dù bạn ở bất cứ đâu.
             </p>
 
             {/* Search Form */}
@@ -46,7 +46,7 @@ const HeroSection = () => {
               <input
                 type="text"
                 className="block w-full pl-11 pr-4 py-4 border-2 border-rose-100 rounded-2xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all shadow-sm"
-                placeholder="What do you want to learn today?"
+                placeholder="Bạn muốn học gì hôm nay?"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -54,14 +54,14 @@ const HeroSection = () => {
                 type="submit"
                 className="absolute inset-y-2 right-2 px-6 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 transition-colors shadow-md flex items-center gap-2 group"
               >
-                Search
+                Tìm kiếm
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </form>
 
             {/* Trust Stats (Căn trái) */}
             <div className="pt-4">
-              <p className="text-sm text-gray-500 font-medium mb-2">Trusted by over 15K Users worldwide</p>
+              <p className="text-sm text-gray-500 font-medium mb-2">Hơn 15K người dùng tin tưởng</p>
               <div className="flex items-center gap-4">
                 <h2 className="text-3xl font-bold text-gray-900">290+</h2>
                 <div className="flex items-center gap-1 text-yellow-500">
@@ -93,7 +93,7 @@ const HeroSection = () => {
                     <User className="w-6 h-6 text-rose-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Active Students</p>
+                    <p className="text-xs text-gray-500">Học viên</p>
                     <p className="font-bold text-gray-900">10k+</p>
                   </div>
                 </div>

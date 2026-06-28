@@ -60,7 +60,7 @@ const Header = () => {
                 }`
               }
             >
-              Home
+              Tru Chảng
             </NavLink>
             <NavLink
               to="/courses"
@@ -69,7 +69,7 @@ const Header = () => {
                 }`
               }
             >
-              Courses
+              Khóa học
             </NavLink>
             {/* <NavLink
               to="/blog"
@@ -91,14 +91,14 @@ const Header = () => {
                   className="inline-flex items-center rounded-full bg-rose-500 px-4 py-2 text-white hover:bg-rose-600 text-sm font-medium"
                 >
                   <User className="h-4 w-4 mr-2" />
-                  Sign In
+                  Đăng nhập
                 </NavLink>
                 <NavLink
                   to="/register"
                   className="inline-flex items-center rounded-full border border-rose-500 px-4 py-2 text-rose-600 hover:bg-rose-50 text-sm font-medium"
                 >
                   <FileText className="h-4 w-4 mr-2" />
-                  Register
+                  Đăng ký
                 </NavLink>
               </>
             ) : (
@@ -117,17 +117,17 @@ const Header = () => {
                     )}
                   </button>
 
-                    {notificationOpen && (  
-                      <div className="absolute top-full right-0 mt-2 z-50">
-                        <NotificationMenu
-                          open={notificationOpen}
-                          onClose={() => setNotificationOpen(false)}
-                        />
-                      </div>
-                    )}
-                  </div>
+                  {notificationOpen && (
+                    <div className="absolute top-full right-0 mt-2 z-50">
+                      <NotificationMenu
+                        open={notificationOpen}
+                        onClose={() => setNotificationOpen(false)}
+                      />
+                    </div>
+                  )}
+                </div>
 
-                  { }
+                { }
                 <Link
                   to="/cart"
                   className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50"
@@ -186,7 +186,7 @@ const Header = () => {
                             className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
                           >
                             <User className="h-4 w-4 text-rose-500" />
-                            My Profile
+                            Hồ sơ của tôi
                           </Link>
                         </li>
                         <li>
@@ -195,7 +195,7 @@ const Header = () => {
                             className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
                           >
                             <Heart className="h-4 w-4 text-rose-500" />
-                            Wishlist
+                            Ưa thích
                           </Link>
                         </li>
                         <li>
@@ -204,7 +204,7 @@ const Header = () => {
                             className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50"
                           >
                             <Settings className="h-4 w-4 text-rose-500" />
-                            Settings
+                            Cài đặt
                           </Link>
                         </li>
                       </ul>
@@ -216,7 +216,7 @@ const Header = () => {
                           className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-rose-500 text-white py-2 hover:bg-rose-600"
                         >
                           <LogOut className="h-4 w-4" />
-                          Logout
+                          Đăng xuất
                         </button>
                       </div>
                     </div>
