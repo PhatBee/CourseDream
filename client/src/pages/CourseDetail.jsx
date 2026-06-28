@@ -58,7 +58,7 @@ const CourseDetail = () => {
     return (
       <div className="flex justify-center items-center h-screen">
         <Spinner />
-        <p>Loading course...</p>
+        <p>Đang tải khóa học...</p>
       </div>
     );
   }

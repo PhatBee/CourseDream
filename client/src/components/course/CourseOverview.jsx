@@ -136,7 +136,7 @@ const CourseOverview = ({ course }) => {
     <div className="space-y-6">
       <div className="bg-white rounded-lg">
         <h5 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-rose-500">
-          Course Description
+          Mô tả khóa học
         </h5>
         <div className="prose max-w-none text-justify">
           {renderDescription(description)}
@@ -147,7 +147,7 @@ const CourseOverview = ({ course }) => {
         <div className="bg-gradient-to-br from-rose-50 to-indigo-50 rounded-lg p-6 border border-rose-100">
           <h5 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
             <Target className="w-6 h-6 mr-2 text-rose-600" />
-            What you'll learn
+            Bạn sẽ học được gì?
           </h5>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {learnOutcomes.map((item, index) => (
@@ -162,7 +162,7 @@ const CourseOverview = ({ course }) => {
 
       {requirements && requirements.length > 0 && (
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-6 border border-amber-100">
-          <h5 className="text-xl font-semibold text-gray-800 mb-4">Requirements</h5>
+          <h5 className="text-xl font-semibold text-gray-800 mb-4 text-justify">Yêu cầu khóa học</h5>
           <ul className="space-y-2">
             {requirements.map((item, index) => (
               <li key={index} className="flex items-start">

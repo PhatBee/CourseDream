@@ -31,7 +31,7 @@ const HomeScreen = ({ navigation }) => {
   const { items: enrollments, isLoading: enrollLoading } = useSelector(state => state.enrollment);
 
   const isLoading = catLoading || courseLoading || enrollLoading;
-  
+
   const ongoing = enrollments?.[0] || null;
 
   useFocusEffect(
@@ -85,7 +85,7 @@ const HomeScreen = ({ navigation }) => {
           <OngoingCourse enrollment={ongoing} />
         ) : (
           <View className="px-5">
-            <PromoBanner navigation={navigation} />
+            {/* <PromoBanner navigation={navigation} /> */}
             <LoginPromptCard navigation={navigation} />
           </View>
         )}
@@ -98,9 +98,9 @@ const HomeScreen = ({ navigation }) => {
         {/* Popular Courses */}
         <View className="mb-20">
           <View className="flex-row justify-between items-center mb-4 px-5">
-            <Text className="text-lg font-bold text-gray-900">Popular Courses</Text>
+            <Text className="text-lg font-bold text-gray-900">Khóa học phổ biến</Text>
             <TouchableOpacity onPress={() => nav.navigate('MainTabs', { screen: 'CoursesTab', params: { clearSearch: true } })}>
-              <Text className="text-rose-500 text-sm font-medium">See All</Text>
+              <Text className="text-rose-500 text-sm font-medium">Xem tất cả</Text>
             </TouchableOpacity>
           </View>
 
@@ -129,7 +129,7 @@ const HomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
             ) : (
-              !isLoading && <Text className="text-gray-400 ml-5">No courses available.</Text>
+              !isLoading && <Text className="text-gray-400 ml-5">Không có khóa học.</Text>
             )}
           </ScrollView>
         </View>

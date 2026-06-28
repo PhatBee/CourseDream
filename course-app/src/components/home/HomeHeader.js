@@ -14,7 +14,7 @@ const HomeHeader = ({ user }) => {
       <View>
         <Text className="text-gray-500 text-sm font-medium">Hello,</Text>
         <Text className="text-2xl font-bold text-gray-900">
-          {`${user ? user.name : 'Guest User'} 👋`}
+          {`${user ? user.name : 'Người dùng khách'} 👋`}
         </Text>
       </View>
 
@@ -47,7 +47,7 @@ const HomeHeader = ({ user }) => {
           onPress={() => navigation.navigate('Login')}
         >
           <LogIn size={18} color="#fff" />
-          <Text className="text-white font-semibold text-sm">Sign In</Text>
+          <Text className="text-white font-semibold text-sm">Đăng nhập</Text>
         </TouchableOpacity>
       )}
     </View>

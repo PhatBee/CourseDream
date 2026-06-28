@@ -42,7 +42,7 @@ const CourseCardAllCourse = React.memo(({ course }) => {
   const hasDiscount = priceDiscount !== undefined && priceDiscount !== null && priceDiscount < price;
 
   const formatCurrency = (amount) => {
-    if (!amount || amount === 0 || isNaN(amount)) return "Free";
+    if (!amount || amount === 0 || isNaN(amount)) return "Miễn phí";
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
@@ -101,7 +101,7 @@ const CourseCardAllCourse = React.memo(({ course }) => {
       </View>
       {/* Content */}
       <View className="p-3 flex-1">
-        <Text className="text-gray-900 font-bold text-xs mb-1 leading-5" numberOfLines={2}>{title}</Text>
+        <Text className="text-gray-900 font-bold text-xs mb-1 leading-5 text-justify" numberOfLines={2}>{title}</Text>
         <Text className="text-gray-500 text-[11px] mb-1" numberOfLines={1}>{instructor?.name || 'Unknown'}</Text>
         <View className="flex-row items-center mb-1">
           <Star size={10} color="#f59e0b" fill="#f59e0b" />
@@ -117,7 +117,7 @@ const CourseCardAllCourse = React.memo(({ course }) => {
           <View className="flex-row items-center justify-between mt-1">
             <View>
               {finalPrice === 0 || price === 0 ? (
-                <Text className="text-rose-600 font-extrabold text-xs">Free</Text>
+                <Text className="text-rose-600 font-extrabold text-xs">Miễn phí</Text>
               ) : (
                 <Text className="text-rose-600 font-extrabold text-xs">{formatCurrency(finalPrice)}</Text>
               )}
@@ -125,7 +125,7 @@ const CourseCardAllCourse = React.memo(({ course }) => {
                 <View className="flex-row items-center">
                   <Text className="text-gray-400 text-[10px] line-through mr-1">{formatCurrency(price)}</Text>
                   <View className="bg-rose-100 px-1 rounded">
-                    <Text className="text-rose-600 text-[9px] font-bold">SALE</Text>
+                    <Text className="text-rose-600 text-[9px] font-bold">Giảm giá</Text>
                   </View>
                 </View>
               )}

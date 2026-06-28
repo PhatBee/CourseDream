@@ -32,9 +32,9 @@ const CategoryList = ({ categories, navigation }) => {
   return (
     <View className="mb-8">
       <View className="flex-row justify-between items-center mb-4">
-        <Text className="text-lg font-bold text-gray-900">Top Categories</Text>
+        <Text className="text-lg font-bold text-gray-900">Danh mục</Text>
         <TouchableOpacity onPress={handleSeeAll}>
-          <Text className="text-rose-500 text-sm font-medium">See All</Text>
+          <Text className="text-rose-500 text-sm font-medium">Xem tất cả</Text>
         </TouchableOpacity>
       </View>
 

@@ -14,7 +14,7 @@ const InstructorBioMobile = ({ instructor = {} }) => {
 
   return (
     <View className="px-4 mb-4">
-      <Text className="text-lg font-bold mb-2">About the instructor</Text>
+      <Text className="text-lg font-bold mb-2">Giảng viên</Text>
       <View className="flex-row items-center bg-white rounded-xl p-4 shadow border border-gray-100">
         <Image
           source={avatar ? { uri: avatar } : require('../../../assets/images/default-avatar.jpg')}
@@ -28,8 +28,8 @@ const InstructorBioMobile = ({ instructor = {} }) => {
           <View className="flex-row items-center mt-1">
             <Star size={14} color="#f59e0b" fill="#f59e0b" />
             <Text className="ml-1 font-bold text-gray-700">{rating?.toFixed(1) || '0.0'}</Text>
-            <Text className="ml-2 text-xs text-gray-500">{totalReviews} Reviews</Text>
-            <Text className="ml-2 text-xs text-gray-500">{totalStudents} Students</Text>
+            <Text className="ml-2 text-xs text-gray-500">{totalReviews} Bình luận</Text>
+            <Text className="ml-2 text-xs text-gray-500">{totalStudents} Học viên</Text>
           </View>
         </View>
       </View>

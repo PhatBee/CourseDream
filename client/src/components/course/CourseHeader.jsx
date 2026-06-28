@@ -82,7 +82,7 @@ const CourseHeader = ({ course, reviewCount }) => {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">{title}</h1>
 
           {/* Short Description */}
-          <p className="text-gray-500 text-sm mb-4 leading-relaxed line-clamp-3">{shortDescription}</p>
+          <p className="text-gray-500 text-sm mb-4 leading-relaxed line-clamp-3 text-justify">{shortDescription}</p>
 
           {/* Rating Row */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">

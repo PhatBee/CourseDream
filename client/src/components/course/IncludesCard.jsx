@@ -19,7 +19,7 @@ const IncludesCard = ({ course }) => {
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200">
       <div className="p-5">
-        <h5 className="text-lg font-semibold text-gray-800 mb-4">Includes</h5>
+        <h5 className="text-lg font-semibold text-gray-800 mb-4 text-justify">Khóa học này bao gồm</h5>
         <ul className="space-y-3">
 
           {/* 3. Lặp qua mảng 'includesList' (từ database) */}

@@ -11,7 +11,7 @@ const IncludesCardMobile = ({ course }) => {
   const includesList = course.includes || [];
   return (
     <View className="bg-white rounded-lg border border-gray-200 mb-4 p-4">
-      <Text className="text-lg font-semibold text-gray-800 mb-4">Includes</Text>
+      <Text className="text-lg font-semibold text-gray-800 mb-4">Bao gồm</Text>
       {includesList.map((text, index) => (
         <View key={index} className="flex-row items-center mb-2">
           <View className="text-blue-600 mr-3">{staticIcons[index] || defaultIcon}</View>

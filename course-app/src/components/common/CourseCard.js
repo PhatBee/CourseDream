@@ -17,7 +17,7 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
     return (
       <View className="mt-2">
         <View className="bg-emerald-50 px-3 py-2 rounded-lg items-center justify-center border border-emerald-100">
-          <Text className="text-emerald-600 font-bold text-xs uppercase tracking-wider">Already Enrolled</Text>
+          <Text className="text-emerald-600 font-bold text-xs uppercase tracking-wider">Đã đăng ký</Text>
         </View>
       </View>
     );
@@ -28,7 +28,7 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
     <View className="flex-row items-center justify-between mt-auto pt-2">
       <View>
         {price === 0 || displayPrice === 0 ? (
-          <Text className="text-rose-600 font-extrabold text-xs">Free</Text>
+          <Text className="text-rose-600 font-extrabold text-xs">Miễn phí</Text>
         ) : (
           <Text className="text-rose-600 font-extrabold text-base">{formatPrice(displayPrice)}</Text>
         )}
@@ -36,7 +36,7 @@ const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, format
           <View className="flex-row items-center">
             <Text className="text-gray-400 text-xs line-through mr-1">{formatPrice(price)}</Text>
             <View className="bg-rose-100 px-1 rounded">
-              <Text className="text-rose-600 text-[10px] font-bold">SALE</Text>
+              <Text className="text-rose-600 text-[10px] font-bold">Giảm giá</Text>
             </View>
           </View>
         )}
@@ -94,7 +94,7 @@ const CourseCard = ({ course }) => {
   const hasDiscount = priceDiscount !== undefined && priceDiscount !== null && priceDiscount < price;
 
   const formatCurrency = (amount) => {
-    if (!amount || amount === 0 || isNaN(amount)) return 'Free';
+    if (!amount || amount === 0 || isNaN(amount)) return 'Miễn phí';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
@@ -183,7 +183,7 @@ const CourseCard = ({ course }) => {
       {/* Content Area */}
       <View className="p-3 justify-between flex-1">
         <View>
-          <Text className="text-gray-900 font-bold text-sm mb-1 leading-5" numberOfLines={2}>{title}</Text>
+          <Text className="text-gray-900 font-bold text-sm mb-1 leading-5 text-justify" numberOfLines={2}>{title}</Text>
           <Text className="text-gray-500 text-xs mb-2" numberOfLines={1}>{instructor?.name || 'Unknown'}</Text>
 
           {/* Rating */}
