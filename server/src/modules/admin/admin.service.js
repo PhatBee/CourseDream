@@ -46,7 +46,7 @@ export const reviewApplication = async (targetUserId, decision, adminNotes) => {
       type: "system",
       title: "Hồ sơ giảng viên được duyệt",
       message: "Chúc mừng! Yêu cầu trở thành giảng viên của bạn đã được phê duyệt. Bạn có thể bắt đầu tạo khóa học ngay bây giờ.",
-      metadata: { adminNote: adminNotes }
+      metadata: { adminNote: adminNotes, url: "/instructor/dashboard" }
     }).catch(err => console.error("Lỗi gửi thông báo:", err));
 
   } else if (decision === 'reject') {
@@ -58,8 +58,8 @@ export const reviewApplication = async (targetUserId, decision, adminNotes) => {
       recipient: user._id,
       type: "system",
       title: "Hồ sơ giảng viên bị từ chối",
-      message: "Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.",
-      metadata: { adminNote: adminNotes }
+      message: `Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.${adminNotes ? `\n\nGhi chú từ admin: ${adminNotes}` : ""}`,
+      metadata: { adminNote: adminNotes, url: "/profile/become-instructor" }
     }).catch(err => console.error("Lỗi gửi thông báo:", err));
   } else {
     const error = new Error('Quyết định không hợp lệ.');
@@ -1193,6 +1193,15 @@ export const reviewInstructorApplication = async (applicationId, action, reason)
       });
     }
 
+    // 4. Gửi thông báo cho user được duyệt
+    await notificationService.createNotification({
+      recipient: user._id,
+      type: "system",
+      title: "Hồ sơ giảng viên được duyệt",
+      message: "Chúc mừng! Yêu cầu trở thành giảng viên của bạn đã được phê duyệt. Bạn có thể bắt đầu tạo khóa học ngay bây giờ.",
+      metadata: { url: "/instructor/dashboard" }
+    }).catch(err => console.error("Lỗi gửi thông báo approve:", err));
+
     return { message: "Approved successfully. User is now an Instructor." };
   }
 
@@ -1202,6 +1211,15 @@ export const reviewInstructorApplication = async (applicationId, action, reason)
     application.status = 'rejected';
     application.rejectionReason = reason;
     await application.save();
+
+    // Gửi thông báo cho user bị từ chối
+    await notificationService.createNotification({
+      recipient: application.user._id,
+      type: "system",
+      title: "Hồ sơ giảng viên bị từ chối",
+      message: `Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.${reason ? `\n\nLý do: ${reason}` : ""}`,
+      metadata: { adminNote: reason, url: "/profile/become-instructor" }
+    }).catch(err => console.error("Lỗi gửi thông báo reject:", err));
 
     return { message: "Application rejected." };
   }
@@ -1269,4 +1287,4 @@ export const getQuizzesPreview = async (courseId) => {
         : 0,
     },
   };
-};
+};

@@ -32,7 +32,13 @@ const notificationSlice = createSlice({
     unreadCount: 0,
     loading: false,
   },
-  reducers: {},
+  reducers: {
+    addRealtimeNotification: (state, action) => {
+      // Thêm notification mới vào đầu danh sách
+      state.notifications = [action.payload, ...state.notifications];
+      state.unreadCount += 1;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getNotifications.pending, (state) => {
@@ -61,4 +67,5 @@ const notificationSlice = createSlice({
   },
 });
 
+export const { addRealtimeNotification } = notificationSlice.actions;
 export default notificationSlice.reducer;
