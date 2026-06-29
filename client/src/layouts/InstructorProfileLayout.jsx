@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 const InstructorProfileLayout = () => {
   const { user } = useSelector((state) => state.auth);
 
-  if (!user) return <div className="text-center py-20">Loading...</div>;
+  if (!user) return <div className="text-center py-20">Đang tải...</div>;
 
   return (
     <div className="bg-gray-50 py-6">

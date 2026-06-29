@@ -21,23 +21,23 @@ const InstructorSidebar = () => {
     {
       path: '/instructor/dashboard',
       icon: <LayoutDashboard size={20} />,
-      label: 'Dashboard',
+      label: 'Tổng quan',
     },
     {
       path: '/instructor/courses',
       icon: <BookOpen size={20} />,
-      label: 'My Courses',
+      label: 'Khóa học của tôi',
     },
     {
       path: '/instructor/add-course',
       icon: <PlusCircle size={20} />,
-      label: 'Add Course',
+      label: 'Thêm khóa học',
     },
-      {
-        path: '/instructor/profile',
-        icon: <User size={20} />,
-        label: 'Profile',
-      },
+    {
+      path: '/instructor/profile',
+      icon: <User size={20} />,
+      label: 'Thông tin cá nhân',
+    },
   ];
 
   return (
@@ -85,7 +85,7 @@ const InstructorSidebar = () => {
               `}
             >
               <Settings size={20} />
-              <span className="ml-3">Settings</span>
+              <span className="ml-3">Cài đặt</span>
             </NavLink>
           </li>
           <li>
@@ -94,7 +94,7 @@ const InstructorSidebar = () => {
               className="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
             >
               <LogOut size={20} />
-              <span className="ml-3">Logout</span>
+              <span className="ml-3">Đăng xuất</span>
             </button>
           </li>
         </ul>

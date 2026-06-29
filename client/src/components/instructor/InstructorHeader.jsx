@@ -14,10 +14,10 @@ const InstructorHeader = ({ user }) => {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path.includes('/instructor/add-course')) return 'Create Course';
-    if (path.includes('/instructor/courses')) return 'My Courses';
-    if (path.includes('/instructor/dashboard')) return 'Instructor Dashboard';
-    return 'Instructor Panel';
+    if (path.includes('/instructor/add-course')) return 'Tạo khóa học';
+    if (path.includes('/instructor/courses')) return 'Khóa học của tôi';
+    if (path.includes('/instructor/dashboard')) return 'Tổng quan';
+    return 'Bảng điều khiển';
   };
 
   const title = getPageTitle();
@@ -26,7 +26,7 @@ const InstructorHeader = ({ user }) => {
     <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm flex-shrink-0 z-10 text-left">
       <div>
         <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-        <p className="text-sm text-gray-500 mt-1">Welcome, {user?.name || 'Instructor'}!</p>
+        <p className="text-sm text-gray-500 mt-1">Chào bạn, {user?.name || 'Giảng viên'}!</p>
       </div>
 
       <div className="flex items-center gap-5">
@@ -51,10 +51,10 @@ const InstructorHeader = ({ user }) => {
 
           <div className="text-right hidden sm:block">
             <p className="text-sm font-bold text-gray-800 group-hover:text-rose-600 transition-colors">
-              {user?.name || 'Instructor User'}
+              {user?.name || 'Giang viên'}
             </p>
             <p className="text-xs text-gray-500 font-medium capitalize bg-gray-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
-              {user?.role || 'instructor'}
+              {user?.role || 'Giảng viên'}
             </p>
           </div>
 

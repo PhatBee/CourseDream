@@ -39,10 +39,10 @@ const SocialPayoutEdit = () => {
     return (
         <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 md:p-8 text-left">
             <form onSubmit={onSubmit} className="space-y-8">
-                
+
                 {/* Social Links Section */}
                 <div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">Social Profiles</h3>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">Thông tin mạng xã hội</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="relative">
                             <Globe size={18} className="absolute left-3 top-3.5 text-gray-400" />
@@ -66,19 +66,19 @@ const SocialPayoutEdit = () => {
                 {/* Payout Section */}
                 <div>
                     <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-                        <CreditCard size={20} /> Payout Details
+                        <CreditCard size={20} /> Thông tin thanh toán
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Bank Name</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Tên ngân hàng</label>
                             <input type="text" name="bankName" value={payout.bankName || ''} onChange={handlePayoutChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-rose-100 focus:border-rose-400 outline-none transition" />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Account Number</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Số tài khoản</label>
                             <input type="text" name="bankAccount" value={payout.bankAccount || ''} onChange={handlePayoutChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-rose-100 focus:border-rose-400 outline-none transition" />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">PayPal Email (Optional)</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Email PayPal (Tùy chọn)</label>
                             <input type="email" name="paypalEmail" value={payout.paypalEmail || ''} onChange={handlePayoutChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-rose-100 focus:border-rose-400 outline-none transition" />
                         </div>
                     </div>
@@ -86,7 +86,7 @@ const SocialPayoutEdit = () => {
 
                 <div className="pt-4">
                     <button type="submit" disabled={isLoading} className="px-8 py-3 bg-rose-500 text-white rounded-lg font-bold hover:bg-rose-600 transition shadow-lg shadow-rose-200 disabled:opacity-70">
-                        {isLoading ? 'Saving...' : 'Save Information'}
+                        {isLoading ? 'Đang lưu...' : 'Lưu thông tin'}
                     </button>
                 </div>
             </form>

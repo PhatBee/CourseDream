@@ -26,10 +26,9 @@ const TabLink = ({ to, icon, label }) => {
       <NavLink
         to={to}
         className={({ isActive }) =>
-          `flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border border-transparent w-full ${
-            isActive
-              ? 'bg-rose-50 text-rose-600 border-rose-200'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-gray-100'
+          `flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border border-transparent w-full ${isActive
+            ? 'bg-rose-50 text-rose-600 border-rose-200'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-gray-100'
           }`
         }
       >
@@ -65,22 +64,22 @@ const InstructorProfileSidebar = () => {
       {
         to: '/instructor/profile/settings/edit',
         icon: <User size={18} />,
-        label: 'Edit Profile',
+        label: 'Chỉnh sửa thông tin',
       },
       {
         to: '/instructor/profile/settings/security',
         icon: <LockKeyhole size={18} />,
-        label: 'Change Password',
+        label: 'Thay đổi mật khẩu',
       },
       {
         to: '/instructor/profile/settings/instructor-profile',
         icon: <ShieldCheck size={18} />,
-        label: 'Instructor Profile',
+        label: 'Thông tin giảng viên',
       },
       {
         to: '/instructor/profile/settings/social-payout',
         icon: <CreditCard size={18} />,
-        label: 'Social & Payout',
+        label: 'Thông tin mạng xã hội & thanh toán',
       },
     ],
     [],
@@ -96,7 +95,7 @@ const InstructorProfileSidebar = () => {
           className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover ring-2 ring-transparent"
         />
         <div className="min-w-0">
-          <p className="font-bold text-gray-900 truncate">{user?.name || 'Instructor'}</p>
+          <p className="font-bold text-gray-900 truncate">{user?.name || 'Giảng viên'}</p>
           <p className="text-xs text-gray-500 mt-0.5">{user?.email}</p>
         </div>
       </div>
