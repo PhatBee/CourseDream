@@ -71,7 +71,7 @@ const MyProfileScreen = ({ navigation }) => {
     if (!user) {
         return (
             <SafeAreaView className="flex-1 bg-white items-center justify-center">
-                <Text className="text-gray-600">No profile data</Text>
+                <Text className="text-gray-600">Không có dữ liệu</Text>
             </SafeAreaView>
         );
     }
@@ -85,8 +85,8 @@ const MyProfileScreen = ({ navigation }) => {
                         <ArrowLeft size={24} color="#000" />
                     </TouchableOpacity>
                     <View>
-                        <Text className="text-xl font-bold">My Profile</Text>
-                        <Text className="text-sm text-gray-500">View your information</Text>
+                        <Text className="text-xl font-bold">Thông tin cá nhân</Text>
+                        <Text className="text-sm text-gray-500">Xem thông tin của bạn</Text>
                     </View>
                 </View>
                 <TouchableOpacity
@@ -115,22 +115,22 @@ const MyProfileScreen = ({ navigation }) => {
 
                     {/* Info Cards */}
                     <View className="space-y-4 mb-6">
-                        <InfoCard icon={UserIcon} label="Full Name" value={user.name} />
+                        <InfoCard icon={UserIcon} label="Họ và tên" value={user.name} />
                         <InfoCard
                             icon={Calendar}
-                            label="Registration Date"
+                            label="Ngày đăng ký"
                             value={formatDate(user.createdAt)}
                         />
-                        <InfoCard icon={Mail} label="Email Address" value={user.email} />
-                        <InfoCard icon={Phone} label="Phone Number" value={user.phone} />
+                        <InfoCard icon={Mail} label="Email" value={user.email} />
+                        <InfoCard icon={Phone} label="Số điện thoại" value={user.phone} />
                     </View>
 
                     {/* Bio Section */}
                     <View className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                        <Text className="text-sm font-bold text-gray-800 mb-3">Bio</Text>
+                        <Text className="text-sm font-bold text-gray-800 mb-3">Giới thiệu</Text>
                         <Text className="text-gray-600 leading-relaxed text-sm">
                             {user.bio ||
-                                'No bio information provided yet. Click edit to introduce yourself!'}
+                                'Chưa có thông tin giới thiệu. Hãy chỉnh sửa để giới thiệu về bản thân!'}
                         </Text>
                     </View>
                 </View>

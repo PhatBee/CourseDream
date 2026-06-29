@@ -196,7 +196,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                     onClick={handleEnrollNow}
                     className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                   >
-                    Đăng ký ngay
+                    Ghi danh ngay
                   </button>
                 </>
               )}
@@ -296,7 +296,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                   onClick={handleEnrollNow}
                   className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-full hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                 >
-                  Đăng ký ngay
+                  Ghi danh ngay
                 </button>
               </>
             )}

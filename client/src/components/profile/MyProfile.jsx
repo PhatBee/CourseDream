@@ -9,7 +9,7 @@ const formatDate = (ts) => {
     if (!ts) return 'N/A';
     const date = new Date(ts);
     return date.toLocaleDateString('en-GB', {
-        day: '2-digit', month: 'short', year: 'numeric', 
+        day: '2-digit', month: 'short', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
     });
 };
@@ -38,8 +38,8 @@ const MyProfile = ({ isInstructorView = false }) => {
 
     if (!user) return null;
 
-    const editLink = isInstructorView 
-        ? "/instructor/profile/settings/edit" 
+    const editLink = isInstructorView
+        ? "/instructor/profile/settings/edit"
         : "/profile/settings/edit";
 
     return (
@@ -47,13 +47,13 @@ const MyProfile = ({ isInstructorView = false }) => {
             {/* Header */}
             <div className="flex justify-between items-start mb-8 border-b border-gray-100 pb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage your personal information</p>
+                    <h2 className="text-2xl font-bold text-gray-800">Hồ sơ của tôi</h2>
+                    <p className="text-sm text-gray-500 mt-1">Quản lý thông tin cá nhân</p>
                 </div>
                 <Link
                     to={editLink}
                     className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                    title="Edit Profile"
+                    title="Cập nhật thông tin"
                 >
                     <Edit size={20} />
                 </Link>
@@ -61,31 +61,31 @@ const MyProfile = ({ isInstructorView = false }) => {
 
             {/* Thông tin chi tiết */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <InfoCard 
-                    icon={<UserIcon size={18} />} 
-                    label="Full Name" 
-                    value={user.name} 
+                <InfoCard
+                    icon={<UserIcon size={18} />}
+                    label="Họ tên"
+                    value={user.name}
                 />
-                <InfoCard 
-                    icon={<Calendar size={18} />} 
-                    label="Registration Date" 
-                    value={formatDate(user.createdAt)} 
+                <InfoCard
+                    icon={<Calendar size={18} />}
+                    label="Ngày đăng ký"
+                    value={formatDate(user.createdAt)}
                 />
-                <InfoCard 
-                    icon={<Mail size={18} />} 
-                    label="Email Address" 
-                    value={user.email} 
+                <InfoCard
+                    icon={<Mail size={18} />}
+                    label="Email"
+                    value={user.email}
                 />
-                <InfoCard 
-                    icon={<Phone size={18} />} 
-                    label="Phone Number" 
-                    value={user.phone} 
+                <InfoCard
+                    icon={<Phone size={18} />}
+                    label="Số điện thoại"
+                    value={user.phone}
                 />
             </div>
 
             {/* Bio Section */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <h6 className="text-sm font-bold text-gray-800 mb-3">Bio</h6>
+                <h6 className="text-sm font-bold text-gray-800 mb-3">Tiểu sử</h6>
                 <p className="text-gray-600 leading-relaxed text-sm">
                     {user.bio || "No bio information provided yet. Click edit to introduce yourself!"}
                 </p>

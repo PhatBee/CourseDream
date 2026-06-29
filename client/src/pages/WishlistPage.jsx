@@ -41,7 +41,7 @@ const WishlistPage = () => {
             setIsRemoveModalOpen(false);
             setDisplayItems([]);
             setCurrentPage(1);
-        } catch (error) { console.error("Failed:", error); } 
+        } catch (error) { console.error("Failed:", error); }
         finally { setIsDeleting(false); }
     };
 
@@ -53,8 +53,8 @@ const WishlistPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800 text-left">Wishlist</h2>
-                    <p className="text-sm text-gray-500 mt-1">Courses you have saved for later</p>
+                    <h2 className="text-2xl font-bold text-gray-800 text-left">Danh sách yêu thích</h2>
+                    <p className="text-sm text-gray-500 mt-1">Các khóa học bạn đã lưu để xem sau</p>
                 </div>
 
                 {reduxItems.length > 0 && (
@@ -63,7 +63,7 @@ const WishlistPage = () => {
                         className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
                     >
                         <Trash2 size={18} />
-                        Clear All
+                        Xóa tất cả
                     </button>
                 )}
             </div>
@@ -101,10 +101,10 @@ const WishlistPage = () => {
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <HeartOff size={40} className="text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Your wishlist is empty</h3>
-                    <p className="text-gray-500 mb-8 max-w-md mx-auto">Looks like you haven't added any courses yet. Browse our catalog to find something you like!</p>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Danh sách của bạn trống</h3>
+                    <p className="text-gray-500 mb-8 max-w-md mx-auto">Có vẻ như bạn chưa thêm khóa học nào. Hãy khám phá danh mục của chúng tôi để tìm thứ gì đó bạn thích!</p>
                     <a href="/courses" className="inline-flex px-6 py-3 bg-rose-500 text-white rounded-full font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-200">
-                        Explore Courses
+                        Khám phá khóa học
                     </a>
                 </div>
             )}
@@ -113,9 +113,9 @@ const WishlistPage = () => {
                 isOpen={isRemoveModalOpen}
                 onClose={() => setIsRemoveModalOpen(false)}
                 onConfirm={handleConfirmClear}
-                title="Clear Wishlist"
-                message="Are you sure you want to remove all items?"
-                confirmLabel="Clear All"
+                title="Xóa danh sách"
+                message="Bạn có chắc chắn muốn xóa tất cả các mục?"
+                confirmLabel="Xóa tất cả"
                 isDeleting={isDeleting}
             />
         </div>

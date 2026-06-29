@@ -9,7 +9,7 @@ const SidebarLink = ({ to, icon, label, exact = false }) => {
     <li>
       <NavLink
         to={to}
-        end={exact} 
+        end={exact}
         className={({ isActive }) => `
           flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200
           ${isActive
@@ -51,15 +51,15 @@ const ProfileSidebar = () => {
           Menu
         </h6>
         <ul className="space-y-1">
-          <SidebarLink to={dashboardLink} icon={<LayoutDashboard size={20} />} label="Dashboard" exact />
-          
-          <SidebarLink to="/profile/my-profile" icon={<User size={20} />} label="My Profile" />
+          <SidebarLink to={dashboardLink} icon={<LayoutDashboard size={20} />} label="Tổng quan" exact />
+
+          <SidebarLink to="/profile/my-profile" icon={<User size={20} />} label="Thông tin cá nhân" />
 
           {/* Chế độ xem của Học sinh */}
           {viewMode === 'student' && (
             <>
-              <SidebarLink to="/profile/enrolled-courses" icon={<BookOpen size={20} />} label="Enrolled Courses" />
-              <SidebarLink to="/profile/wishlist" icon={<Heart size={20} />} label="Wishlist" />
+              <SidebarLink to="/profile/enrolled-courses" icon={<BookOpen size={20} />} label="Khóa học đã đăng ký" />
+              <SidebarLink to="/profile/wishlist" icon={<Heart size={20} />} label="Danh sách yêu thích" />
             </>
           )}
 
@@ -69,17 +69,17 @@ const ProfileSidebar = () => {
 
       <div>
         <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">
-          Account Settings
+          Cài đặt tài khoản
         </h6>
         <ul className="space-y-1">
-          <SidebarLink to="/profile/settings/edit" icon={<Settings size={20} />} label="Settings" />
+          <SidebarLink to="/profile/settings/edit" icon={<Settings size={20} />} label="Cài đặt" />
           <li>
             <button
               onClick={handleLogout}
               className="flex items-center w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
             >
               <LogOut size={20} className="mr-3" />
-              Logout
+              Đăng xuất
             </button>
           </li>
         </ul>

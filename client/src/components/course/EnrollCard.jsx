@@ -167,7 +167,7 @@ const EnrollCard = ({ course, isInstructor }) => {
                 onClick={handleEnrollNow}
                 className="w-full border-2 border-rose-600 text-rose-600 hover:bg-rose-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
               >
-                Đăng ký ngay
+                Ghi danh ngay
               </button>
             </>
           )}

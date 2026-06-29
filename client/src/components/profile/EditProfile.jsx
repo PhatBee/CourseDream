@@ -96,11 +96,11 @@ const EditProfile = () => {
             <div className="flex items-center gap-6 mb-8">
                 <Avatar src={preview} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
                 <div>
-                    <h5 className="font-bold text-gray-800 text-lg">Profile Photo</h5>
-                    <p className="text-sm text-gray-500 mb-3">Allowed JPG, GIF or PNG. Max size of 2MB</p>
+                    <h5 className="font-bold text-gray-800 text-lg">Ảnh</h5>
+                    <p className="text-sm text-gray-500 mb-3">Ảnh phải là JPG, GIF hoặc PNG. Kích thước tối đa 2MB</p>
                     <div className="flex gap-3">
                         <label className="px-4 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 cursor-pointer transition">
-                            Upload
+                            Tải lên
                             <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
                         </label>
                         <button
@@ -108,7 +108,7 @@ const EditProfile = () => {
                             onClick={handleDeleteAvatar}
                             className="px-4 py-1.5 bg-rose-50 text-rose-500 rounded text-sm font-medium hover:bg-rose-100 transition"
                         >
-                            Delete
+                            Xóa
                         </button>
                     </div>
                 </div>
@@ -116,34 +116,34 @@ const EditProfile = () => {
 
             <form onSubmit={onSubmit} className="space-y-6">
                 <div className="border-b border-gray-100 pb-4 mb-4">
-                    <h3 className="text-lg font-bold text-gray-800">Personal Details</h3>
-                    <p className="text-sm text-gray-500">Edit your personal information</p>
+                    <h3 className="text-lg font-bold text-gray-800">Thông tin cá nhân</h3>
+                    <p className="text-sm text-gray-500">Chỉnh sửa thông tin cá nhân của bạn</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Full Name */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Họ tên <span className="text-red-500">*</span></label>
                         <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-rose-100 focus:border-rose-400 outline-none transition" />
                     </div>
 
                     {/* Phone */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại <span className="text-red-500">*</span></label>
                         <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-rose-100 focus:border-rose-400 outline-none transition" />
                     </div>
                 </div>
 
                 {/* Bio */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bio <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Giới thiệu <span className="text-red-500">*</span></label>
                     <textarea rows="4" value={bio} onChange={(e) => setBio(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-rose-100 focus:border-rose-400 outline-none transition"></textarea>
                 </div>
 
                 {/* Button */}
                 <div className="pt-4">
                     <button type="submit" disabled={isLoading} className="px-8 py-3 bg-rose-500 text-white rounded-lg font-bold hover:bg-rose-600 transition shadow-lg shadow-rose-200 disabled:opacity-70">
-                        {isLoading ? 'Updating...' : 'Update Profile'}
+                        {isLoading ? 'Đang cập nhật...' : 'Cập nhật'}
                     </button>
                 </div>
             </form>
