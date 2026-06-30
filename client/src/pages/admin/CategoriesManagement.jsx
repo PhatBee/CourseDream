@@ -157,10 +157,10 @@ const CategoriesManagement = () => {
                       </button>
                       <button
                         onClick={() => openDeleteModal(cat)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                         title="Xóa"
                       >
-                        <div className="w-4 h-4 border-2 border-current rounded-sm flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-current rounded-sm flex items-center justify-center relative">
                           <div className="w-2 h-[2px] bg-current transform rotate-45"></div>
                           <div className="w-2 h-[2px] bg-current transform -rotate-45 absolute"></div>
                         </div>
