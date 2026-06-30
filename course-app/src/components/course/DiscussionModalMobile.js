@@ -400,13 +400,12 @@ const DiscussionModalMobile = ({
                   </TouchableOpacity>
 
                   {(isInstructor ||
-                    user?._id === localDiscussion.author?._id) &&
-                    !item.isBestAnswer && (
+                    user?._id === localDiscussion.author?._id) && (
                       <TouchableOpacity
                         onPress={() => handleMarkBestAnswer(item._id)}
                       >
-                        <Text className="text-green-600 text-xs font-semibold">
-                          Đánh dấu hay nhất
+                        <Text className={`${item.isBestAnswer ? "text-gray-500" : "text-green-600"} text-xs font-semibold`}>
+                          {item.isBestAnswer ? "Bỏ đánh dấu hay nhất" : "Đánh dấu hay nhất"}
                         </Text>
                       </TouchableOpacity>
                     )}
