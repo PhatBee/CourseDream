@@ -13,6 +13,8 @@ const initialState = {
     banReason: null,
     isRegisterSuccess: false, // Cho trang Register
     isVerifySuccess: false,   // Cho trang VerifyOTP
+    isResendSuccess: false,   // Cho Resend OTP
+    isResendLoading: false,   // Cho Resend OTP
     registrationEmail: null,  // Lưu email để dùng ở trang OTP
     resetEmail: null,         // Lưu email từ Forgot -> Verify
     resetToken: null,         // Lưu token từ Verify -> SetPassword
@@ -50,6 +52,15 @@ export const register = createAsyncThunk('auth/register', async (userData, thunk
 export const verifyOTP = createAsyncThunk('auth/verifyOTP', async (otpData, thunkAPI) => {
     try {
         return await authService.verifyOTP(otpData);
+    } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const resendOTP = createAsyncThunk('auth/resendOTP', async (email, thunkAPI) => {
+    try {
+        return await authService.resendOTP(email);
     } catch (error) {
         const message = error.response?.data?.message || error.message;
         return thunkAPI.rejectWithValue(message);
@@ -122,6 +133,8 @@ export const authSlice = createSlice({
             state.banReason = null;
             state.isRegisterSuccess = false;
             state.isVerifySuccess = false;
+            state.isResendSuccess = false;
+            state.isResendLoading = false;
             state.isForgotSuccess = false;
             state.isVerifyResetSuccess = false;
             state.isSetPasswordSuccess = false;
@@ -192,6 +205,23 @@ export const authSlice = createSlice({
             })
             .addCase(verifyOTP.rejected, (state, action) => {
                 state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            // === RESEND OTP CASES ===
+            .addCase(resendOTP.pending, (state) => {
+                state.isResendLoading = true;
+                state.isResendSuccess = false;
+                state.isError = false;
+                state.message = '';
+            })
+            .addCase(resendOTP.fulfilled, (state, action) => {
+                state.isResendLoading = false;
+                state.isResendSuccess = true;
+                state.message = action.payload.message;
+            })
+            .addCase(resendOTP.rejected, (state, action) => {
+                state.isResendLoading = false;
                 state.isError = true;
                 state.message = action.payload;
             })
