@@ -62,6 +62,12 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
   const flatListRef = useRef(null);
   const [highlightedDiscussionId, setHighlightedDiscussionId] = useState(null);
 
+  // Ref để tránh mở modal liên tục khi state thay đổi
+  const processedParamsRef = useRef({
+    discussionId: null,
+    replyId: null,
+  });
+
   useEffect(() => {
     if (courseId && lectureId) {
       setPage(1);
@@ -72,12 +78,18 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
   useEffect(() => {
     const { discussionId, replyId } = route.params || {};
 
-    if (discussionId && discussions.length > 0) {
+    if (
+      discussionId && 
+      discussions.length > 0 && 
+      (processedParamsRef.current.discussionId !== discussionId ||
+       processedParamsRef.current.replyId !== replyId)
+    ) {
       if (replyId) {
         // CÓ REPLY ID -> Chỉ mở Popup chi tiết nếu là Reply
         const target = discussions.find((d) => d._id === discussionId);
         if (target && !selectedDiscussion) {
           setSelectedDiscussion(target);
+          processedParamsRef.current = { discussionId, replyId };
         }
       } else {
         // KHÔNG CÓ REPLY ID (Cảnh cáo toàn bộ thảo luận gốc)
@@ -95,11 +107,13 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
           }, 600);
         }
 
+        processedParamsRef.current = { discussionId, replyId };
+
         // Tự tắt highlight sau 3s (Tương tự web)
         setTimeout(() => setHighlightedDiscussionId(null), 3000);
       }
     }
-  }, [route.params?.discussionId, route.params?.replyId, discussions]);
+  }, [route.params?.discussionId, route.params?.replyId, discussions, selectedDiscussion]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);

@@ -80,6 +80,13 @@ const LearningScreen = ({ route, navigation }) => {
     discussionId ? "Discussion" : "Lectures",
   );
 
+  // Dùng ref để tracking xem đã xử lý param từ notification chưa
+  const processedParamsRef = useRef({
+    discussionId: null,
+    lectureId: null,
+    replyId: null,
+  });
+
   // ─── Refs và state cho Quiz Review ───────────────────────────────────────────
   // videoPlayerRef: điều khiển VideoPlayer (seekToQuiz) từ bên ngoài
   const videoPlayerRef = useRef(null);
@@ -145,13 +152,43 @@ const LearningScreen = ({ route, navigation }) => {
     dispatch(fetchVideoProgress({ courseSlug: slug, lectureId: currentLecture._id }));
   }, [currentLecture?._id, slug, dispatch]);
 
-  // Khi chuyển bài → reset tab về Lectures
+  // Xử lý notification deep link (khi có lectureId, discussionId trong route.params)
   useEffect(() => {
-    setActiveTab('Lectures');
-  }, [currentLecture?._id]);
+    const { lectureId: routeLectureId, discussionId: routeDiscussionId, replyId: routeReplyId } = route.params || {};
+
+    if (
+      routeLectureId &&
+      (processedParamsRef.current.lectureId !== routeLectureId ||
+       processedParamsRef.current.discussionId !== routeDiscussionId ||
+       processedParamsRef.current.replyId !== routeReplyId)
+    ) {
+      if (sections.length > 0) {
+        const allLecs = sections.flatMap((s) => s.lectures || []);
+        const targetLec = allLecs.find((l) => l._id === routeLectureId);
+        
+        if (targetLec && currentLecture?._id !== targetLec._id) {
+          dispatch(setCurrentLecture(targetLec));
+        }
+
+        if (routeDiscussionId) {
+          setActiveTab('Discussion');
+        } else {
+          setActiveTab('Lectures');
+        }
+
+        // Đánh dấu đã xử lý
+        processedParamsRef.current = {
+          lectureId: routeLectureId,
+          discussionId: routeDiscussionId,
+          replyId: routeReplyId,
+        };
+      }
+    }
+  }, [route.params, sections, currentLecture?._id, dispatch]);
 
   const handleLecturePress = (lecture) => {
     dispatch(setCurrentLecture(lecture));
+    setActiveTab('Lectures');
   };
 
   /**
