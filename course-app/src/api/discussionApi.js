@@ -26,6 +26,8 @@ const discussionApi = {
     axiosClient.get(
       `${path}/${discussionId}/replies?page=${page}&limit=${limit}`,
     ),
+  deleteReply: (replyId) =>
+    axiosClient.delete(`${path}/replies/${replyId}`),
 };
 
 export default discussionApi;

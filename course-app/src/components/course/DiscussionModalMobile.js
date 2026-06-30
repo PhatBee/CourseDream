@@ -16,15 +16,17 @@ import { useDispatch } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   X,
-  Send,
-  ThumbsUp,
   MoreVertical,
-  CheckCircle2,
+  ThumbsUp,
   MessageCircle,
+  CheckCircle2,
+  Send,
+  Trash2,
 } from "lucide-react-native";
 import Toast from "react-native-toast-message";
 import { replyDiscussion } from "../../features/discussion/discussionSlice";
 import discussionApi from "../../api/discussionApi";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
 import { useRoute } from "@react-navigation/native";
 
 const DiscussionModalMobile = ({
@@ -46,6 +48,9 @@ const DiscussionModalMobile = ({
   const [replies, setReplies] = useState([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [replyInput, setReplyInput] = useState("");
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [replyToDelete, setReplyToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [sending, setSending] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -221,6 +226,29 @@ const DiscussionModalMobile = ({
     }
   };
 
+  const handleOpenDeleteReplyModal = (replyId) => {
+    setReplyToDelete(replyId);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDeleteReply = async () => {
+    if (!replyToDelete) return;
+    setIsDeleting(true);
+    try {
+      await discussionApi.deleteReply(replyToDelete);
+      Toast.show({ type: "success", text1: "Đã xóa bình luận" });
+      fetchReplies(1);
+      fetchDiscussionDetail(localDiscussion._id);
+      if (onRefreshParent) onRefreshParent();
+    } catch (err) {
+      Toast.show({ type: "error", text1: "Xóa bình luận thất bại" });
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalVisible(false);
+      setReplyToDelete(null);
+    }
+  };
+
   if (!localDiscussion) return null;
 
   return (
@@ -367,14 +395,25 @@ const DiscussionModalMobile = ({
                     </Text>
                   </View>
 
-                  {user?._id && item.author?._id !== user._id && (
+                  {user?._id === item.author?._id || isInstructor ? (
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleOpenDeleteReplyModal(item._id);
+                      }}
+                      className="p-2 -mr-2 -mt-2"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Trash2 size={17} color="#EF4444" />
+                    </TouchableOpacity>
+                  ) : user?._id && item.author?._id !== user._id ? (
                     <TouchableOpacity
                       onPress={() => onReport(item._id, "reply")}
                       className="p-1"
                     >
                       <MoreVertical size={16} color="#9ca3af" />
                     </TouchableOpacity>
-                  )}
+                  ) : null}
                 </View>
 
                 <Text className="text-gray-700 text-[15px] mb-3 leading-5 ml-9">
@@ -454,6 +493,20 @@ const DiscussionModalMobile = ({
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <DeleteConfirmModal
+        visible={deleteModalVisible}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteModalVisible(false);
+            setReplyToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDeleteReply}
+        title="Xóa bình luận"
+        message="Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác."
+        isDeleting={isDeleting}
+      />
     </Modal>
   );
 };

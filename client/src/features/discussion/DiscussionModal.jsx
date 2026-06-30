@@ -5,6 +5,7 @@ import {
   FaCheck,
   FaUserCircle,
   FaFlag,
+  FaTrash,
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -14,11 +15,13 @@ import {
   replyToDiscussion,
   voteDiscussion,
   markBestAnswer,
+  deleteReply,
 } from "../../api/discussionApi";
 
 // Tích hợp Report của hệ thống
 import { sendReport, resetReportState } from "../report/reportSlice";
 import ReportModal from "../../components/common/ReportModal";
+import RemoveModal from "../../components/common/RemoveModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import Avatar from "../../components/common/Avatar";
 
@@ -42,6 +45,9 @@ const DiscussionModal = ({
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [replyInput, setReplyInput] = useState("");
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [replyToDelete, setReplyToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Quản lý Modal báo cáo riêng cho Replies (Báo cáo câu trả lời)
   const [reportConfig, setReportConfig] = useState({
@@ -173,6 +179,29 @@ const DiscussionModal = ({
     } catch (err) {
       console.error(err);
       toast.error("Lỗi cập nhật best answer");
+    }
+  };
+
+  const handleDeleteReply = (replyId) => {
+    setReplyToDelete(replyId);
+    setIsRemoveModalOpen(true);
+  };
+
+  const handleConfirmDeleteReply = async () => {
+    if (!replyToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteReply(replyToDelete);
+      toast.success("Đã xóa bình luận!");
+      setReplies((prev) => prev.filter((r) => r._id !== replyToDelete));
+      refreshParent();
+    } catch (err) {
+      console.error(err);
+      toast.error("Xóa bình luận thất bại");
+    } finally {
+      setIsDeleting(false);
+      setIsRemoveModalOpen(false);
+      setReplyToDelete(null);
     }
   };
 
@@ -336,21 +365,30 @@ const DiscussionModal = ({
                       </div>
                     </div>
 
-                    {/* Nút báo cáo Reply cụ thể */}
-                    {user && user._id !== reply.author?._id && (
-                      <button
-                        onClick={() =>
-                          setReportConfig({
-                            open: true,
-                            targetId: reply._id,
-                            type: "reply",
-                          })
-                        }
-                        className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2 py-1 text-[11px] text-gray-400 hover:text-rose-500 bg-gray-50 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100"
-                      >
-                        <FaFlag /> Báo cáo
-                      </button>
-                    )}
+                    {/* Nút Phụ Trợ (Xóa/Báo cáo) */}
+                    <div className="ml-auto flex items-center gap-3">
+                      {user?._id === reply.author?._id || isInstructor ? (
+                        <button
+                          onClick={() => handleDeleteReply(reply._id)}
+                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-[11px] flex gap-1 items-center px-2 py-1 bg-gray-50 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                        >
+                          <FaTrash /> Xóa
+                        </button>
+                      ) : user && user._id !== reply.author?._id ? (
+                        <button
+                          onClick={() =>
+                            setReportConfig({
+                              open: true,
+                              targetId: reply._id,
+                              type: "reply",
+                            })
+                          }
+                          className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2 py-1 text-[11px] text-gray-400 hover:text-rose-500 bg-gray-50 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100"
+                        >
+                          <FaFlag /> Báo cáo
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
 
                   <p className="text-gray-700 text-sm ml-11 mb-3 whitespace-pre-wrap">
@@ -430,6 +468,20 @@ const DiscussionModal = ({
           loading={reporting}
         />
       )}
+
+      <RemoveModal
+        isOpen={isRemoveModalOpen}
+        onClose={() => {
+          if (!isDeleting) {
+            setIsRemoveModalOpen(false);
+            setReplyToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDeleteReply}
+        title="Xóa bình luận"
+        message="Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác."
+        isDeleting={isDeleting}
+      />
     </>
   );
 };

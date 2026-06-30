@@ -7,6 +7,7 @@ import {
   softDeleteDiscussion,
   getDiscussionDetails,
   getRepliesByDiscussion,
+  softDeleteReply,
 } from "../discussion/discussion.service.js";
 import mongoose from "mongoose";
 
@@ -184,6 +185,21 @@ export const deleteDiscussion = async (req, res, next) => {
     );
 
     res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteReply = async (req, res, next) => {
+  try {
+    const { replyId } = req.params;
+    const userId = req.user._id;
+    const isAdminOrInstructor =
+      req.user.role === "instructor" || req.user.role === "admin";
+
+    const updated = await softDeleteReply(replyId, userId, isAdminOrInstructor);
+
+    res.json({ success: true, data: updated, message: "Đã xoá bình luận" });
   } catch (err) {
     next(err);
   }
