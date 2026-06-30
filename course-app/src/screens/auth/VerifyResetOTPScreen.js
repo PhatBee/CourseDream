@@ -11,6 +11,7 @@ import {
     Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
 import { verifyResetOTP, reset } from '../../features/auth/authSlice';
 import { ArrowRight, Mail } from 'lucide-react-native';
 
@@ -19,17 +20,18 @@ const VerifyResetOTPScreen = ({ navigation }) => {
     const inputRefs = useRef([]);
 
     const dispatch = useDispatch();
+    const isFocused = useIsFocused();
     const { isLoading, isError, message, isVerifyResetSuccess, resetEmail } = useSelector(
         (state) => state.auth
     );
 
     // Nếu không có email, đá về trang ForgotPassword
     useEffect(() => {
-        if (!resetEmail) {
+        if (isFocused && !resetEmail) {
             Alert.alert('Thông báo', 'Vui lòng bắt đầu từ trang Quên mật khẩu.');
             navigation.navigate('ForgotPassword');
         }
-    }, [resetEmail, navigation]);
+    }, [resetEmail, isFocused, navigation]);
 
     // Xử lý kết quả
     useEffect(() => {
