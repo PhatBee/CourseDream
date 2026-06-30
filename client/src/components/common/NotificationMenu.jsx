@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
+import { getDiscussionById } from "../../api/discussionApi";
+import toast from "react-hot-toast";
 
 // Helper lấy Icon và Màu sắc tương ứng với từng loại thông báo
 const getNotificationUI = (type) => {
@@ -78,15 +80,25 @@ const NotificationMenu = ({ open, onClose }) => {
 
     switch (type) {
       case "warning":
+      case "reply":
         if (
           metadata?.courseSlug &&
           metadata?.lessonId &&
           metadata?.discussionId
         ) {
-          navigate(
-            `/courses/${metadata.courseSlug}/learn/lecture/${metadata.lessonId}?discussionId=${metadata.discussionId}${metadata.replyId ? `&replyId=${metadata.replyId}` : ""}`,
-          );
-        } else if (metadata?.courseSlug) {
+          try {
+            // Pre-fetch check: Nếu thảo luận không tồn tại, sẽ ném ra lỗi 404
+            await getDiscussionById(metadata.discussionId);
+            // Nếu tồn tại, nhảy vào trang học
+            navigate(
+              `/courses/${metadata.courseSlug}/learn/lecture/${metadata.lessonId}?discussionId=${metadata.discussionId}${metadata.replyId ? `&replyId=${metadata.replyId}` : ""}`,
+            );
+          } catch (error) {
+            // Nếu không tìm thấy, đá về trang overview và báo lỗi ngay, tránh load trang VideoPlayer
+            toast.error("Không tìm thấy thảo luận. Thảo luận này có thể đã bị xóa.");
+            navigate(`/courses/${metadata.courseSlug}/overview`);
+          }
+        } else if (type === "warning" && metadata?.courseSlug) {
           navigate(`/courses/${metadata.courseSlug}`);
         }
         break;
@@ -95,17 +107,6 @@ const NotificationMenu = ({ open, onClose }) => {
         break;
       case "system":
         if (metadata?.url) navigate(metadata.url);
-        break;
-      case "reply":
-        if (
-          metadata?.courseSlug &&
-          metadata?.lessonId &&
-          metadata?.discussionId
-        ) {
-          navigate(
-            `/courses/${metadata.courseSlug}/learn/lecture/${metadata.lessonId}?discussionId=${metadata.discussionId}${metadata.replyId ? `&replyId=${metadata.replyId}` : ""}`,
-          );
-        }
         break;
       case "reminder_learning":
         if (metadata?.courseSlug)

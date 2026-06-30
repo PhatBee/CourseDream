@@ -60,45 +60,57 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user, targetDiscuss
   const flatListRef = useRef(null);
   const [highlightedDiscussionId, setHighlightedDiscussionId] = useState(null);
 
+  // Thêm state để theo dõi lần load đầu tiên
+  const [isFetchingInitial, setIsFetchingInitial] = useState(true);
+
   useEffect(() => {
     if (courseId && lectureId) {
+      setIsFetchingInitial(true);
       setPage(1);
-      dispatch(fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }));
+      dispatch(fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }))
+        .finally(() => {
+          setIsFetchingInitial(false);
+        });
     }
   }, [courseId, lectureId, dispatch]);
 
   useEffect(() => {
-    if (targetDiscussionId && discussions.length > 0) {
-      if (targetReplyId) {
-        // CÓ REPLY ID -> Chỉ mở Popup chi tiết nếu là Reply
-        const target = discussions.find((d) => d._id === targetDiscussionId);
-        if (target && !selectedDiscussion) {
-          setSelectedDiscussion(target);
-          if (onConsumed) onConsumed();
+    if (targetDiscussionId && !isFetchingInitial) {
+      const target = discussions.find((d) => d._id === targetDiscussionId);
+
+      if (target) {
+        if (targetReplyId) {
+          // CÓ REPLY ID -> Chỉ mở Popup chi tiết nếu là Reply
+          if (!selectedDiscussion) {
+            setSelectedDiscussion(target);
+          }
+        } else {
+          // KHÔNG CÓ REPLY ID -> Highlight và Scroll
+          setHighlightedDiscussionId(targetDiscussionId);
+
+          const index = discussions.findIndex((d) => d._id === targetDiscussionId);
+          if (index !== -1 && flatListRef.current) {
+            setTimeout(() => {
+              flatListRef.current?.scrollToIndex({
+                index,
+                animated: true,
+                viewPosition: 0.5,
+              });
+            }, 600);
+          }
+
+          // Tự tắt highlight sau 3s (Tương tự web)
+          setTimeout(() => setHighlightedDiscussionId(null), 3000);
         }
       } else {
-        // KHÔNG CÓ REPLY ID (Cảnh cáo toàn bộ thảo luận gốc)
-        // -> Highlight và Scroll, KHÔNG MỞ MODAL CHI TIẾT
-        setHighlightedDiscussionId(targetDiscussionId);
-
-        const index = discussions.findIndex((d) => d._id === targetDiscussionId);
-        if (index !== -1 && flatListRef.current) {
-          setTimeout(() => {
-            flatListRef.current?.scrollToIndex({
-              index,
-              animated: true,
-              viewPosition: 0.5,
-            });
-          }, 600);
-        }
-
-        if (onConsumed) onConsumed();
-
-        // Tự tắt highlight sau 3s (Tương tự web)
-        setTimeout(() => setHighlightedDiscussionId(null), 3000);
+        // KHÔNG TÌM THẤY TARGET (đã bị xóa hoặc không nằm trong trang 1)
+        Toast.show({ type: "error", text1: "Không tìm thấy thảo luận", text2: "Thảo luận này có thể đã bị xóa." });
       }
+
+      // Luôn consume param để dọn dẹp sau khi xử lý (kể cả tìm thấy hay không)
+      if (onConsumed) onConsumed();
     }
-  }, [targetDiscussionId, targetReplyId, discussions, selectedDiscussion, onConsumed]);
+  }, [targetDiscussionId, targetReplyId, discussions, isFetchingInitial, selectedDiscussion, onConsumed]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);

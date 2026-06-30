@@ -19,7 +19,7 @@ import {
 // Tích hợp Report của hệ thống
 import { sendReport, resetReportState } from "../report/reportSlice";
 import ReportModal from "../../components/common/ReportModal";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Avatar from "../../components/common/Avatar";
 
 const DiscussionModal = ({
@@ -195,6 +195,7 @@ const DiscussionModal = ({
 
   // Logic Scroll đến Reply cụ thể nếu có replyId trong URL query
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -211,6 +212,13 @@ const DiscussionModal = ({
             () => el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50"),
             3000,
           );
+        } else {
+          const existsInArray = replies.some(r => String(r._id) === String(replyId));
+          if (!existsInArray) {
+            toast.error("Không tìm thấy câu trả lời. Câu trả lời này có thể đã bị xóa.");
+            const basePath = location.pathname.split("/learn/")[0];
+            navigate(`${basePath}/overview`);
+          }
         }
       }, 600); // Delay 600ms để đảm bảo rằng các phần tử đã được nạp xong
     }

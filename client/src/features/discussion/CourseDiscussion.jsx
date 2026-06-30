@@ -23,7 +23,7 @@ import {
   resetReportState,
 } from "../../features/report/reportSlice";
 import DiscussionModal from "./DiscussionModal";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import Avatar from "../../components/common/Avatar";
 
 const CourseDiscussion = ({
@@ -39,6 +39,8 @@ const CourseDiscussion = ({
   );
   const { success, error } = useSelector((state) => state.report);
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
@@ -137,9 +139,8 @@ const CourseDiscussion = ({
   // Lắng nghe URL Params để Scroll & Mở Modal
   useEffect(() => {
     if (!loading && discussions.length > 0) {
-      const params = new URLSearchParams(location.search);
-      const focusDiscussionId = params.get("discussionId");
-      const focusReplyId = params.get("replyId");
+      const focusDiscussionId = searchParams.get("discussionId");
+      const focusReplyId = searchParams.get("replyId");
 
       if (focusDiscussionId) {
         // Tự động mở Modal nếu có replyId (tức là báo cáo bình luận bên trong)
@@ -149,29 +150,47 @@ const CourseDiscussion = ({
           );
           if (itemToOpen) {
             setSelectedDiscussion(itemToOpen);
+          } else {
+             // KHÔNG TÌM THẤY 
+             toast.error("Không tìm thấy thảo luận. Thảo luận này có thể đã bị xóa.");
+             const basePath = location.pathname.split("/learn/")[0];
+             navigate(`${basePath}/overview`);
           }
         }
         // Scroll đến Thảo luận gốc
         else if (!focusReplyId) {
-          setTimeout(() => {
-            const el = document.getElementById(
-              `discussion-${focusDiscussionId}`,
-            );
-            if (el) {
-              el.scrollIntoView({ behavior: "smooth", block: "center" });
-              // Highlight nhẹ
-              el.classList.add("ring-2", "ring-rose-400", "bg-rose-50");
-              setTimeout(
-                () =>
-                  el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50"),
-                3000,
+          const itemToOpen = discussions.find((d) => d._id === focusDiscussionId);
+          if (itemToOpen) {
+            setTimeout(() => {
+              const el = document.getElementById(
+                `discussion-${focusDiscussionId}`,
               );
-            }
-          }, 500); // Đợi render xong
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                // Highlight nhẹ
+                el.classList.add("ring-2", "ring-rose-400", "bg-rose-50");
+                setTimeout(
+                  () =>
+                    el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50"),
+                  3000,
+                );
+              }
+              // Xóa param ngay sau khi cuộn xong
+              const newParams = new URLSearchParams(window.location.search);
+              if (newParams.has("discussionId")) {
+                 newParams.delete("discussionId");
+                 setSearchParams(newParams, { replace: true });
+              }
+            }, 500); // Đợi render xong
+          } else {
+             toast.error("Không tìm thấy thảo luận. Thảo luận này có thể đã bị xóa.");
+             const basePath = location.pathname.split("/learn/")[0];
+             navigate(`${basePath}/overview`);
+          }
         }
       }
     }
-  }, [location.search, discussions, loading]);
+  }, [searchParams, discussions, loading, selectedDiscussion, navigate, location.pathname]);
 
   if (loading && discussions.length === 0)
     return (
@@ -357,12 +376,24 @@ const CourseDiscussion = ({
         </div>
       )}
 
+      {/* Modal Hiển thị Chi tiết Thảo luận */}
       {selectedDiscussion && (
         <DiscussionModal
           discussion={selectedDiscussion}
+          onClose={() => {
+            setSelectedDiscussion(null);
+            
+            // QUAN TRỌNG: Xóa param khỏi URL sau khi đóng popup
+            // Để đảm bảo lần sau click qua lại tab không bị tự động mở popup cũ
+            const newParams = new URLSearchParams(window.location.search);
+            if (newParams.has("discussionId") || newParams.has("replyId")) {
+              newParams.delete("discussionId");
+              newParams.delete("replyId");
+              setSearchParams(newParams, { replace: true });
+            }
+          }}
           user={user}
           isInstructor={isInstructor}
-          onClose={() => setSelectedDiscussion(null)}
           refreshParent={refreshParent}
           onReport={() => openReportPopup(selectedDiscussion._id)}
         />
