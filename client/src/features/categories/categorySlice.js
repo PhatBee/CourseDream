@@ -34,7 +34,7 @@ export const updateCategory = createAsyncThunk(
   async ({ id, data }, thunkAPI) => {
     try {
       const response = await categoryApi.updateCategory(id, data);
-      toast.success("Category updated successfully!");
+      toast.success("Đã chỉnh sửa danh mục thành công");
       return response.data.data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update");
@@ -49,7 +49,7 @@ export const deleteCategory = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       await categoryApi.deleteCategory(id);
-      toast.success("Category deleted successfully!");
+      toast.success("Đã xóa danh mục thành công");
       return id;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete");
