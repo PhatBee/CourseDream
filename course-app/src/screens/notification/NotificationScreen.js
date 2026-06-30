@@ -165,7 +165,19 @@ const NotificationScreen = () => {
     }
 
     // --- CÁC TRƯỜNG HỢP KHÁC ---
+    // Debug: xem type và metadata thực tế
+    console.log('[Notification] type:', type, '| metadata:', JSON.stringify(metadata));
+
     switch (type) {
+      case "system":
+        // Thông báo duyệt/từ chối giảng viên → chuyển sang BecomeInstructor
+        // Dùng getParent() để tránh bị giới hạn bởi Tab navigator context
+        try {
+          navigation.navigate("BecomeInstructor");
+        } catch (e) {
+          navigation.getParent()?.navigate("BecomeInstructor");
+        }
+        break;
       case "purchase_success":
         navigation.navigate("MyCourses");
         break;
@@ -181,6 +193,7 @@ const NotificationScreen = () => {
           navigation.navigate("CourseDetail", { slug: metadata.courseSlug });
         break;
       default:
+        console.log('[Notification] Unhandled type:', type);
         break;
     }
   };
