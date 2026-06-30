@@ -96,7 +96,7 @@ const AdminSidebar = () => {
               className="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
             >
               <LogOut size={20} />
-              <span className="ml-3">Logout</span>
+              <span className="ml-3">Đăng xuất</span>
             </button>
           </li>
         </ul>
