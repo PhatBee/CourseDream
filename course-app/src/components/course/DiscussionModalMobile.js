@@ -246,64 +246,7 @@ const DiscussionModalMobile = ({
           </View>
         </View>
 
-        <View className="p-4 bg-white mb-2 shadow-sm border-b border-gray-100 z-10">
-          <View className="flex-row justify-between mb-3">
-            <View className="flex-row gap-2 flex-1 items-center">
-              <Image
-                source={
-                  localDiscussion.author?.avatar?.url
-                    ? { uri: localDiscussion.author.avatar.url }
-                    : localDiscussion.author?.avatar
-                      ? { uri: localDiscussion.author.avatar }
-                      : require("../../../assets/images/default-avatar.jpg")
-                }
-                style={{ width: 32, height: 32, borderRadius: 16 }}
-              />
-              <Text className="text-sm font-semibold text-gray-600">
-                {localDiscussion.author?.name}
-              </Text>
-            </View>
 
-            <TouchableOpacity
-              onPress={() => onReport(localDiscussion._id, "discussion")}
-              className="p-2 -mr-2"
-            >
-              <MoreVertical size={20} color="#9ca3af" />
-            </TouchableOpacity>
-          </View>
-
-          <Text className="font-bold text-lg text-gray-900 mb-2">
-            {localDiscussion.title}
-          </Text>
-          <Text className="text-gray-700 leading-6 mb-4">
-            {localDiscussion.content}
-          </Text>
-
-          <View className="flex-row items-center justify-between border-t border-gray-100 pt-3">
-            <TouchableOpacity
-              className="flex-row items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100"
-              onPress={handleVoteLocalDiscussion}
-            >
-              <ThumbsUp
-                size={16}
-                color={
-                  localDiscussion.upvotedBy?.includes(user?._id)
-                    ? "#3b82f6"
-                    : "#6b7280"
-                }
-              />
-              <Text className="text-sm font-semibold text-gray-600">
-                {localDiscussion.upvoteCount || 0}
-              </Text>
-            </TouchableOpacity>
-            <View className="flex-row items-center gap-1">
-              <MessageCircle size={16} color="#6b7280" />
-              <Text className="text-gray-500 text-sm">
-                {localDiscussion.answerCount} câu trả lời
-              </Text>
-            </View>
-          </View>
-        </View>
 
         <FlatList
           ref={listRef}
@@ -311,7 +254,6 @@ const DiscussionModalMobile = ({
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item._id}
           keyboardShouldPersistTaps="handled"
-          // ---------- THÊM DÒNG NÀY ----------
           onScrollToIndexFailed={(info) => {
             const wait = new Promise((resolve) => setTimeout(resolve, 500));
             wait.then(() => {
@@ -321,7 +263,66 @@ const DiscussionModalMobile = ({
               });
             });
           }}
-          // -----------------------------------
+          ListHeaderComponent={
+            <View className="p-4 bg-white mb-2 shadow-sm border-b border-gray-100">
+              <View className="flex-row justify-between mb-3">
+                <View className="flex-row gap-2 flex-1 items-center">
+                  <Image
+                    source={
+                      localDiscussion.author?.avatar?.url
+                        ? { uri: localDiscussion.author.avatar.url }
+                        : localDiscussion.author?.avatar
+                          ? { uri: localDiscussion.author.avatar }
+                          : require("../../../assets/images/default-avatar.jpg")
+                    }
+                    style={{ width: 32, height: 32, borderRadius: 16 }}
+                  />
+                  <Text className="text-sm font-semibold text-gray-600">
+                    {localDiscussion.author?.name}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => onReport(localDiscussion._id, "discussion")}
+                  className="p-2 -mr-2"
+                >
+                  <MoreVertical size={20} color="#9ca3af" />
+                </TouchableOpacity>
+              </View>
+
+              <Text className="font-bold text-lg text-gray-900 mb-2">
+                {localDiscussion.title}
+              </Text>
+              <Text className="text-gray-700 leading-6 mb-4">
+                {localDiscussion.content}
+              </Text>
+
+              <View className="flex-row items-center justify-between border-t border-gray-100 pt-3">
+                <TouchableOpacity
+                  className="flex-row items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100"
+                  onPress={handleVoteLocalDiscussion}
+                >
+                  <ThumbsUp
+                    size={16}
+                    color={
+                      localDiscussion.upvotedBy?.includes(user?._id)
+                        ? "#3b82f6"
+                        : "#6b7280"
+                    }
+                  />
+                  <Text className="text-sm font-semibold text-gray-600">
+                    {localDiscussion.upvoteCount || 0}
+                  </Text>
+                </TouchableOpacity>
+                <View className="flex-row items-center gap-1">
+                  <MessageCircle size={16} color="#6b7280" />
+                  <Text className="text-gray-500 text-sm">
+                    {localDiscussion.answerCount} câu trả lời
+                  </Text>
+                </View>
+              </View>
+            </View>
+          }
 
           renderItem={({ item }) => {
             const isHighlighted = item._id === highlightedReply;
