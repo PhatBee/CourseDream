@@ -14,7 +14,7 @@ import { toastConfig } from './src/utils/toastConfig';
 import "./global.css"
 import { getCart } from './src/features/cart/cartSlice';
 import io from 'socket.io-client';
-import { fetchNotifications } from './src/features/notification/notificationSlice';
+import { fetchNotifications, addRealtimeNotification } from './src/features/notification/notificationSlice';
 
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -124,7 +124,7 @@ const MainNavigator = () => {
 
       socket.on('new_notification', (data) => {
         console.log('Socket event new_notification', data);
-        dispatch(fetchNotifications());
+        dispatch(addRealtimeNotification(data));
       });
     }
     return () => {
