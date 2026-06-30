@@ -92,7 +92,30 @@ export const createPolymorphicReport = async (
     priority,
   });
 
-  // 6. Thông báo cho Admin (tạm gửi cho Admin, có thể log lại tuỳ hệ thống)
+  // 6. Thông báo cho Admin
+  const REASON_MAP = {
+    INAPPROPRIATE_CONTENT: "Nội dung không phù hợp",
+    COPYRIGHT_VIOLATION: "Vi phạm bản quyền",
+    FRAUD: "Lừa đảo / Sai sự thật",
+    HARASSMENT: "Hành vi không phù hợp / Quấy rối",
+    SPAM: "Spam hoặc quảng cáo",
+    OTHER: "Khác",
+  };
+  const PRIORITY_MAP = {
+    low: "Thấp",
+    medium: "Trung bình",
+    high: "Cao",
+  };
+  const TARGET_TYPE_MAP = {
+    course: "Khóa học",
+    discussion: "Thảo luận",
+    reply: "Bình luận",
+  };
+
+  const priorityLabel = PRIORITY_MAP[priority] || priority.toUpperCase();
+  const targetTypeLabel = TARGET_TYPE_MAP[targetType] || targetType.toUpperCase();
+  const reasonLabel = REASON_MAP[reason] || reason;
+
   const admins = await User.find({ role: "admin" }).select("_id");
   await Promise.all(
     admins.map((admin) =>
@@ -100,8 +123,8 @@ export const createPolymorphicReport = async (
         recipient: admin._id,
         sender: reporterId,
         type: "report",
-        title: `Báo cáo mới [Priority: ${priority.toUpperCase()}]`,
-        message: `Loại: ${targetType.toUpperCase()} - Reason: ${reason} \n${summaryContext.substring(0, 50)}`,
+        title: `Báo cáo mới [Mức độ: ${priorityLabel}]`,
+        message: `Loại: ${targetTypeLabel} - Lý do: ${reasonLabel} \n${summaryContext.substring(0, 50)}`,
         metadata: {
           reportId: report._id
         }
