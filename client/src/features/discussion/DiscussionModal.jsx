@@ -363,8 +363,8 @@ const DiscussionModal = ({
                         className="text-xs font-semibold text-gray-500 hover:text-green-600 transition-colors"
                       >
                         {reply.isBestAnswer
-                          ? "Bỏ Best Answer"
-                          : "Mark Best Answer"}
+                          ? "Bỏ bình chọn"
+                          : "Bình chọn"}
                       </button>
                     )}
                   </div>
