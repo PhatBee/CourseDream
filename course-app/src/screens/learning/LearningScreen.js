@@ -93,6 +93,10 @@ const LearningScreen = ({ route, navigation }) => {
   // isReviewOpen: trạng thái mở/đóng QuizReviewSheetMobile
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
+  // ─── States dành riêng cho xử lý Deep Link sang Thảo luận ────────────
+  const [targetDiscussionId, setTargetDiscussionId] = useState(null);
+  const [targetReplyId, setTargetReplyId] = useState(null);
+
   const { course, sections, currentLecture, progress, isLoading, lastWatchedTime } = useSelector(
     (state) => state.learning
   );
@@ -171,6 +175,8 @@ const LearningScreen = ({ route, navigation }) => {
         }
 
         if (routeDiscussionId) {
+          setTargetDiscussionId(routeDiscussionId);
+          setTargetReplyId(routeReplyId);
           setActiveTab('Discussion');
         } else {
           setActiveTab('Lectures');
@@ -358,6 +364,12 @@ const LearningScreen = ({ route, navigation }) => {
             lectureId={currentLecture._id}
             user={user}
             isEnrolled={true}
+            targetDiscussionId={targetDiscussionId}
+            targetReplyId={targetReplyId}
+            onConsumed={() => {
+              setTargetDiscussionId(null);
+              setTargetReplyId(null);
+            }}
           />
         ) : (
           <View style={styles.emptyDiscussion}>
