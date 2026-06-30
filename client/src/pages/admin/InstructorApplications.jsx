@@ -5,6 +5,7 @@ import { fetchInstructorApplications, reviewInstructorApp } from '../../features
 import Pagination from '../../components/common/Pagination';
 import ApplicationDetailModal from '../../components/admin/ApplicationDetailModal';
 import { Eye, Clock } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import Spinner from '../../components/common/Spinner';
 import Avatar from '../../components/common/Avatar';
 
@@ -16,10 +17,23 @@ const InstructorApplications = () => {
     const [selectedApp, setSelectedApp] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     useEffect(() => {
         dispatch(fetchInstructorApplications({ page: currentPage, status: 'pending' }));
     }, [dispatch, currentPage]);
+
+    useEffect(() => {
+        const appId = searchParams.get('appId');
+        if (appId && adminApplications.length > 0) {
+            const app = adminApplications.find(a => a._id === appId);
+            if (app) {
+                openModal(app);
+                searchParams.delete('appId');
+                setSearchParams(searchParams, { replace: true });
+            }
+        }
+    }, [searchParams, adminApplications, setSearchParams]);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);

@@ -2,6 +2,7 @@ import User from '../auth/auth.model.js';
 import InstructorApplication from './instructorApplication.model.js';
 import bcrypt from 'bcryptjs';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../config/cloudinary.js';
+import notificationService from '../notification/notification.service.js';
 
 const validatePasswordStrength = (password) => {
   if (password.length < 8) return false;
@@ -208,6 +209,23 @@ export const requestInstructorRole = async (userId, data) => {
     // Tạo đơn mới
     application = await InstructorApplication.create(appData);
   }
+
+  // Gửi thông báo cho Admin
+  const admins = await User.find({ role: 'admin' }).select('_id');
+  await Promise.all(
+    admins.map((admin) =>
+      notificationService.createNotification({
+        recipient: admin._id,
+        sender: userId,
+        type: 'system',
+        title: `Yêu cầu làm giảng viên mới`,
+        message: `${user.name} vừa gửi đơn đăng ký trở thành giảng viên.`,
+        metadata: {
+          url: `/admin/instructors/applications?appId=${application._id}`
+        }
+      })
+    )
+  );
 
   return { message: 'Hồ sơ đã được gửi thành công. Vui lòng chờ quản trị viên duyệt.' };
 };
