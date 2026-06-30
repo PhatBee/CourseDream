@@ -17,7 +17,9 @@ import { useRoute } from "@react-navigation/native";
 import {
   fetchDiscussions,
   addDiscussion,
+  deleteDiscussion,
 } from "../../features/discussion/discussionSlice";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
 import Toast from "react-native-toast-message";
 import ReportModalMobile from "../common/ReportModalMobile";
 import DiscussionModalMobile from "./DiscussionModalMobile";
@@ -27,6 +29,7 @@ import {
   MoreVertical,
   CheckCircle2,
   X,
+  Trash2,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -50,6 +53,11 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
   const [reportTargetId, setReportTargetId] = useState("");
   const [reportType, setReportType] = useState("discussion");
   const [selectedDiscussion, setSelectedDiscussion] = useState(null);
+
+  // States dành cho Delete Confirm Modal
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [discussionToDelete, setDiscussionToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const flatListRef = useRef(null);
   const [highlightedDiscussionId, setHighlightedDiscussionId] = useState(null);
@@ -130,6 +138,27 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
     setReportTargetId(id);
     setReportType(type);
     setReportVisible(true);
+  };
+
+  const handleOpenDeleteModal = (discussionId) => {
+    setDiscussionToDelete(discussionId);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!discussionToDelete) return;
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteDiscussion(discussionToDelete)).unwrap();
+      Toast.show({ type: "success", text1: "Đã xóa bài thảo luận." });
+      dispatch(fetchDiscussions({ courseId, lectureId, page: 1, limit: 10 }));
+    } catch {
+      Toast.show({ type: "error", text1: "Không thể xóa thảo luận." });
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalVisible(false);
+      setDiscussionToDelete(null);
+    }
   };
 
   const canDiscuss = isEnrolled || (user && user.role === "instructor");
@@ -243,17 +272,30 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
                   </View>
                 </View>
 
-                {user?._id && item.author?._id !== user._id && (
+                {/* Nút hành động: Xóa (chủ sở hữu) hoặc Báo cáo (người khác) */}
+                {user?._id === item.author?._id ? (
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleOpenDeleteModal(item._id);
+                    }}
+                    className="p-2 -mr-2 -mt-2"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Trash2 size={17} color="#EF4444" />
+                  </TouchableOpacity>
+                ) : user?._id && item.author?._id !== user._id ? (
                   <TouchableOpacity
                     onPress={(e) => {
                       e.stopPropagation();
                       openReport(item._id, "discussion");
                     }}
                     className="p-2 -mr-2 -mt-2"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <MoreVertical size={18} color="#9CA3AF" />
                   </TouchableOpacity>
-                )}
+                ) : null}
               </View>
 
               <Text
@@ -402,6 +444,21 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
         type={reportType}
         targetId={reportTargetId}
         isEnrolled={canDiscuss}
+      />
+
+      {/* Modal Xác Nhận Xóa Thảo Luận */}
+      <DeleteConfirmModal
+        visible={deleteModalVisible}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteModalVisible(false);
+            setDiscussionToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Xóa bài thảo luận"
+        message="Bạn có chắc chắn muốn xóa bài thảo luận này? Hành động này không thể hoàn tác."
+        isDeleting={isDeleting}
       />
 
       {/* Modal Chi tiết */}

@@ -33,6 +33,7 @@ const LoginScreen = ({ navigation }) => {
 
     // --- GOOGLE SETUP ---
     const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+        clientId: EXPO_CLIENT_ID,       // Web Client ID – required for Expo Go
         androidClientId: GOOGLE_CLIENT_ID,
         expoClientId: EXPO_CLIENT_ID,
     });

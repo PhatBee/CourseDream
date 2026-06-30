@@ -15,6 +15,7 @@ import {
   FaFlag,
 } from "react-icons/fa";
 import ReportModal from "../../components/common/ReportModal";
+import RemoveModal from "../../components/common/RemoveModal";
 import toast from "react-hot-toast";
 import Pagination from "../../components/common/Pagination";
 import {
@@ -45,6 +46,9 @@ const CourseDiscussion = ({
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDiscussionId, setReportDiscussionId] = useState(null);
   const [selectedDiscussion, setSelectedDiscussion] = useState(null);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [discussionToDelete, setDiscussionToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load Thảo Luận khi Bài giảng (lectureId) thay đổi
   useEffect(() => {
@@ -93,12 +97,20 @@ const CourseDiscussion = ({
     dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
   };
 
-  const handleDeleteDiscussion = async (discussionId) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa bài thảo luận này?")) {
-      await dispatch(deleteDiscussion(discussionId));
-      toast.success("Đã xóa thảo luận.");
-      dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
-    }
+  const handleDeleteDiscussion = (discussionId) => {
+    setDiscussionToDelete(discussionId);
+    setIsRemoveModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!discussionToDelete) return;
+    setIsDeleting(true);
+    await dispatch(deleteDiscussion(discussionToDelete));
+    toast.success("Đã xóa thảo luận.");
+    dispatch(fetchDiscussions({ courseId, lectureId, page, limit: 10 }));
+    setIsDeleting(false);
+    setIsRemoveModalOpen(false);
+    setDiscussionToDelete(null);
   };
 
   const openReportPopup = (discussionId) => {
@@ -366,6 +378,20 @@ const CourseDiscussion = ({
           loading={loading}
         />
       )}
+
+      <RemoveModal
+        isOpen={isRemoveModalOpen}
+        onClose={() => {
+          if (!isDeleting) {
+            setIsRemoveModalOpen(false);
+            setDiscussionToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Xóa bài thảo luận"
+        message="Bạn có chắc chắn muốn xóa bài thảo luận này? Hành động này không thể hoàn tác."
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

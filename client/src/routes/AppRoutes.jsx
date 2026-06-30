@@ -47,19 +47,22 @@ import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
 import StudentDashboard from "../pages/StudentDashboard";
 import ReportsManagement from "../pages/admin/ReportsManagement";
 import PromotionsManagement from "../pages/admin/PromotionsManagement";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { io } from "socket.io-client";
+import { addRealtimeNotification } from "../features/notification/notificationSlice";
 
 export default function AppRoutes() {
   const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     // Nếu chưa đăng nhập thì không mở socket để tiết kiệm hiệu năng
     if (!user?._id) return;
 
     // Gắn userId để backend biết ai đang truy cập, khớp với logic server
-    const socket = io(import.meta.env.VITE_API_URL, {
+    // Socket.io cần kết nối đến root URL (không có /api)
+    const socket = io(import.meta.env.VITE_SOCKET_URL, {
       query: { userId: user._id },
     });
 
@@ -76,8 +79,13 @@ export default function AppRoutes() {
       window.location.href = "/login";
     });
 
+    // Lắng nghe thông báo realtime từ server (ví dụ: admin duyệt/từ chối giảng viên)
+    socket.on("new_notification", (notification) => {
+      dispatch(addRealtimeNotification(notification));
+    });
+
     return () => socket.disconnect();
-  }, [user?._id]);
+  }, [user?._id, dispatch]);
 
   return (
     <BrowserRouter>
