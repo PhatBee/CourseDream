@@ -11,6 +11,7 @@ import InstructorCourseCard from '../../components/instructor/InstructorCourseCa
 import Pagination from '../../components/common/Pagination';
 import Spinner from '../../components/common/Spinner';
 import RemoveModal from '../../components/common/RemoveModal';
+import CourseStudentsModal from '../../components/instructor/CourseStudentsModal';
 import {
   PlusCircle,
   BookOpen,
@@ -94,6 +95,8 @@ const InstructorCourses = () => {
     btnLabel: '',
     btnClass: '',
   });
+  const [isStudentsModalOpen, setIsStudentsModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   useEffect(() => {
     dispatch(
@@ -288,6 +291,10 @@ const InstructorCourses = () => {
                   course={course}
                   onDelete={handleDeleteClick}
                   onActivate={handleActivate}
+                  onShowStudents={(c) => {
+                    setSelectedCourse(c);
+                    setIsStudentsModalOpen(true);
+                  }}
                 />
               ))}
             </div>
@@ -328,6 +335,16 @@ const InstructorCourses = () => {
         confirmLabel={modalConfig.btnLabel} 
         confirmBtnClass={modalConfig.btnClass || 'bg-red-500 hover:bg-red-600 shadow-red-200'}
         isDeleting={isLoading}
+      />
+
+      <CourseStudentsModal
+        isOpen={isStudentsModalOpen}
+        onClose={() => {
+          setIsStudentsModalOpen(false);
+          setSelectedCourse(null);
+        }}
+        courseId={selectedCourse?._id}
+        courseTitle={selectedCourse?.title}
       />
     </div>
   );

@@ -40,7 +40,7 @@ const diffField = (oldVal, newVal) => {
 const diffArrayField = (oldArr = [], newArr = []) => {
   const oldSet = new Set((oldArr || []).map(s => String(s).trim()));
   const newSet = new Set((newArr || []).map(s => String(s).trim()));
-  const added   = [...newSet].filter(s => !oldSet.has(s));
+  const added = [...newSet].filter(s => !oldSet.has(s));
   const removed = [...oldSet].filter(s => !newSet.has(s));
   const unchanged = [...newSet].filter(s => oldSet.has(s));
   return { changed: added.length > 0 || removed.length > 0, added, removed, unchanged };
@@ -76,15 +76,15 @@ const diffLectures = (origLectures = [], revLectures = []) => {
     }
 
     // So sánh các thuộc tính của lecture
-    const titleChanged     = (origL.title || '') !== (l.title || '');
-    const durationChanged  = Number(origL.duration) !== Number(l.duration);
-    const videoUrlChanged  = (origL.videoUrl || '') !== (l.videoUrl || '');
-    const previewChanged   = Boolean(origL.isPreviewFree) !== Boolean(l.isPreviewFree);
+    const titleChanged = (origL.title || '') !== (l.title || '');
+    const durationChanged = Number(origL.duration) !== Number(l.duration);
+    const videoUrlChanged = (origL.videoUrl || '') !== (l.videoUrl || '');
+    const previewChanged = Boolean(origL.isPreviewFree) !== Boolean(l.isPreviewFree);
     const resourcesChanged = JSON.stringify(origL.resources || []) !== JSON.stringify(l.resources || []);
 
     // So sánh quizzes (nếu có)
     const origQuizzes = origL.quizzes || [];
-    const revQuizzes  = l.quizzes || [];
+    const revQuizzes = l.quizzes || [];
     const quizzesChanged =
       origQuizzes.length !== revQuizzes.length ||
       JSON.stringify(origQuizzes.map(q => ({ q: q.question, a: q.correctAnswer }))) !==
@@ -183,13 +183,13 @@ const calcDiffStats = (diffedSections) => {
   let addedLectures = 0, modifiedLectures = 0, deletedLectures = 0;
 
   diffedSections.forEach(s => {
-    if (s._diffStatus === 'added')    addedSections++;
+    if (s._diffStatus === 'added') addedSections++;
     if (s._diffStatus === 'modified') modifiedSections++;
-    if (s._diffStatus === 'deleted')  deletedSections++;
+    if (s._diffStatus === 'deleted') deletedSections++;
     (s.lectures || []).forEach(l => {
-      if (l._diffStatus === 'added')    addedLectures++;
+      if (l._diffStatus === 'added') addedLectures++;
       if (l._diffStatus === 'modified') modifiedLectures++;
-      if (l._diffStatus === 'deleted')  deletedLectures++;
+      if (l._diffStatus === 'deleted') deletedLectures++;
     });
   });
 
@@ -356,8 +356,8 @@ const InfoItem = ({ icon, label, value }) => {
         <Ico size={15} className="text-rose-500" />
       </div>
       <div>
-        <p className="text-xs text-gray-400 font-medium">{label}</p>
-        <p className="text-sm font-semibold text-gray-800 mt-0.5">{value || 'N/A'}</p>
+        <p className="text-xs text-gray-400 font-medium text-justify">{label}</p>
+        <p className="text-sm font-semibold text-gray-800 mt-0.5 text-justify">{value || 'N/A'}</p>
       </div>
     </div>
   );
@@ -381,16 +381,16 @@ const DiffInfoItem = ({ icon, label, oldVal, newVal }) => {
         <Ico size={15} className={changed ? 'text-amber-600' : 'text-rose-500'} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-400 font-medium mb-0.5">{label}</p>
+        <p className="text-xs text-gray-400 font-medium mb-0.5 text-justify">{label}</p>
         {changed ? (
           <div className="space-y-0.5">
             {/* Giá trị cũ: gạch ngang đỏ */}
-            <p className="text-xs text-red-400 line-through font-medium">{oldVal || 'N/A'}</p>
+            <p className="text-xs text-red-400 line-through font-medium text-justify">{oldVal || 'N/A'}</p>
             {/* Giá trị mới: xanh lá đậm */}
-            <p className="text-sm text-emerald-700 font-bold">{newVal || 'N/A'}</p>
+            <p className="text-sm text-emerald-700 font-bold text-justify">{newVal || 'N/A'}</p>
           </div>
         ) : (
-          <p className="text-sm font-semibold text-gray-800">{newVal || 'N/A'}</p>
+          <p className="text-sm font-semibold text-gray-800 text-justify">{newVal || 'N/A'}</p>
         )}
       </div>
       {/* Badge nhỏ chỉ thị thay đổi */}
@@ -420,13 +420,13 @@ const DiffTextBlock = ({ label, oldText, newText }) => {
       {oldText && (
         <div className="p-3 bg-red-50/50 border-b border-red-100">
           <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide mb-1">Phiên bản cũ</p>
-          <p className="text-xs text-red-500 line-through leading-relaxed">{oldText}</p>
+          <p className="text-xs text-red-500 line-through leading-relaxed text-justify">{oldText}</p>
         </div>
       )}
       {newText && (
         <div className="p-3 bg-emerald-50/50">
           <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide mb-1">Phiên bản mới</p>
-          <p className="text-xs text-emerald-800 font-medium leading-relaxed">{newText}</p>
+          <p className="text-xs text-emerald-800 font-medium leading-relaxed text-justify">{newText}</p>
         </div>
       )}
     </div>
@@ -495,7 +495,7 @@ const DiffListBlock = ({ label, icon: ListIcon, oldArr = [], newArr = [] }) => {
 const DiffCategoryBlock = ({ oldCats = [], newCats = [] }) => {
   const oldNames = new Set((oldCats || []).map(c => (c.name || '').trim()));
   const newNames = new Set((newCats || []).map(c => (c.name || '').trim()));
-  const added   = [...newCats].filter(c => !oldNames.has((c.name || '').trim()));
+  const added = [...newCats].filter(c => !oldNames.has((c.name || '').trim()));
   const removed = [...oldCats].filter(c => !newNames.has((c.name || '').trim()));
   const unchanged = [...newCats].filter(c => oldNames.has((c.name || '').trim()));
   const changed = added.length > 0 || removed.length > 0;
@@ -553,100 +553,100 @@ const DiffBanner = ({ stats, fieldChanges }) => {
     stats.addedLectures + stats.modifiedLectures + stats.deletedLectures +
     fieldChanges > 0;
 
-  return (
-    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 mb-6">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-          <GitCompare size={16} className="text-amber-600" />
-        </div>
-        <div>
-          <h3 className="text-sm font-bold text-amber-800">Chế độ xem thay đổi (Diff Mode)</h3>
-          <p className="text-xs text-amber-600">Giảng viên đã cập nhật khóa học đang phát hành</p>
-        </div>
-        {hasChanges ? (
-          <span className="ml-auto px-2 py-1 bg-amber-200 text-amber-800 text-xs font-bold rounded-full">
-            Có thay đổi
-          </span>
-        ) : (
-          <span className="ml-auto px-2 py-1 bg-gray-100 text-gray-500 text-xs font-bold rounded-full">
-            Không thay đổi
-          </span>
-        )}
-      </div>
+  // return (
+  //   <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 mb-6">
+  //     {/* Header */}
+  //     <div className="flex items-center gap-2 mb-3">
+  //       <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+  //         <GitCompare size={16} className="text-amber-600" />
+  //       </div>
+  //       <div>
+  //         <h3 className="text-sm font-bold text-amber-800">Chế độ xem thay đổi (Diff Mode)</h3>
+  //         <p className="text-xs text-amber-600">Giảng viên đã cập nhật khóa học đang phát hành</p>
+  //       </div>
+  //       {hasChanges ? (
+  //         <span className="ml-auto px-2 py-1 bg-amber-200 text-amber-800 text-xs font-bold rounded-full">
+  //           Có thay đổi
+  //         </span>
+  //       ) : (
+  //         <span className="ml-auto px-2 py-1 bg-gray-100 text-gray-500 text-xs font-bold rounded-full">
+  //           Không thay đổi
+  //         </span>
+  //       )}
+  //     </div>
 
-      {/* Thống kê nhanh */}
-      <div className="grid grid-cols-3 gap-2">
-        {/* ADDED */}
-        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
-          <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Sparkles size={12} className="text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wide">Thêm mới</p>
-            <p className="text-sm font-bold text-emerald-700">
-              {stats.addedSections > 0 && <span>{stats.addedSections} section</span>}
-              {stats.addedSections > 0 && stats.addedLectures > 0 && ', '}
-              {stats.addedLectures > 0 && <span>{stats.addedLectures} bài</span>}
-              {stats.addedSections === 0 && stats.addedLectures === 0 && '—'}
-            </p>
-          </div>
-        </div>
+  //     {/* Thống kê nhanh */}
+  //     <div className="grid grid-cols-3 gap-2">
+  //       {/* ADDED */}
+  //       <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
+  //         <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+  //           <Sparkles size={12} className="text-emerald-600" />
+  //         </div>
+  //         <div>
+  //           <p className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wide">Thêm mới</p>
+  //           <p className="text-sm font-bold text-emerald-700">
+  //             {stats.addedSections > 0 && <span>{stats.addedSections} section</span>}
+  //             {stats.addedSections > 0 && stats.addedLectures > 0 && ', '}
+  //             {stats.addedLectures > 0 && <span>{stats.addedLectures} bài</span>}
+  //             {stats.addedSections === 0 && stats.addedLectures === 0 && '—'}
+  //           </p>
+  //         </div>
+  //       </div>
 
-        {/* MODIFIED */}
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-2.5">
-          <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Edit3 size={12} className="text-amber-600" />
-          </div>
-          <div>
-            <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wide">Đã sửa</p>
-            <p className="text-sm font-bold text-amber-700">
-              {stats.modifiedSections > 0 && <span>{stats.modifiedSections} section</span>}
-              {stats.modifiedSections > 0 && stats.modifiedLectures > 0 && ', '}
-              {stats.modifiedLectures > 0 && <span>{stats.modifiedLectures} bài</span>}
-              {stats.modifiedSections === 0 && stats.modifiedLectures === 0 && (fieldChanges > 0 ? `${fieldChanges} trường` : '—')}
-            </p>
-          </div>
-        </div>
+  //       {/* MODIFIED */}
+  //       <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+  //         <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+  //           <Edit3 size={12} className="text-amber-600" />
+  //         </div>
+  //         <div>
+  //           <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wide">Đã sửa</p>
+  //           <p className="text-sm font-bold text-amber-700">
+  //             {stats.modifiedSections > 0 && <span>{stats.modifiedSections} section</span>}
+  //             {stats.modifiedSections > 0 && stats.modifiedLectures > 0 && ', '}
+  //             {stats.modifiedLectures > 0 && <span>{stats.modifiedLectures} bài</span>}
+  //             {stats.modifiedSections === 0 && stats.modifiedLectures === 0 && (fieldChanges > 0 ? `${fieldChanges} trường` : '—')}
+  //           </p>
+  //         </div>
+  //       </div>
 
-        {/* DELETED */}
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-2.5">
-          <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Trash2 size={12} className="text-red-500" />
-          </div>
-          <div>
-            <p className="text-[10px] text-red-500 font-semibold uppercase tracking-wide">Đã xóa</p>
-            <p className="text-sm font-bold text-red-600">
-              {stats.deletedSections > 0 && <span>{stats.deletedSections} section</span>}
-              {stats.deletedSections > 0 && stats.deletedLectures > 0 && ', '}
-              {stats.deletedLectures > 0 && <span>{stats.deletedLectures} bài</span>}
-              {stats.deletedSections === 0 && stats.deletedLectures === 0 && '—'}
-            </p>
-          </div>
-        </div>
-      </div>
+  //       {/* DELETED */}
+  //       <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-2.5">
+  //         <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+  //           <Trash2 size={12} className="text-red-500" />
+  //         </div>
+  //         <div>
+  //           <p className="text-[10px] text-red-500 font-semibold uppercase tracking-wide">Đã xóa</p>
+  //           <p className="text-sm font-bold text-red-600">
+  //             {stats.deletedSections > 0 && <span>{stats.deletedSections} section</span>}
+  //             {stats.deletedSections > 0 && stats.deletedLectures > 0 && ', '}
+  //             {stats.deletedLectures > 0 && <span>{stats.deletedLectures} bài</span>}
+  //             {stats.deletedSections === 0 && stats.deletedLectures === 0 && '—'}
+  //           </p>
+  //         </div>
+  //       </div>
+  //     </div>
 
-      {/* Chú thích màu */}
-      <div className="flex items-center gap-4 mt-3 flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-emerald-400" />
-          <span className="text-[10px] text-gray-500 font-medium">✨ Thêm mới</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-amber-400" />
-          <span className="text-[10px] text-gray-500 font-medium">✏️ Có sửa đổi</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-400" />
-          <span className="text-[10px] text-gray-500 font-medium">🗑️ Đã xóa</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-gray-300" />
-          <span className="text-[10px] text-gray-500 font-medium">Không đổi</span>
-        </div>
-      </div>
-    </div>
-  );
+  //     {/* Chú thích màu */}
+  //     <div className="flex items-center gap-4 mt-3 flex-wrap">
+  //       <div className="flex items-center gap-1.5">
+  //         <div className="w-3 h-3 rounded-full bg-emerald-400" />
+  //         <span className="text-[10px] text-gray-500 font-medium">✨ Thêm mới</span>
+  //       </div>
+  //       <div className="flex items-center gap-1.5">
+  //         <div className="w-3 h-3 rounded-full bg-amber-400" />
+  //         <span className="text-[10px] text-gray-500 font-medium">✏️ Có sửa đổi</span>
+  //       </div>
+  //       <div className="flex items-center gap-1.5">
+  //         <div className="w-3 h-3 rounded-full bg-red-400" />
+  //         <span className="text-[10px] text-gray-500 font-medium">🗑️ Đã xóa</span>
+  //       </div>
+  //       <div className="flex items-center gap-1.5">
+  //         <div className="w-3 h-3 rounded-full bg-gray-300" />
+  //         <span className="text-[10px] text-gray-500 font-medium">Không đổi</span>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 };
 
 /**
@@ -654,10 +654,10 @@ const DiffBanner = ({ stats, fieldChanges }) => {
  */
 const DiffStatusBadge = ({ status }) => {
   const configs = {
-    added:     { label: '✨ Thêm mới',   className: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
-    modified:  { label: '✏️ Có thay đổi', className: 'bg-amber-100 text-amber-700 border-amber-300' },
-    deleted:   { label: '🗑️ Đã xóa',     className: 'bg-red-100 text-red-600 border-red-300' },
-    unchanged: { label: null,             className: '' }
+    added: { label: '✨ Thêm mới', className: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
+    modified: { label: '✏️ Có thay đổi', className: 'bg-amber-100 text-amber-700 border-amber-300' },
+    deleted: { label: '🗑️ Đã xóa', className: 'bg-red-100 text-red-600 border-red-300' },
+    unchanged: { label: null, className: '' }
   };
   const config = configs[status] || configs.unchanged;
   if (!config.label) return null;
@@ -703,13 +703,13 @@ const AdminPendingCourseDetail = () => {
   const dispatch = useDispatch();
   const { adminPendingDetail, isLoading, adminActionLoading } = useSelector(state => state.admin);
 
-  const [showApproveModal, setShowApproveModal]   = useState(false);
-  const [showRejectModal, setShowRejectModal]     = useState(false);
-  const [showChangesModal, setShowChangesModal]   = useState(false);
-  const [rejectMessage, setRejectMessage]         = useState('');
-  const [changesMessage, setChangesMessage]       = useState('');
-  const [expandedSections, setExpandedSections]   = useState([0]);
-  const [videoPreview, setVideoPreview]           = useState(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showChangesModal, setShowChangesModal] = useState(false);
+  const [rejectMessage, setRejectMessage] = useState('');
+  const [changesMessage, setChangesMessage] = useState('');
+  const [expandedSections, setExpandedSections] = useState([0]);
+  const [videoPreview, setVideoPreview] = useState(null);
 
   useEffect(() => {
     dispatch(getAdminPendingDetail(revisionId));
@@ -723,7 +723,7 @@ const AdminPendingCourseDetail = () => {
     }
     return diffSections(
       adminPendingDetail.originalCourse.sections || [],
-      adminPendingDetail.revision.sections       || []
+      adminPendingDetail.revision.sections || []
     );
   }, [adminPendingDetail]);
 
@@ -834,8 +834,8 @@ const AdminPendingCourseDetail = () => {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Giảng viên: <span className="font-medium text-gray-600">{revision.instructor?.name}</span> • {revision.instructor?.email}
+              <p className="text-xs text-gray-400 mt-0.5 text-justify">
+                Giảng viên: <span className="font-medium text-gray-600 text-justify">{revision.instructor?.name}</span> • {revision.instructor?.email}
               </p>
             </div>
           </div>
@@ -900,10 +900,9 @@ const AdminPendingCourseDetail = () => {
             )}
 
             {/* Descriptions */}
-            <div className={`bg-white rounded-2xl shadow-sm p-6 border ${
-              isDiffMode && diffField(originalCourse?.shortDescription, revision.shortDescription).changed
-                ? 'border-amber-200' : 'border-gray-100'
-            }`}>
+            <div className={`bg-white rounded-2xl shadow-sm p-6 border ${isDiffMode && diffField(originalCourse?.shortDescription, revision.shortDescription).changed
+              ? 'border-amber-200' : 'border-gray-100'
+              }`}>
               <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
                 <BookOpen size={18} className="text-rose-500" /> Mô tả khóa học
                 {isDiffMode && diffField(originalCourse?.shortDescription, revision.shortDescription).changed && (
@@ -956,9 +955,8 @@ const AdminPendingCourseDetail = () => {
             {(revision.learnOutcomes?.length > 0 || (isDiffMode && originalCourse?.learnOutcomes?.length > 0)) && (() => {
               const learnDiff = isDiffMode ? diffArrayField(originalCourse?.learnOutcomes, revision.learnOutcomes) : null;
               return (
-                <div className={`bg-white rounded-2xl shadow-sm p-6 border ${
-                  learnDiff?.changed ? 'border-amber-200' : 'border-gray-100'
-                }`}>
+                <div className={`bg-white rounded-2xl shadow-sm p-6 border ${learnDiff?.changed ? 'border-amber-200' : 'border-gray-100'
+                  }`}>
                   <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <Award size={18} className="text-rose-500" /> Học viên sẽ học được
                     {learnDiff?.changed && (
@@ -1012,9 +1010,8 @@ const AdminPendingCourseDetail = () => {
             {(revision.requirements?.length > 0 || (isDiffMode && originalCourse?.requirements?.length > 0)) && (() => {
               const reqDiff = isDiffMode ? diffArrayField(originalCourse?.requirements, revision.requirements) : null;
               return (
-                <div className={`bg-white rounded-2xl shadow-sm p-6 border ${
-                  reqDiff?.changed ? 'border-amber-200' : 'border-gray-100'
-                }`}>
+                <div className={`bg-white rounded-2xl shadow-sm p-6 border ${reqDiff?.changed ? 'border-amber-200' : 'border-gray-100'
+                  }`}>
                   <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <List size={18} className="text-rose-500" /> Yêu cầu trước khi học
                     {reqDiff?.changed && (
@@ -1084,21 +1081,21 @@ const AdminPendingCourseDetail = () => {
                     // ── Section styling theo _diffStatus ────────────────────────
                     const sStatus = section._diffStatus || 'unchanged';
                     const sectionBorderClass = {
-                      added:     'border-emerald-300 bg-emerald-50/60',
-                      modified:  'border-amber-200 bg-amber-50/40',
-                      deleted:   'border-red-200 bg-red-50/30 opacity-75',
+                      added: 'border-emerald-300 bg-emerald-50/60',
+                      modified: 'border-amber-200 bg-amber-50/40',
+                      deleted: 'border-red-200 bg-red-50/30 opacity-75',
                       unchanged: 'border-gray-100'
                     }[sStatus];
                     const sectionHeaderClass = {
-                      added:     'bg-emerald-50 hover:bg-emerald-100/70',
-                      modified:  'bg-amber-50/60 hover:bg-amber-100/60',
-                      deleted:   'bg-red-50/40 hover:bg-red-50/60',
+                      added: 'bg-emerald-50 hover:bg-emerald-100/70',
+                      modified: 'bg-amber-50/60 hover:bg-amber-100/60',
+                      deleted: 'bg-red-50/40 hover:bg-red-50/60',
                       unchanged: 'bg-gray-50 hover:bg-gray-100'
                     }[sStatus];
                     const sectionNumberClass = {
-                      added:     'bg-emerald-100 text-emerald-700',
-                      modified:  'bg-amber-100 text-amber-700',
-                      deleted:   'bg-red-100 text-red-500',
+                      added: 'bg-emerald-100 text-emerald-700',
+                      modified: 'bg-amber-100 text-amber-700',
+                      deleted: 'bg-red-100 text-red-500',
                       unchanged: 'bg-rose-100 text-rose-600'
                     }[sStatus];
 
@@ -1139,21 +1136,21 @@ const AdminPendingCourseDetail = () => {
                               // ── Lecture styling theo _diffStatus ────────────────
                               const lStatus = lecture._diffStatus || 'unchanged';
                               const lectureBg = {
-                                added:     'bg-emerald-50/50 hover:bg-emerald-50',
-                                modified:  'bg-amber-50/40 hover:bg-amber-50/60',
-                                deleted:   'bg-red-50/30 hover:bg-red-50/50',
+                                added: 'bg-emerald-50/50 hover:bg-emerald-50',
+                                modified: 'bg-amber-50/40 hover:bg-amber-50/60',
+                                deleted: 'bg-red-50/30 hover:bg-red-50/50',
                                 unchanged: 'hover:bg-gray-50'
                               }[lStatus];
                               const lectureIconBg = {
-                                added:     'bg-emerald-100',
-                                modified:  'bg-amber-100',
-                                deleted:   'bg-red-100',
+                                added: 'bg-emerald-100',
+                                modified: 'bg-amber-100',
+                                deleted: 'bg-red-100',
                                 unchanged: 'bg-gray-100'
                               }[lStatus];
                               const lectureIconColor = {
-                                added:     'text-emerald-500',
-                                modified:  'text-amber-500',
-                                deleted:   'text-red-400',
+                                added: 'text-emerald-500',
+                                modified: 'text-amber-500',
+                                deleted: 'text-red-400',
                                 unchanged: 'text-gray-400'
                               }[lStatus];
 
@@ -1167,8 +1164,8 @@ const AdminPendingCourseDetail = () => {
                                         {lStatus === 'deleted'
                                           ? <Trash2 size={10} className={lectureIconColor} />
                                           : lStatus === 'added'
-                                          ? <Sparkles size={10} className={lectureIconColor} />
-                                          : <Play size={11} className={lectureIconColor} />
+                                            ? <Sparkles size={10} className={lectureIconColor} />
+                                            : <Play size={11} className={lectureIconColor} />
                                         }
                                       </div>
 
@@ -1313,12 +1310,11 @@ const AdminPendingCourseDetail = () => {
           <div className="space-y-5">
 
             {/* Course Info Card — Full Diff */}
-            <div className={`bg-white rounded-2xl shadow-sm p-5 border ${
-              isDiffMode && metaFieldChanges > 0 ? 'border-amber-200' : 'border-gray-100'
-            }`}>
+            <div className={`bg-white rounded-2xl shadow-sm p-5 border ${isDiffMode && metaFieldChanges > 0 ? 'border-amber-200' : 'border-gray-100'
+              }`}>
               <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide flex items-center gap-2">
                 Thông tin khóa học
-                {isDiffMode && metaFieldChanges > 0 && (
+                {/* {isDiffMode && metaFieldChanges > 0 && (
                   <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
                     {metaFieldChanges} trường đã đổi
                   </span>
@@ -1327,7 +1323,7 @@ const AdminPendingCourseDetail = () => {
                   <span className="ml-auto text-[10px] text-gray-400 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">
                     Diff
                   </span>
-                )}
+                )} */}
               </h3>
               <div className="space-y-3">
                 {isDiffMode ? (
@@ -1372,11 +1368,11 @@ const AdminPendingCourseDetail = () => {
                 ) : (
                   // ── Standard info items (type === 'new') ──────────────────────
                   <>
-                    <InfoItem icon={DollarSign} label="Giá gốc"        value={formatVND(revision.price)} />
+                    <InfoItem icon={DollarSign} label="Giá gốc" value={formatVND(revision.price)} />
                     <InfoItem icon={DollarSign} label="Giá khuyến mãi" value={formatVND(revision.priceDiscount)} />
-                    <InfoItem icon={Award}      label="Cấp độ"          value={revision.level} />
-                    <InfoItem icon={Globe}      label="Ngôn ngữ"        value={revision.language} />
-                    <InfoItem icon={Tag}        label="Slug"            value={revision.slug} />
+                    <InfoItem icon={Award} label="Cấp độ" value={revision.level} />
+                    <InfoItem icon={Globe} label="Ngôn ngữ" value={revision.language} />
+                    <InfoItem icon={Tag} label="Slug" value={revision.slug} />
                   </>
                 )}
               </div>
@@ -1384,7 +1380,7 @@ const AdminPendingCourseDetail = () => {
 
             {/* Instructor Card */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">Giảng viên</h3>
+              <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide ">Giảng viên</h3>
               <div className="flex items-center gap-3">
                 <Avatar
                   src={revision.instructor?.avatar}
@@ -1392,7 +1388,7 @@ const AdminPendingCourseDetail = () => {
                   className="w-12 h-12 rounded-xl object-cover border border-gray-100"
                 />
                 <div>
-                  <p className="font-bold text-gray-900 text-sm">{revision.instructor?.name}</p>
+                  <p className="font-bold text-gray-900 text-sm text-justify">{revision.instructor?.name}</p>
                   <p className="text-xs text-gray-400">{revision.instructor?.email}</p>
                 </div>
               </div>
@@ -1407,9 +1403,8 @@ const AdminPendingCourseDetail = () => {
                 [...newCatNames].some(n => !oldCatNames.has(n))
               );
               return (
-                <div className={`bg-white rounded-2xl shadow-sm p-5 border ${
-                  catChanged ? 'border-amber-200' : 'border-gray-100'
-                }`}>
+                <div className={`bg-white rounded-2xl shadow-sm p-5 border ${catChanged ? 'border-amber-200' : 'border-gray-100'
+                  }`}>
                   <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide flex items-center gap-2">
                     Danh mục
                     {catChanged && (

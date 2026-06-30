@@ -26,7 +26,7 @@ const formatPrice = (amount) => {
 };
 
 // ======================== MAIN COMPONENT ========================
-const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
+const InstructorCourseCard = ({ course, onDelete, onActivate, onShowStudents }) => {
     const {
         _id, title, thumbnail, price, priceDiscount,
         totalLectures, totalHours, status,
@@ -174,9 +174,18 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
 
                 {/* Students badge */}
                 {studentsCount > 0 && (
-                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onShowStudents && onShowStudents(course);
+                        }}
+                        className="absolute bottom-3 right-3 bg-black/60 hover:bg-rose-600 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 cursor-pointer transition-colors duration-200"
+                        title="Xem danh sách học viên"
+                    >
                         👥 {studentsCount}
-                    </div>
+                    </button>
                 )}
             </div>
 
@@ -193,7 +202,7 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-sm font-bold text-gray-800 line-clamp-2 mb-3 flex-grow leading-snug" title={title}>
+                <h3 className="text-sm font-bold text-gray-800 line-clamp-2 mb-3 flex-grow leading-snug text-justify" title={title}>
                     {title || 'Khóa học chưa đặt tên'}
                 </h3>
 
@@ -201,7 +210,20 @@ const InstructorCourseCard = ({ course, onDelete, onActivate }) => {
                 <div className="flex items-center gap-3 text-xs text-gray-400 border-t border-gray-50 pt-3 mb-3">
                     <span className="flex items-center gap-1"><BookOpen size={12} /> {totalLectures || 0} bài</span>
                     <span className="flex items-center gap-1"><Clock size={12} /> {totalHours ? `${totalHours}h` : '--'}</span>
-                    {studentsCount > 0 && <span className="flex items-center gap-1">👥 {studentsCount}</span>}
+                    {studentsCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onShowStudents && onShowStudents(course);
+                            }}
+                            className="flex items-center gap-1 text-gray-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Xem danh sách học viên"
+                        >
+                            👥 {studentsCount}
+                        </button>
+                    )}
                 </div>
 
                 {/* Feedback Panel (Changes Requested / Rejected) */}
