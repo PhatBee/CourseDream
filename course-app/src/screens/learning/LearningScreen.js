@@ -8,6 +8,7 @@ import {
   StatusBar,
   StyleSheet,
   Linking,
+  useWindowDimensions,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -89,6 +90,10 @@ const LearningScreen = ({ route, navigation }) => {
     (state) => state.learning
   );
 
+  // ── Phát hiện landscape để điều chỉnh layout ────────────────────────────────────
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isLandscape = windowWidth > windowHeight;
+
   // ─── Parse resources của bài học hiện tại ─────────────────────────────────
   const parsedResources = useMemo(() => {
     if (!currentLecture?.resources || !Array.isArray(currentLecture.resources)) return [];
@@ -162,7 +167,7 @@ const LearningScreen = ({ route, navigation }) => {
     }));
   };
 
-  // ─── Loading ─────────────────────────────────────────────────────────────
+  // ─── Loading ─────────────────────────────────────────────────────
   if (isLoading || !course) {
     return (
       <View style={styles.loadingContainer}>
@@ -177,196 +182,239 @@ const LearningScreen = ({ route, navigation }) => {
   const totalLectures = allLectures.length;
   const progressPct = totalLectures > 0 ? Math.round((completedCount / totalLectures) * 100) : 0;
 
+  // ─── Shared sub-layouts (dùng lại cho cả portrait và landscape) ──────────
+  const renderInfoBar = () => currentLecture && (
+    <View style={styles.infoBar}>
+      <View style={styles.infoBarLeft}>
+        <Text style={styles.lectureTitle} numberOfLines={1}>
+          {currentLecture.title}
+        </Text>
+        <Text style={styles.progressLabel}>
+          {completedCount}/{totalLectures} bài · {progressPct}% hoàn thành
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        onPress={() => handleToggleComplete(currentLecture._id)}
+        style={[styles.completeBtn, isCompleted && styles.completeBtnDone]}
+        activeOpacity={0.8}
+      >
+        <CheckCircle size={15} color={isCompleted ? '#10b981' : '#fff'} />
+        <Text style={[styles.completeBtnText, isCompleted && styles.completeBtnTextDone]}>
+          {isCompleted ? 'Đã xong' : 'Hoàn thành'}
+        </Text>
+      </TouchableOpacity>
+
+      {(currentLecture?.quizzes?.filter(q => q.isActive !== false).length > 0) && (
+        <TouchableOpacity
+          onPress={() => setIsReviewOpen(true)}
+          style={styles.quizReviewBtn}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.quizReviewBtnText}>
+            📋 {currentLecture.quizzes.filter(q => q.isActive !== false).length}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const renderNavRow = () => currentLecture && (
+    <View style={styles.navRow}>
+      <TouchableOpacity
+        style={[styles.navBtn, !hasPrev && styles.navBtnDisabled]}
+        onPress={handlePrev}
+        disabled={!hasPrev}
+        activeOpacity={0.75}
+      >
+        <ChevronLeft size={16} color={hasPrev ? '#e11d48' : '#d1d5db'} />
+        <Text style={[styles.navBtnText, !hasPrev && styles.navBtnTextDisabled]}>Bài trước</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.navBtn, !hasNext && styles.navBtnDisabled]}
+        onPress={handleNext}
+        disabled={!hasNext}
+        activeOpacity={0.75}
+      >
+        <Text style={[styles.navBtnText, !hasNext && styles.navBtnTextDisabled]}>Bài tiếp</Text>
+        <ChevronRight size={16} color={hasNext ? '#e11d48' : '#d1d5db'} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderTabContent = () => (
+    <View style={styles.contentArea}>
+      <LearningTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        resourceCount={parsedResources.length}
+      />
+
+      {/* ── Tab: Bài giảng ── */}
+      {activeTab === 'Lectures' && (
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
+          <CurriculumList
+            sections={sections}
+            currentLecture={currentLecture}
+            completedLectures={progress?.completedLectures || []}
+            onLecturePress={handleLecturePress}
+            onToggleComplete={handleToggleComplete}
+          />
+        </ScrollView>
+      )}
+
+      {/* ── Tab: Tổng quan ── */}
+      {activeTab === 'Overview' && (
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
+          <View style={styles.overviewContainer}>
+            <Text style={styles.overviewTitle}>{course.title}</Text>
+            <Text style={styles.overviewInstructor}>
+              {course.instructor?.name || 'Instructor'}
+            </Text>
+
+            <View style={styles.progressBarWrapper}>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
+              </View>
+              <Text style={styles.progressBarLabel}>{progressPct}%</Text>
+            </View>
+
+            <Text style={styles.overviewSectionTitle}>Mô tả khóa học</Text>
+            <Text style={styles.overviewDesc}>
+              {course.description || 'Không có mô tả.'}
+            </Text>
+          </View>
+        </ScrollView>
+      )}
+
+      {/* ── Tab: Tài liệu ── */}
+      {activeTab === 'Resources' && (
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
+          <View style={styles.resourcesContainer}>
+            <View style={styles.resourcesHeader}>
+              <FileText size={16} color="#e11d48" />
+              <Text style={styles.resourcesTitle}>
+                Tài liệu đính kèm ({parsedResources.length})
+              </Text>
+            </View>
+
+            {parsedResources.length > 0 ? (
+              parsedResources.map((res, index) => (
+                <ResourceItem key={index} resource={res} />
+              ))
+            ) : (
+              <View style={styles.emptyResources}>
+                <FileText size={32} color="#e5e7eb" />
+                <Text style={styles.emptyResourcesText}>Không có tài liệu đính kèm</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      )}
+
+      {/* ── Tab: Thảo luận ── */}
+      {activeTab === 'Discussion' && (
+        currentLecture ? (
+          <DiscussionMobile
+            courseId={course._id}
+            lectureId={currentLecture._id}
+            user={user}
+            isEnrolled={true}
+          />
+        ) : (
+          <View style={styles.emptyDiscussion}>
+            <Text style={styles.emptyDiscussionText}>
+              Chọn một bài giảng để xem phần Hỏi Đáp tương ứng.
+            </Text>
+          </View>
+        )
+      )}
+    </View>
+  );
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor="#0a0a0a" />
 
-      {/* ── 1. VIDEO PLAYER AREA ── */}
-      <View style={styles.videoWrapper}>
-        {/* Back button overlay */}
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          activeOpacity={0.8}
-        >
-          <ChevronLeft size={22} color="#fff" />
-        </TouchableOpacity>
+      {isLandscape ? (
+        /* ───── LANDSCAPE: 2 cột ──────────────────────────────────────── */
+        <View style={styles.landscapeWrapper}>
 
-        <VideoPlayer
-          ref={videoPlayerRef}
-          currentLecture={currentLecture}
-          courseId={course._id}
-          courseSlug={slug}
-          thumbnail={course.thumbnail}
-          lastWatchedTime={lastWatchedTime}
-          onProgress={handleVideoProgress}
-          onComplete={() => {
-            if (!isCompleted && currentLecture?._id) {
-              handleToggleComplete(currentLecture._id);
-            }
-          }}
-        />
-      </View>
-
-      {/* ── 2. LECTURE INFO BAR ── */}
-      {currentLecture && (
-        <View style={styles.infoBar}>
-          <View style={styles.infoBarLeft}>
-            <Text style={styles.lectureTitle} numberOfLines={1}>
-              {currentLecture.title}
-            </Text>
-            <Text style={styles.progressLabel}>
-              {completedCount}/{totalLectures} bài · {progressPct}% hoàn thành
-            </Text>
-          </View>
-
-          {/* Mark Complete */}
-          <TouchableOpacity
-            onPress={() => handleToggleComplete(currentLecture._id)}
-            style={[styles.completeBtn, isCompleted && styles.completeBtnDone]}
-            activeOpacity={0.8}
-          >
-            <CheckCircle size={15} color={isCompleted ? '#10b981' : '#fff'} />
-            <Text style={[styles.completeBtnText, isCompleted && styles.completeBtnTextDone]}>
-              {isCompleted ? 'Đã xong' : 'Hoàn thành'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* ✅ Nút Xem lại câu hỏi — chỉ hiện khi bài học có quiz */}
-          {(currentLecture?.quizzes?.filter(q => q.isActive !== false).length > 0) && (
+          {/* Cột trái: Video (55% width, full height) */}
+          <View style={[styles.videoWrapper, { width: windowWidth * 0.55, height: windowHeight }]}>
             <TouchableOpacity
-              onPress={() => setIsReviewOpen(true)}
-              style={styles.quizReviewBtn}
+              onPress={() => navigation.goBack()}
+              style={styles.backBtn}
               activeOpacity={0.8}
             >
-              <Text style={styles.quizReviewBtnText}>
-                📋 {currentLecture.quizzes.filter(q => q.isActive !== false).length}
-              </Text>
+              <ChevronLeft size={22} color="#fff" />
             </TouchableOpacity>
-          )}
-        </View>
-      )}
 
-      {/* ── 3. PREV / NEXT NAV ── */}
-      {currentLecture && (
-        <View style={styles.navRow}>
-          <TouchableOpacity
-            style={[styles.navBtn, !hasPrev && styles.navBtnDisabled]}
-            onPress={handlePrev}
-            disabled={!hasPrev}
-            activeOpacity={0.75}
-          >
-            <ChevronLeft size={16} color={hasPrev ? '#e11d48' : '#d1d5db'} />
-            <Text style={[styles.navBtnText, !hasPrev && styles.navBtnTextDisabled]}>
-              Bài trước
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.navBtn, !hasNext && styles.navBtnDisabled]}
-            onPress={handleNext}
-            disabled={!hasNext}
-            activeOpacity={0.75}
-          >
-            <Text style={[styles.navBtnText, !hasNext && styles.navBtnTextDisabled]}>
-              Bài tiếp
-            </Text>
-            <ChevronRight size={16} color={hasNext ? '#e11d48' : '#d1d5db'} />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* ── 4. TABS & CONTENT ── */}
-      <View style={styles.contentArea}>
-        <LearningTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          resourceCount={parsedResources.length}
-        />
-
-        {/* ── Tab: Bài giảng ── */}
-        {activeTab === 'Lectures' && (
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
-            <CurriculumList
-              sections={sections}
+            <VideoPlayer
+              ref={videoPlayerRef}
               currentLecture={currentLecture}
-              completedLectures={progress?.completedLectures || []}
-              onLecturePress={handleLecturePress}
-              onToggleComplete={handleToggleComplete}
-            />
-          </ScrollView>
-        )}
-
-        {/* ── Tab: Tổng quan ── */}
-        {activeTab === 'Overview' && (
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
-            <View style={styles.overviewContainer}>
-              <Text style={styles.overviewTitle}>{course.title}</Text>
-              <Text style={styles.overviewInstructor}>
-                {course.instructor?.name || 'Instructor'}
-              </Text>
-
-                {/* Progress bar */}
-                <View style={styles.progressBarWrapper}>
-                  <View style={styles.progressBarTrack}>
-                    <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
-                  </View>
-                  <Text style={styles.progressBarLabel}>{progressPct}%</Text>
-                </View>
-
-              <Text style={styles.overviewSectionTitle}>Mô tả khóa học</Text>
-              <Text style={styles.overviewDesc}>
-                {course.description || 'Không có mô tả.'}
-              </Text>
-            </View>
-          </ScrollView>
-        )}
-
-        {/* ── Tab: Tài liệu ── */}
-        {activeTab === 'Resources' && (
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
-            <View style={styles.resourcesContainer}>
-              <View style={styles.resourcesHeader}>
-                <FileText size={16} color="#e11d48" />
-                <Text style={styles.resourcesTitle}>
-                  Tài liệu đính kèm ({parsedResources.length})
-                </Text>
-              </View>
-
-              {parsedResources.length > 0 ? (
-                parsedResources.map((res, index) => (
-                  <ResourceItem key={index} resource={res} />
-                ))
-              ) : (
-                <View style={styles.emptyResources}>
-                  <FileText size={32} color="#e5e7eb" />
-                  <Text style={styles.emptyResourcesText}>Không có tài liệu đính kèm</Text>
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        )}
-
-        {/* ── Tab: Thảo luận ── */}
-        {activeTab === 'Discussion' && (
-          currentLecture ? (
-            <DiscussionMobile
               courseId={course._id}
-              lectureId={currentLecture._id}
-              user={user}
-              isEnrolled={true}
+              courseSlug={slug}
+              thumbnail={course.thumbnail}
+              lastWatchedTime={lastWatchedTime}
+              onProgress={handleVideoProgress}
+              playerHeight={windowHeight}
+              onComplete={() => {
+                if (!isCompleted && currentLecture?._id) {
+                  handleToggleComplete(currentLecture._id);
+                }
+              }}
             />
-          ) : (
-            <View style={styles.emptyDiscussion}>
-              <Text style={styles.emptyDiscussionText}>
-                Chọn một bài giảng để xem phần Hỏi Đáp tương ứng.
-              </Text>
-            </View>
-          )
-        )}
-      </View>
+          </View>
 
-      {/* ✅ QuizReviewSheetMobile — quản lý tại LearningScreen (Component cha) */}
+          {/* Cột phải: Info + Nav + Tabs (flex: 1) */}
+          <View style={styles.landscapeRight}>
+            {renderInfoBar()}
+            {renderNavRow()}
+            {renderTabContent()}
+          </View>
+        </View>
+      ) : (
+        /* ───── PORTRAIT: Layout gốc ─────────────────────────────────── */
+        <>
+          {/* ── 1. VIDEO PLAYER AREA ── */}
+          <View style={styles.videoWrapper}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backBtn}
+              activeOpacity={0.8}
+            >
+              <ChevronLeft size={22} color="#fff" />
+            </TouchableOpacity>
+
+            <VideoPlayer
+              ref={videoPlayerRef}
+              currentLecture={currentLecture}
+              courseId={course._id}
+              courseSlug={slug}
+              thumbnail={course.thumbnail}
+              lastWatchedTime={lastWatchedTime}
+              onProgress={handleVideoProgress}
+              onComplete={() => {
+                if (!isCompleted && currentLecture?._id) {
+                  handleToggleComplete(currentLecture._id);
+                }
+              }}
+            />
+          </View>
+
+          {/* ── 2. LECTURE INFO BAR ── */}
+          {renderInfoBar()}
+
+          {/* ── 3. PREV / NEXT NAV ── */}
+          {renderNavRow()}
+
+          {/* ── 4. TABS & CONTENT ── */}
+          {renderTabContent()}
+        </>
+      )}
+
       {currentLecture && (
         <QuizReviewSheetMobile
           isOpen={isReviewOpen}
@@ -375,17 +423,12 @@ const LearningScreen = ({ route, navigation }) => {
           lectureId={currentLecture._id}
           quizzes={currentLecture?.quizzes || []}
           onRetake={(quizIndex) => {
-            // Tìm timestamp tương ứng với quizIndex
             const quiz = (currentLecture?.quizzes || [])[quizIndex];
             if (!quiz) return;
             const ts = Number(quiz.timestamp);
-            // Điều khiển VideoPlayer qua ref: tua về vị trí quiz
             videoPlayerRef.current?.seekToQuiz(ts);
           }}
-          onRetakeAll={() => {
-            // seekToQuiz sẽ được gọi bởi từng QuizReviewItem’s onRetake
-            // không cần thêm gì ở đây
-          }}
+          onRetakeAll={() => {}}
         />
       )}
     </View>
@@ -608,6 +651,19 @@ const styles = StyleSheet.create({
   emptyResourcesText: {
     fontSize: 14,
     color: '#9ca3af',
+  },
+
+  // ── Landscape layout ──
+  landscapeWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  landscapeRight: {
+    flex: 1,
+    flexDirection: 'column',
+    borderLeftWidth: 1,
+    borderLeftColor: '#f3f4f6',
+    backgroundColor: '#fff',
   },
 });
 

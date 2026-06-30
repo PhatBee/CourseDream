@@ -50,6 +50,7 @@ const VideoPlayer = forwardRef((
   lastWatchedTime = 0,
   onProgress,
   onComplete,
+  playerHeight,     // ── THÊM: chiều cao tuỳ chỉnh (dùng cho landscape)
 }, ref) => {
   const videoViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
@@ -625,7 +626,7 @@ const VideoPlayer = forwardRef((
   // ─── Main Video Player (expo-video) ───────────────────────────────────────────
   const containerStyle = isFullscreen
     ? [styles.fullscreenContainer, { width: windowWidth, height: windowHeight }]
-    : styles.container;
+    : [styles.container, playerHeight ? { height: playerHeight } : null];
 
   const handlePlayPause = () => {
     if (isPlaying) {
