@@ -10,6 +10,14 @@ const enrollmentApi = {
   getMyEnrollments: () => {
     return axiosClient.get(`${path}/me`);
   },
+
+  /**
+   * Lấy danh sách khóa học đã đăng ký kèm tiến độ học tập thực tế từ Progress
+   * Endpoint: GET /api/enrollments/dashboard
+   */
+  getStudentDashboard: () => {
+    return axiosClient.get(`${path}/dashboard`);
+  },
 };
 
 export default enrollmentApi;

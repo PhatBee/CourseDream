@@ -47,6 +47,10 @@ const EditCoursePage = () => {
     const [reviewMessage, setReviewMessage] = useState(null);
     const [courseStatus, setCourseStatus] = useState(null); // changes_requested | rejected | draft | ...
 
+    // ✅ State để lưu dữ liệu khóa học ban đầu, dùng để so sánh với form.courseData
+    const [initialCourseData, setInitialCourseData] = useState(null);
+    const [hasChanges, setHasChanges] = useState(false);
+
     // Modal State
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
     const [editingSectionIndex, setEditingSectionIndex] = useState(null);
@@ -59,6 +63,80 @@ const EditCoursePage = () => {
 
     // Use Custom Hook (giống AddCourse)
     const form = useAddCourseForm();
+
+    // Deep comparison function for course data (including nested arrays and objects)
+    const areCourseDataEqual = useCallback((obj1, obj2) => {
+        if (obj1 === obj2) return true;
+        if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) return false;
+
+        const keys1 = Object.keys(obj1).filter(key => key !== '__typename');
+        const keys2 = Object.keys(obj2).filter(key => key !== '__typename');
+
+        if (keys1.length !== keys2.length) return false;
+
+        for (const key of keys1) {
+            if (!keys2.includes(key)) return false;
+
+            const val1 = obj1[key];
+            const val2 = obj2[key];
+
+            // Special handling for categories array (objects with value and label)
+            if (key === 'categories' && Array.isArray(val1) && Array.isArray(val2)) {
+                if (val1.length !== val2.length) return false;
+                const sortedVal1 = [...val1].sort((a, b) => (a.value || '').localeCompare(b.value || ''));
+                const sortedVal2 = [...val2].sort((a, b) => (a.value || '').localeCompare(b.value || ''));
+
+                for (let i = 0; i < sortedVal1.length; i++) {
+                    if (sortedVal1[i].value !== sortedVal2[i].value) return false;
+                }
+                continue; // Move to next key
+            }
+
+            // Special handling for sections, lectures, resources, quizzes
+            if (key === 'sections' && Array.isArray(val1) && Array.isArray(val2)) {
+                if (val1.length !== val2.length) return false;
+                for (let i = 0; i < val1.length; i++) {
+                    if (!areCourseDataEqual(val1[i], val2[i])) return false;
+                }
+                continue;
+            }
+            if (key === 'lectures' && Array.isArray(val1) && Array.isArray(val2)) {
+                if (val1.length !== val2.length) return false;
+                for (let i = 0; i < val1.length; i++) {
+                    if (!areCourseDataEqual(val1[i], val2[i])) return false;
+                }
+                continue;
+            }
+            if (key === 'resources' && Array.isArray(val1) && Array.isArray(val2)) {
+                if (val1.length !== val2.length) return false;
+                for (let i = 0; i < val1.length; i++) {
+                    if (!areCourseDataEqual(val1[i], val2[i])) return false;
+                }
+                continue;
+            }
+            if (key === 'quizzes' && Array.isArray(val1) && Array.isArray(val2)) {
+                if (val1.length !== val2.length) return false;
+                for (let i = 0; i < val1.length; i++) {
+                    if (!areCourseDataEqual(val1[i], val2[i])) return false;
+                }
+                continue;
+            }
+
+            if (typeof val1 === 'object' && val1 !== null && typeof val2 === 'object' && val2 !== null) {
+                if (!areCourseDataEqual(val1, val2)) return false;
+            } else if (val1 !== val2) {
+                return false;
+            }
+        }
+        return true;
+    }, []);
+
+    // Effect to set initialCourseData and track changes
+    useEffect(() => {
+        if (initialCourseData && form.courseData) {
+            setHasChanges(!areCourseDataEqual(initialCourseData, form.courseData));
+        }
+    }, [initialCourseData, form.courseData, areCourseDataEqual]);
 
     useEffect(() => {
         if (location.state?.showEnterToast) {
@@ -102,7 +180,10 @@ const EditCoursePage = () => {
                 });
 
                 // Đổ dữ liệu vào form
-                form.setFullData({ ...apiData, categories: mappedCategories });
+                const fullCourseData = { ...apiData, categories: mappedCategories };
+                form.setFullData(fullCourseData);
+                // ✅ Lưu dữ liệu ban đầu để so sánh
+                setInitialCourseData(fullCourseData);
 
             } catch (error) {
                 console.error(error);
@@ -240,7 +321,7 @@ const EditCoursePage = () => {
 
             if (createNewCourse.fulfilled.match(resultAction)) {
                 toast.success(
-                    isDraft ? '✅ Đã lưu nháp!' : '🎉 Đã gửi lên chờ Admin duyệt!',
+                    isDraft ? 'Đã lưu nháp!' : 'Đã gửi lên chờ Admin duyệt!',
                     { id: toastId, duration: 3000 }
                 );
                 navigate('/instructor/courses');
@@ -364,13 +445,13 @@ const EditCoursePage = () => {
     // ============================================================
     const statusConfig = {
         changes_requested: {
-            label: '⚠️ Cần chỉnh sửa theo yêu cầu Admin',
+            label: 'Cần chỉnh sửa theo yêu cầu Admin',
             bg: 'bg-orange-50 border-orange-200',
             text: 'text-orange-800',
             badge: 'bg-orange-100 text-orange-700 border-orange-200'
         },
         rejected: {
-            label: '❌ Khóa học bị từ chối',
+            label: 'Khóa học bị từ chối',
             bg: 'bg-red-50 border-red-200',
             text: 'text-red-800',
             badge: 'bg-red-100 text-red-700 border-red-200'
@@ -408,7 +489,7 @@ const EditCoursePage = () => {
                         </button>
                         <button
                             onClick={onSaveDraft}
-                            disabled={isLoading}
+                            disabled={isLoading || !hasChanges}
                             className="px-4 py-2 text-rose-600 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 font-medium flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50"
                         >
                             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -416,8 +497,8 @@ const EditCoursePage = () => {
                         </button>
                         <button
                             onClick={onSubmit}
-                            disabled={isLoading}
-                            className="px-4 py-2 text-white bg-rose-600 border border-rose-600 rounded-xl hover:bg-rose-700 font-medium flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50"
+                            disabled={isLoading || !hasChanges}
+                            className="px-4 py-2 text-white bg-rose-600 border border-rose-600 rounded-xl hover:bg-rose-700 font-medium flex items-center gap-2 transition-colors shadow-sm disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-rose-400 disabled:border-rose-400"
                         >
                             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                             {courseStatus === 'changes_requested' ? 'Gửi lại duyệt' : 'Gửi duyệt'}
@@ -517,8 +598,8 @@ const EditCoursePage = () => {
                         ) : (
                             <button
                                 onClick={onSubmit}
-                                disabled={isLoading}
-                                className="px-8 py-2.5 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 flex items-center gap-2 shadow-sm shadow-rose-200 disabled:opacity-60 transition-colors"
+                                disabled={isLoading || !hasChanges}
+                                className="px-8 py-2.5 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 flex items-center gap-2 shadow-sm shadow-rose-200 transition-colors disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-rose-400"
                             >
                                 {isLoading
                                     ? <><Loader2 size={18} className="animate-spin" /> Đang xử lý...</>

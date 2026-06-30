@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
     Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
 import { setPassword, clearReset, reset } from '../../features/auth/authSlice';
 import { Lock, ArrowRight, Eye, EyeOff } from 'lucide-react-native';
 
@@ -21,17 +22,19 @@ const SetPasswordScreen = ({ navigation }) => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const dispatch = useDispatch();
+    const isFocused = useIsFocused();
+    const isRedirecting = useRef(false); // Flag tránh race condition khi clearReset()
     const { isLoading, isError, isSetPasswordSuccess, message, resetToken } = useSelector(
         (state) => state.auth
     );
 
     // Nếu không có token, không cho ở lại trang này
     useEffect(() => {
-        if (!resetToken) {
+        if (isFocused && !resetToken && !isRedirecting.current) {
             Alert.alert('Lỗi', 'Phiên đặt lại mật khẩu không hợp lệ.');
             navigation.navigate('ForgotPassword');
         }
-    }, [resetToken, navigation]);
+    }, [resetToken, isFocused, navigation]);
 
     // Xử lý kết quả
     useEffect(() => {
@@ -42,6 +45,7 @@ const SetPasswordScreen = ({ navigation }) => {
 
         // Khi setPassword() thành công
         if (isSetPasswordSuccess) {
+            isRedirecting.current = true; // Đánh dấu đang chuyển hướng thành công
             Alert.alert('Thành công', message, [
                 {
                     text: 'OK',

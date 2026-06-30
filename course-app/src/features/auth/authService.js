@@ -23,6 +23,11 @@ const verifyOTP = async (otpData) => {
     return response.data;
 };
 
+const resendOTP = async (email) => {
+    const response = await axiosClient.post("/auth/resend-otp", { email });
+    return response.data;
+};
+
 const googleLogin = async (credential) => {
     const response = await axiosClient.post("/auth/google", { credential });
     if (response.data) {
@@ -71,6 +76,7 @@ const authService = {
     login,
     register,
     verifyOTP,
+    resendOTP,
     googleLogin,
     facebookLogin,
     logout,

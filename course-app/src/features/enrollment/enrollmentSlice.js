@@ -4,6 +4,7 @@ import Toast from 'react-native-toast-message';
 
 const initialState = {
   items: [],
+  dashboardData: [],
   enrolledCourseIds: [],
   isLoading: false,
   isError: false,
@@ -25,6 +26,21 @@ export const fetchMyEnrollments = createAsyncThunk(
   }
 );
 
+// Thunk: Lấy thông tin Dashboard của học viên (kèm tiến độ thật)
+export const fetchStudentDashboard = createAsyncThunk(
+  'enrollment/fetchStudentDashboard',
+  async (_, thunkAPI) => {
+    try {
+      const response = await enrollmentApi.getStudentDashboard();
+      // Backend trả về: { success: true, data: [...] }
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 const enrollmentSlice = createSlice({
   name: 'enrollment',
   initialState,
@@ -32,6 +48,7 @@ const enrollmentSlice = createSlice({
     // Action reset khi logout
     resetEnrollment: (state) => {
       state.items = [];
+      state.dashboardData = [];
       state.enrolledCourseIds = [];
       state.isLoading = false;
       state.isError = false;
@@ -56,6 +73,22 @@ const enrollmentSlice = createSlice({
         }).filter(id => id !== null);
       })
       .addCase(fetchMyEnrollments.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      .addCase(fetchStudentDashboard.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchStudentDashboard.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.dashboardData = action.payload.data;
+        
+        state.enrolledCourseIds = action.payload.data.map(enrollment => {
+          return enrollment.course ? enrollment.course._id : null;
+        }).filter(id => id !== null);
+      })
+      .addCase(fetchStudentDashboard.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
