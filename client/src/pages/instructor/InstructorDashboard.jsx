@@ -50,7 +50,7 @@ const InstructorDashboard = () => {
         />
         <StatCard
           icon={TrendingUp}
-          label="New Enrollments (Today)"
+          label="Ghi danh hôm nay"
           value={stats?.todayEnrollments || 0}
           color="text-emerald-600"
           bgColor="bg-emerald-50"

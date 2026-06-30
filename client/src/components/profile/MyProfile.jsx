@@ -85,7 +85,7 @@ const MyProfile = ({ isInstructorView = false }) => {
 
             {/* Bio Section */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <h6 className="text-sm font-bold text-gray-800 mb-3">Tiểu sử</h6>
+                <h6 className="text-sm font-bold text-gray-800 mb-3">Giới thiệu</h6>
                 <p className="text-gray-600 leading-relaxed text-sm">
                     {user.bio || "No bio information provided yet. Click edit to introduce yourself!"}
                 </p>

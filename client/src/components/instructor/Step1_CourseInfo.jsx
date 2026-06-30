@@ -57,12 +57,12 @@ const Step1_CourseInfo = ({
 
     return (
         <div className="space-y-6 animate-fadeIn">
-            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Course Information</h2>
+            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Thông tin khóa học</h2>
 
             {/* Title */}
             <div>
-                <label className="block text-sm font-bold mb-2">
-                    Course Title <span className="text-red-500">*</span>
+                <label className="block text-sm font-bold mb-2 text-justify">
+                    Tiêu đề <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -70,7 +70,7 @@ const Step1_CourseInfo = ({
                     value={courseData.title}
                     onChange={handleInputChange}
                     className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-rose-400 transition-all ${errCls(!!errorFields.title)}`}
-                    placeholder="e.g. Complete Python Bootcamp"
+                    placeholder="Nhập tiêu đề khóa học"
                 />
                 <FieldError msg={errorFields.title} />
             </div>
@@ -78,14 +78,14 @@ const Step1_CourseInfo = ({
             {/* Categories, Level, Language */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-3">
-                    <label className="block text-sm font-bold mb-2">
-                        Categories <span className="text-red-500">*</span>
+                    <label className="block text-sm font-bold mb-2 text-justify">
+                        Danh mục <span className="text-red-500">*</span>
                     </label>
 
                     {/* Tags Display */}
                     <div className={`flex flex-wrap gap-2 mb-3 p-3 border rounded-lg bg-gray-50 min-h-[50px] transition-all ${errCls(!!errorFields.categories)}`}>
                         {courseData.categories.length === 0 && (
-                            <span className="text-gray-400 text-sm py-1">No categories selected</span>
+                            <span className="text-gray-400 text-sm py-1">Chưa chọn danh mục</span>
                         )}
                         {courseData.categories.map((cat, idx) => (
                             <span key={idx} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 border ${cat.isNew ? 'bg-green-100 text-green-800 border-green-200' : 'bg-blue-100 text-blue-800 border-blue-200'}`}>
@@ -103,11 +103,11 @@ const Step1_CourseInfo = ({
                             className="w-full px-4 py-3 border rounded-lg outline-none bg-white focus:ring-2 focus:ring-rose-400"
                             value=""
                         >
-                            <option value="" disabled>Select a category to add...</option>
+                            <option value="" disabled>Chọn một danh mục để thêm...</option>
                             {categoriesList.map(cat => (
                                 <option key={cat._id} value={cat._id}>{cat.name}</option>
                             ))}
-                            <option value="custom_new" className="font-bold text-blue-600 bg-blue-50">+ Create New Category</option>
+                            <option value="custom_new" className="font-bold text-blue-600 bg-blue-50">+ Tạo danh mục mới</option>
                         </select>
                     ) : (
                         <div className="flex gap-2 animate-fadeIn">
@@ -115,40 +115,40 @@ const Step1_CourseInfo = ({
                                 type="text"
                                 value={newCategoryName}
                                 onChange={(e) => setNewCategoryName(e.target.value)}
-                                placeholder="Type new category name..."
+                                placeholder="Nhập tên danh mục mới..."
                                 className="flex-1 px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-green-500 border-green-300"
                                 autoFocus
                                 onKeyDown={(e) => e.key === 'Enter' && handleAddCustomCategory()}
                             />
-                            <button onClick={handleAddCustomCategory} className="px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Add</button>
-                            <button onClick={() => { setIsAddingNewCat(false); setNewCategoryName(''); }} className="px-4 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300">Cancel</button>
+                            <button onClick={handleAddCustomCategory} className="px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Thêm</button>
+                            <button onClick={() => { setIsAddingNewCat(false); setNewCategoryName(''); }} className="px-4 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300">Hủy</button>
                         </div>
                     )}
-                    <p className="text-xs text-gray-500 mt-1">You can select multiple categories or create new ones.</p>
+                    <p className="text-xs text-gray-500 mt-1">Bạn có thể chọn nhiều danh mục hoặc tạo danh mục mới.</p>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold mb-2">Level</label>
+                    <label className="block text-sm font-bold mb-2 text-justify">Cấp độ</label>
                     <select name="level" value={courseData.level} onChange={handleInputChange} className="w-full px-4 py-3 border rounded-lg outline-none bg-white">
-                        <option value="alllevels">All Levels</option>
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
+                        <option value="alllevels">Mọi trình độ</option>
+                        <option value="beginner">Mới bắt đầu</option>
+                        <option value="intermediate">Trung cấp</option>
+                        <option value="advanced">Nâng cao</option>
                     </select>
                 </div>
                 <div>
-                    <label className="block text-sm font-bold mb-2">Language</label>
+                    <label className="block text-sm font-bold mb-2 text-justify">Ngôn ngữ</label>
                     <select name="language" value={courseData.language} onChange={handleInputChange} className="w-full px-4 py-3 border rounded-lg outline-none bg-white">
-                        <option value="vn">Vietnamese</option>
-                        <option value="en">English</option>
+                        <option value="vn">Tiếng Việt</option>
+                        <option value="en">Tiếng Anh</option>
                     </select>
                 </div>
             </div>
 
             {/* Short Description */}
             <div>
-                <label className="block text-sm font-bold mb-2">
-                    Short Description <span className="text-red-500">*</span>
+                <label className="block text-sm font-bold mb-2 text-justify">
+                    Mô tả ngắn <span className="text-red-500">*</span>
                 </label>
                 <textarea
                     name="shortDescription"
@@ -163,9 +163,9 @@ const Step1_CourseInfo = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Learn Outcomes */}
                 <DynamicListInput
-                    title="What will students learn?"
+                    title="Học viên sẽ học được gì?"
                     items={courseData.learnOutcomes}
-                    placeholder="e.g. Build apps"
+                    placeholder="e.g. Xây dựng ứng dụng"
                     onAdd={() => handleArrayAction('learnOutcomes', 'add')}
                     onRemove={(idx) => handleArrayAction('learnOutcomes', 'remove', idx)}
                     onChange={(idx, val) => handleArrayAction('learnOutcomes', 'update', idx, val)}
@@ -174,9 +174,9 @@ const Step1_CourseInfo = ({
                 />
                 {/* Target Audience */}
                 <DynamicListInput
-                    title="Target Audience"
+                    title="Đối tượng"
                     items={courseData.audience}
-                    placeholder="e.g. Beginners"
+                    placeholder="e.g. Mới bắt đầu"
                     onAdd={() => handleArrayAction('audience', 'add')}
                     onRemove={(idx) => handleArrayAction('audience', 'remove', idx)}
                     onChange={(idx, val) => handleArrayAction('audience', 'update', idx, val)}

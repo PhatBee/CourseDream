@@ -393,7 +393,7 @@ const EditCoursePage = () => {
                             <BookOpen size={20} className="text-rose-600" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa khóa học</h1>
+                            <h1 className="text-2xl font-bold text-gray-900 text-justify">Chỉnh sửa khóa học</h1>
                             <p className="text-sm text-gray-500 truncate max-w-xs">
                                 {form.courseData.title || slug}
                             </p>

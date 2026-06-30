@@ -288,7 +288,7 @@ const VideoPlayer = ({
   // Pause video khi có quiz active
   useEffect(() => {
     if (quizBlocked && playerInstanceRef.current) {
-      try { playerInstanceRef.current.pause(); } catch (_) {}
+      try { playerInstanceRef.current.pause(); } catch (_) { }
     }
   }, [quizBlocked]);
 
@@ -305,7 +305,7 @@ const VideoPlayer = ({
     const beforeTime = lastKnownTimeRef?.current ?? 0;
     const { blocked, revertTo } = checkSeekBlock(seekTo, beforeTime);
     if (blocked && player) {
-      try { player.currentTime(revertTo); } catch (_) {}
+      try { player.currentTime(revertTo); } catch (_) { }
       toast.warning('⚠️ Hãy trả lời câu hỏi trước khi xem tiếp!', { toastId: 'quiz-block', autoClose: 2500 });
     }
   }, [notifySeekStart, checkSeekBlock, lastKnownTimeRef]);
@@ -333,7 +333,7 @@ const VideoPlayer = ({
       // ✅ Bước 2: tua về 1s trước quiz và play
       playerInstanceRef.current.currentTime(Math.max(0, ts - 1));
       playerInstanceRef.current.play();
-    } catch (_) {}
+    } catch (_) { }
   }, [quizzes, pendingRetakeRef]);
 
 
@@ -424,222 +424,222 @@ const VideoPlayer = ({
 
   return (
     <>
-    <div className="flex flex-col bg-white min-h-full">
-      {/* ===== VIDEO AREA (dark background, aspect-ratio cố định) ===== */}
-      <div className="w-full bg-black relative">
-        {isLoadingUrl ? (
-          <div
-            className="w-full flex flex-col items-center justify-center text-white/60 bg-gray-950"
-            style={{ aspectRatio: "16/9" }}
-          >
-            <Loader2 size={40} className="animate-spin text-rose-400 mb-3" />
-            <p className="text-sm">Đang tải video</p>
-          </div>
-        ) : urlError ? (
-          <div
-            className="w-full flex flex-col items-center justify-center text-white/60 bg-gray-950"
-            style={{ aspectRatio: "16/9" }}
-          >
-            <AlertCircle size={40} className="text-rose-400 mb-3" />
-            <p className="text-sm text-center px-4">{urlError}</p>
-            <button
-              onClick={fetchVideoUrl}
-              className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition-colors"
+      <div className="flex flex-col bg-white min-h-full">
+        {/* ===== VIDEO AREA (dark background, aspect-ratio cố định) ===== */}
+        <div className="w-full bg-black relative">
+          {isLoadingUrl ? (
+            <div
+              className="w-full flex flex-col items-center justify-center text-white/60 bg-gray-950"
+              style={{ aspectRatio: "16/9" }}
             >
-              <RefreshCw size={14} /> Thử lại
-            </button>
-          </div>
-        ) : videoUrl ? (
-          <>
-            {/* Resume badge khi có lastWatchedTime > 10s */}
-            {lastWatchedTime > 10 && !quizBlocked && (
-              <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-rose-600/90 backdrop-blur-sm rounded-full px-3 py-1 pointer-events-none">
-                <span className="text-white text-xs font-semibold">
-                  ▶ Tiếp tục từ {Math.floor(lastWatchedTime / 60)}:{String(Math.floor(lastWatchedTime % 60)).padStart(2, '0')}
-                </span>
-              </div>
-            )}
-            <VideoJSPlayer
-              key={lecture._id}
-              src={videoUrl}
-              poster={lecture.thumbnail || ""}
-              startTime={lastWatchedTime || 0}
-              onTimeUpdate={(t) => {
-                quizTimeUpdate(t);
-                setMarkerCurrentTime(t);
-              }}
-              onSeeking={handleSeeking}
-              onSeeked={quizSeeked}
-              onPlayerReady={(player) => {
-                playerInstanceRef.current = player;
-                // Lấy duration khi metadata đã load
-                const updateDuration = () => {
-                  const d = player.duration();
-                  if (d && isFinite(d) && d > 0) setVideoDuration(d);
-                };
-                player.on('loadedmetadata', updateDuration);
-                player.on('durationchange', updateDuration);
-                updateDuration(); // Thử lấy ngay nếu đã sẵn sàng
-              }}
-              onProgress={onVideoProgress}
-              onEnded={() => {
-                if (!isCompleted) onToggleComplete?.();
-              }}
-            />
-            {/* ── Quiz Progress Markers ─────────────────────────────────── */}
-            {quizzes.length > 0 && videoDuration > 0 && (
-              <QuizProgressMarkers
-                playerRef={playerInstanceRef}
-                quizzes={quizzes}
-                videoDuration={videoDuration || lecture?.duration}
-                currentTime={markerCurrentTime}
-                completedQuizzes={completedQuizzes}
-                lectureId={lecture?._id}
-              />
-            )}
-            {/* ── Quiz Overlay ──────────────────────────────────────────── */}
-            {activeQuiz && (
-              <VideoQuizOverlay
-                quiz={activeQuiz.quiz}
-                onSubmit={(answer) => submitAnswer(activeQuiz.quizIndex, answer)}
-                onCorrect={() => {
-                  // ✅ FIX: Delay nhỏ trước khi resume → tránh race condition
-                  // markQuizComplete dispatch xong mới play → checkSeekBlock sẽ thấy quiz đã done
-                  setTimeout(() => {
-                    if (playerInstanceRef.current) {
-                      try { playerInstanceRef.current.play(); } catch (_) {}
-                    }
-                  }, 150);
+              <Loader2 size={40} className="animate-spin text-rose-400 mb-3" />
+              <p className="text-sm">Đang tải video</p>
+            </div>
+          ) : urlError ? (
+            <div
+              className="w-full flex flex-col items-center justify-center text-white/60 bg-gray-950"
+              style={{ aspectRatio: "16/9" }}
+            >
+              <AlertCircle size={40} className="text-rose-400 mb-3" />
+              <p className="text-sm text-center px-4">{urlError}</p>
+              <button
+                onClick={fetchVideoUrl}
+                className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition-colors"
+              >
+                <RefreshCw size={14} /> Thử lại
+              </button>
+            </div>
+          ) : videoUrl ? (
+            <>
+              {/* Resume badge khi có lastWatchedTime > 10s */}
+              {lastWatchedTime > 10 && !quizBlocked && (
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-rose-600/90 backdrop-blur-sm rounded-full px-3 py-1 pointer-events-none">
+                  <span className="text-white text-xs font-semibold">
+                    ▶ Tiếp tục từ {Math.floor(lastWatchedTime / 60)}:{String(Math.floor(lastWatchedTime % 60)).padStart(2, '0')}
+                  </span>
+                </div>
+              )}
+              <VideoJSPlayer
+                key={lecture._id}
+                src={videoUrl}
+                poster={lecture.thumbnail || ""}
+                startTime={lastWatchedTime || 0}
+                onTimeUpdate={(t) => {
+                  quizTimeUpdate(t);
+                  setMarkerCurrentTime(t);
+                }}
+                onSeeking={handleSeeking}
+                onSeeked={quizSeeked}
+                onPlayerReady={(player) => {
+                  playerInstanceRef.current = player;
+                  // Lấy duration khi metadata đã load
+                  const updateDuration = () => {
+                    const d = player.duration();
+                    if (d && isFinite(d) && d > 0) setVideoDuration(d);
+                  };
+                  player.on('loadedmetadata', updateDuration);
+                  player.on('durationchange', updateDuration);
+                  updateDuration(); // Thử lấy ngay nếu đã sẵn sàng
+                }}
+                onProgress={onVideoProgress}
+                onEnded={() => {
+                  if (!isCompleted) onToggleComplete?.();
                 }}
               />
-            )}
-          </>
-        ) : (
-          <div
-            className="w-full flex flex-col items-center justify-center text-white/40 bg-gray-950"
-            style={{ aspectRatio: "16/9" }}
-          >
-            <p className="text-sm">Video không khả dụng</p>
-          </div>
-        )}
-      </div>
+              {/* ── Quiz Progress Markers ─────────────────────────────────── */}
+              {quizzes.length > 0 && videoDuration > 0 && (
+                <QuizProgressMarkers
+                  playerRef={playerInstanceRef}
+                  quizzes={quizzes}
+                  videoDuration={videoDuration || lecture?.duration}
+                  currentTime={markerCurrentTime}
+                  completedQuizzes={completedQuizzes}
+                  lectureId={lecture?._id}
+                />
+              )}
+              {/* ── Quiz Overlay ──────────────────────────────────────────── */}
+              {activeQuiz && (
+                <VideoQuizOverlay
+                  quiz={activeQuiz.quiz}
+                  onSubmit={(answer) => submitAnswer(activeQuiz.quizIndex, answer)}
+                  onCorrect={() => {
+                    // ✅ FIX: Delay nhỏ trước khi resume → tránh race condition
+                    // markQuizComplete dispatch xong mới play → checkSeekBlock sẽ thấy quiz đã done
+                    setTimeout(() => {
+                      if (playerInstanceRef.current) {
+                        try { playerInstanceRef.current.play(); } catch (_) { }
+                      }
+                    }, 150);
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <div
+              className="w-full flex flex-col items-center justify-center text-white/40 bg-gray-950"
+              style={{ aspectRatio: "16/9" }}
+            >
+              <p className="text-sm">Video không khả dụng</p>
+            </div>
+          )}
+        </div>
 
-      {/* ===== CONTENT BELOW VIDEO ===== */}
-      <div className="flex-1 flex flex-col">
-        {/* --- Lecture Title & Navigation --- */}
-        <div className="px-6 pt-5 pb-4 border-b border-gray-100">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            {/* Title */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 leading-snug">
-                {lecture.title}
-              </h1>
-              {lecture.duration > 0 && (
-                <p className="text-sm text-gray-400 mt-1 flex items-center gap-1">
-                  <span>⏱</span>
-                  {formatDuration(lecture.duration)}
-                </p>
+        {/* ===== CONTENT BELOW VIDEO ===== */}
+        <div className="flex-1 flex flex-col">
+          {/* --- Lecture Title & Navigation --- */}
+          <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              {/* Title */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-bold text-gray-900 leading-snug  text-justify">
+                  {lecture.title}
+                </h1>
+                {lecture.duration > 0 && (
+                  <p className="text-sm text-gray-400 mt-1 flex items-center gap-1">
+                    <span>⏱</span>
+                    {formatDuration(lecture.duration)}
+                  </p>
+                )}
+              </div>
+
+              {/* Mark Complete Button */}
+              <button
+                onClick={onToggleComplete}
+                className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border shadow-sm ${isCompleted
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-rose-600 text-white border-rose-600 hover:bg-rose-700 shadow-rose-200"
+                  }`}
+              >
+                <CheckCircle
+                  size={16}
+                  className={isCompleted ? "text-emerald-600" : "text-white"}
+                />
+                {isCompleted ? "Đã hoàn thành" : "Hoàn thành bài học"}
+              </button>
+
+              {/* Quiz Review Button — chỉ hiện khi có quiz active */}
+              {quizzes.filter(q => q.isActive !== false).length > 0 && (
+                <button
+                  id="quiz-review-btn"
+                  onClick={() => setIsReviewOpen(true)}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
+                           bg-indigo-50 text-indigo-700 border border-indigo-200
+                           hover:bg-indigo-100 transition-all shadow-sm"
+                >
+                  📋 Xem lại câu hỏi ({quizzes.filter(q => q.isActive !== false).length})
+                </button>
               )}
             </div>
 
-            {/* Mark Complete Button */}
-            <button
-              onClick={onToggleComplete}
-              className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border shadow-sm ${isCompleted
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                : "bg-rose-600 text-white border-rose-600 hover:bg-rose-700 shadow-rose-200"
-                }`}
-            >
-              <CheckCircle
-                size={16}
-                className={isCompleted ? "text-emerald-600" : "text-white"}
-              />
-              {isCompleted ? "Đã hoàn thành" : "Hoàn thành bài học"}
-            </button>
-
-            {/* Quiz Review Button — chỉ hiện khi có quiz active */}
-            {quizzes.filter(q => q.isActive !== false).length > 0 && (
+            {/* Prev / Next Navigation */}
+            <div className="flex gap-2 mt-4">
               <button
-                id="quiz-review-btn"
-                onClick={() => setIsReviewOpen(true)}
-                className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
-                           bg-indigo-50 text-indigo-700 border border-indigo-200
-                           hover:bg-indigo-100 transition-all shadow-sm"
+                onClick={onPrevious}
+                className="flex items-center gap-1.5 px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-xl font-medium hover:border-rose-400 hover:text-rose-600 transition-all text-sm shadow-sm"
               >
-                📋 Xem lại câu hỏi ({quizzes.filter(q => q.isActive !== false).length})
+                <ChevronLeft size={16} /> Bài trước
               </button>
-            )}
+              <button
+                onClick={onNext}
+                className="flex items-center gap-1.5 px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-xl font-medium hover:border-rose-400 hover:text-rose-600 transition-all text-sm shadow-sm"
+              >
+                Bài tiếp <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
 
-          {/* Prev / Next Navigation */}
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={onPrevious}
-              className="flex items-center gap-1.5 px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-xl font-medium hover:border-rose-400 hover:text-rose-600 transition-all text-sm shadow-sm"
-            >
-              <ChevronLeft size={16} /> Bài trước
-            </button>
-            <button
-              onClick={onNext}
-              className="flex items-center gap-1.5 px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-xl font-medium hover:border-rose-400 hover:text-rose-600 transition-all text-sm shadow-sm"
-            >
-              Bài tiếp <ChevronRight size={16} />
-            </button>
+          {/* --- Tabs (Overview / Resources / Discussion) --- */}
+          <div className="flex gap-0 border-b border-gray-100 px-6">
+            {[
+              { id: "overview", label: "Tổng quan", icon: BookOpen },
+              ...(parsedResources.length > 0
+                ? [
+                  {
+                    id: "resources",
+                    label: `Tài liệu (${parsedResources.length})`,
+                    icon: FileText,
+                  },
+                ]
+                : []),
+              {
+                id: "discussion",
+                label: "Hỏi đáp & Thảo luận",
+                icon: MessageSquare,
+              }, // Tab mới
+            ].map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all -mb-px ${activeTab === id
+                  ? "border-rose-500 text-rose-600"
+                  : "border-transparent text-gray-500 hover:text-gray-800"
+                  }`}
+              >
+                <Icon size={15} />
+                {label}
+              </button>
+            ))}
           </div>
-        </div>
 
-        {/* --- Tabs (Overview / Resources / Discussion) --- */}
-        <div className="flex gap-0 border-b border-gray-100 px-6">
-          {[
-            { id: "overview", label: "Tổng quan", icon: BookOpen },
-            ...(parsedResources.length > 0
-              ? [
-                {
-                  id: "resources",
-                  label: `Tài liệu (${parsedResources.length})`,
-                  icon: FileText,
-                },
-              ]
-              : []),
-            {
-              id: "discussion",
-              label: "Hỏi đáp & Thảo luận",
-              icon: MessageSquare,
-            }, // Tab mới
-          ].map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all -mb-px ${activeTab === id
-                ? "border-rose-500 text-rose-600"
-                : "border-transparent text-gray-500 hover:text-gray-800"
-                }`}
-            >
-              <Icon size={15} />
-              {label}
-            </button>
-          ))}
-        </div>
+          {/* --- Tab Content --- */}
+          <div className="flex-1 px-6 py-5">
+            {activeTab === "overview" && (
+              <div className="space-y-4">
+                {/* Lecture description */}
+                {lecture.description ? (
+                  <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed">
+                    <p>{lecture.description}</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+                    <BookOpen size={32} className="mb-2" />
+                    <p className="text-sm text-gray-400">
+                      Bài giảng này chưa có mô tả.
+                    </p>
+                  </div>
+                )}
 
-        {/* --- Tab Content --- */}
-        <div className="flex-1 px-6 py-5">
-          {activeTab === "overview" && (
-            <div className="space-y-4">
-              {/* Lecture description */}
-              {lecture.description ? (
-                <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed">
-                  <p>{lecture.description}</p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-gray-300">
-                  <BookOpen size={32} className="mb-2" />
-                  <p className="text-sm text-gray-400">
-                    Bài giảng này chưa có mô tả.
-                  </p>
-                </div>
-              )}
-
-              {/* CloudFront Info
+                {/* CloudFront Info
               {isCFUrl && (
                 <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 rounded-xl px-4 py-3 mt-4">
                   <Cloud size={13} className="text-blue-400 flex-shrink-0" />
@@ -652,55 +652,55 @@ const VideoPlayer = ({
                   </span>
                 </div>
               )} */}
-            </div>
-          )}
-
-          {activeTab === "resources" && parsedResources.length > 0 && (
-            <div>
-              <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <Download size={15} className="text-rose-500" />
-                Tài liệu đính kèm ({parsedResources.length})
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {parsedResources.map((res, idx) => (
-                  <ResourceItem key={idx} resource={res} />
-                ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* --- Discussion Section (Tab Thảo luận) --- */}
-          {activeTab === "discussion" && (
-            <div className="fade-in">
-              <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <MessageSquare size={15} className="text-rose-500" />
-                Thảo luận Bài giảng
-              </h3>
+            {activeTab === "resources" && parsedResources.length > 0 && (
+              <div>
+                <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <Download size={15} className="text-rose-500" />
+                  Tài liệu đính kèm ({parsedResources.length})
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {parsedResources.map((res, idx) => (
+                    <ResourceItem key={idx} resource={res} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-              {/* TRUYỀN ĐẦY ĐỦ PROPS XUỐNG COURUSEDISCUSSION NẰM Ở ĐÂY */}
-              <CourseDiscussion
-                courseId={courseId}
-                lectureId={lecture._id}
-                user={user}
-                isEnrolled={isEnrolled}
-                isInstructor={isInstructor}
-              />
-            </div>
-          )}
+            {/* --- Discussion Section (Tab Thảo luận) --- */}
+            {activeTab === "discussion" && (
+              <div className="fade-in">
+                <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <MessageSquare size={15} className="text-rose-500" />
+                  Thảo luận Bài giảng
+                </h3>
+
+                {/* TRUYỀN ĐẦY ĐỦ PROPS XUỐNG COURUSEDISCUSSION NẰM Ở ĐÂY */}
+                <CourseDiscussion
+                  courseId={courseId}
+                  lectureId={lecture._id}
+                  user={user}
+                  isEnrolled={isEnrolled}
+                  isInstructor={isInstructor}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* ── Quiz Review Panel (ngoài flex container để không bị clip) ── */}
-    <QuizReviewModal
-      isOpen={isReviewOpen}
-      onClose={() => setIsReviewOpen(false)}
-      courseSlug={courseSlug}
-      lectureId={lecture?._id}
-      quizzes={quizzes}
-      onRetake={handleRetakeQuiz}
-      onRetakeAll={resetAllQuizAttempts}
-    />
+      {/* ── Quiz Review Panel (ngoài flex container để không bị clip) ── */}
+      <QuizReviewModal
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        courseSlug={courseSlug}
+        lectureId={lecture?._id}
+        quizzes={quizzes}
+        onRetake={handleRetakeQuiz}
+        onRetakeAll={resetAllQuizAttempts}
+      />
     </>
   );
 };

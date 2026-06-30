@@ -7,12 +7,12 @@ const TopCoursesList = ({ courses }) => {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full text-left">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold text-gray-800">Top Courses</h3>
-        <Link 
-          to="/admin/courses" 
+        <h3 className="text-lg font-bold text-gray-800">Khóa học nổi bật</h3>
+        <Link
+          to="/admin/courses"
           className="flex items-center text-sm font-medium text-rose-600 hover:text-rose-700 transition-colors"
         >
-          See All <ArrowUpRight size={16} className="ml-1" />
+          Tất cả <ArrowUpRight size={16} className="ml-1" />
         </Link>
       </div>
 
@@ -20,9 +20,9 @@ const TopCoursesList = ({ courses }) => {
         {courses.map((course) => (
           <div key={course._id} className="flex items-center justify-between group">
             <div className="flex items-center gap-3">
-              <img 
-                src={course.thumbnail || defaultAvatar} 
-                alt="" 
+              <img
+                src={course.thumbnail || defaultAvatar}
+                alt=""
                 className="w-10 h-10 rounded-lg object-cover bg-gray-100"
               />
               <div>
@@ -30,7 +30,7 @@ const TopCoursesList = ({ courses }) => {
                   {course.title}
                 </h4>
                 <p className="text-xs text-gray-500">
-                  {course.studentsCount} sales
+                  {course.studentsCount} Học viên
                 </p>
               </div>
             </div>
@@ -39,9 +39,9 @@ const TopCoursesList = ({ courses }) => {
             </span>
           </div>
         ))}
-        
+
         {courses.length === 0 && (
-          <p className="text-center text-gray-400 text-sm py-4">No data available</p>
+          <p className="text-center text-gray-400 text-sm py-4">Chưa có khóa học</p>
         )}
       </div>
     </div>

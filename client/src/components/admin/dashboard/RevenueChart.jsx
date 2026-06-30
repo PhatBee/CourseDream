@@ -22,16 +22,16 @@ const RevenueChart = () => {
       {/* Header + Filter */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-lg font-bold text-gray-800">Revenue Analytics</h3>
+          <h3 className="text-lg font-bold text-gray-800">Thống kê doanh thu</h3>
         </div>
-        <select 
+        <select
           className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:border-rose-500 cursor-pointer"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         >
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="year">This Year</option>
+          <option value="week">Tuần này</option>
+          <option value="month">Tháng này</option>
+          <option value="year">Năm nay</option>
         </select>
       </div>
 
@@ -46,35 +46,35 @@ const RevenueChart = () => {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#e11d48" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#e11d48" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="label" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fill: '#9ca3af', fontSize: 12}} 
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#9ca3af', fontSize: 12 }}
                 dy={10}
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fill: '#9ca3af', fontSize: 12}}
-                tickFormatter={(val) => `${val/1000}k`} 
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#9ca3af', fontSize: 12 }}
+                tickFormatter={(val) => `${val / 1000}k`}
               />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 formatter={(val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)}
               />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#e11d48" 
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#e11d48"
                 strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorRevenue)" 
+                fillOpacity={1}
+                fill="url(#colorRevenue)"
               />
             </AreaChart>
           </ResponsiveContainer>

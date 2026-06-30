@@ -3,7 +3,7 @@ import React from 'react';
 const Step5_Pricing = ({ courseData, handleInputChange }) => {
     return (
         <div className="space-y-6 animate-fadeIn">
-            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Pricing & Settings</h2>
+            <h2 className="text-2xl font-bold border-b pb-4 mb-4 text-center">Giá và hoàn thành</h2>
 
             <div className="flex items-center gap-3 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <input
@@ -15,14 +15,14 @@ const Step5_Pricing = ({ courseData, handleInputChange }) => {
                     className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
                 />
                 <label htmlFor="isFree" className="font-medium text-gray-700 cursor-pointer select-none">
-                    This is a free course
+                    Khóa học miễn phí
                 </label>
             </div>
 
             {!courseData.isFree && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fadeIn">
                     <div>
-                        <label className="block text-sm font-bold mb-2">Regular Price (VND)</label>
+                        <label className="block text-sm font-bold mb-2 text-justify">Giá gốc (VND)</label>
                         <div className="relative">
                             <input
                                 type="number"
@@ -35,7 +35,7 @@ const Step5_Pricing = ({ courseData, handleInputChange }) => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-bold mb-2">Discounted Price (VND)</label>
+                        <label className="block text-sm font-bold mb-2 text-justify">Giá khuyến mãi (VND)</label>
                         <div className="relative">
                             <input
                                 type="number"
@@ -46,19 +46,19 @@ const Step5_Pricing = ({ courseData, handleInputChange }) => {
                                 className="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Must be lower than or equal to regular price.</p>
+                        <p className="text-xs text-gray-500 mt-1">Giá khuyến mãi phải thấp hơn hoặc bằng giá gốc.</p>
                     </div>
                 </div>
             )}
 
             <div>
-                <label className="block text-sm font-bold mb-2">Message to Reviewer</label>
+                <label className="block text-sm font-bold mb-2 text-justify">Lời nhắn gửi tới admin</label>
                 <textarea
                     name="messageToReviewer"
                     value={courseData.messageToReviewer}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border rounded-lg h-32 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Any notes for the admin reviewer..."
+                    placeholder="Hãy nhập lời nhắn gửi tới admin..."
                 ></textarea>
             </div>
         </div>

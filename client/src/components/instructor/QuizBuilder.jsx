@@ -83,7 +83,7 @@ const QuizCard = ({ quiz, index, onChange, onDelete, onGetCurrentTime }) => {
           {/* Timestamp row */}
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block text-justify">
                 Mốc thời gian (giây)
               </label>
               <input
@@ -118,7 +118,7 @@ const QuizCard = ({ quiz, index, onChange, onDelete, onGetCurrentTime }) => {
 
           {/* Question */}
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block text-justify">
               Câu hỏi <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -132,7 +132,7 @@ const QuizCard = ({ quiz, index, onChange, onDelete, onGetCurrentTime }) => {
 
           {/* Options */}
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block text-justify">
               Các lựa chọn <span className="text-red-400">*</span>
             </label>
             <div className="space-y-2">
