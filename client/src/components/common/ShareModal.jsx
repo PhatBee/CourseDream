@@ -116,7 +116,7 @@ const ShareModal = ({ isOpen, onClose, url, title }) => {
             />
             <button 
               onClick={handleCopy}
-              className={`p-3 text-sm font-medium text-white rounded-r-lg border border-l-0 transition-all w-28 flex justify-center items-center
+              className={`p-3 text-sm font-medium text-white rounded-r-lg border border-l-0 transition-all w-45 flex justify-center items-center
                 ${isCopied 
                   ? 'bg-green-500 border-green-500 hover:bg-green-600' 
                   : 'bg-gray-900 border-gray-900 hover:bg-gray-800'
