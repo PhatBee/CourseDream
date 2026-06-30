@@ -1,4 +1,4 @@
-import { getInstructorProfile, updateInstructorProfile, getInstructorDashboardStats } from "./instructor.service.js";
+import { getInstructorProfile, updateInstructorProfile, getInstructorDashboardStats, getCourseStudents as getCourseStudentsService } from "./instructor.service.js";
 
 /**
  * GET /api/instructor/profile
@@ -32,6 +32,21 @@ export const getInstructorDashboard = async (req, res, next) => {
     const instructorId = req.user._id;
     const stats = await getInstructorDashboardStats(instructorId);
     res.json(stats);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/instructor/courses/:courseId/students
+ */
+export const getCourseStudents = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const { page, limit } = req.query;
+    const instructorId = req.user._id;
+    const result = await getCourseStudentsService(courseId, instructorId, { page, limit });
+    res.json({ success: true, data: result });
   } catch (err) {
     next(err);
   }

@@ -15,7 +15,11 @@ const initialState = {
   message: '',
   instructorCourses: [],
   instructorStats: { all: 0, published: 0, pending: 0, draft: 0 },
-  instructorPagination: { page: 1, limit: 9, totalPages: 1, total: 0 }
+  instructorPagination: { page: 1, limit: 9, totalPages: 1, total: 0 },
+  courseStudents: [],
+  courseStudentsPagination: { page: 1, limit: 10, totalPages: 1, totalItems: 0 },
+  isStudentsLoading: false,
+  studentsError: null
 };
 
 export const getAllCourses = createAsyncThunk(
@@ -99,6 +103,19 @@ export const activateInstructorCourse = createAsyncThunk(
       return id;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data?.message);
+    }
+  }
+);
+
+export const getCourseStudents = createAsyncThunk(
+  'course/getStudents',
+  async ({ courseId, params }, thunkAPI) => {
+    try {
+      const response = await courseService.getCourseStudents({ courseId, params });
+      return response; // { success: true, data: { students, pagination } }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error fetching course students';
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
@@ -230,6 +247,19 @@ export const courseSlice = createSlice({
         state.instructorStats.published += 1;
         state.instructorStats.hidden -= 1;
         toast.success("Khóa học đã được kích hoạt lại!");
+      })
+      .addCase(getCourseStudents.pending, (state) => {
+        state.isStudentsLoading = true;
+        state.studentsError = null;
+      })
+      .addCase(getCourseStudents.fulfilled, (state, action) => {
+        state.isStudentsLoading = false;
+        state.courseStudents = action.payload.data.students || [];
+        state.courseStudentsPagination = action.payload.data.pagination || { page: 1, limit: 10, totalPages: 1, totalItems: 0 };
+      })
+      .addCase(getCourseStudents.rejected, (state, action) => {
+        state.isStudentsLoading = false;
+        state.studentsError = action.payload;
       })
   },
 });

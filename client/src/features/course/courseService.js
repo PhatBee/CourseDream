@@ -1,5 +1,6 @@
 // src/features/course/courseService.js
 import { courseApi } from "../../api/courseApi";
+import { instructorApi } from "../../api/instructorApi";
 
 const getDetails = async (slug) => {
   const response = await courseApi.getDetailsBySlug(slug);
@@ -36,6 +37,11 @@ const activateCourse = async (id) => {
   return response.data;
 };
 
+const getCourseStudents = async ({ courseId, params }) => {
+  const response = await instructorApi.getCourseStudents(courseId, params);
+  return response.data;
+};
+
 // ==================== ADMIN SERVICES ====================
 
 const courseService = {
@@ -46,6 +52,7 @@ const courseService = {
   getInstructorCourseForEdit,
   deleteCourse,
   activateCourse,
+  getCourseStudents,
 };
 
 export default courseService;

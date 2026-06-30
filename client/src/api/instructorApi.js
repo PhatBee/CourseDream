@@ -20,9 +20,15 @@ const updateInstructorProfile = (data) => {
   return axiosClient.put(`${path}/profile`, data);
 };
 
+// Lấy danh sách học viên của khóa học
+const getCourseStudents = (courseId, params) => {
+  return axiosClient.get(`${path}/courses/${courseId}/students`, { params });
+};
+
 export const instructorApi = {
     getInstructorStats,
     getInstructorProfile,
     updateInstructorProfile,
-    getInstructorDashboardStats
+    getInstructorDashboardStats,
+    getCourseStudents
 };
