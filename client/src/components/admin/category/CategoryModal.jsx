@@ -26,7 +26,7 @@ const CategoryModal = ({ isOpen, onClose, onConfirm, initialData, isEditing }) =
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h3 className="text-lg font-bold text-gray-800">
-            {isEditing ? 'Edit Category' : 'Add New Category'}
+            {isEditing ? 'Chỉnh sửa' : 'Thêm mới'}
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
             <X size={20} />
@@ -36,7 +36,7 @@ const CategoryModal = ({ isOpen, onClose, onConfirm, initialData, isEditing }) =
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category Name <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tên danh mục <span className="text-red-500">*</span></label>
             <input 
               type="text" 
               required
@@ -48,12 +48,12 @@ const CategoryModal = ({ isOpen, onClose, onConfirm, initialData, isEditing }) =
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Icon Class / Emoji</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Biểu tượng</label>
             <div className="flex gap-3">
               <input 
                 type="text" 
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none"
-                placeholder="e.g. 💻 or fa-code"
+                placeholder="💻 or fa-code"
                 value={formData.icon}
                 onChange={(e) => setFormData({...formData, icon: e.target.value})}
               />
@@ -70,13 +70,13 @@ const CategoryModal = ({ isOpen, onClose, onConfirm, initialData, isEditing }) =
               onClick={onClose}
               className="px-5 py-2.5 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-colors"
             >
-              Cancel
+              Hủy
             </button>
             <button 
               type="submit"
               className="px-5 py-2.5 rounded-lg bg-rose-600 text-white font-medium hover:bg-rose-700 shadow-md shadow-rose-200 transition-all"
             >
-              {isEditing ? 'Save Changes' : 'Create Category'}
+              {isEditing ? 'Lưu' : 'Tạo mới'}
             </button>
           </div>
         </form>
