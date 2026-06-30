@@ -99,7 +99,7 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
         const index = discussions.findIndex((d) => d._id === discussionId);
         if (index !== -1 && flatListRef.current) {
           setTimeout(() => {
-            flatListRef.current.scrollToIndex({
+            flatListRef.current?.scrollToIndex({
               index,
               animated: true,
               viewPosition: 0.5,
@@ -247,11 +247,10 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={() => setSelectedDiscussion(item)}
-              className={`rounded-2xl p-4 mb-4 border shadow-sm ${
-                isHighlighted
+              className={`rounded-2xl p-4 mb-4 border shadow-sm ${isHighlighted
                   ? "bg-rose-50 border-rose-300"
                   : "bg-white border-gray-100"
-              }`}
+                }`}
               style={{
                 elevation: 2,
                 shadowColor: "#000",
@@ -335,7 +334,7 @@ const DiscussionMobile = ({ courseId, lectureId, isEnrolled, user }) => {
                       {/* Kiểm tra nếu là OBJ có nội dung content hay chỉ là ID */}
                       Câu trả lời hay nhất{" "}
                       {typeof item.bestAnswerId === "object" &&
-                      item.bestAnswerId.author?.name
+                        item.bestAnswerId.author?.name
                         ? `- ${item.bestAnswerId.author.name}`
                         : ""}
                     </Text>

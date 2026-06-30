@@ -6,7 +6,7 @@ const PrivateRoute = ({ allowedRoles }) => {
     const { user, isLoading } = useSelector((state) => state.auth);
 
     if (isLoading && !user) {
-        return <div className="flex justify-center items-center h-screen">Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Đang tải...</div>;
     }
 
     if (!user) {

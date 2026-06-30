@@ -8,19 +8,19 @@ const CancelModal = ({ isOpen, onClose, onSaveDraft, onExit }) => {
                 <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertTriangle className="text-yellow-600" size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Unsaved Changes</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Thay đổi chưa lưu</h3>
                 <p className="text-gray-600 mb-6">
-                    You have unsaved changes. Do you want to save this course as a draft before exiting?
+                    Bạn có thay đổi chưa được lưu. Bạn có muốn lưu khóa học này dưới dạng bản nháp trước khi thoát?
                 </p>
                 <div className="flex flex-col gap-3">
                     <button onClick={onSaveDraft} className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition">
-                        Save Draft & Exit
+                        Lưu Bản Nháp & Thoát
                     </button>
                     <button onClick={onExit} className="w-full py-2.5 border border-red-200 text-red-600 font-bold rounded-lg hover:bg-red-50 transition">
-                        Discard & Exit
+                        Không lưu & Thoát
                     </button>
                     <button onClick={onClose} className="w-full py-2.5 text-gray-500 font-medium hover:text-gray-700">
-                        Cancel
+                        Hủy
                     </button>
                 </div>
             </div>

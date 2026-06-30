@@ -38,7 +38,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application, onReview, isProc
                             alt="Avatar" 
                             className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
                         />
-                        <div>
+                        <div className="text-left">
                             <h4 className="text-lg font-bold text-gray-900">{application.user?.name}</h4>
                             <p className="text-gray-600 text-sm">{application.user?.email}</p>
                             <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded uppercase">
@@ -52,7 +52,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application, onReview, isProc
                         <h5 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
                             <User size={18} className="text-blue-500" /> Giới thiệu bản thân
                         </h5>
-                        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 border whitespace-pre-line">
+                        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 border whitespace-pre-line text-justify">
                             {application.bio}
                         </div>
                     </div>
@@ -62,14 +62,14 @@ const ApplicationDetailModal = ({ isOpen, onClose, application, onReview, isProc
                         <h5 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
                             <FileText size={18} className="text-green-500" /> Kinh nghiệm & Chứng chỉ
                         </h5>
-                        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 border whitespace-pre-line">
+                        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 border whitespace-pre-line text-justify">
                             {application.experience}
                         </div>
                     </div>
 
                     {/* Topics */}
                     <div>
-                        <h5 className="font-bold text-gray-800 mb-2">Chủ đề giảng dạy dự kiến</h5>
+                        <h5 className="font-bold text-gray-800 mb-2 text-justify">Chủ đề giảng dạy dự kiến</h5>
                         <div className="flex flex-wrap gap-2">
                             {application.intendedTopics?.map((topic, idx) => (
                                 <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm border">
@@ -89,7 +89,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application, onReview, isProc
                                 href={application.sampleVideoUrl} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline text-sm break-all bg-gray-50 p-2 rounded block border"
+                                className="text-blue-600 hover:underline text-sm break-all bg-gray-50 p-2 rounded block border text-justify"
                             >
                                 {application.sampleVideoUrl}
                             </a>

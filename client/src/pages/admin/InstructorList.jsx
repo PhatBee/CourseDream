@@ -60,7 +60,7 @@ const InstructorsManagement = () => {
         <div className="relative">
           <input 
             type="text" 
-            placeholder="Search instructor..." 
+            placeholder="Tìm kiếm giảng viên..." 
             className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl w-64 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -75,12 +75,12 @@ const InstructorsManagement = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                <th className="px-6 py-4">Instructor</th>
-                <th className="px-6 py-4">Contact</th>
-                <th className="px-6 py-4">Expertise</th>
-                <th className="px-6 py-4 text-center">Stats</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4">Giảng viên</th>
+                <th className="px-6 py-4">Liên hệ</th>
+                <th className="px-6 py-4">Chuyên môn</th>
+                <th className="px-6 py-4 text-center">Thống kê</th>
+                <th className="px-6 py-4">Trạng thái</th>
+                <th className="px-6 py-4 text-right">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">

@@ -58,7 +58,7 @@ const StudentsManagement = () => {
         <div className="relative absolute right">
           <input
             type="text"
-            placeholder="Search by name or email..."
+            placeholder="Tìm kiếm học viên..."
             className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl w-64 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -73,12 +73,12 @@ const StudentsManagement = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Contact Info</th>
-                <th className="px-6 py-4 text-center">Enrolled</th>
-                <th className="px-6 py-4">Joined Date</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4">Học viên</th>
+                <th className="px-6 py-4">Liên hệ</th>
+                <th className="px-6 py-4 text-center">Tham gia khóa học</th>
+                <th className="px-6 py-4">Đăng ký ngày</th>
+                <th className="px-6 py-4">Trạng thái</th>
+                <th className="px-6 py-4 text-right">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">
@@ -135,15 +135,15 @@ const StudentsManagement = () => {
                   <td className="px-6 py-4">
                     {!student.isActive ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-                        Banned
+                        Vô hiệu
                       </span>
                     ) : student.isVerified ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                        Active
+                        Kích hoạt
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                        Unverified
+                        Chưa xác minh
                       </span>
                     )}
                   </td>
@@ -161,7 +161,7 @@ const StudentsManagement = () => {
               {students.length === 0 && !isLoading && (
                 <tr>
                   <td colSpan="6" className="text-center py-10 text-gray-400">
-                    No students found matching your search.
+                    Không tìm thấy học viên nào phù hợp với tìm kiếm của bạn.
                   </td>
                 </tr>
               )}

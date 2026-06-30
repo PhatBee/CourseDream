@@ -54,7 +54,7 @@ const CategoriesManagement = () => {
 
   const openDeleteModal = (cat) => {
     if (cat.courseCount > 0) {
-      toast.error(`Cannot delete! This category has ${cat.courseCount} active courses.`);
+      toast.error(`Không thể xóa danh mục có khóa học.`);
       return;
     }
     setSelectedCategory(cat);
@@ -85,7 +85,7 @@ const CategoriesManagement = () => {
           onClick={openCreateModal}
           className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-xl font-medium hover:bg-rose-700 shadow-sm transition-all hover:shadow-md"
         >
-          <Plus size={20} /> Add New Category
+          <Plus size={20} /> Thêm Danh Mục Mới
         </button>
       </div>
 
@@ -94,24 +94,13 @@ const CategoriesManagement = () => {
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
-            placeholder="Search categories..."
+            placeholder="Tìm kiếm danh mục..."
             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Search size={18} className="absolute left-3 top-3 text-gray-400" />
         </div>
-
-        {/* Sort Button (Optional) */}
-        <button
-          onClick={() => handleSort('courseCount')}
-          className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl transition-colors font-medium text-sm
-            ${sortConfig.key === 'courseCount' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}
-          `}
-        >
-          <Filter size={18} />
-          {sortConfig.direction === 'desc' ? 'Most Courses' : 'Least Courses'}
-        </button>
       </div>
 
       {/* Table */}
@@ -120,10 +109,10 @@ const CategoriesManagement = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                <th className="px-6 py-4">Category Name</th>
+                <th className="px-6 py-4">Tên danh mục</th>
                 <th className="px-6 py-4">Slug</th>
-                <th className="px-6 py-4 text-center">Courses</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-center">Khóa học</th>
+                <th className="px-6 py-4 text-right">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">
@@ -183,7 +172,7 @@ const CategoriesManagement = () => {
 
               {categories.length === 0 && !isLoading && (
                 <tr>
-                  <td colSpan="5" className="text-center py-10 text-gray-400">No categories found.</td>
+                  <td colSpan="5" className="text-center py-10 text-gray-400">Không tìm thấy danh mục nào.</td>
                 </tr>
               )}
             </tbody>
@@ -213,9 +202,9 @@ const CategoriesManagement = () => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Delete Category?"
-        message={`Are you sure you want to delete "${selectedCategory?.name}"?`}
-        confirmLabel="Yes, Delete"
+        title="Xóa Danh Mục?"
+        message={`Bạn có chắc chắn muốn xóa "${selectedCategory?.name}"?`}
+        confirmLabel="Có, Xóa"
       />
     </div>
   );
