@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchReports, fetchReportDetail } from "../../features/report/reportSlice";
 import Pagination from "../../components/common/Pagination";
 import { Eye, Filter } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import ReportDetailModal from "./ReportDetailModal";
 
 const statusColors = {
@@ -27,10 +28,24 @@ const ReportsManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     dispatch(fetchReports({ ...filters, page: currentPage }));
   }, [dispatch, filters, currentPage]);
+
+  useEffect(() => {
+    const reportId = searchParams.get("reportId");
+    if (reportId) {
+      dispatch(fetchReportDetail(reportId));
+      setSelectedReport(reportId);
+      setShowDetail(true);
+      
+      // Xóa query param để không bị mở lại modal nếu user refresh
+      searchParams.delete("reportId");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, dispatch, setSearchParams]);
 
   const handlePageChange = (page) => setCurrentPage(page);
 

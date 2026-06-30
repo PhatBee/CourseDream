@@ -30,6 +30,7 @@ const NotificationSchema = new mongoose.Schema(
       discussionId: mongoose.Schema.Types.ObjectId,
       replyId: mongoose.Schema.Types.ObjectId,
       orderId: mongoose.Schema.Types.ObjectId,
+      reportId: mongoose.Schema.Types.ObjectId,
       url: String,
       isDeleted: { type: Boolean, default: false }, // Dùng để đánh dấu thông báo này đã bị xóa (ẩn) nhưng chưa đến lúc xóa hẳn khỏi DB
 

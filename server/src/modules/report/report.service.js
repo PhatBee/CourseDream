@@ -102,7 +102,9 @@ export const createPolymorphicReport = async (
         type: "report",
         title: `Báo cáo mới [Priority: ${priority.toUpperCase()}]`,
         message: `Loại: ${targetType.toUpperCase()} - Reason: ${reason} \n${summaryContext.substring(0, 50)}`,
-        relatedId: report._id,
+        metadata: {
+          reportId: report._id
+        }
       }),
     ),
   );

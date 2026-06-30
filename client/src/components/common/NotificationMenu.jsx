@@ -103,7 +103,11 @@ const NotificationMenu = ({ open, onClose }) => {
         }
         break;
       case "report":
-        navigate("/admin/reports");
+        if (metadata?.reportId) {
+          navigate(`/admin/reports?reportId=${metadata.reportId}`);
+        } else {
+          navigate("/admin/reports");
+        }
         break;
       case "system":
         if (metadata?.url) navigate(metadata.url);
