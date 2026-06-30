@@ -10,26 +10,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, BookOpen, Heart, Award, TrendingUp, ChevronRight } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import { fetchMyEnrollments } from '../../features/enrollment/enrollmentSlice';
+import { fetchStudentDashboard } from '../../features/enrollment/enrollmentSlice';
 import { getWishlist } from '../../features/wishlist/wishlistSlice';
 import { Image } from 'expo-image';
 
 const DashboardScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
-  const { items: enrollments = [], isLoading: enrollLoading } = useSelector(state => state.enrollment);
+  const { dashboardData: enrollments = [], isLoading: enrollLoading } = useSelector(state => state.enrollment);
   const { items: wishlist = [] } = useSelector(state => state.wishlist);
 
   useFocusEffect(
     useCallback(() => {
-      dispatch(fetchMyEnrollments());
+      dispatch(fetchStudentDashboard());
       dispatch(getWishlist());
     }, [dispatch])
   );
 
-  const completedCourses = enrollments.filter(e => (e.progress?.percentage ?? 0) >= 100);
+  const completedCourses = enrollments.filter(e => (e.learningProgress?.percentage ?? 0) >= 100);
   const inProgressCourses = enrollments.filter(e => {
-    const p = e.progress?.percentage ?? 0;
+    const p = e.learningProgress?.percentage ?? 0;
     return p > 0 && p < 100;
   });
 
@@ -116,7 +116,7 @@ const DashboardScreen = ({ navigation }) => {
             <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
               Khóa học gần đây
             </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('MyLearningTab')}>
+            <TouchableOpacity onPress={() => navigation.navigate('MainTabs', { screen: 'MyLearningTab' })}>
               <Text className="text-rose-500 text-sm font-medium">Xem tất cả</Text>
             </TouchableOpacity>
           </View>
@@ -139,7 +139,7 @@ const DashboardScreen = ({ navigation }) => {
               {enrollments.slice(0, 4).map((enrollment) => {
                 const course = enrollment?.course;
                 if (!course) return null;
-                const progress = enrollment?.progress?.percentage ?? 0;
+                const progress = enrollment?.learningProgress?.percentage ?? 0;
                 return (
                   <TouchableOpacity
                     key={enrollment._id}
@@ -178,35 +178,7 @@ const DashboardScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Quick Actions */}
-        <View className="px-4 pt-6">
-          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            Truy cập nhanh
-          </Text>
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              className="flex-1 bg-rose-500 rounded-2xl py-4 items-center shadow-sm"
-              onPress={() => navigation.navigate('MyLearningTab')}
-            >
-              <BookOpen size={22} color="#fff" />
-              <Text className="text-white font-semibold text-sm mt-1.5">Học ngay</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-1 bg-white border border-gray-100 rounded-2xl py-4 items-center shadow-sm"
-              onPress={() => navigation.navigate('Wishlist')}
-            >
-              <Heart size={22} color="#e11d48" />
-              <Text className="text-gray-700 font-semibold text-sm mt-1.5">Yêu thích</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-1 bg-white border border-gray-100 rounded-2xl py-4 items-center shadow-sm"
-              onPress={() => navigation.navigate('MainTabs', { screen: 'CoursesTab' })}
-            >
-              <TrendingUp size={22} color="#7c3aed" />
-              <Text className="text-gray-700 font-semibold text-sm mt-1.5">Khám phá</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
