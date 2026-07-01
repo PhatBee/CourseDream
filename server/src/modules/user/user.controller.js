@@ -47,7 +47,7 @@ export const updateProfile = async (req, res, next) => {
 
 /**
  * @desc    Thay đổi mật khẩu
- * @route   PUT /api/v1/users/password
+ * @route   PUT /api/users/password
  */
 export const updatePassword = async (req, res, next) => {
   try {
