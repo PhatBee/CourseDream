@@ -60,7 +60,7 @@ const Header = () => {
                 }`
               }
             >
-              Tru Chảng
+              Trang chủ
             </NavLink>
             <NavLink
               to="/courses"
