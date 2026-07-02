@@ -203,7 +203,7 @@ const NotificationMenu = ({ open, onClose }) => {
                           </div>
 
                           <div
-                            className={`text-[13px] whitespace-pre-line mt-1 leading-relaxed ${
+                            className={`text-[13px] whitespace-pre-line mt-1 leading-relaxed text-justify ${
                               !n.read
                                 ? "text-gray-700"
                                 : "text-gray-500 line-clamp-2"
@@ -220,7 +220,7 @@ const NotificationMenu = ({ open, onClose }) => {
                             </div>
                           )}
 
-                          <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                          <p className="text-[11px] text-gray-400 mt-2 font-medium text-justify">
                             {new Date(n.createdAt).toLocaleString("vi-VN")}
                           </p>
                         </div>
@@ -306,7 +306,7 @@ const NotificationMenu = ({ open, onClose }) => {
                                     onClose();
                                     navigate(`/courses/${m?.courseSlug}`);
                                   }}
-                                  className="text-blue-600 hover:text-blue-800 font-medium underline decoration-blue-300 underline-offset-2 break-words block text-[14px] text-left"
+                                  className="text-blue-600 hover:text-blue-800 font-medium underline decoration-blue-300 underline-offset-2 break-words block text-[14px] text-justify"
                                 >
                                   {m?.originalContent?.replace("Khóa học: ", "") || "Đi đến khóa học"}
                                 </button>
@@ -314,7 +314,7 @@ const NotificationMenu = ({ open, onClose }) => {
                            } else {
                               return (
                                  <div>
-                                    <div className="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200 italic shadow-sm whitespace-pre-line break-words">
+                                    <div className="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200 italic shadow-sm whitespace-pre-line break-words text-justify">
                                       "{m?.originalContent}"
                                     </div>
                                     
@@ -342,7 +342,7 @@ const NotificationMenu = ({ open, onClose }) => {
                      <div className="flex items-start gap-4 pt-4 border-t border-gray-100">
                         <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">Ghi chú</div>
                         <div className="flex-1">
-                           <div className="text-[14px] font-medium text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                           <div className="text-[14px] font-medium text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-200 text-justify">
                              {warningDetailPopup.metadata.adminNote}
                            </div>
                         </div>
