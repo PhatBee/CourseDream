@@ -367,6 +367,9 @@ const VideoPlayer = ({
     }
   }, [lecture?._id, courseId]);
 
+  // Dùng ref để theo dõi bài giảng hiện tại, tránh bị reset tab vô cớ khi URL param thay đổi (do xoá discussionId)
+  const lastLectureIdRef = useRef(lecture?._id);
+
   useEffect(() => {
     fetchVideoUrl();
 
@@ -377,10 +380,13 @@ const VideoPlayer = ({
 
     if (hasDiscussionLink) {
       setActiveTab("discussion"); // Tự động mở tab Hỏi đáp
-    } else {
-      setActiveTab("overview"); // Mặc định mở Tổng quan
+    } else if (lastLectureIdRef.current !== lecture?._id) {
+      // Chỉ tự động chuyển về overview nếu ĐỔI bài giảng mới
+      setActiveTab("overview");
     }
-  }, [fetchVideoUrl, location.search]);
+    
+    lastLectureIdRef.current = lecture?._id;
+  }, [fetchVideoUrl, location.search, lecture?._id]);
 
   const parsedResources = React.useMemo(() => {
     if (!lecture?.resources || !Array.isArray(lecture.resources)) return [];

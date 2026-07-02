@@ -139,14 +139,14 @@ const NotificationScreen = () => {
 
     const { type, metadata } = item;
 
-    // YÊU CẦU 3: Nếu bài viết bị Xóa (isDeleted) -> Hiện Popup ngay tại màn hình thông báo
-    if (metadata?.isDeleted) {
+    // YÊU CẦU 3: Nếu là cảnh báo (warning) hoặc bài viết bị Xóa (isDeleted) -> Hiện Popup ngay tại màn hình thông báo
+    if (type === "warning" || metadata?.isDeleted) {
       setDeletedPopup(item);
       return;
     }
 
-    // YÊU CẦU 1 & 2: Click vào thông báo dạng Report (warning) hoặc Reply -> Đi đến Cụ thể
-    if (type === "warning" || type === "reply" || type === "reply_discussion") {
+    // YÊU CẦU 1 & 2: Click vào thông báo Reply -> Đi đến Cụ thể
+    if (type === "reply" || type === "reply_discussion") {
       if (
         metadata?.courseSlug &&
         metadata?.lessonId &&
@@ -158,8 +158,6 @@ const NotificationScreen = () => {
           discussionId: metadata.discussionId,
           replyId: metadata.replyId,
         });
-      } else if (metadata?.courseSlug) {
-        navigation.navigate("CourseDetail", { slug: metadata.courseSlug });
       }
       return;
     }
@@ -230,6 +228,15 @@ const NotificationScreen = () => {
         >
           {item.message}
         </Text>
+        {item.type === "warning" && item.metadata?.reportReasonLabel && (
+          <View className="flex-row mt-1.5">
+             <View className="bg-rose-100 px-2 py-0.5 rounded border border-rose-200">
+               <Text className="text-[10px] font-bold text-rose-700 uppercase">
+                 {item.metadata.reportReasonLabel}
+               </Text>
+             </View>
+          </View>
+        )}
       </View>
 
       {!item.read && (
@@ -329,53 +336,109 @@ const NotificationScreen = () => {
 
               {/* Body */}
               <ScrollView className="px-5 py-5 max-h-96">
-                <View className="mb-4">
-                  <Text className="text-[11px] font-bold text-rose-500 uppercase tracking-widest mb-1.5">
-                    Lý do hệ thống tiếp nhận
+                <View className="mb-5 flex-row">
+                  <Text className="w-24 text-[11px] font-bold text-gray-500 uppercase mt-1">
+                    Lý do
                   </Text>
-                  <View className="bg-rose-50 border border-rose-200 rounded-lg p-3">
-                    <Text className="text-sm text-rose-700 font-semibold">
-                      {deletedPopup.metadata?.reportReasonLabel ||
-                        "Vi phạm tiêu chuẩn cộng đồng"}
-                    </Text>
+                  <View className="flex-1">
+                    <View className="bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5 self-start">
+                      <Text className="text-xs text-rose-700 font-bold">
+                        {deletedPopup.metadata?.reportReasonLabel ||
+                          "Vi phạm tiêu chuẩn cộng đồng"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View className="mb-5 flex-row">
+                  <Text className="w-24 text-[11px] font-bold text-gray-500 uppercase mt-1">
+                     {(deletedPopup.metadata?.targetType === "course" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.courseSlug && !deletedPopup.metadata?.discussionId))
+                       ? "Khóa học"
+                       : (deletedPopup.metadata?.targetType === "discussion" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.discussionId && !deletedPopup.metadata?.replyId))
+                       ? "Thảo luận"
+                       : (deletedPopup.metadata?.targetType === "reply" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.replyId))
+                       ? "Bình luận"
+                       : "Nội dung"}
+                  </Text>
+                  <View className="flex-1">
+                     {(() => {
+                        const m = deletedPopup.metadata;
+                        const isCourse = m?.targetType === "course" || (!m?.targetType && m?.courseSlug && !m?.discussionId);
+                        const isDiscussion = m?.targetType === "discussion" || (!m?.targetType && m?.discussionId && !m?.replyId);
+                        const isReply = m?.targetType === "reply" || (!m?.targetType && m?.replyId);
+
+                        if (isCourse) {
+                           return m?.isDeleted ? (
+                             <Text className="text-sm font-bold text-gray-500 line-through">
+                                {m?.originalContent?.replace("Khóa học: ", "") || "Khóa học"}
+                             </Text>
+                           ) : (
+                             <TouchableOpacity onPress={() => {
+                                setDeletedPopup(null);
+                                if (m?.courseSlug) navigation.navigate("CourseDetail", { slug: m.courseSlug });
+                             }}>
+                                <Text className="text-sm font-bold text-blue-600 underline">
+                                   {m?.originalContent?.replace("Khóa học: ", "") || "Đi đến khóa học"}
+                                </Text>
+                             </TouchableOpacity>
+                           );
+                        } else {
+                           return (
+                              <View>
+                                 <View className="bg-gray-100 border border-gray-200 p-3 rounded-lg shadow-sm">
+                                    <Text className="text-gray-700 text-xs italic leading-5">
+                                      "{m?.originalContent || deletedPopup.message}"
+                                    </Text>
+                                 </View>
+                                 {!m?.isDeleted && (
+                                    <TouchableOpacity
+                                      className="mt-2.5 bg-blue-50 border border-blue-100 rounded self-start px-2.5 py-1.5"
+                                      onPress={() => {
+                                         setDeletedPopup(null);
+                                         if (isDiscussion && m?.courseSlug && m?.lessonId && m?.discussionId) {
+                                            navigation.navigate("Learning", { slug: m.courseSlug, lectureId: m.lessonId, discussionId: m.discussionId });
+                                         } else if (isReply && m?.courseSlug && m?.lessonId && m?.discussionId && m?.replyId) {
+                                            navigation.navigate("Learning", { slug: m.courseSlug, lectureId: m.lessonId, discussionId: m.discussionId, replyId: m.replyId });
+                                         }
+                                      }}
+                                    >
+                                       <Text className="text-blue-600 text-xs font-bold">
+                                          {isDiscussion ? "Thảo luận gốc ↗" : "Bình luận gốc ↗"}
+                                       </Text>
+                                    </TouchableOpacity>
+                                 )}
+                              </View>
+                           );
+                        }
+                     })()}
                   </View>
                 </View>
 
                 {deletedPopup.metadata?.adminNote && (
-                  <View className="mb-4">
-                    <Text className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
-                      Ghi chú từ quản trị viên
+                  <View className="mb-3 pt-3 border-t border-gray-100 flex-row">
+                    <Text className="w-24 text-[11px] font-bold text-gray-500 uppercase mt-1">
+                      Ghi chú
                     </Text>
-                    <View className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
-                      <Text className="text-gray-700 font-medium">
+                    <View className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <Text className="text-gray-700 text-xs font-medium">
                         {deletedPopup.metadata.adminNote}
                       </Text>
                     </View>
                   </View>
                 )}
 
-                <View className="mb-2">
-                  <Text className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
-                    Nội dung đã đăng tải
+                {deletedPopup.metadata?.isDeleted && (
+                  <Text className="text-[10px] text-rose-500 font-medium mt-1 text-right italic">
+                    ** Nội dung vi phạm đã bị gỡ bỏ khỏi hệ thống.
                   </Text>
-                  <View className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <Text className="text-gray-700 text-sm leading-5">
-                      {deletedPopup.metadata?.originalContent ||
-                        deletedPopup.message}
-                    </Text>
-                  </View>
-                  <Text className="text-[10px] text-gray-400 font-medium mt-2 text-right italic">
-                    ** Việc vi phạm nhiều lần có thể dẫn tới khóa tài khoản vĩnh
-                    viễn.
-                  </Text>
-                </View>
+                )}
               </ScrollView>
 
               {/* Footer */}
               <View className="px-5 py-4 border-t border-gray-100 bg-gray-50/70 items-end">
                 <TouchableOpacity
                   onPress={() => setDeletedPopup(null)}
-                  className="px-6 py-2.5 bg-gray-900 rounded-lg shadow-md"
+                  className="px-6 py-2 bg-gray-900 rounded-lg shadow-md"
                 >
                   <Text className="text-white text-sm font-bold">Đóng</Text>
                 </TouchableOpacity>

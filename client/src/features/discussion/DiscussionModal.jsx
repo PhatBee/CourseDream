@@ -238,20 +238,58 @@ const DiscussionModal = ({
           el.scrollIntoView({ behavior: "smooth", block: "center" });
           el.classList.add("ring-2", "ring-rose-400", "bg-rose-50"); // Tạo hiệu ứng Highlight chớp nhoáng
           setTimeout(
-            () => el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50"),
+            () => {
+              if (el) el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50");
+            },
             3000,
           );
+          
+          // Xóa param ngay sau khi cuộn xong (Xóa CẢ replyId và discussionId để CourseDiscussion không bị kích hoạt nhánh đánh dấu Thảo luận)
+          const newParams = new URLSearchParams(window.location.search);
+          let changed = false;
+          if (newParams.has("replyId")) {
+             newParams.delete("replyId");
+             changed = true;
+          }
+          if (newParams.has("discussionId")) {
+             newParams.delete("discussionId");
+             changed = true;
+          }
+          if (changed) {
+             navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
+          }
         } else {
           const existsInArray = replies.some(r => String(r._id) === String(replyId));
           if (!existsInArray) {
-            toast.error("Không tìm thấy câu trả lời. Câu trả lời này có thể đã bị xóa.");
-            const basePath = location.pathname.split("/learn/")[0];
-            navigate(`${basePath}/overview`);
+            if (hasMore) {
+              // Câu trả lời có thể ở trang tiếp theo, tự động tải thêm
+              setPage((prev) => {
+                const nextPage = prev + 1;
+                fetchReplies(nextPage);
+                return nextPage;
+              });
+            } else {
+              // Đã tải hết nhưng không thấy -> Xóa param và báo lỗi
+              toast.error("Không tìm thấy bình luận. Bình luận này có thể đã bị xóa.");
+              const newParams = new URLSearchParams(window.location.search);
+              let changed = false;
+              if (newParams.has("replyId")) {
+                 newParams.delete("replyId");
+                 changed = true;
+              }
+              if (newParams.has("discussionId")) {
+                 newParams.delete("discussionId");
+                 changed = true;
+              }
+              if (changed) {
+                 navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
+              }
+            }
           }
         }
       }, 600); // Delay 600ms để đảm bảo rằng các phần tử đã được nạp xong
     }
-  }, [location.search, replies, loading]);
+  }, [location.search, replies, loading, hasMore, navigate, location.pathname]);
 
   return (
     <>

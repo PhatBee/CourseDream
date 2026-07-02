@@ -393,6 +393,7 @@ export const resolveReport = async (id, status, adminNote, action, adminId) => {
         reportReasonLabel: reportReasonLabel, // Gắn nhãn lỗi
         adminNote: adminNote || "", // Lời nhắn admin riêng biệt
         originalContent: originalContent, // Nội dung đầy đủ
+        targetType: report.targetType, // Truyền thêm loại nội dung (course, discussion, reply)
       },
     });
   }
