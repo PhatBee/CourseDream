@@ -20,6 +20,57 @@ const AIChatbox = () => {
     scrollToBottom();
   }, [messages]);
 
+  const typingQueueRef = useRef('');
+  const isTypingRef = useRef(false);
+  const isStreamDoneRef = useRef(false);
+  const pendingCoursesRef = useRef(null);
+  const aiMessageIndexRef = useRef(-1);
+
+  const processTypingQueue = () => {
+    if (typingQueueRef.current.length > 0) {
+      // Đánh máy nhanh: mỗi lần lấy 2 ký tự (chạy theo từ)
+      const chars = typingQueueRef.current.slice(0, 2);
+      typingQueueRef.current = typingQueueRef.current.slice(2);
+
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        const idx = aiMessageIndexRef.current;
+        if (newMsgs[idx]) {
+          newMsgs[idx] = { ...newMsgs[idx], text: newMsgs[idx].text + chars };
+        }
+        return newMsgs;
+      });
+
+      // Lặp lại hiệu ứng
+      requestAnimationFrame(() => {
+        setTimeout(processTypingQueue, 15);
+      });
+    } else {
+      isTypingRef.current = false;
+      // Khi đã đánh máy xong VÀ luồng dữ liệu đã kết thúc -> Hiển thị khóa học
+      if (isStreamDoneRef.current && pendingCoursesRef.current) {
+        const finalCourses = pendingCoursesRef.current; // Trích xuất giá trị ra trước để tránh lỗi closure của React
+        pendingCoursesRef.current = null; // Xóa tạm ngay lập tức
+        
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          const idx = aiMessageIndexRef.current;
+          if (newMsgs[idx] && (!newMsgs[idx].courses || newMsgs[idx].courses.length === 0)) {
+            newMsgs[idx] = { ...newMsgs[idx], courses: finalCourses };
+          }
+          return newMsgs;
+        });
+      }
+    }
+  };
+
+  const startTypingEffect = () => {
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      processTypingQueue();
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
     
@@ -30,6 +81,14 @@ const AIChatbox = () => {
     setIsLoading(true);
 
     const aiMessageIndex = currentMessages.length;
+    aiMessageIndexRef.current = aiMessageIndex;
+    
+    // Reset state cho lượt chat mới
+    typingQueueRef.current = '';
+    isTypingRef.current = false;
+    isStreamDoneRef.current = false;
+    pendingCoursesRef.current = null;
+
     // Tạo một tin nhắn rỗng của AI để chuẩn bị nhận luồng dữ liệu (Stream)
     setMessages(prev => [...prev, { role: 'ai', text: '', courses: [] }]);
 
@@ -46,6 +105,7 @@ const AIChatbox = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let done = false;
+      let buffer = '';
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -54,30 +114,32 @@ const AIChatbox = () => {
         if (value) {
           setIsLoading(false); // Đã bắt đầu nhận luồng, tắt loading
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+          buffer += chunk;
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // Giữ lại phần chưa hoàn chỉnh (Fix rớt mạng/mất chữ)
           
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const dataStr = line.replace('data: ', '').trim();
               if (dataStr === '[DONE]') {
                 done = true;
+                isStreamDoneRef.current = true;
+                // Đảm bảo kích hoạt check courses nếu text đã chạy xong trước đó
+                if (!isTypingRef.current) {
+                  processTypingQueue();
+                }
                 break;
               }
               if (dataStr) {
                 try {
                   const data = JSON.parse(dataStr);
                   if (data.type === 'courses') {
-                    setMessages(prev => {
-                      const newMsgs = [...prev];
-                      newMsgs[aiMessageIndex] = { ...newMsgs[aiMessageIndex], courses: data.courses };
-                      return newMsgs;
-                    });
+                    // Tạm thời cất danh sách khóa học, khoan hiển thị
+                    pendingCoursesRef.current = data.courses;
                   } else if (data.type === 'text') {
-                    setMessages(prev => {
-                      const newMsgs = [...prev];
-                      newMsgs[aiMessageIndex] = { ...newMsgs[aiMessageIndex], text: newMsgs[aiMessageIndex].text + data.text };
-                      return newMsgs;
-                    });
+                    // Nạp chữ vào hàng đợi để đánh máy
+                    typingQueueRef.current += data.text;
+                    startTypingEffect();
                   }
                 } catch (e) {
                   console.error("Error parsing SSE data", e);

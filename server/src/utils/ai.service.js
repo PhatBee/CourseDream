@@ -3,8 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export const generateCourseEmbedding = async (text) => {
   if (!process.env.GEMINI_API_KEY) {
     console.warn("GEMINI_API_KEY is not defined. Skipping embedding generation.");
-    // Return dummy vector of 768 dimensions for now if no key
-    return new Array(768).fill(0.001);
+    // Return dummy vector of 3072 dimensions for now if no key
+    return new Array(3072).fill(0.001);
   }
   
   try {

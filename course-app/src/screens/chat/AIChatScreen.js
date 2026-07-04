@@ -25,6 +25,53 @@ const AIChatScreen = () => {
     }
   };
 
+  const typingQueueRef = useRef('');
+  const isTypingRef = useRef(false);
+  const isStreamDoneRef = useRef(false);
+  const pendingCoursesRef = useRef(null);
+  const aiMessageIndexRef = useRef(-1);
+
+  const processTypingQueue = () => {
+    if (typingQueueRef.current.length > 0) {
+      const chars = typingQueueRef.current.slice(0, 2);
+      typingQueueRef.current = typingQueueRef.current.slice(2);
+
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        const idx = aiMessageIndexRef.current;
+        if (newMsgs[idx]) {
+          newMsgs[idx] = { ...newMsgs[idx], text: newMsgs[idx].text + chars };
+        }
+        return newMsgs;
+      });
+
+      requestAnimationFrame(() => {
+        setTimeout(processTypingQueue, 15);
+      });
+    } else {
+      isTypingRef.current = false;
+      if (isStreamDoneRef.current && pendingCoursesRef.current) {
+        const finalCourses = pendingCoursesRef.current;
+        pendingCoursesRef.current = null;
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          const idx = aiMessageIndexRef.current;
+          if (newMsgs[idx] && (!newMsgs[idx].courses || newMsgs[idx].courses.length === 0)) {
+            newMsgs[idx] = { ...newMsgs[idx], courses: finalCourses };
+          }
+          return newMsgs;
+        });
+      }
+    }
+  };
+
+  const startTypingEffect = () => {
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      processTypingQueue();
+    }
+  };
+
   const handleSend = () => {
     if (!input.trim()) return;
 
@@ -35,6 +82,14 @@ const AIChatScreen = () => {
     setIsLoading(true);
 
     const aiMessageIndex = currentMessages.length;
+    aiMessageIndexRef.current = aiMessageIndex;
+
+    // Reset state
+    typingQueueRef.current = '';
+    isTypingRef.current = false;
+    isStreamDoneRef.current = false;
+    pendingCoursesRef.current = null;
+
     // Chuẩn bị khung message rỗng cho AI
     setMessages(prev => [...prev, { role: 'ai', text: '', courses: [] }]);
 
@@ -50,6 +105,10 @@ const AIChatScreen = () => {
     es.addEventListener('message', (event) => {
       if (event.data === '[DONE]') {
         es.close();
+        isStreamDoneRef.current = true;
+        if (!isTypingRef.current) {
+          processTypingQueue();
+        }
         return;
       }
       
@@ -58,19 +117,10 @@ const AIChatScreen = () => {
         setIsLoading(false); // Đã nhận dữ liệu đầu tiên
 
         if (data.type === 'courses') {
-          setMessages(prev => {
-            const newMsgs = [...prev];
-            newMsgs[aiMessageIndex] = { ...newMsgs[aiMessageIndex], courses: data.courses };
-            return newMsgs;
-          });
-          setTimeout(scrollToBottom, 200);
+          pendingCoursesRef.current = data.courses;
         } else if (data.type === 'text') {
-          setMessages(prev => {
-            const newMsgs = [...prev];
-            newMsgs[aiMessageIndex] = { ...newMsgs[aiMessageIndex], text: newMsgs[aiMessageIndex].text + data.text };
-            return newMsgs;
-          });
-          setTimeout(scrollToBottom, 50);
+          typingQueueRef.current += data.text;
+          startTypingEffect();
         }
       } catch (e) {
         console.error("Lỗi parse SSE", e);
