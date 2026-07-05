@@ -16,6 +16,7 @@ import {
 } from "../../features/course/courseSlice";
 import { fetchMyEnrollments } from "../../features/enrollment/enrollmentSlice";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import Toast from 'react-native-toast-message';
 
 import CourseHeaderMobile from "../../components/course/CourseHeaderMobile";
 import IncludesCardMobile from "../../components/course/IncludesCardMobile";
@@ -53,6 +54,17 @@ const CourseDetailScreen = () => {
   }, [slug, user, dispatch]);
 
   useEffect(() => {
+    if (isError) {
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: message || 'Khóa học này hiện đã bị tạm ẩn',
+      });
+      navigation.goBack();
+    }
+  }, [isError, message, navigation]);
+
+  useEffect(() => {
     if (course?._id) {
       dispatch(fetchReviews({ courseId: course._id }));
     }
@@ -68,19 +80,7 @@ const CourseDetailScreen = () => {
   }
 
   if (isError) {
-    return (
-      <View className="flex-1 justify-center items-center px-4">
-        <Text className="text-red-500 text-center mb-4">
-          {message || "Không thể tải khóa học."}
-        </Text>
-        <TouchableOpacity
-          className="bg-rose-500 px-6 py-3 rounded-lg"
-          onPress={() => navigation.goBack()}
-        >
-          <Text className="text-white font-bold">Quay lại</Text>
-        </TouchableOpacity>
-      </View>
-    );
+    return null; // Trả về null để useEffect điều hướng về trang trước, tránh nhấp nháy màn hình lỗi
   }
 
   const isEnrolled = user && enrolledCourseIds?.includes(String(course?._id));

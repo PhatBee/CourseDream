@@ -11,7 +11,7 @@ import Lecture from './lecture.model.js';
 export const getCourseDetailsBySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const data = await courseService.getCourseDetailsBySlug(slug);
+    const data = await courseService.getCourseDetailsBySlug(slug, req.user);
 
     res.status(200).json({
       success: true,
