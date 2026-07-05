@@ -434,6 +434,7 @@ Dự án được thực hiện bởi **Nhóm 59** trong khuôn khổ Khóa lu�
 | Ong Vĩnh Phát | Full-Stack Developer (Backend, Frontend Web, Mobile App) |
 | Phạm Đăng Khôi | Full-Stack Developer (Backend, Frontend Web, Mobile App) |
 | Huỳnh Thị Mỹ Tâm | Full-Stack Developer (Backend, Frontend Web, Mobile App, Testing & QA) |
+
 Đóng góp, báo lỗi hoặc yêu cầu tính năng mới: vui lòng mở một Issue hoặc gửi Pull Request.
 
 ---
