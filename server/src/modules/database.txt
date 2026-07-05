@@ -1,0 +1,973 @@
+=========================================
+// File: .\auth\auth.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const UserSchema = new mongoose.Schema({
+  name: String,
+  email: {
+    type: String,
+    required: true, // Nên thêm required
+    unique: true,
+    lowercase: true, // Nên thêm để đảm bảo tính duy nhất
+    trim: true      // Nên thêm để loại bỏ khoảng trắng
+  },
+  password: {
+    type: String,
+    required: function () { return this.authProvider === 'local'; },
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google', 'facebook'],
+    default: 'local',
+  },
+  linkedAccounts: [
+    {
+      provider: { type: String, enum: ["google", "facebook"] },
+      providerId: String, // Google user id, Facebook user id
+      email: String,
+    }
+  ],
+  phone: {
+    type: String,
+    default: null,
+    sparse: true, // Cho phép nhiều giá trị null
+    unique: true,
+    index: true,
+  },
+  role: {
+    type: String,
+    enum: ["student", "instructor", "admin"],
+    default: "student"
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  otp: {
+    type: String,
+    default: null,
+  },
+  otpExpires: {
+    type: Date,
+    default: null,
+  },
+  avatar: String,
+  bio: String,
+
+  instructorRejectionReason: {
+    type: String,
+    default: null
+  },
+
+  refreshToken: {
+    type: String,
+    default: null,
+  }
+}, { timestamps: true });
+
+/**
+ * TỰ ĐỘNG XÓA TÀI LIỆU
+ * Tạo một TTL (Time-To-Live) index trên trường `otpExpires`.
+ * MongoDB sẽ tự động xóa tài liệu sau 0 giây (expireAfterSeconds: 0)
+ * khi thời gian ở `otpExpires` đã trôi qua,
+ * NHƯNG CHỈ KHI `isVerified` vẫn là `false`.
+ */
+UserSchema.index(
+  { otpExpires: 1 },
+  {
+    expireAfterSeconds: 0,
+    partialFilterExpression: { isVerified: false }
+  }
+);
+const User = mongoose.model('User', UserSchema);
+export default User;
+
+
+
+=========================================
+// File: .\cart\cart.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const CartItemSchema = new mongoose.Schema({
+    course: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+        required: true
+    },
+    price: {
+        type: Number,
+        required: true
+    },
+    priceDiscount: {
+        type: Number,
+        required: true
+    },
+    addedAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const CartSchema = new mongoose.Schema({
+    student: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        unique: true // Mỗi user chỉ có 1 cart
+    },
+    items: [CartItemSchema],
+    totalItems: {
+        type: Number,
+        default: 0
+    },
+    subtotal: {
+        type: Number,
+        default: 0
+    },
+    totalDiscount: {
+        type: Number,
+        default: 0
+    },
+    total: {
+        type: Number,
+        default: 0
+    }
+}, { timestamps: true });
+
+// Method để tính toán lại tổng tiền
+CartSchema.methods.calculateTotals = function () {
+    this.totalItems = this.items.length;
+    this.subtotal = this.items.reduce((sum, item) => sum + item.price, 0);
+    this.total = this.items.reduce((sum, item) => sum + item.priceDiscount, 0);
+    this.totalDiscount = this.subtotal - this.total;
+    return this;
+};
+
+// Index để tìm course trong cart
+CartSchema.index({ 'items.course': 1 });
+
+export default mongoose.model('Cart', CartSchema);
+
+
+
+=========================================
+// File: .\category\category.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const CategorySchema = new mongoose.Schema({
+  name: String,
+  slug: { type: String, unique: true },
+  icon: { 
+    type: String,
+    default: null 
+  },
+});
+
+CategorySchema.index({ name: 'text' });
+
+export default mongoose.model('Category', CategorySchema);
+
+
+
+=========================================
+// File: .\course\course.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const CourseSchema = new mongoose.Schema({
+  title: String,
+  slug: { type: String, unique: true },
+  thumbnail: String,
+  previewUrl: String,
+  shortDescription: String,
+  topics: [String],
+  includes: [String],
+  audience: [String],
+  description: String,
+  price: { type: Number, default: 0 },
+  priceDiscount: {
+    type: Number,
+    default: function () { return this.price; },
+    validate: {
+      validator: function (val) { return val <= this.price; },
+      message: 'Discount price cannot be higher than original price!'
+    }
+  },
+  level: { type: String, enum: ['beginner', 'intermediate', 'advanced', 'alllevels'] },
+  language: String,
+  requirements: [String],
+  learnOutcomes: [String],
+
+  instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+  sections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Section' }],
+
+  rating: { type: Number, default: 0 },
+  studentsCount: { type: Number, default: 0 },
+  totalLectures: { type: Number, default: 0 },
+  totalHours: { type: Number, default: 0 },
+  totalDurationSeconds: { type: Number, default: 0 },
+
+  /**
+   * Trạng thái nghiệp vụ (theo plan_2.md):
+   * - draft       : Mới tạo, chưa submit
+   * - pending     : Đang chờ admin duyệt
+   * - published   : Đã publish (live)
+   * - unpublished : Giảng viên hoặc Admin ẩn khỏi marketplace, học viên cũ vẫn truy cập được
+   * - hidden      : Ẩn tạm thời (giảng viên tự ẩn, chưa có học viên)
+   * - archived    : Lưu trữ (đã có học viên, không nhận đăng ký mới)
+   * - suspended   : Bị đình chỉ bởi Admin (vi phạm chính sách)
+   * - deleted     : Đã xóa mềm
+   */
+  status: {
+    type: String,
+    enum: ['draft', 'pending', 'published', 'unpublished', 'hidden', 'archived', 'suspended', 'deleted'],
+    default: 'draft'
+  },
+
+  // Version tracking (đồng bộ với plan_2.md)
+  publishedVersionNo: { type: Number, default: null },   // Version live hiện tại
+  currentDraftVersionNo: { type: Number, default: 1 },  // Version draft đang soạn
+
+  version: { type: Number, default: 1 }, // Legacy / compat
+
+  // Admin feedback khi suspend
+  suspendReason: { type: String, default: null },
+
+}, { timestamps: true });
+
+export default mongoose.model('Course', CourseSchema);
+
+
+
+=========================================
+// File: .\course\courseRevision.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const ResourceSchema = new mongoose.Schema({
+  title: String,
+  url: String,
+  type: String
+}, { _id: false });
+
+const LectureSchema = new mongoose.Schema({
+  title: String,
+  videoUrl: String,   // CDN URL hoặc S3 key (không phải signed URL)
+  duration: Number,
+  order: Number,
+  isPreviewFree: Boolean,
+  resources: [ResourceSchema],
+  // ── Quiz data (lưu cùng bài giảng trong revision) ────────────────────────
+  quizzes: [{
+    question:      String,
+    options:       [{ id: String, text: String }],
+    correctAnswer: String, // 'A' | 'B' | 'C' | 'D'
+    hint:          String,
+    timestamp:     Number,
+    isActive:      { type: Boolean, default: true },
+  }],
+}, { _id: false });
+
+const SectionSchema = new mongoose.Schema({
+  title: String,
+  order: Number,
+  lectures: [LectureSchema]
+}, { _id: false });
+
+/**
+ * CourseRevision: Bản nháp / submission của Instructor
+ *
+ * Trạng thái (theo plan_2.md):
+ * - draft              : Đang soạn thảo, chưa gửi duyệt
+ * - pending            : Đã gửi, chờ admin duyệt
+ * - changes_requested  : Admin yêu cầu sửa (Case 3: bị trả về sửa)
+ * - approved           : Đã được duyệt và apply vào Course
+ * - rejected           : Bị từ chối hoàn toàn (nặng hơn changes_requested)
+ * - archived           : Đã lưu trữ (version cũ sau khi publish version mới)
+ */
+const CourseRevisionSchema = new mongoose.Schema({
+  instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', default: null },
+
+  status: {
+    type: String,
+    enum: ['draft', 'pending', 'changes_requested', 'approved', 'rejected', 'archived'],
+    default: 'draft'
+  },
+
+  version: { type: Number, default: 1 },
+
+  data: {
+    title: String,
+    slug: String,
+    thumbnail: String,
+    previewUrl: String,
+    shortDescription: String,
+    description: String,
+    price: Number,
+    priceDiscount: Number,
+    level: String,
+    language: String,
+
+    learnOutcomes: [String],
+    requirements: [String],
+    audience: [String],
+    includes: [String],
+
+    categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+    sections: [SectionSchema]
+  },
+
+  // Feedback từ Admin (dùng cho cả changes_requested và rejected)
+  reviewMessage: String,
+
+  // Lịch sử feedback (để instructor xem được các lần sửa trước)
+  reviewHistory: [{
+    message: String,
+    action: { type: String, enum: ['changes_requested', 'rejected'] },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdAt: { type: Date, default: Date.now }
+  }],
+
+  submittedAt: { type: Date, default: null }, // Thời điểm gửi duyệt
+
+}, { timestamps: true });
+
+export default mongoose.model('CourseRevision', CourseRevisionSchema);
+
+
+
+=========================================
+// File: .\course\lecture.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const ResourceSchema = new mongoose.Schema({
+  title: String,
+  url: String,
+  type: { type: String, enum: ['link', 'file'], default: 'link' }
+}, { _id: false });
+
+// ── Quiz: một lựa chọn (A/B/C/D) ────────────────────────────────────────────
+const QuizOptionSchema = new mongoose.Schema({
+  id:   { type: String, required: true }, // 'A' | 'B' | 'C' | 'D'
+  text: { type: String, required: true },
+}, { _id: false });
+
+// ── Quiz: gắn theo mốc timestamp của video ───────────────────────────────────
+const QuizSchema = new mongoose.Schema({
+  question:      { type: String, required: true },
+  options:       { type: [QuizOptionSchema], default: [] },
+  correctAnswer: { type: String, required: true }, // 'A' | 'B' | 'C' | 'D'
+  hint:          { type: String, default: '' },     // Gợi ý khi trả lời sai
+  explanation:   { type: String, default: '' },     // Giải thích đáp án đúng — chỉ hiển thị trong Review Mode sau khi làm xong
+  timestamp:     { type: Number, required: true, default: 0 }, // Giây trong video
+  isActive:      { type: Boolean, default: true },  // Admin có thể vô hiệu hoá
+}, { timestamps: true });
+
+const LectureSchema = new mongoose.Schema({
+  title: String,
+  videoUrl: String,
+  duration: Number, // seconds
+  section: { type: mongoose.Schema.Types.ObjectId, ref: "Section" },
+  order: Number,
+  isPreviewFree: { type: Boolean, default: false },
+
+  resources: [ResourceSchema],
+
+  // ── Interactive Quiz gắn với mốc thời gian ──────────────────────────────
+  quizzes: { type: [QuizSchema], default: [] },
+}, { timestamps: true });
+
+export default mongoose.model('Lecture', LectureSchema);
+
+
+
+=========================================
+// File: .\course\section.model.js
+=========================================
+import mongoose from 'mongoose';
+import Lecture from './lecture.model.js';
+
+const SectionSchema = new mongoose.Schema({
+  title: String,
+  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
+  lectures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lecture" }],
+  order: Number
+}, { timestamps: true });
+
+export default mongoose.model('Section', SectionSchema);
+
+
+
+=========================================
+// File: .\discussion\discussion.model.js
+=========================================
+import mongoose from "mongoose";
+
+const DiscussionSchema = new mongoose.Schema(
+  {
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+      required: true,
+      index: true,
+    },
+    lectureId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Lecture",
+      index: true,
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    title: { type: String, required: true, trim: true, minlength: 5 },
+    content: { type: String, required: true, trim: true },
+    status: {
+      type: String,
+      enum: ["OPEN", "RESOLVED", "CLOSED"],
+      default: "OPEN",
+      index: true,
+    },
+    bestAnswerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DiscussionReply",
+    },
+    answerCount: { type: Number, default: 0 },
+    upvoteCount: { type: Number, default: 0 },
+    upvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isHidden: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+  },
+  { timestamps: true },
+);
+
+DiscussionSchema.index({ course: 1, status: 1, createdAt: -1 });
+DiscussionSchema.index({ course: 1, upvoteCount: -1 });
+DiscussionSchema.index({ title: "text", content: "text" });
+
+export default mongoose.model("Discussion", DiscussionSchema);
+
+
+
+=========================================
+// File: .\discussion\discussionReply.model.js
+=========================================
+import mongoose from "mongoose";
+
+const DiscussionReplySchema = new mongoose.Schema(
+  {
+    discussionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Discussion",
+      required: true,
+      index: true, // Đánh index để truy vấn replies theo discussion cực nhanh
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    content: {
+      type: String,
+      trim: true,
+      required: true,
+      minlength: 1,
+    },
+    upvoteCount: { type: Number, default: 0 },
+    upvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isBestAnswer: { type: Boolean, default: false },
+    isHidden: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+  },
+  { timestamps: true },
+);
+
+// Tối ưu cho việc lấy danh sách reply phân trang theo thứ tự thời gian tạo
+DiscussionReplySchema.index({ discussionId: 1, createdAt: 1 });
+
+export default mongoose.model("DiscussionReply", DiscussionReplySchema);
+
+
+
+=========================================
+// File: .\enrollment\enrollment.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const EnrollmentSchema = new mongoose.Schema({
+  student: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
+  enrolledAt: { type: Date, default: Date.now },
+  lastViewedAt: { type: Date, default: Date.now}
+}, { timestamps: true });
+
+export default mongoose.model('Enrollment', EnrollmentSchema);
+
+
+
+=========================================
+// File: .\notification\notification.model.js
+=========================================
+// server/src/modules/notification/notification.model.js
+import mongoose from "mongoose";
+
+const NotificationSchema = new mongoose.Schema(
+  {
+    recipient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    type: {
+      type: String,
+      enum: [
+        // CHỈ LƯU NHỮNG GÌ SẼ HIỂN THỊ CHUÔNG:
+        "reminder_learning",
+        "reply",
+        "system",
+        "report",
+        "warning",
+      ],
+      required: true,
+    },
+    title: { type: String, required: true },
+    message: { type: String, required: true },
+    metadata: {
+      courseId: mongoose.Schema.Types.ObjectId,
+      courseSlug: String,
+      lessonId: mongoose.Schema.Types.ObjectId,
+      discussionId: mongoose.Schema.Types.ObjectId,
+      replyId: mongoose.Schema.Types.ObjectId,
+      orderId: mongoose.Schema.Types.ObjectId,
+      reportId: mongoose.Schema.Types.ObjectId,
+      url: String,
+      isDeleted: { type: Boolean, default: false }, // Dùng để đánh dấu thông báo này đã bị xóa (ẩn) nhưng chưa đến lúc xóa hẳn khỏi DB
+
+      // BỔ SUNG THÊM 3 TRƯỜNG NÀY ĐỂ RENDER POPUP ĐẸP HƠN
+      reportReasonLabel: String,
+      adminNote: String,
+      originalContent: String,
+    },
+    read: { type: Boolean, default: false },
+  },
+  { timestamps: true },
+);
+
+NotificationSchema.index({ recipient: 1, createdAt: -1 });
+export default mongoose.model("Notification", NotificationSchema);
+
+
+
+=========================================
+// File: .\payment\payment.model.js
+=========================================
+import mongoose from "mongoose";
+
+const PaymentSchema = new mongoose.Schema({
+  student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }], // Hỗ trợ nhiều khóa học
+  orderId: { type: String, required: true, unique: true, index: true }, // vnp_TxnRef - Mã đơn hàng
+  amount: { type: Number, required: true }, // Số tiền thanh toán
+  method: { type: String, enum: ["vnpay", "momo", "zalopay", "free"], default: "vnpay" },
+  status: {
+    type: String,
+    enum: ["pending", "success", "failed"],
+    default: "pending"
+  }, // 0: pending, 1: success, 2: failed
+
+  // VNPAY specific fields
+  transactionNo: { type: String, index: true }, // vnp_TransactionNo - Mã giao dịch tại VNPAY
+  bankCode: String, // vnp_BankCode
+  bankTranNo: String, // vnp_BankTranNo
+  cardType: String, // vnp_CardType
+  payDate: Date, // vnp_PayDate
+  responseCode: String, // vnp_ResponseCode
+  transactionStatus: String, // vnp_TransactionStatus
+  orderInfo: String, // vnp_OrderInfo - Mô tả đơn hàng
+
+  // Metadata đơn hàng và khuyến mãi
+  originalPrice: { type: Number }, // Tổng tiền gốc
+  discountAmount: { type: Number, default: 0 }, // Số tiền được giảm
+  couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Promotion" }, // Mã giảm giá đã dùng
+
+  // Metadata hệ thống
+
+  ipAddr: String, // IP address của khách hàng
+  locale: { type: String, default: "vn" }, // Ngôn ngữ
+  platform: { type: String, enum: ["web", "mobile"], default: "web" }, // Platform
+}, { timestamps: true });
+
+export default mongoose.model("Payment", PaymentSchema);
+
+
+
+=========================================
+// File: .\progress\progress.model.js
+=========================================
+import mongoose from 'mongoose';
+
+/**
+ * VideoWatchTime — lưu last_watched_time cho từng bài giảng
+ */
+const VideoWatchTimeSchema = new mongoose.Schema({
+  lecture: { type: mongoose.Schema.Types.ObjectId, ref: 'Lecture', required: true },
+  watchedSeconds: { type: Number, default: 0 },  // Thời gian đã xem (giây)
+  updatedAt: { type: Date, default: Date.now },
+}, { _id: false });
+
+/**
+ * CompletedQuiz — lưu quiz đã trả lời của học viên (bao gồm lịch sử)
+ */
+const CompletedQuizSchema = new mongoose.Schema({
+  lectureId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lecture', required: true },
+  quizIndex: { type: Number, required: true },        // vị trí trong lecture.quizzes[]
+  selectedAnswer: { type: String, default: '' },       // Đáp án đã chọn (A/B/C/D)
+  isCorrect: { type: Boolean, default: true },         // Kết quả (backward-compat: mặc định true)
+  attempts: { type: Number, default: 1 },              // Số lần thử
+  answeredAt: { type: Date, default: Date.now },
+}, { _id: false });
+
+const ProgressSchema = new mongoose.Schema({
+  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
+  student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  completedLectures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lecture" }],
+  percentage: { type: Number, default: 0 },
+  /** Map lưu thời gian xem của từng bài giảng */
+  watchTimes: [VideoWatchTimeSchema],
+  /** Danh sách quiz đã trả lời đúng */
+  completedQuizzes: { type: [CompletedQuizSchema], default: [] },
+}, { timestamps: true });
+
+ProgressSchema.index({ student: 1, course: 1 }, { unique: true });
+
+export default mongoose.model('Progress', ProgressSchema);
+
+
+
+=========================================
+// File: .\promotion\promotion.model.js
+=========================================
+import mongoose from "mongoose";
+import { promotionPreSave } from "./promotion.validation.js";
+
+const promotionSchema = new mongoose.Schema(
+  {
+    code: { type: String, required: true, unique: true, uppercase: true, trim: true },
+    description: { type: String },
+    discountType: { type: String, enum: ["percent", "fixed"], required: true },
+    discountValue: { type: Number, required: true, min: 0 },
+    appliesTo: { type: String, enum: ["all", "category", "course", "category+course"], required: true },
+    categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }], // mảng category
+    courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }], // mảng course
+    minPrice: { type: Number, default: 0, min: 0 },
+    maxUsage: { type: Number, default: 0 }, // 0 = không giới hạn
+    maxUsagePerUser: { type: Number, default: 0 }, // 0 = không giới hạn
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    totalUsed: { type: Number, default: 0 },
+    usersUsed: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        count: { type: Number, default: 0 },
+      },
+    ],
+    isActive: { type: Boolean, default: true }, // trạng thái hoạt động
+  },
+  { timestamps: true }
+);
+
+// Thêm index cho usersUsed.user để query nhanh
+promotionSchema.index({ "usersUsed.user": 1 });
+
+promotionSchema.pre("save", promotionPreSave);
+
+export default mongoose.model("Promotion", promotionSchema);
+
+
+
+=========================================
+// File: .\report\report.model.js
+=========================================
+import mongoose from "mongoose";
+
+const ReportSchema = new mongoose.Schema(
+  {
+    reporter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    // Generic Target (Khắc phục việc fix cứng course, discussion, reply)
+    targetId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    targetType: {
+      type: String,
+      enum: ["course", "discussion", "reply"],
+      required: true,
+    },
+    reportedUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Người tạo nội dung bị report
+
+    // Danh mục lỗi + Mô tả chi tiết
+    reason: {
+      type: String,
+      enum: [
+        "SPAM",
+        "INAPPROPRIATE_CONTENT",
+        "COPYRIGHT_VIOLATION",
+        "FRAUD",
+        "HARASSMENT",
+        "OTHER",
+      ],
+      required: true,
+    },
+    description: { type: String, trim: true }, // Chi tiết user nhập thêm
+
+    status: {
+      type: String,
+      enum: ["pending", "reviewing", "resolved", "rejected"],
+      default: "pending",
+    },
+    priority: { type: String, enum: ["low", "medium", "high"], default: "low" }, // Thêm priority
+
+    resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    resolvedAt: Date,
+    adminNote: String,
+    actions: [
+      {
+        /* ... (giữ nguyên của bạn) ... */
+      },
+    ],
+  },
+  { timestamps: true },
+);
+
+// Ràng buộc quan trọng: 1 người chỉ được mở 1 report pending cho cùng 1 đối tượng
+ReportSchema.index(
+  { reporter: 1, targetId: 1, targetType: 1 },
+  { unique: true, partialFilterExpression: { status: "pending" } },
+);
+
+export default mongoose.model("Report", ReportSchema);
+
+
+
+=========================================
+// File: .\review\review.model.js
+=========================================
+import mongoose from "mongoose";
+
+const reviewSchema = new mongoose.Schema(
+  {
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+      required: true,
+    },
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, trim: true, maxlength: 1000 }, // Optional
+
+    isEdited: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+    isHidden: { type: Boolean, default: false },
+
+    likedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    likesCount: { type: Number, default: 0 },
+
+    instructorReply: {
+      comment: { type: String, trim: true },
+      repliedAt: { type: Date },
+    },
+  },
+  { timestamps: true },
+);
+
+// Hook chống lệch dữ liệu (Data Drift) cho likesCount
+reviewSchema.pre("save", function (next) {
+  if (this.likedUsers) {
+    this.likesCount = this.likedUsers.length;
+  }
+  next();
+});
+
+reviewSchema.index(
+  { student: 1, course: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } },
+);
+
+// Index phục vụ Count (đếm tổng số review)
+reviewSchema.index({ course: 1, isDeleted: 1, isHidden: 1 });
+// Index phục vụ Find & Sort
+reviewSchema.index({ course: 1, isDeleted: 1, isHidden: 1, createdAt: -1 });
+
+reviewSchema.index({ course: 1, rating: -1 });
+reviewSchema.index({ course: 1, likesCount: -1 });
+
+export default mongoose.model("Review", reviewSchema);
+
+
+
+=========================================
+// File: .\user\instructorApplication.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const InstructorApplicationSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    bio: String,
+    experience: String,
+    sampleVideoUrl: String,
+    intendedTopics: [String],
+    status: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "pending"
+    },
+    rejectionReason: { type: String, default: "" }
+}, { timestamps: true });
+
+const InstructorApplication = mongoose.model("InstructorApplication", InstructorApplicationSchema);
+export default InstructorApplication;
+
+
+
+
+=========================================
+// File: .\user\InstructorProfile.model.js
+=========================================
+import mongoose from "mongoose";
+import review from "../review/review.model.js";
+import enrollment from "../enrollment/enrollment.model.js";
+import course from "../course/course.model.js";
+
+const InstructorProfileSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        unique: true
+    },
+
+    // UI Hiển thị trên trang Instructor
+    headline: { type: String },              // Ví dụ: "Senior Backend Developer"
+
+    // Từ hồ sơ apply
+    experience: { type: String },
+    education: { type: String },
+
+    // Mạng xã hội
+    socialLinks: {
+        website: String,
+        facebook: String,
+        youtube: String,
+        linkedin: String,
+        twitter: String
+    },
+
+    // Thông tin thanh toán (Nhận tiền)
+    payout: {
+        bankName: String,
+        bankAccount: String,
+        paypalEmail: String,
+        stripeId: String
+    },
+
+    // Thống kê
+    totalStudents: { type: Number, default: 0 },
+    totalReviews: { type: Number, default: 0 },
+    rating: { type: Number, default: 0 }, // trung bình ví dụ 4.5
+
+    // Lĩnh vực giảng dạy
+    specialties: [String],
+
+}, { timestamps: true });
+
+// Tính toán thống kê
+InstructorProfileSchema.pre('save', async function (next) {
+    const instructor = this;
+
+    try {
+        // 1. Tìm tất cả khóa học của giảng viên này
+        // Cần đảm bảo instructor.user có giá trị. 
+        if (!instructor.user) return next();
+
+        // Sử dụng mongoose.model để tránh circular dependency nếu có
+        const Course = mongoose.model('Course');
+        const Enrollment = mongoose.model('Enrollment');
+        const Review = mongoose.model('Review');
+
+        const courses = await Course.find({ instructor: instructor.user }).select('_id');
+        const courseIds = courses.map(c => c._id);
+
+        if (courseIds.length === 0) {
+            instructor.totalStudents = 0;
+            instructor.totalReviews = 0;
+            instructor.rating = 0;
+            return next();
+        }
+
+        // 2. Tính totalStudents (Số lượng enrollment cho các khóa học của giảng viên)
+        const totalEnrollments = await Enrollment.countDocuments({ course: { $in: courseIds } });
+        instructor.totalStudents = totalEnrollments;
+
+        // 3. Tính totalReviews và rating trung bình từ tất cả các khóa học
+        const stats = await Review.aggregate([
+            { $match: { course: { $in: courseIds } } },
+            {
+                $group: {
+                    _id: null,
+                    totalReviews: { $sum: 1 },
+                    avgRating: { $avg: '$rating' }
+                }
+            }
+        ]);
+
+        instructor.totalReviews = stats.length > 0 ? stats[0].totalReviews : 0;
+        instructor.rating = stats.length > 0 ? Math.round(stats[0].avgRating * 10) / 10 : 0;
+
+        next();
+    } catch (error) {
+        // console.error("Error calculating instructor stats:", error);
+        next(error);
+    }
+});
+
+export default mongoose.model("InstructorProfile", InstructorProfileSchema);
+
+
+
+=========================================
+// File: .\wishlist\wishlist.model.js
+=========================================
+import mongoose from 'mongoose';
+
+const WishlistSchema = new mongoose.Schema({
+  student: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }]
+}, { timestamps: true });
+
+export default mongoose.model('Wishlist', WishlistSchema);
+
+
+
