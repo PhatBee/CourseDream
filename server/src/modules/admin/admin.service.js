@@ -10,6 +10,7 @@ import Section from '../course/section.model.js';
 import InstructorApplication from '../user/instructorApplication.model.js';
 import InstructorProfile from '../user/InstructorProfile.model.js';
 import notificationService from "../notification/notification.service.js";
+import { generateCourseEmbedding } from '../../utils/ai.service.js';
 
 export const getPendingApplications = async () => {
   const applications = await User.find({
@@ -350,16 +351,16 @@ export const getPendingRevisions = async (query) => {
  * Sử dụng MongoDB Aggregation Pipeline để join Payment & Enrollment
  */
 export const getAllCoursesForAdmin = async (query) => {
-  const page    = parseInt(query.page)  || 1;
-  const limit   = parseInt(query.limit) || 10;
-  const skip    = (page - 1) * limit;
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-  const statusFilter = query.status  || '';
-  const search       = query.search  || '';
-  const sortBy       = query.sortBy  || 'createdAt';   // revenue | students | price | createdAt
-  const sortOrder    = query.sortOrder === 'asc' ? 1 : -1;
-  const minPrice     = query.minPrice != null ? Number(query.minPrice) : null;
-  const maxPrice     = query.maxPrice != null ? Number(query.maxPrice) : null;
+  const statusFilter = query.status || '';
+  const search = query.search || '';
+  const sortBy = query.sortBy || 'createdAt';   // revenue | students | price | createdAt
+  const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+  const minPrice = query.minPrice != null ? Number(query.minPrice) : null;
+  const maxPrice = query.maxPrice != null ? Number(query.maxPrice) : null;
 
   // ---------- Build $match ----------
   const matchStage = {};
@@ -377,10 +378,10 @@ export const getAllCoursesForAdmin = async (query) => {
 
   // ---------- Sort field mapping ----------
   const sortFieldMap = {
-    revenue:    'totalRevenue',
-    students:   'totalStudents',
-    price:      'price',
-    createdAt:  'createdAt',
+    revenue: 'totalRevenue',
+    students: 'totalStudents',
+    price: 'price',
+    createdAt: 'createdAt',
   };
   const sortField = sortFieldMap[sortBy] || 'createdAt';
 
@@ -392,7 +393,7 @@ export const getAllCoursesForAdmin = async (query) => {
     {
       $lookup: {
         from: 'payments',
-        let:  { courseId: '$_id' },
+        let: { courseId: '$_id' },
         pipeline: [
           {
             $match: {
@@ -419,7 +420,7 @@ export const getAllCoursesForAdmin = async (query) => {
             $group: {
               _id: null,
               totalRevenue: { $sum: '$perCourseRevenue' },
-              totalOrders:  { $sum: 1 }
+              totalOrders: { $sum: 1 }
             }
           }
         ],
@@ -450,16 +451,16 @@ export const getAllCoursesForAdmin = async (query) => {
     // Thêm các trường computed
     {
       $addFields: {
-        totalRevenue:  { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalRevenue', 0] }, 0] },
-        totalOrders:   { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalOrders',  0] }, 0] },
+        totalRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalRevenue', 0] }, 0] },
+        totalOrders: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalOrders', 0] }, 0] },
         totalStudents: { $size: '$enrollmentDocs' },
-        instructor:    {
+        instructor: {
           $let: {
             vars: { inst: { $arrayElemAt: ['$instructorDoc', 0] } },
             in: {
-              _id:    '$$inst._id',
-              name:   '$$inst.name',
-              email:  '$$inst.email',
+              _id: '$$inst._id',
+              name: '$$inst.name',
+              email: '$$inst.email',
               avatar: '$$inst.avatar'
             }
           }
@@ -470,9 +471,9 @@ export const getAllCoursesForAdmin = async (query) => {
     // Bỏ các mảng raw không cần thiết
     {
       $project: {
-        paymentStats:    0,
-        enrollmentDocs:  0,
-        instructorDoc:   0,
+        paymentStats: 0,
+        enrollmentDocs: 0,
+        instructorDoc: 0,
       }
     },
 
@@ -495,7 +496,7 @@ export const getAllCoursesForAdmin = async (query) => {
 
   const [result] = await Course.aggregate(pipeline);
   const courses = result?.data || [];
-  const total   = result?.totalCount?.[0]?.count || 0;
+  const total = result?.totalCount?.[0]?.count || 0;
 
   // ---------- Stats theo status (tất cả courses, không filter) ----------
   const statusCounts = await Course.aggregate([
@@ -596,12 +597,12 @@ export const approveRevision = async (revisionId, adminId) => {
           resources: lecData.resources || [],
           // ── Copy quiz data từ revision ──────────────────────────────────────
           quizzes: (lecData.quizzes || []).map(q => ({
-            question:      q.question,
-            options:       q.options || [],
+            question: q.question,
+            options: q.options || [],
             correctAnswer: q.correctAnswer,
-            hint:          q.hint || '',
-            timestamp:     Number(q.timestamp) || 0,
-            isActive:      q.isActive !== false,
+            hint: q.hint || '',
+            timestamp: Number(q.timestamp) || 0,
+            isActive: q.isActive !== false,
           })),
         });
         lectureIds.push(newLecture._id);
@@ -705,12 +706,12 @@ export const approveRevision = async (revisionId, adminId) => {
           resources: lecData.resources || [],
           // ── Copy quiz data từ revision ──────────────────────────────────────
           quizzes: (lecData.quizzes || []).map(q => ({
-            question:      q.question,
-            options:       q.options || [],
+            question: q.question,
+            options: q.options || [],
             correctAnswer: q.correctAnswer,
-            hint:          q.hint || '',
-            timestamp:     Number(q.timestamp) || 0,
-            isActive:      q.isActive !== false,
+            hint: q.hint || '',
+            timestamp: Number(q.timestamp) || 0,
+            isActive: q.isActive !== false,
           })),
         });
         lectureIds.push(newLecture._id);
@@ -767,6 +768,18 @@ export const approveRevision = async (revisionId, adminId) => {
     resultCourse = liveCourse;
   }
 
+  // --- GENERATE EMBEDDING ---
+  try {
+    const textToEmbed = `${resultCourse.title}. ${resultCourse.shortDescription}. ${resultCourse.description}`;
+    const embedding = await generateCourseEmbedding(textToEmbed);
+    if (embedding && embedding.length > 0) {
+      resultCourse.embedding = embedding;
+      await resultCourse.save();
+    }
+  } catch (error) {
+    console.error("Error generating embedding during approval:", error);
+  }
+
   // ✅ Fix Bug 3: Cleanup - Archive tất cả revision còn lại của cùng instructor/course
   // Tránh tình trạng duplicate revisions cũ vẫn hiển thị changes_requested/rejected
   const cleanupFilter = {
@@ -789,8 +802,11 @@ export const approveRevision = async (revisionId, adminId) => {
     type: "system",
     title: "Khóa học đã được duyệt",
     message: `Khóa học "${revision.data.title}" của bạn đã được admin duyệt.`,
-    relatedId: revision._id,
-    courseSlug: revision.data.slug || undefined
+    metadata: {
+      courseId: revision._id,
+      courseSlug: revision.data.slug || undefined,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -830,8 +846,11 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
     type: "system",
     title: "Khóa học bị từ chối",
     message: `Khóa học "${revision.data.title}" của bạn đã bị từ chối. Lý do: ${reviewMessage}`,
-    relatedId: revision._id,
-    courseSlug: revision.data.slug || undefined
+    metadata: {
+      courseId: revision._id,
+      courseSlug: revision.data.slug || undefined,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -886,8 +905,11 @@ export const requestRevisionChanges = async (revisionId, reviewMessage, adminId)
     type: 'system',
     title: '⚠️ Khóa học cần chỉnh sửa',
     message: `Khóa học "${revision.data.title}" cần chỉnh sửa trước khi được duyệt. Phản hồi: ${reviewMessage}`,
-    relatedId: revision._id,
-    courseSlug: revision.data.slug || undefined
+    metadata: {
+      courseId: revision._id,
+      courseSlug: revision.data.slug || undefined,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -926,8 +948,11 @@ export const unpublishCourse = async (courseId, adminId, reason = '') => {
     type: 'system',
     title: 'Khóa học đã bị ẩn khỏi marketplace',
     message: `Khóa học "${course.title}" đã bị admin unpublish.${reason ? ` Lý do: ${reason}` : ''} Học viên hiện tại vẫn có thể truy cập.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -973,8 +998,11 @@ export const suspendCourse = async (courseId, adminId, reason) => {
     type: 'system',
     title: '🚫 Khóa học bị đình chỉ vi phạm chính sách',
     message: `Khóa học "${course.title}" đã bị đình chỉ. Lý do: ${reason}. Vui lòng liên hệ Admin để được hỗ trợ.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return {
@@ -1010,8 +1038,11 @@ export const restoreSuspendedCourse = async (courseId, adminId) => {
     type: 'system',
     title: 'Khóa học đã được khôi phục',
     message: `Khóa học "${course.title}" đã được admin khôi phục về trạng thái Unpublished. Bạn có thể liên hệ Admin để publish lại.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return { message: 'Đã khôi phục khóa học về trạng thái Unpublished.' };
@@ -1045,9 +1076,12 @@ export const republishCourse = async (courseId, adminId) => {
     sender: adminId,
     type: 'system',
     title: '✅ Khóa học đã được publish lại',
-    message: `Khóa học "${course.title}" đã được admin publish trở lại marketplace.`,
-    relatedId: course._id,
-    courseSlug: course.slug
+    message: `Khóa học "${course.title}" đã được admin hiển thị lại trên marketplace. Học viên mới có thể tiếp tục đăng ký.`,
+    metadata: {
+      courseId: course._id,
+      courseSlug: course.slug,
+      url: '/profile/instructor/courses'
+    }
   });
 
   return { message: 'Đã publish lại khóa học thành công.' };
@@ -1260,17 +1294,17 @@ export const getQuizzesPreview = async (courseId) => {
       totalQuizzes += activeQuizzes.length;
 
       return {
-        lectureId:    lecture._id,
+        lectureId: lecture._id,
         lectureTitle: lecture.title,
-        duration:     lecture.duration,
-        quizzes:      activeQuizzes.map(q => ({
-          _id:           q._id,
-          question:      q.question,
-          options:       q.options,
+        duration: lecture.duration,
+        quizzes: activeQuizzes.map(q => ({
+          _id: q._id,
+          question: q.question,
+          options: q.options,
           correctAnswer: q.correctAnswer, // Admin được phép xem đáp án đúng
-          hint:          q.hint,
-          timestamp:     q.timestamp,
-          isActive:      q.isActive,
+          hint: q.hint,
+          timestamp: q.timestamp,
+          isActive: q.isActive,
         })),
       };
     }),

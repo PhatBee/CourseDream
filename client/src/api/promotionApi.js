@@ -31,3 +31,8 @@ export const getAvailablePromotions = async (courseIds) => {
   });
   return res.data;
 };
+
+export const commitPromotion = async ({ promotionId }) => {
+  const res = await axiosClient.post("/promotions/commit", { promotionId });
+  return res.data;
+};

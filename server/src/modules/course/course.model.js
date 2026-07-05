@@ -60,6 +60,8 @@ const CourseSchema = new mongoose.Schema({
   // Admin feedback khi suspend
   suspendReason: { type: String, default: null },
 
+  embedding: { type: [Number], select: false },
+
 }, { timestamps: true });
 
 export default mongoose.model('Course', CourseSchema);
