@@ -134,7 +134,7 @@ export const resendOTP = async (req, res, next) => {
 };
 
 /**
- * @desc    Đăng nhập người dùng
+ * @desc    Đăng nhập người dùng (Student/Instructor) - chặn Admin
  * @route   POST /api/auth/login
  * @access  Public
  */
@@ -142,7 +142,7 @@ export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        const { user, accessToken, refreshToken } = await authService.login({ email, password });
+        const { user, accessToken, refreshToken } = await authService.loginUser({ email, password });
 
         setCookies(res, accessToken, refreshToken);
 

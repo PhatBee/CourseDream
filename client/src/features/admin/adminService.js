@@ -1,5 +1,16 @@
 import { adminApi } from "../../api/adminApi";
 
+/**
+ * Đăng nhập dành riêng cho Admin
+ * @param {object} userData - { email, password }
+ */
+const adminLogin = async (userData) => {
+    const response = await adminApi.adminLogin(userData);
+    if (response.data) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    return response.data;
+};
 
 const getPendingCourses = async (params) => {
     const response = await adminApi.getPendingCourses(params);
@@ -36,6 +47,7 @@ const reviewInstructorApplication = async (id, data) => {
 };
 
 export const adminService = {
+    adminLogin,
     getPendingCourses,
     getPendingCourseDetail,
     approveCourse,

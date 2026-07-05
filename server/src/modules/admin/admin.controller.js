@@ -1,6 +1,45 @@
 // src/modules/admin/admin.controller.js
 import * as adminService from './admin.service.js';
 
+/**
+ * Helper: Đặt httpOnly cookies cho access & refresh token
+ */
+const setCookies = (res, accessToken, refreshToken) => {
+    res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: 14 * 24 * 60 * 60 * 1000,
+    });
+};
+
+/**
+ * @desc    Đăng nhập dành riêng cho Admin (chỉ local auth)
+ * @route   POST /api/admin/login
+ * @access  Public
+ */
+export const adminLogin = async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
+        const { user, accessToken, refreshToken } = await adminService.loginAdmin({ email, password });
+        setCookies(res, accessToken, refreshToken);
+        res.status(200).json({
+            message: 'Đăng nhập quản trị thành công!',
+            user,
+            accessToken,
+            refreshToken,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getPendingApplications = async (req, res, next) => {
   try {
     const applications = await adminService.getPendingApplications();

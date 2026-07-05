@@ -4,6 +4,13 @@ import { setToken, setUser, removeToken, removeUser, saveRefreshToken, getRefres
 const login = async (userData) => {
     const response = await axiosClient.post("/auth/login", userData);
     if (response.data) {
+        // [BẢO MẬT] Chặn tài khoản Admin đăng nhập vào app student/instructor
+        // (Backend đã chặn ở service layer, đây là lớp bảo vệ thứ 2 phía client)
+        if (response.data.user?.role === 'admin') {
+            const error = new Error('Tài khoản không có quyền truy cập vùng này.');
+            error.response = { data: { message: 'Tài khoản không có quyền truy cập vùng này.' } };
+            throw error;
+        }
         // Lưu Token và User vào thiết bị
         await setToken(response.data.accessToken);
         await saveRefreshToken(response.data.refreshToken);

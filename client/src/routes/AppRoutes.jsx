@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
+import AdminLogin from "../pages/AdminLogin";
 import Register from "../pages/Register";
 import VerifyOTP from "../pages/VerifyOTP";
 import ForgotPassword from "../pages/ForgotPassword";
@@ -168,6 +169,7 @@ export default function AppRoutes() {
 
         {/* No header Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login-ptk2026" element={<AdminLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

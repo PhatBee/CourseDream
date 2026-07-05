@@ -4,6 +4,13 @@ import { adminApi } from '../../api/adminApi';
 import toast from 'react-hot-toast';
 
 const initialState = {
+    // === AUTH ADMIN ===
+    adminAuthUser: null,
+    adminAuthLoading: false,
+    adminAuthError: false,
+    adminAuthSuccess: false,
+    adminAuthMessage: '',
+    // === DASHBOARD & ANALYTICS ===
     stats: null,
     revenueData: null,
     isLoading: false,
@@ -32,6 +39,22 @@ const initialState = {
     },
     adminCoursesLoading: false,
 };
+
+// === THUNK: Admin Login ===
+export const adminLogin = createAsyncThunk(
+    'admin/adminLogin',
+    async (userData, thunkAPI) => {
+        try {
+            return await adminService.adminLogin(userData);
+        } catch (error) {
+            const message =
+                (error.response && error.response.data && error.response.data.message) ||
+                error.message ||
+                error.toString();
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
 
 // 1. Thunk: Lấy số liệu tổng quan
 export const fetchDashboardStats = createAsyncThunk(
@@ -226,10 +249,34 @@ const adminSlice = createSlice({
             state.isLoading = false;
             state.isError = false;
             state.message = '';
-        }
+        },
+        resetAdminAuth: (state) => {
+            state.adminAuthLoading = false;
+            state.adminAuthError = false;
+            state.adminAuthSuccess = false;
+            state.adminAuthMessage = '';
+        },
     },
     extraReducers: (builder) => {
         builder
+            // === ADMIN LOGIN ===
+            .addCase(adminLogin.pending, (state) => {
+                state.adminAuthLoading = true;
+                state.adminAuthError = false;
+                state.adminAuthSuccess = false;
+                state.adminAuthMessage = '';
+            })
+            .addCase(adminLogin.fulfilled, (state, action) => {
+                state.adminAuthLoading = false;
+                state.adminAuthSuccess = true;
+                state.adminAuthUser = action.payload.user;
+            })
+            .addCase(adminLogin.rejected, (state, action) => {
+                state.adminAuthLoading = false;
+                state.adminAuthError = true;
+                state.adminAuthMessage = action.payload;
+                state.adminAuthUser = null;
+            })
             // Dashboard Stats
             .addCase(fetchDashboardStats.pending, (state) => {
                 state.isLoading = true;
@@ -401,5 +448,5 @@ const adminSlice = createSlice({
     },
 });
 
-export const { resetAdminState } = adminSlice.actions;
+export const { resetAdminState, resetAdminAuth } = adminSlice.actions;
 export default adminSlice.reducer;

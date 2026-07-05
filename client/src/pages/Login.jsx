@@ -61,13 +61,18 @@ const Login = () => {
       dispatch(reset());
     }
     if (isSuccess || user) {
+      // [BẢO MẬT - CLIENT GUARD] Chặn admin ngay tại đây nếu lọt qua
+      if (user?.role === "admin") {
+        toast.error("Tài khoản không có quyền truy cập vùng này.");
+        dispatch(reset());
+        return;
+      }
+
       if (isSuccess) toast.success("Đăng nhập thành công");
 
       const callbackUrl = searchParams.get("callbackUrl");
       if (callbackUrl) {
         navigate(callbackUrl);
-      } else if (user?.role === "admin") {
-        navigate("/admin/dashboard");
       } else if (user?.role === "instructor") {
         navigate("/instructor/dashboard");
       } else {
