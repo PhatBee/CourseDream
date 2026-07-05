@@ -22,7 +22,7 @@ const AIChatbox = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    
+
     const userText = input.trim();
     const currentMessages = [...messages, { role: 'user', text: userText }];
     setMessages(currentMessages);
@@ -35,14 +35,15 @@ const AIChatbox = () => {
 
     try {
       // Dùng fetch thay vì axios để xử lý Stream
-      const response = await fetch('http://localhost:5000/api/chatbot/ask', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${apiUrl}/chatbot/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userText, history: currentMessages })
       });
 
       if (!response.body) throw new Error('No readable stream');
-      
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let done = false;
@@ -50,12 +51,12 @@ const AIChatbox = () => {
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
-        
+
         if (value) {
           setIsLoading(false); // Đã bắt đầu nhận luồng, tắt loading
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split('\n');
-          
+
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const dataStr = line.replace('data: ', '').trim();
@@ -101,7 +102,7 @@ const AIChatbox = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {!isOpen && (
-        <button 
+        <button
           onClick={() => setIsOpen(true)}
           className="bg-rose-600 hover:bg-rose-700 text-white p-4 rounded-full shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center"
         >
@@ -127,21 +128,20 @@ const AIChatbox = () => {
             {messages.map((msg, index) => (
               <div key={index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 {msg.text && (
-                  <div className={`px-4 py-2 rounded-2xl max-w-[85%] ${
-                    msg.role === 'user' 
-                      ? 'bg-rose-600 text-white rounded-br-none' 
+                  <div className={`px-4 py-2 rounded-2xl max-w-[85%] ${msg.role === 'user'
+                      ? 'bg-rose-600 text-white rounded-br-none'
                       : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
-                  }`}>
+                    }`}>
                     <div className={`text-[15px] leading-relaxed text-justify ${msg.role === 'ai' ? 'markdown-chat' : 'whitespace-pre-wrap'}`}>
                       {msg.role === 'ai' ? (
                         <ReactMarkdown
                           components={{
-                            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                            strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />,
-                            em: ({node, ...props}) => <em className="italic" {...props} />,
-                            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 ml-1" {...props} />,
-                            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2 ml-1" {...props} />,
-                            li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                            strong: ({ node, ...props }) => <strong className="font-bold text-gray-900" {...props} />,
+                            em: ({ node, ...props }) => <em className="italic" {...props} />,
+                            ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-2 ml-1" {...props} />,
+                            ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-2 ml-1" {...props} />,
+                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
                           }}
                         >
                           {msg.text}
@@ -152,7 +152,7 @@ const AIChatbox = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Courses Card */}
                 {msg.courses && msg.courses.length > 0 && (
                   <div className="mt-2 flex flex-col gap-2 w-full max-w-[90%]">
@@ -169,16 +169,16 @@ const AIChatbox = () => {
                 )}
               </div>
             ))}
-            
+
             {isLoading && (
               <div className="flex items-start">
-                 <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm">
-                   <div className="flex gap-1">
-                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
-                   </div>
-                 </div>
+                <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                  </div>
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -186,15 +186,15 @@ const AIChatbox = () => {
 
           {/* Input Area */}
           <div className="p-3 bg-white border-t border-gray-100 flex gap-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Hỏi trợ lý tư vấn khóa học..."
               className="flex-1 bg-gray-100 border-transparent focus:bg-white focus:border-rose-500 border rounded-full px-4 py-2 text-sm outline-none transition"
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
               className="bg-rose-600 text-white p-2 w-10 h-10 flex items-center justify-center rounded-full hover:bg-rose-700 disabled:opacity-50 transition"
