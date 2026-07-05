@@ -440,5 +440,5 @@ Dự án được thực hiện bởi **Nhóm 59** trong khuôn khổ Khóa lu�
 
 ### 📄 Giấy Phép
 
-Dự án này được phát triển cho mục đích học thuật — Tiểu Luận Chuyên Ngành.  
-Bản quyền © 2025 **DreamCourse — Nhóm 59**. Toàn quyền bảo lưu.
+Dự án này được phát triển cho mục đích học thuật — Khóa luận tốt nghiệp.  
+Bản quyền © 2026 **DreamCourse — Nhóm 59**. Toàn quyền bảo lưu.
