@@ -52,6 +52,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { io } from "socket.io-client";
 import { addRealtimeNotification } from "../features/notification/notificationSlice";
+import ApiErrorWatcher from "../components/common/ApiErrorWatcher";
+import ErrorPage from "../pages/ErrorPage";
 
 export default function AppRoutes() {
   const { user } = useSelector((state) => state.auth);
@@ -90,7 +92,8 @@ export default function AppRoutes() {
 
   return (
     <BrowserRouter>
-      <Routes>
+      <ApiErrorWatcher>
+        <Routes>
         {/* ===================== PUBLIC + USER AREA ===================== */}
         {/* Những route nào cần header thì bọc bởi MainLayout */}
 
@@ -214,7 +217,11 @@ export default function AppRoutes() {
             element={<AdminPendingCourseDetail />}
           />
         </Route>
+
+        {/* Fallback route cho 404 Client-side */}
+        <Route path="*" element={<ErrorPage status={404} />} />
       </Routes>
+      </ApiErrorWatcher>
     </BrowserRouter>
   );
 }

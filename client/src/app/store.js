@@ -14,6 +14,7 @@ import reportReducer from '../features/report/reportSlice';
 import notificationReducer from '../features/notification/notificationSlice';
 import promotionReducer from '../features/promotion/promotionSlice';
 import userReducer from '../features/user/userSlice';
+import errorReducer from '../features/error/errorSlice';
 
 const appReducer = combineReducers({
   auth: authReducer,
@@ -31,6 +32,7 @@ const appReducer = combineReducers({
   notification: notificationReducer,
   promotion: promotionReducer,
   user: userReducer,
+  error: errorReducer,
 });
 
 const rootReducer = (state, action) => {
