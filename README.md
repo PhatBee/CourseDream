@@ -227,7 +227,7 @@ course-app/
 #### 1. Clone repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dreamcourse.git
+git clone https://github.com/phatbee/dreamcourse.git
 cd dreamcourse
 ```
 
@@ -427,14 +427,14 @@ NGROK_FORWARD=https://your-ngrok-subdomain.ngrok-free.app
 
 ### 👥 Nhóm Phát Triển
 
-Dự án được thực hiện bởi **Nhóm 59** trong khuôn khổ Tiểu Luận Chuyên Ngành:
+Dự án được thực hiện bởi **Nhóm 59** trong khuôn khổ Khóa luận tốt nghiệp:
 
 | Họ & Tên | Vai Trò |
 |---|---|
-| Ông Vĩnh Phát | Full-Stack Developer (Backend, Frontend Web) |
-| Phạm Đăng Khôi | Full-Stack Developer (Mobile App, Frontend Web) |
-| Huỳnh Thị Mỹ Tâm | Full-Stack Developer (Frontend Web, Testing & QA) |
-
+| Ong Vĩnh Phát | Full-Stack Developer (Backend, Frontend Web, Mobile App) |
+| Phạm Đăng Khôi | Full-Stack Developer (Backend, Frontend Web, Mobile App) |
+| Huỳnh Thị Mỹ Tâm | Full-Stack Developer (Backend, Frontend Web, Mobile App, Testing & QA) |
+`
 Đóng góp, báo lỗi hoặc yêu cầu tính năng mới: vui lòng mở một Issue hoặc gửi Pull Request.
 
 ---
