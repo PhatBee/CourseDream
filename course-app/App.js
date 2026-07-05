@@ -5,6 +5,7 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from './src/app/store.js';
 import Toast from 'react-native-toast-message';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './src/utils/navigation';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
 import { getUser, getToken, removeToken, removeUser } from './src/utils/storage';
@@ -187,7 +188,7 @@ export default function App() {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <NavigationContainer linking={linking}>
+        <NavigationContainer ref={navigationRef} linking={linking}>
           <MainNavigator />
         </NavigationContainer>
         <Toast config={toastConfig} />

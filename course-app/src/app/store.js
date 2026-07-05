@@ -1,4 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { setStore } from './storeHolder';
 import authReducer from '../features/auth/authSlice';
 import userReducer from '../features/user/userSlice';
@@ -16,24 +16,33 @@ import reportReducer from '../features/report/reportSlice';
 import notificationReducer from '../features/notification/notificationSlice';
 import promotionReducer from '../features/promotion/promotionSlice';
 
-export const store = configureStore({
-        reducer: {
-                // Add your reducers here
-                auth: authReducer,
-                categories: categoryReducer,
-                course: courseReducer,
-                enrollment: enrollmentReducer,
-                wishlist: wishlistReducer,
-                user: userReducer,
-                instructor: instructorReducer,
-                cart: cartReducer,
-                learning: learningReducer,
-                review: reviewReducer,
-                discussion: discussionReducer,
-                report: reportReducer,
-                notification: notificationReducer,
-                promotion: promotionReducer,
+const appReducer = combineReducers({
+        auth: authReducer,
+        categories: categoryReducer,
+        course: courseReducer,
+        enrollment: enrollmentReducer,
+        wishlist: wishlistReducer,
+        user: userReducer,
+        instructor: instructorReducer,
+        cart: cartReducer,
+        learning: learningReducer,
+        review: reviewReducer,
+        discussion: discussionReducer,
+        report: reportReducer,
+        notification: notificationReducer,
+        promotion: promotionReducer,
+});
+
+const rootReducer = (state, action) => {
+        if (action.type === 'auth/logout/fulfilled') {
+                // Reset toàn bộ state về trạng thái ban đầu
+                state = undefined;
         }
+        return appReducer(state, action);
+};
+
+export const store = configureStore({
+        reducer: rootReducer
 });
 
 // Inject store vào storeHolder để axiosClient dùng lazy (tránh require cycle)
