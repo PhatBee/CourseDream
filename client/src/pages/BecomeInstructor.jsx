@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { X, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -11,6 +11,7 @@ import {
 
 const BecomeInstructor = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const {
         instructorApplication,
@@ -34,8 +35,10 @@ const BecomeInstructor = () => {
 
     // 1. Fetch trạng thái đơn khi load trang
     useEffect(() => {
-        dispatch(getInstructorApplication());
-    }, [dispatch]);
+        if (user) {
+            dispatch(getInstructorApplication());
+        }
+    }, [dispatch, user]);
 
     // 2. Handle success/error messages
     useEffect(() => {
@@ -76,6 +79,15 @@ const BecomeInstructor = () => {
         dispatch(applyToBecomeInstructor(formData));
     };
 
+    const handleApplyClick = () => {
+        if (!user) {
+            toast.error("Vui lòng đăng nhập để đăng ký làm giảng viên");
+            navigate('/login?callbackUrl=/profile/become-instructor');
+        } else {
+            setIsModalOpen(true);
+        }
+    };
+
     // --- Helper Render UI dựa trên Status ---
     const renderActionSection = () => {
         if (isApplicationLoading) return <div className="animate-pulse h-10 w-32 bg-gray-200 rounded"></div>;
@@ -96,7 +108,7 @@ const BecomeInstructor = () => {
         }
 
         // Trường hợp 2: Đã là Instructor (Approved)
-        if (user.role === 'instructor' || (instructorApplication && instructorApplication.status === 'approved')) {
+        if (user?.role === 'instructor' || (instructorApplication && instructorApplication.status === 'approved')) {
             return (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-lg">
                     <div className="flex items-center gap-3">
@@ -127,7 +139,7 @@ const BecomeInstructor = () => {
                         </div>
                     </div>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleApplyClick}
                         className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-lg"
                     >
                         Cập nhật và đăng ký lại
@@ -139,7 +151,7 @@ const BecomeInstructor = () => {
         // Trường hợp 4: Chưa từng đăng ký (Null)
         return (
             <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleApplyClick}
                 className="px-8 py-4 bg-rose-600 text-white rounded-full font-bold text-lg hover:bg-rose-700 transition shadow-xl flex items-center gap-2"
             >
                 Đăng ký ngay <i className="isax isax-arrow-right-3"></i>
