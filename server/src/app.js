@@ -105,7 +105,7 @@ app.use("/api/chatbot", chatbotRoutes);
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
-  res.status(err.status || 500).json({
+  res.status(err.statusCode || err.status || 500).json({
     message: err.message || "Server Error",
   });
 });
