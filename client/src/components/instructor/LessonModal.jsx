@@ -324,7 +324,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                                 />
 
                                 <p className="text-xs text-gray-400 mt-2">
-                                    📌 Hỗ trợ MP4, MOV, AVI • Tối đa 2GB
+                                    Hỗ trợ MP4, MOV, AVI • Tối đa 2GB
                                 </p>
                             </div>
                         </div>
