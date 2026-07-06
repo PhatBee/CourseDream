@@ -11,6 +11,73 @@ import InstructorApplication from '../user/instructorApplication.model.js';
 import InstructorProfile from '../user/InstructorProfile.model.js';
 import notificationService from "../notification/notification.service.js";
 import { generateCourseEmbedding } from '../../utils/ai.service.js';
+import { comparePassword } from '../../utils/password.utils.js';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils.js';
+
+/**
+ * Service: Đăng nhập dành riêng cho Admin
+ * - CHỈ cho phép role 'admin'
+ * - CHỈ cho phép phương thức local (email + password)
+ * - KHÔNG hỗ trợ Google/Facebook
+ */
+export const loginAdmin = async ({ email, password }) => {
+    const user = await User.findOne({ email });
+    if (!user) {
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // [BẢO MẬT] Chỉ cho phép tài khoản Admin
+    if (user.role !== 'admin') {
+        const error = new Error('Bạn không có quyền truy cập trang quản trị.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // [BẢO MẬT] Chỉ cho phép đăng nhập bằng Local
+    if (user.authProvider !== 'local' || !user.password) {
+        const error = new Error('Tài khoản Admin phải đăng nhập bằng Email và Mật khẩu.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    if (!user.isVerified) {
+        const error = new Error('Tài khoản Admin chưa được kích hoạt.');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    if (!user.isActive) {
+        const error = new Error('Tài khoản Admin đã bị vô hiệu hóa. Vui lòng liên hệ hệ thống.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) {
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    const userResponse = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+    };
+
+    return { user: userResponse, accessToken, refreshToken };
+};
 
 export const getPendingApplications = async () => {
   const applications = await User.find({

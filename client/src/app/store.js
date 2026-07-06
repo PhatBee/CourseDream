@@ -1,4 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import authReducer from '../features/auth/authSlice';
 import courseReducer from '../features/course/courseSlice';
 import wishlistReducer from '../features/wishlist/wishlistSlice';
@@ -7,30 +7,42 @@ import learningReducer from "../features/learning/learningSlice";
 import cartReducer from '../features/cart/cartSlice';
 import enrollmentReducer from "../features/enrollment/enrollmentSlice";
 import adminReducer from '../features/admin/adminSlice';
-import instructorReducer from '../features/instructor/instructorSlice'
+import instructorReducer from '../features/instructor/instructorSlice';
 import reviewReducer from '../features/review/reviewSlice';
 import discussionReducer from '../features/discussion/discussionSlice';
 import reportReducer from '../features/report/reportSlice';
 import notificationReducer from '../features/notification/notificationSlice';
 import promotionReducer from '../features/promotion/promotionSlice';
 import userReducer from '../features/user/userSlice';
+import errorReducer from '../features/error/errorSlice';
+
+const appReducer = combineReducers({
+  auth: authReducer,
+  categories: categoryReducer,
+  course: courseReducer,
+  learning: learningReducer,
+  wishlist: wishlistReducer,
+  cart: cartReducer,
+  enrollment: enrollmentReducer,
+  admin: adminReducer,
+  instructor: instructorReducer,
+  review: reviewReducer,
+  discussion: discussionReducer,
+  report: reportReducer,
+  notification: notificationReducer,
+  promotion: promotionReducer,
+  user: userReducer,
+  error: errorReducer,
+});
+
+const rootReducer = (state, action) => {
+  if (action.type === 'auth/logout/fulfilled') {
+    // Reset toàn bộ state về trạng thái ban đầu
+    state = undefined;
+  }
+  return appReducer(state, action);
+};
+
 export const store = configureStore({
-  reducer: {
-    // Add your reducers here
-    auth: authReducer,
-    categories: categoryReducer,
-    course: courseReducer,
-    learning: learningReducer,
-    wishlist: wishlistReducer,
-    cart: cartReducer,
-    enrollment: enrollmentReducer,
-    admin: adminReducer,
-    instructor: instructorReducer,
-    review: reviewReducer,
-    discussion: discussionReducer,
-    report: reportReducer,
-    notification: notificationReducer,
-    promotion: promotionReducer,
-    user: userReducer,
-  },
+  reducer: rootReducer,
 });

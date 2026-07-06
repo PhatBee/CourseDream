@@ -6,6 +6,11 @@ import { store } from "./app/store";
 import './index.css'
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import GlobalErrorBoundary from "./components/common/GlobalErrorBoundary";
+import { injectStore } from "./api/axiosClient";
+
+// Inject store into axiosClient to resolve circular dependency
+injectStore(store);
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -26,7 +31,9 @@ import App from './App.jsx'
 ReactDOM.createRoot(document.getElementById("root")).render(
   <GoogleOAuthProvider clientId={googleClientId}>
     <Provider store={store}>
-      <AppRoutes />
+      <GlobalErrorBoundary>
+        <AppRoutes />
+      </GlobalErrorBoundary>
       <Toaster
         position="top-right"
         toastOptions={{

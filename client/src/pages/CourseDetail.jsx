@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { getCourseDetails, resetCourse } from "../features/course/courseSlice";
 import { fetchMyEnrollments } from "../features/enrollment/enrollmentSlice";
+import { toast } from "react-hot-toast";
 
 // Import các component con
 import Breadcrumb from "../components/common/Breadcrumb";
@@ -15,6 +16,7 @@ const CourseDetail = () => {
   const { slug } = useParams();
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const { discussions } = useSelector((state) => state.discussion);
 
   // Lấy state từ Redux store
@@ -30,6 +32,13 @@ const CourseDetail = () => {
       dispatch(resetCourse());
     };
   }, [slug, dispatch]);
+
+  useEffect(() => {
+    if (isError) {
+      toast.error(message || "Khóa học này hiện đã bị tạm ẩn.");
+      navigate(-1);
+    }
+  }, [isError, message, navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -65,13 +74,7 @@ const CourseDetail = () => {
 
   // Xử lý trạng thái Lỗi
   if (isError) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-red-500">
-          Lỗi: {message || "Không thể tải khóa học."}
-        </p>
-      </div>
-    );
+    return null; // Trả về null để useEffect điều hướng về trang trước, tránh nhấp nháy màn hình lỗi
   }
 
   // Render giao diện

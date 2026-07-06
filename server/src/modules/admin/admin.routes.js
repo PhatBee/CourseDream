@@ -6,6 +6,14 @@ import { checkRole } from '../../middlewares/role.middleware.js';
 
 const router = express.Router();
 
+/**
+ * @route   POST /api/admin/login
+ * @desc    Đăng nhập Admin (public - không cần auth middleware)
+ * @access  Public
+ */
+router.post('/login', adminController.adminLogin);
+
+// Tất cả routes bên dưới đều yêu cầu verifyToken + role admin
 router.use(verifyToken, checkRole('admin'));
 
 /**
