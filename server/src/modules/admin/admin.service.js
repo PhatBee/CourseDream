@@ -805,7 +805,7 @@ export const approveRevision = async (revisionId, adminId) => {
     metadata: {
       courseId: revision._id,
       courseSlug: revision.data.slug || undefined,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -849,7 +849,7 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
     metadata: {
       courseId: revision._id,
       courseSlug: revision.data.slug || undefined,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -908,7 +908,7 @@ export const requestRevisionChanges = async (revisionId, reviewMessage, adminId)
     metadata: {
       courseId: revision._id,
       courseSlug: revision.data.slug || undefined,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -951,7 +951,7 @@ export const unpublishCourse = async (courseId, adminId, reason = '') => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -1001,7 +1001,7 @@ export const suspendCourse = async (courseId, adminId, reason) => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -1041,7 +1041,7 @@ export const restoreSuspendedCourse = async (courseId, adminId) => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -1080,7 +1080,7 @@ export const republishCourse = async (courseId, adminId) => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
