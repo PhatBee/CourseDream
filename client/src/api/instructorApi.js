@@ -6,8 +6,8 @@ export const getInstructorStats = () => {
   return axiosClient.get("/instructor/stats");
 };
 
- const getInstructorDashboardStats = () => {
-  return axiosClient.get("/instructor/dashboard");
+const getInstructorDashboardStats = (timeRange) => {
+  return axiosClient.get("/instructor/dashboard", { params: { timeRange } });
 };
 
 //Lấy thông tin profile

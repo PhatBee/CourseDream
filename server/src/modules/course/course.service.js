@@ -19,8 +19,8 @@ import User from "../auth/auth.model.js";
  * @param {string} slug - Slug của khóa học
  * @returns {Promise<object>} - Dữ liệu chi tiết của khóa học
  */
-export const getCourseDetailsBySlug = async (slug) => {
-  const course = await Course.findOne({ slug: slug, status: "published" })
+export const getCourseDetailsBySlug = async (slug, currentUser) => {
+  const course = await Course.findOne({ slug: slug })
     .select(
       "title slug thumbnail previewUrl shortDescription topics includes " +
       "audience description price priceDiscount level language requirements " +
@@ -52,6 +52,21 @@ export const getCourseDetailsBySlug = async (slug) => {
     const error = new Error("Không tìm thấy khóa học.");
     error.statusCode = 404;
     throw error;
+  }
+
+  // Kiểm tra trạng thái khóa học
+  if (course.status !== 'published') {
+    const isAuthorized = currentUser && (
+      currentUser.role === 'admin' ||
+      String(currentUser._id) === String(course.instructor)
+    );
+
+    if (!isAuthorized) {
+      const error = new Error("Khóa học này hiện đã bị tạm ẩn.");
+      error.statusCode = 403;
+      error.code = "COURSE_TEMPORARILY_HIDDEN";
+      throw error;
+    }
   }
 
   // [MỚI] Lấy thông tin chi tiết Instructor Profile

@@ -40,9 +40,9 @@ export const updateInstructorData = createAsyncThunk(
 
 export const fetchDashboardStats = createAsyncThunk(
   'instructor/fetchDashboardStats',
-  async (_, thunkAPI) => {
+  async (timeRange, thunkAPI) => {
     try {
-      const response = await instructorApi.getInstructorDashboardStats();
+      const response = await instructorApi.getInstructorDashboardStats(timeRange);
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;

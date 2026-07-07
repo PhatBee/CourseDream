@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
+import AdminLogin from "../pages/AdminLogin";
 import Register from "../pages/Register";
 import VerifyOTP from "../pages/VerifyOTP";
 import ForgotPassword from "../pages/ForgotPassword";
@@ -51,6 +52,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { io } from "socket.io-client";
 import { addRealtimeNotification } from "../features/notification/notificationSlice";
+import ApiErrorWatcher from "../components/common/ApiErrorWatcher";
+import ErrorPage from "../pages/ErrorPage";
 
 export default function AppRoutes() {
   const { user } = useSelector((state) => state.auth);
@@ -89,7 +92,8 @@ export default function AppRoutes() {
 
   return (
     <BrowserRouter>
-      <Routes>
+      <ApiErrorWatcher>
+        <Routes>
         {/* ===================== PUBLIC + USER AREA ===================== */}
         {/* Những route nào cần header thì bọc bởi MainLayout */}
 
@@ -168,6 +172,7 @@ export default function AppRoutes() {
 
         {/* No header Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login-ptk2026" element={<AdminLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -212,7 +217,11 @@ export default function AppRoutes() {
             element={<AdminPendingCourseDetail />}
           />
         </Route>
+
+        {/* Fallback route cho 404 Client-side */}
+        <Route path="*" element={<ErrorPage status={404} />} />
       </Routes>
+      </ApiErrorWatcher>
     </BrowserRouter>
   );
 }

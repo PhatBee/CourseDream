@@ -91,7 +91,7 @@ const Step3_Curriculum = ({
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">📚 Nội dung khóa học</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Nội dung khóa học</h2>
                     <p className="text-sm text-gray-400 mt-1">
                         {sections.length} section • {totalLectures} bài học •{' '}
                         <span className="text-rose-500 font-medium">{formatDuration(totalDuration)}</span> tổng

@@ -1,11 +1,19 @@
 import axiosClient from "../../api/axiosClient";
-import { setToken, setUser, removeToken, removeUser } from "../../utils/storage";
+import { setToken, setUser, removeToken, removeUser, saveRefreshToken, getRefreshToken, removeRefreshToken } from "../../utils/storage";
 
 const login = async (userData) => {
     const response = await axiosClient.post("/auth/login", userData);
     if (response.data) {
+        // [BẢO MẬT] Chặn tài khoản Admin đăng nhập vào app student/instructor
+        // (Backend đã chặn ở service layer, đây là lớp bảo vệ thứ 2 phía client)
+        if (response.data.user?.role === 'admin') {
+            const error = new Error('Tài khoản không có quyền truy cập vùng này.');
+            error.response = { data: { message: 'Tài khoản không có quyền truy cập vùng này.' } };
+            throw error;
+        }
         // Lưu Token và User vào thiết bị
         await setToken(response.data.accessToken);
+        await saveRefreshToken(response.data.refreshToken);
         await setUser(response.data.user);
     }
     return response.data;
@@ -32,6 +40,7 @@ const googleLogin = async (credential) => {
     const response = await axiosClient.post("/auth/google", { credential });
     if (response.data) {
         await setToken(response.data.accessToken);
+        await saveRefreshToken(response.data.refreshToken);
         await setUser(response.data.user);
     }
     return response.data;
@@ -41,6 +50,7 @@ const facebookLogin = async (accessToken) => {
     const response = await axiosClient.post("/auth/facebook", { accessToken });
     if (response.data) {
         await setToken(response.data.accessToken);
+        await saveRefreshToken(response.data.refreshToken);
         await setUser(response.data.user);
     }
     return response.data;
@@ -48,13 +58,14 @@ const facebookLogin = async (accessToken) => {
 
 const logout = async () => {
     try {
-        await axiosClient.post("/auth/logout");
+        const refreshToken = await getRefreshToken();
+        await axiosClient.post("/auth/logout", { refreshToken });
     } catch (error) {
         console.log(error);
     }
     await removeToken();
+    await removeRefreshToken();
     await removeUser();
-
 };
 
 const forgotPassword = async (email) => {

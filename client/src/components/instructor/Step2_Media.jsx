@@ -124,7 +124,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
     return (
         <div className="space-y-8 animate-fadeIn">
             <div>
-                <h2 className="text-2xl font-bold text-gray-900">🎨 Media</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Media</h2>
                 <p className="text-gray-500 text-sm mt-1">Thumbnail và video preview cho khóa học của bạn</p>
             </div>
 
@@ -133,7 +133,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                 {/* ===== THUMBNAIL ===== */}
                 <div>
                     <label className="block text-sm font-bold mb-2 text-gray-700">
-                        🖼️ Hình ảnh khóa học <span className="text-rose-500">*</span>
+                        Hình ảnh khóa học <span className="text-rose-500">*</span>
                     </label>
                     <p className="text-xs text-gray-400 mb-3">Tỷ lệ 16:9 khuyến nghị, tối thiểu 750x422px</p>
 
@@ -203,7 +203,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                 {/* ===== PREVIEW VIDEO ===== */}
                 <div>
                     <label className="block text-sm font-bold mb-2 text-gray-700">
-                        🎬 Video giới thiệu <span className="text-gray-400 font-normal">(Không bắt buộc)</span>
+                        Video giới thiệu <span className="text-gray-400 font-normal">(Không bắt buộc)</span>
                     </label>
                     <p className="text-xs text-gray-400 mb-3">Video giới thiệu ngắn về khóa học</p>
 

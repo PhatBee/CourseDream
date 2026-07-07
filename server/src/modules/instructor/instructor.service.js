@@ -23,7 +23,7 @@ const parseArrayField = (fieldData) => {
  */
 export const getInstructorProfile = async (userId) => {
   let profile = await InstructorProfile.findOne({ user: userId });
-  
+
   // Nếu chưa có (trường hợp hiếm), tạo mới mặc định
   if (!profile) {
     profile = await InstructorProfile.create({ user: userId });
@@ -41,24 +41,319 @@ export const updateInstructorProfile = async (userId, data) => {
     { new: true, upsert: true } // Trả về data mới, nếu chưa có thì tạo
   );
   return profile;
-};  
+};
 
-export const getInstructorDashboardStats = async (instructorId) => {
-  const instructorCourses = await Course.find({ instructor: instructorId }).select('_id studentsCount');
+export const getInstructorDashboardStats = async (instructorId, timeRange = '30days') => {
+  // 1. Lấy danh sách khóa học của giảng viên
+  const instructorCourses = await Course.find({ instructor: instructorId }).lean();
   const courseIds = instructorCourses.map(c => c._id);
-
   const totalCourses = instructorCourses.length;
 
+  // Điểm đánh giá trung bình của tất cả khóa học
+  const averageRating = totalCourses > 0
+    ? (instructorCourses.reduce((acc, course) => acc + (course.rating || 0), 0) / totalCourses)
+    : 0;
+
+  // Tổng số học viên thực tế của các khóa học
   const totalStudents = instructorCourses.reduce((acc, course) => acc + (course.studentsCount || 0), 0);
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  // 2. Xác định các mốc thời gian dựa trên bộ lọc
+  const now = new Date();
+  let currentPeriodStart;
+  let previousPeriodStart;
+  let previousPeriodEnd;
+  let groupByFormat;
+  let gapFillStep;
 
-  const todayEnrollments = await Enrollment.countDocuments({
-    course: { $in: courseIds },
-    enrolledAt: { $gte: startOfToday }
-  });
+  if (timeRange === '7days') {
+    currentPeriodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    previousPeriodStart = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    previousPeriodEnd = currentPeriodStart;
+    groupByFormat = '%Y-%m-%d';
+    gapFillStep = 'day';
+  } else if (timeRange === '30days') {
+    currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    previousPeriodStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    previousPeriodEnd = currentPeriodStart;
+    groupByFormat = '%Y-%m-%d';
+    gapFillStep = 'day';
+  } else {
+    // 'all' - Toàn thời gian
+    currentPeriodStart = new Date(0); // Từ lúc bắt đầu hệ thống
+    previousPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Dùng 30 ngày trước làm đối chuẩn so sánh tăng trưởng
+    previousPeriodEnd = now;
+    groupByFormat = '%Y-%m';
+    gapFillStep = 'month';
+  }
 
+  // Mốc thời gian bắt đầu để tính toán tăng trưởng
+  const kpiGrowthStart = timeRange === 'all' ? new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000) : previousPeriodStart;
+  const kpiGrowthCurrentStart = timeRange === 'all' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) : currentPeriodStart;
+  const kpiGrowthPreviousEnd = timeRange === 'all' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) : previousPeriodEnd;
+
+  // 3. Chạy Aggregation Pipeline trên Enrollment để tính KPI Doanh thu và Ghi danh
+  const kpiStats = await Enrollment.aggregate([
+    {
+      $match: {
+        course: { $in: courseIds }
+      }
+    },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'course',
+        foreignField: '_id',
+        as: 'courseDetails'
+      }
+    },
+    {
+      $unwind: '$courseDetails'
+    },
+    {
+      $project: {
+        enrolledAt: 1,
+        price: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        // Dữ liệu toàn thời gian
+        allTimeRevenue: { $sum: '$price' },
+        allTimeEnrollments: { $sum: 1 },
+        // Dữ liệu chu kỳ hiện tại
+        currentRevenue: {
+          $sum: {
+            $cond: [
+              { $gte: ['$enrolledAt', kpiGrowthCurrentStart] },
+              '$price',
+              0
+            ]
+          }
+        },
+        // Dữ liệu chu kỳ trước
+        previousRevenue: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $gte: ['$enrolledAt', kpiGrowthStart] },
+                  { $lt: ['$enrolledAt', kpiGrowthPreviousEnd] }
+                ]
+              },
+              '$price',
+              0
+            ]
+          }
+        },
+        currentEnrollments: {
+          $sum: {
+            $cond: [
+              { $gte: ['$enrolledAt', kpiGrowthCurrentStart] },
+              1,
+              0
+            ]
+          }
+        },
+        previousEnrollments: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $gte: ['$enrolledAt', kpiGrowthStart] },
+                  { $lt: ['$enrolledAt', kpiGrowthPreviousEnd] }
+                ]
+              },
+              1,
+              0
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
+  const kpi = kpiStats[0] || {
+    allTimeRevenue: 0,
+    allTimeEnrollments: 0,
+    currentRevenue: 0,
+    previousRevenue: 0,
+    currentEnrollments: 0,
+    previousEnrollments: 0
+  };
+
+  // Xác định số liệu chính hiển thị trên card dựa vào timeRange
+  const finalRevenue = timeRange === 'all' ? kpi.allTimeRevenue : kpi.currentRevenue;
+  const finalEnrollments = timeRange === 'all' ? kpi.allTimeEnrollments : kpi.currentEnrollments;
+
+  // Tính tỷ lệ tăng trưởng doanh thu và ghi danh
+  const revGrowth = kpi.previousRevenue > 0
+    ? ((kpi.currentRevenue - kpi.previousRevenue) / kpi.previousRevenue) * 100
+    : 0;
+
+  const enrollGrowth = kpi.previousEnrollments > 0
+    ? ((kpi.currentEnrollments - kpi.previousEnrollments) / kpi.previousEnrollments) * 100
+    : 0;
+
+  // Tính tỷ lệ chuyển đổi (mock page views dựa trên enrollments)
+  const currentViews = finalEnrollments * 18 + 120;
+  const currentConversionRate = currentViews > 0 ? (finalEnrollments / currentViews) * 100 : 0;
+
+  const prevEnrollmentsVal = timeRange === 'all' ? kpi.currentEnrollments : kpi.previousEnrollments;
+  const prevViews = prevEnrollmentsVal * 18 + 120;
+  const prevConversionRate = prevViews > 0 ? (prevEnrollmentsVal / prevViews) * 100 : 0;
+
+  const conversionGrowth = prevConversionRate > 0
+    ? ((currentConversionRate - prevConversionRate) / prevConversionRate) * 100
+    : 0;
+
+  // 4. Lấy dữ liệu biểu đồ xu hướng (Trend Chart Data)
+  const chartStart = timeRange === 'all'
+    ? new Date(now.getFullYear() - 1, now.getMonth(), 1) // default 12 tháng qua để biểu đồ gọn đẹp
+    : currentPeriodStart;
+
+  const trendStats = await Enrollment.aggregate([
+    {
+      $match: {
+        course: { $in: courseIds },
+        enrolledAt: { $gte: chartStart }
+      }
+    },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'course',
+        foreignField: '_id',
+        as: 'courseDetails'
+      }
+    },
+    {
+      $unwind: '$courseDetails'
+    },
+    {
+      $project: {
+        enrolledAt: 1,
+        price: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          $dateToString: {
+            format: groupByFormat,
+            date: '$enrolledAt',
+            timezone: 'Asia/Ho_Chi_Minh'
+          }
+        },
+        revenue: { $sum: '$price' },
+        enrollments: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { _id: 1 }
+    }
+  ]);
+
+  // Điền đầy đủ các khoảng trống ngày/tháng để biểu đồ không bị gãy nét
+  const chartData = [];
+  const trendMap = new Map(trendStats.map(item => [item._id, item]));
+
+  if (gapFillStep === 'day') {
+    const daysCount = timeRange === '7days' ? 7 : 30;
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const date = String(d.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${date}`;
+
+      const existing = trendMap.get(dateKey);
+      chartData.push({
+        date: `${date}/${month}`, // hiển thị dạng DD/MM cho đẹp
+        revenue: existing ? existing.revenue : 0,
+        enrollments: existing ? existing.enrollments : 0
+      });
+    }
+  } else {
+    // Gộp theo tháng (12 tháng qua)
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const monthKey = `${year}-${month}`;
+
+      const existing = trendMap.get(monthKey);
+      chartData.push({
+        date: `${month}/${year}`, // hiển thị dạng MM/YYYY
+        revenue: existing ? existing.revenue : 0,
+        enrollments: existing ? existing.enrollments : 0
+      });
+    }
+  }
+
+  // 5. Bảng hiệu suất chi tiết các khóa học (Course Performance Table)
+  const coursePerformance = await Course.aggregate([
+    {
+      $match: { instructor: new mongoose.Types.ObjectId(instructorId) }
+    },
+    {
+      $lookup: {
+        from: 'enrollments',
+        localField: '_id',
+        foreignField: 'course',
+        as: 'enrollments'
+      }
+    },
+    {
+      $project: {
+        title: 1,
+        slug: 1,
+        thumbnail: 1,
+        status: 1,
+        price: 1,
+        priceDiscount: 1,
+        rating: 1,
+        periodEnrollments: {
+          $filter: {
+            input: '$enrollments',
+            as: 'e',
+            cond: { $gte: ['$$e.enrolledAt', kpiGrowthCurrentStart] }
+          }
+        },
+        totalEnrollmentsCount: { $size: '$enrollments' }
+      }
+    },
+    {
+      $project: {
+        title: 1,
+        slug: 1,
+        thumbnail: 1,
+        status: 1,
+        price: 1,
+        priceDiscount: 1,
+        rating: 1,
+        studentsCount: '$totalEnrollmentsCount',
+        periodStudentsCount: { $size: '$periodEnrollments' },
+        revenue: {
+          $multiply: [
+            '$totalEnrollmentsCount',
+            { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] }
+          ]
+        },
+        periodRevenue: {
+          $multiply: [
+            { $size: '$periodEnrollments' },
+            { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] }
+          ]
+        }
+      }
+    },
+    {
+      $sort: { revenue: -1 }
+    }
+  ]);
+
+  // Lấy danh sách khóa học gần đây
   const recentCourses = await Course.find({ instructor: instructorId })
     .sort({ updatedAt: -1 })
     .limit(3)
@@ -69,9 +364,19 @@ export const getInstructorDashboardStats = async (instructorId) => {
     stats: {
       totalCourses,
       totalStudents,
-      todayEnrollments
+      rating: averageRating,
+      revenue: finalRevenue,
+      enrollments: finalEnrollments,
+      conversionRate: currentConversionRate,
+      growth: {
+        revenue: revGrowth,
+        enrollments: enrollGrowth,
+        conversion: conversionGrowth
+      }
     },
-    recentCourses
+    recentCourses,
+    chartData,
+    coursePerformance
   };
 };
 
@@ -106,7 +411,7 @@ export const getCourseStudents = async (courseId, instructorId, { page = 1, limi
   }).lean();
 
   const studentsData = enrollments.map(e => {
-    const studentProgress = e.student 
+    const studentProgress = e.student
       ? progresses.find(p => p.student.toString() === e.student._id.toString())
       : null;
     return {
@@ -793,4 +1098,4 @@ export const activateCourse = async (courseId, instructorId) => {
     return { message: "Khóa học đã được xuất bản trở lại (Published)." };
   }
   throw new Error("Khóa học đang ở trạng thái không thể kích hoạt nhanh.");
-};
+};

@@ -35,7 +35,7 @@ const Home = () => {
       <FeaturedCourses /> 
       <MasterSkills />
       <CtaSection />
-      <BlogSection />
+      {/* <BlogSection /> */}
     </div>
   );
 };

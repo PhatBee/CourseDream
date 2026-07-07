@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   login,
@@ -24,6 +24,7 @@ const Login = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
   const { user, isLoading, isError, isSuccess, message, banReason } =
     useSelector((state) => state.auth);
   const [showBanModal, setShowBanModal] = useState(false);
@@ -60,14 +61,25 @@ const Login = () => {
       dispatch(reset());
     }
     if (isSuccess || user) {
+      // [BẢO MẬT - CLIENT GUARD] Chặn admin ngay tại đây nếu lọt qua
+      if (user?.role === "admin") {
+        toast.error("Tài khoản không có quyền truy cập vùng này.");
+        dispatch(reset());
+        return;
+      }
+
       if (isSuccess) toast.success("Đăng nhập thành công");
 
-      if (user?.role === "admin") navigate("/admin/dashboard");
-      else if (user?.role === "instructor")
+      const callbackUrl = searchParams.get("callbackUrl");
+      if (callbackUrl) {
+        navigate(callbackUrl);
+      } else if (user?.role === "instructor") {
         navigate("/instructor/dashboard");
-      else navigate("/");
+      } else {
+        navigate("/");
+      }
     }
-  }, [user, isError, isSuccess, message, banReason, navigate, dispatch]);
+  }, [user, isError, isSuccess, message, banReason, navigate, dispatch, searchParams]);
 
   const closeBanModal = () => {
     setShowBanModal(false);

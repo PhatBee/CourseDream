@@ -43,7 +43,7 @@ router.get('/:courseId/lectures/:lectureId/play', optionalAuth, getVideoPlayUrl)
 
 // ==================== DETAIL / LEARNING ROUTES ====================
 
-router.get('/:slug', getCourseDetailsBySlug);
+router.get('/:slug', optionalAuth, getCourseDetailsBySlug);
 
 router.get('/:slug/learn', verifyToken, checkEnrollment, getLearningContent);
 

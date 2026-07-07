@@ -35,7 +35,8 @@ export const updateProfile = async (req, res, next) => {
 export const getInstructorDashboard = async (req, res, next) => {
   try {
     const instructorId = req.user._id;
-    const stats = await getInstructorDashboardStats(instructorId);
+    const { timeRange } = req.query;
+    const stats = await getInstructorDashboardStats(instructorId, timeRange || '30days');
     res.json(stats);
   } catch (err) {
     next(err);
