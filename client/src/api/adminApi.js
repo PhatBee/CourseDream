@@ -97,6 +97,10 @@ const republishCourse = (courseId) => {
     return axiosClient.patch(`${path}/courses/${courseId}/republish`);
 };
 
+const getVideoSignedUrl = (videoUrl) => {
+    return axiosClient.get(`${path}/video-signature`, { params: { videoUrl } });
+};
+
 export const adminApi = {
     adminLogin,
     getDashboardStats,
@@ -118,4 +122,5 @@ export const adminApi = {
     restoreCourse,
     getAllCourses,
     republishCourse,
+    getVideoSignedUrl,
 };

@@ -137,5 +137,13 @@ router.patch('/courses/:courseId/republish', adminController.republishCourse);
  */
 router.get('/courses/:courseId/quizzes-preview', adminController.getQuizzesPreview);
 
+/**
+ * @route   GET /api/admin/video-signature
+ * @desc    Admin lấy signed URL cho một video bất kỳ trong quá trình kiểm duyệt
+ * @access  Admin
+ */
+router.get('/video-signature', adminController.getVideoSignedUrl);
+
 export default router;
+
 

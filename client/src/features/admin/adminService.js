@@ -46,6 +46,11 @@ const reviewInstructorApplication = async (id, data) => {
     return response.data;
 };
 
+const getVideoSignedUrl = async (videoUrl) => {
+    const response = await adminApi.getVideoSignedUrl(videoUrl);
+    return response.data;
+};
+
 export const adminService = {
     adminLogin,
     getPendingCourses,
@@ -53,7 +58,8 @@ export const adminService = {
     approveCourse,
     rejectCourse,
     getInstructorApplications,
-    reviewInstructorApplication
+    reviewInstructorApplication,
+    getVideoSignedUrl,
 };
 
 export default adminService;

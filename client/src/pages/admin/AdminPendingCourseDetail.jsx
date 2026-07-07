@@ -16,6 +16,8 @@ import {
 import { createPortal } from 'react-dom';
 import Avatar from '../../components/common/Avatar';
 import QuizPreviewList from '../../components/admin/QuizPreviewList';
+import adminService from '../../features/admin/adminService';
+import toast from 'react-hot-toast';
 
 // ========================================================================================
 // ── DIFF HELPER FUNCTIONS ──────────────────────────────────────────────────────────────
@@ -710,6 +712,30 @@ const AdminPendingCourseDetail = () => {
   const [changesMessage, setChangesMessage] = useState('');
   const [expandedSections, setExpandedSections] = useState([0]);
   const [videoPreview, setVideoPreview] = useState(null);
+  const [videoLoadingUrl, setVideoLoadingUrl] = useState(null);
+
+  const handlePlayVideo = async (videoUrl) => {
+    if (!videoUrl) return;
+
+    if (videoUrl.includes('cloudfront.net')) {
+      try {
+        setVideoLoadingUrl(videoUrl);
+        const res = await adminService.getVideoSignedUrl(videoUrl);
+        if (res && res.signedUrl) {
+          setVideoPreview(res.signedUrl);
+        } else {
+          toast.error('Không thể tạo signed URL cho video này');
+        }
+      } catch (error) {
+        console.error('Error fetching signed video URL:', error);
+        toast.error('Có lỗi xảy ra khi ký URL video');
+      } finally {
+        setVideoLoadingUrl(null);
+      }
+    } else {
+      setVideoPreview(videoUrl);
+    }
+  };
 
   useEffect(() => {
     dispatch(getAdminPendingDetail(revisionId));
@@ -888,11 +914,16 @@ const AdminPendingCourseDetail = () => {
                 />
                 {revision.previewUrl && (
                   <button
-                    onClick={() => setVideoPreview(revision.previewUrl)}
-                    className="absolute inset-0 flex items-center justify-center group"
+                    onClick={() => handlePlayVideo(revision.previewUrl)}
+                    disabled={!!videoLoadingUrl}
+                    className="absolute inset-0 flex items-center justify-center group disabled:opacity-70"
                   >
                     <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                      <Play size={24} className="text-rose-600 ml-1" />
+                      {videoLoadingUrl === revision.previewUrl ? (
+                        <div className="w-6 h-6 border-2 border-rose-600 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Play size={24} className="text-rose-600 ml-1" />
+                      )}
                     </div>
                   </button>
                 )}
@@ -1215,10 +1246,16 @@ const AdminPendingCourseDetail = () => {
                                     {/* Video button (ẩn nếu lecture bị xóa) */}
                                     {lecture.videoUrl && lStatus !== 'deleted' && (
                                       <button
-                                        onClick={() => setVideoPreview(lecture.videoUrl)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex-shrink-0 ml-2"
+                                        onClick={() => handlePlayVideo(lecture.videoUrl)}
+                                        disabled={!!videoLoadingUrl}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex-shrink-0 ml-2 disabled:opacity-50"
                                       >
-                                        <Video size={12} /> Xem video
+                                        {videoLoadingUrl === lecture.videoUrl ? (
+                                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                          <Video size={12} />
+                                        )}
+                                        Xem video
                                       </button>
                                     )}
                                   </div>

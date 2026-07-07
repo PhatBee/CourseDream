@@ -1,5 +1,6 @@
-// src/modules/admin/admin.controller.js
 import * as adminService from './admin.service.js';
+import { extractKeyFromCDNUrl, generateSignedVideoUrl } from '../../config/aws.js';
+
 
 /**
  * Helper: Đặt httpOnly cookies cho access & refresh token
@@ -386,6 +387,29 @@ export const getQuizzesPreview = async (req, res, next) => {
     const { courseId } = req.params;
     const result = await adminService.getQuizzesPreview(courseId);
     res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Admin lấy signed URL cho video bất kỳ để kiểm duyệt (CloudFront Signed URL)
+ * @route   GET /api/admin/video-signature
+ */
+export const getVideoSignedUrl = async (req, res, next) => {
+  try {
+    const { videoUrl } = req.query;
+    if (!videoUrl) {
+      return res.status(400).json({ success: false, message: 'Thiếu đường dẫn videoUrl' });
+    }
+
+    const objectKey = extractKeyFromCDNUrl(videoUrl);
+    const signedUrl = generateSignedVideoUrl(objectKey, 3600);
+
+    res.status(200).json({
+      success: true,
+      signedUrl,
+    });
   } catch (error) {
     next(error);
   }
