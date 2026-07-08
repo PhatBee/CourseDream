@@ -412,6 +412,10 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
   });
 
+  coursePerformance.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
+
   return {
     stats: {
       totalCourses,
