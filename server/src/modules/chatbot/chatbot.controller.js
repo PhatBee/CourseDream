@@ -1,5 +1,6 @@
 import Course from '../course/course.model.js';
 import { generateCourseEmbedding, calculateCosineSimilarity, generateChatbotStream } from '../../utils/ai.service.js';
+import { signThumbnailUrl } from '../../config/aws.js';
 
 export const askChatbot = async (req, res, next) => {
   try {
@@ -64,7 +65,7 @@ export const askChatbot = async (req, res, next) => {
       title: c.title,
       slug: c.slug,
       price: c.price,
-      thumbnail: c.thumbnail,
+      thumbnail: signThumbnailUrl(c.thumbnail),
       level: c.level
     }));
 

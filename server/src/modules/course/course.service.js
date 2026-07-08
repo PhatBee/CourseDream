@@ -213,10 +213,22 @@ export const getLearningDetails = async (slug, userId) => {
   if (course.sections) {
     course.sections = course.sections.map(sec => ({
       ...sec,
-      lectures: (sec.lectures || []).map(lec => ({
-        ...lec,
-        quizzes: (lec.quizzes || []).map(({ correctAnswer, ...safeQuiz }) => safeQuiz)
-      }))
+      lectures: (sec.lectures || []).map(lec => {
+        let signedResources = [];
+        if (lec.resources) {
+          signedResources = lec.resources.map(res => {
+            if (res.url && res.url.includes('cloudfront.net')) {
+              return { ...res, url: signThumbnailUrl(res.url) };
+            }
+            return res;
+          });
+        }
+        return {
+          ...lec,
+          resources: signedResources,
+          quizzes: (lec.quizzes || []).map(({ correctAnswer, ...safeQuiz }) => safeQuiz)
+        };
+      })
     }));
   }
 
@@ -386,7 +398,20 @@ export const getLecture = async ({ courseId, lectureId, user }) => {
   if (!enrolled)
     return { error: { status: 403, message: "Bạn chưa mua khóa học này" } };
 
-  return { lecture };
+  const lectureObj = lecture.toObject();
+  if (lectureObj.resources) {
+    lectureObj.resources = lectureObj.resources.map(res => {
+      if (res.url && res.url.includes('cloudfront.net')) {
+        return {
+          ...res,
+          url: signThumbnailUrl(res.url)
+        };
+      }
+      return res;
+    });
+  }
+
+  return { lecture: lectureObj };
 };
 
 // ======================== AWS S3 NOTE ========================

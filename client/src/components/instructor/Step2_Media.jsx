@@ -1,4 +1,4 @@
-﻿// src/components/instructor/Step2_Media.jsx
+// src/components/instructor/Step2_Media.jsx
 import React, { useRef, useState } from 'react';
 import { X, Image as ImageIcon, Upload, Video, CheckCircle, Cloud, AlertCircle } from 'lucide-react';
 import { courseApi } from '../../api/courseApi';
@@ -55,7 +55,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                 courseSlug: courseSlug || courseData.slug || 'temp',
             });
 
-            const { uploadUrl, cdnUrl } = presignRes.data.data;
+            const { uploadUrl, cdnUrl, signedUrl } = presignRes.data.data;
 
             await courseApi.uploadFileToS3(uploadUrl, file, (pct) => {
                 setThumbProgress(pct);
@@ -66,7 +66,7 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                 ...p,
                 thumbnail: cdnUrl,       // CDN URL (dùng khi save)
                 thumbnailUrl: cdnUrl,    // Alias dùng cho backend
-                thumbnailPreview: cdnUrl // Preview URL
+                thumbnailPreview: signedUrl || cdnUrl // Preview URL (signed)
             }));
 
             toast.success('Thumbnail đã upload lên AWS CloudFront!', { id: toastId });
@@ -100,13 +100,17 @@ const Step2_Media = ({ courseData, setCourseData, courseSlug, errorFields = {} }
                 courseSlug: courseSlug || courseData.slug || 'temp',
             });
 
-            const { uploadUrl, cdnUrl } = presignRes.data.data;
+            const { uploadUrl, cdnUrl, signedUrl } = presignRes.data.data;
 
             await courseApi.uploadFileToS3(uploadUrl, file, (pct) => {
                 setPreviewProgress(pct);
             });
 
-            setCourseData(p => ({ ...p, previewUrl: cdnUrl, previewVideoUrl: cdnUrl }));
+            setCourseData(p => ({
+                ...p,
+                previewUrl: signedUrl || cdnUrl,
+                previewVideoUrl: signedUrl || cdnUrl
+            }));
             toast.success('Preview video đã upload lên AWS CloudFront!', { id: toastId });
         } catch (err) {
             console.error('[S3] Preview upload error:', err);

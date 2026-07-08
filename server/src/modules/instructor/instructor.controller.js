@@ -3,7 +3,7 @@ import {
   getCourseStudents as getCourseStudentsService, getInstructorCourses, getCourseForEdit as getCourseForEditService,
   createOrUpdateRevision, deleteCourse as deleteCourseService, activateCourse as activateCourseService
 } from "./instructor.service.js";
-import { generatePresignedUploadUrl, buildS3Key } from '../../config/aws.js';
+import { generatePresignedUploadUrl, buildS3Key, signThumbnailUrl } from '../../config/aws.js';
 
 /**
  * GET /api/instructor/profile
@@ -125,6 +125,7 @@ export const presignThumbnailUpload = async (req, res, next) => {
         uploadUrl: result.uploadUrl,
         key: result.key,
         cdnUrl: result.cdnUrl,
+        signedUrl: signThumbnailUrl(result.cdnUrl)
       }
     });
   } catch (error) {
@@ -160,6 +161,7 @@ export const presignPreviewUpload = async (req, res, next) => {
         uploadUrl: result.uploadUrl,
         key: result.key,
         cdnUrl: result.cdnUrl,
+        signedUrl: signThumbnailUrl(result.cdnUrl)
       }
     });
   } catch (error) {
@@ -215,6 +217,7 @@ export const presignResourceUpload = async (req, res, next) => {
         uploadUrl: result.uploadUrl,
         key: result.key,
         cdnUrl: result.cdnUrl,
+        signedUrl: signThumbnailUrl(result.cdnUrl)
       }
     });
   } catch (error) {

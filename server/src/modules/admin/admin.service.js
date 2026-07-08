@@ -15,6 +15,25 @@ import { comparePassword } from '../../utils/password.utils.js';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils.js';
 import { signThumbnailUrl } from '../../config/aws.js';
 
+const signCourseResources = (courseData) => {
+  if (courseData && courseData.sections) {
+    courseData.sections.forEach(sec => {
+      if (sec.lectures) {
+        sec.lectures.forEach(lec => {
+          if (lec.resources) {
+            lec.resources.forEach(res => {
+              if (res.url) {
+                res.url = signThumbnailUrl(res.url);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+  return courseData;
+};
+
 /**
  * Service: Đăng nhập dành riêng cho Admin
  * - CHỈ cho phép role 'admin'
@@ -622,16 +641,21 @@ export const getPendingRevisionDetail = async (revisionId) => {
       .lean();
   }
 
-  if (originalCourse && originalCourse.thumbnail) {
-    originalCourse.thumbnail = signThumbnailUrl(originalCourse.thumbnail);
+  if (originalCourse) {
+    if (originalCourse.thumbnail) {
+      originalCourse.thumbnail = signThumbnailUrl(originalCourse.thumbnail);
+    }
+    originalCourse = signCourseResources(originalCourse);
   }
 
+  const signedRevision = signCourseResources({
+    ...revision,
+    ...revision.data,
+    thumbnail: signThumbnailUrl(revision.data?.thumbnail)
+  });
+
   return {
-    revision: {
-      ...revision,
-      ...revision.data,
-      thumbnail: signThumbnailUrl(revision.data?.thumbnail)
-    },
+    revision: signedRevision,
     originalCourse,
     type: revision.course ? 'update' : 'new'
   };

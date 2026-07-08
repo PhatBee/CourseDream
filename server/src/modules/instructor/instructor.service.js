@@ -19,6 +19,25 @@ const parseArrayField = (fieldData) => {
   return [fieldData];
 };
 
+const signCourseResources = (courseData) => {
+  if (courseData && courseData.sections) {
+    courseData.sections.forEach(sec => {
+      if (sec.lectures) {
+        sec.lectures.forEach(lec => {
+          if (lec.resources) {
+            lec.resources.forEach(res => {
+              if (res.url) {
+                res.url = signThumbnailUrl(res.url);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+  return courseData;
+};
+
 /**
  * Lấy thông tin chi tiết Instructor Profile
  */
@@ -573,7 +592,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
 
     // CASE 2.1.1: Đã có bản Draft -> Trả về bản Draft để edit tiếp
     if (existingRevision && existingRevision.status === 'draft') {
-      return {
+      return signCourseResources({
         ...existingRevision.data, // Bung dữ liệu trong field 'data' ra
         thumbnail: signThumbnailUrl(existingRevision.data.thumbnail),
         _id: existingRevision._id, // ID của revision
@@ -581,12 +600,12 @@ export const getCourseForEdit = async (slug, instructorId) => {
         status: 'draft',
         reviewMessage: existingRevision.reviewMessage || null,
         isUpdateMode: true // Cờ báo frontend đây là update course cũ
-      };
+      });
     }
 
     // CASE 2.1.2: Có bản Rejected -> Cho phép edit lại
     if (existingRevision && existingRevision.status === 'rejected') {
-      return {
+      return signCourseResources({
         ...existingRevision.data,
         thumbnail: signThumbnailUrl(existingRevision.data.thumbnail),
         _id: existingRevision._id,
@@ -595,12 +614,12 @@ export const getCourseForEdit = async (slug, instructorId) => {
         reviewMessage: existingRevision.reviewMessage || null,
         reviewHistory: existingRevision.reviewHistory || [],
         isUpdateMode: true
-      };
+      });
     }
 
     // CASE 2.1.3: changes_requested -> Cho phép edit và resubmit
     if (existingRevision && existingRevision.status === 'changes_requested') {
-      return {
+      return signCourseResources({
         ...existingRevision.data,
         thumbnail: signThumbnailUrl(existingRevision.data.thumbnail),
         _id: existingRevision._id,
@@ -609,7 +628,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
         reviewMessage: existingRevision.reviewMessage || null,
         reviewHistory: existingRevision.reviewHistory || [],
         isUpdateMode: true
-      };
+      });
     }
 
     // CASE 2.2: Chưa có bản Draft (Lần đầu sửa sau khi publish) -> Clone từ Course Live
@@ -633,7 +652,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
         isPreviewFree: lec.isPreviewFree,
         resources: (lec.resources || []).map(res => ({
           title: res.title,
-          url: res.url,
+          url: signThumbnailUrl(res.url),
           type: res.type
         })),
         // ✅ FIX: Clone quizzes khi lần đầu edit course đã publish
@@ -649,7 +668,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
     }));
 
 
-    return {
+    return signCourseResources({
       title: populatedCourse.title,
       slug: populatedCourse.slug, // Giữ slug cũ
       thumbnail: signThumbnailUrl(populatedCourse.thumbnail),
@@ -670,7 +689,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
       courseId: populatedCourse._id, // Quan trọng: Đánh dấu revision này thuộc về course nào
       status: 'draft', // Bắt đầu là draft
       isUpdateMode: true
-    };
+    });
   }
 
   // --- TRƯỜNG HỢP 1: Course chưa từng publish (Fresh Draft) ---
@@ -700,14 +719,14 @@ export const getCourseForEdit = async (slug, instructorId) => {
   }
 
   if (freshDraft) {
-    return {
+    return signCourseResources({
       ...freshDraft.data,
       thumbnail: signThumbnailUrl(freshDraft.data?.thumbnail),
       _id: freshDraft._id,
       revisionId: freshDraft._id, // ✨ Thêm revisionId để frontend gửi lại khi save
       status: 'draft',
       isUpdateMode: false
-    };
+    });
   }
 
   // Nếu pending (Fresh Pending) -> Chặn
@@ -753,7 +772,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
   }
 
   if (freshRejected) {
-    return {
+    return signCourseResources({
       ...freshRejected.data,
       thumbnail: signThumbnailUrl(freshRejected.data?.thumbnail),
       _id: freshRejected._id,
@@ -762,7 +781,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
       reviewMessage: freshRejected.reviewMessage || null,
       reviewHistory: freshRejected.reviewHistory || [],
       isUpdateMode: false
-    };
+    });
   }
 
   // Nếu changes_requested (Fresh Changes Requested) -> Cho phép edit lại và resubmit
@@ -784,7 +803,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
   }
 
   if (freshChangesRequested) {
-    return {
+    return signCourseResources({
       ...freshChangesRequested.data,
       thumbnail: signThumbnailUrl(freshChangesRequested.data?.thumbnail),
       _id: freshChangesRequested._id,
@@ -793,7 +812,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
       reviewMessage: freshChangesRequested.reviewMessage || null,
       reviewHistory: freshChangesRequested.reviewHistory || [],
       isUpdateMode: false
-    };
+    });
   }
 
   const error = new Error("Không tìm thấy khóa học hoặc bản nháp phù hợp.");
@@ -860,11 +879,17 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
       duration: Number(lec.duration) || 0,
       order: lec.order || 0,
       isPreviewFree: lec.isPreviewFree || false,
-      resources: (lec.resources || []).map(res => ({
-        title: res.title,
-        url: res.url || '',
-        type: res.type || 'link'
-      })),
+      resources: (lec.resources || []).map(res => {
+        let cleanUrl = res.url || '';
+        if (cleanUrl) {
+          cleanUrl = cleanUrl.split('?')[0];
+        }
+        return {
+          title: res.title,
+          url: cleanUrl,
+          type: res.type || 'link'
+        };
+      }),
       // ✅ FIX: Lưu quizzes vào revision — trước đây bị bỏ sót hoàn toàn
       quizzes: (lec.quizzes || []).map(q => ({
         question: q.question || '',
@@ -923,12 +948,17 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
   }
 
 
+  let previewUrl = courseData.previewUrl || '';
+  if (previewUrl) {
+    previewUrl = previewUrl.split('?')[0];
+  }
+
   // 6. Chuẩn bị Data Object cho Revision
   const revisionData = {
     title: courseData.title,
     slug: finalSlug, // Slug được xử lý theo logic trên
     thumbnail: thumbnailUrl,
-    previewUrl: courseData.previewUrl || '',
+    previewUrl: previewUrl,
     shortDescription: courseData.shortDescription,
     description: courseData.description,
     price: Number(courseData.price) || 0,

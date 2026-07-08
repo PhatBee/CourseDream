@@ -140,7 +140,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
                     lectureTitle: lesson.title || 'lecture',
                 });
 
-                const { uploadUrl, cdnUrl } = presignRes.data.data;
+                const { uploadUrl, cdnUrl, signedUrl } = presignRes.data.data;
 
                 await courseApi.uploadFileToS3(uploadUrl, uploadFile, (percent) => {
                     setResourceUploadState(prev => ({ ...prev, progress: percent }));
@@ -148,7 +148,7 @@ const LessonModal = ({ isOpen, onClose, onSave, initialData, isEditing, courseSl
 
                 setLesson(prev => ({
                     ...prev,
-                    resources: [...prev.resources, { title: tempResource.title, url: cdnUrl, type: 'file' }]
+                    resources: [...prev.resources, { title: tempResource.title, url: signedUrl || cdnUrl, type: 'file' }]
                 }));
 
                 toast.success('Resource đã upload!', { id: toastId });
