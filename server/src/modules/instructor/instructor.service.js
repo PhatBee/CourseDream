@@ -132,7 +132,14 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     {
       $project: {
         enrolledAt: 1,
-        price: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] }
+        price: {
+          $convert: {
+            input: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] },
+            to: 'double',
+            onError: 0,
+            onNull: 0
+          }
+        }
       }
     },
     {
@@ -253,7 +260,14 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     {
       $project: {
         enrolledAt: 1,
-        price: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] }
+        price: {
+          $convert: {
+            input: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] },
+            to: 'double',
+            onError: 0,
+            onNull: 0
+          }
+        }
       }
     },
     {
@@ -357,13 +371,27 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         revenue: {
           $multiply: [
             '$totalEnrollmentsCount',
-            { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] }
+            {
+              $convert: {
+                input: { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] },
+                to: 'double',
+                onError: 0,
+                onNull: 0
+              }
+            }
           ]
         },
         periodRevenue: {
           $multiply: [
             { $size: '$periodEnrollments' },
-            { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] }
+            {
+              $convert: {
+                input: { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] },
+                to: 'double',
+                onError: 0,
+                onNull: 0
+              }
+            }
           ]
         }
       }
