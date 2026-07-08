@@ -13,6 +13,7 @@ import notificationService from "../notification/notification.service.js";
 import { generateCourseEmbedding } from '../../utils/ai.service.js';
 import { comparePassword } from '../../utils/password.utils.js';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils.js';
+import { signThumbnailUrl } from '../../config/aws.js';
 
 /**
  * Service: Đăng nhập dành riêng cho Admin
@@ -168,12 +169,18 @@ export const getDashboardCounts = async () => {
 };
 
 export const getTopCourses = async (limit = 5) => {
-  return await Course.find({ status: 'published' })
+  const courses = await Course.find({ status: 'published' })
     .sort({ studentsCount: -1 })
     .limit(limit)
     .select('title slug thumbnail studentsCount price rating instructor')
     .populate('instructor', 'name avatar')
     .lean();
+
+  courses.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
+
+  return courses;
 };
 
 export const getCategoryStats = async () => {
@@ -391,7 +398,7 @@ export const getPendingRevisions = async (query) => {
   const formattedRevisions = revisions.map(rev => ({
     _id: rev._id,
     title: rev.data.title || 'Untitled Course',
-    thumbnail: rev.data.thumbnail,
+    thumbnail: signThumbnailUrl(rev.data.thumbnail),
     price: rev.data.price || 0,
     instructor: rev.instructor,
     courseId: rev.course?._id || null,
@@ -575,6 +582,10 @@ export const getAllCoursesForAdmin = async (query) => {
     return acc;
   }, { all: allCount });
 
+  courses.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
+
   return {
     courses,
     stats,
@@ -611,10 +622,15 @@ export const getPendingRevisionDetail = async (revisionId) => {
       .lean();
   }
 
+  if (originalCourse && originalCourse.thumbnail) {
+    originalCourse.thumbnail = signThumbnailUrl(originalCourse.thumbnail);
+  }
+
   return {
     revision: {
       ...revision,
-      ...revision.data
+      ...revision.data,
+      thumbnail: signThumbnailUrl(revision.data?.thumbnail)
     },
     originalCourse,
     type: revision.course ? 'update' : 'new'

@@ -162,4 +162,20 @@ export const extractKeyFromCDNUrl = (cdnUrl) => {
   }
 };
 
+/**
+ * Trích xuất key từ CloudFront CDN URL và ký URL với thời hạn lâu hơn (mặc định 24 giờ = 86400 giây)
+ * @param {string} url - raw thumbnail URL
+ * @returns {string} - signed URL hoặc raw URL nếu không phải CloudFront
+ */
+export const signThumbnailUrl = (url) => {
+  if (!url) return url;
+  // Loại bỏ query parameter nếu có trước khi check và ký (đề phòng link đã bị ký sẵn)
+  const cleanUrl = url.split('?')[0];
+  if (cleanUrl.includes('cloudfront.net')) {
+    const key = extractKeyFromCDNUrl(cleanUrl);
+    return generateSignedVideoUrl(key, 86400); // 24 giờ
+  }
+  return url;
+};
+
 export { BUCKET, CLOUDFRONT_DOMAIN };

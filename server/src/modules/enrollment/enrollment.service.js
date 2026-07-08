@@ -1,6 +1,7 @@
 import Enrollment from "./enrollment.model.js";
 import Course from "../course/course.model.js";
 import Progress from "../progress/progress.model.js"
+import { signThumbnailUrl } from '../../config/aws.js';
 
 class EnrollmentService {
 
@@ -37,7 +38,7 @@ class EnrollmentService {
     }
     // Lấy danh sách khoá học đã đăng ký của user
     async getMyEnrollments(userId) {
-        return Enrollment.find({ student: userId })
+        const enrollments = await Enrollment.find({ student: userId })
             .populate({
                 path: "course",
                 select: "title slug thumbnail price instructor totalLectures totalHours categories", // Thêm categories
@@ -46,7 +47,16 @@ class EnrollmentService {
                     { path: "categories", select: "name slug" } // Populate categories
                 ]
             })
-            .sort({ lastViewedAt: -1, enrolledAt: -1 });
+            .sort({ lastViewedAt: -1, enrolledAt: -1 })
+            .lean();
+
+        enrollments.forEach(e => {
+            if (e.course && e.course.thumbnail) {
+                e.course.thumbnail = signThumbnailUrl(e.course.thumbnail);
+            }
+        });
+
+        return enrollments;
     }
 
     async getStudentDashboard(userId) {
@@ -68,6 +78,10 @@ class EnrollmentService {
                 student: userId, 
                 course: enrollment.course._id 
             });
+
+            if (enrollment.course.thumbnail) {
+                enrollment.course.thumbnail = signThumbnailUrl(enrollment.course.thumbnail);
+            }
 
             return {
                 _id: enrollment._id, // ID của enrollment

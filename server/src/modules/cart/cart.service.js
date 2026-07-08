@@ -1,5 +1,17 @@
 import Cart from './cart.model.js';
 import Course from '../course/course.model.js';
+import { signThumbnailUrl } from '../../config/aws.js';
+
+const signCartThumbnails = (cart) => {
+    if (cart && cart.items) {
+        cart.items.forEach(item => {
+            if (item.course && item.course.thumbnail) {
+                item.course.thumbnail = signThumbnailUrl(item.course.thumbnail);
+            }
+        });
+    }
+    return cart;
+};
 
 class CartService {
     /**
@@ -14,14 +26,16 @@ class CartService {
                     { path: 'instructor', select: 'name avatar' },
                     { path: 'categories', select: 'name slug' }
                 ]
-            });
+            })
+            .lean();
 
         // Nếu chưa có cart, tạo mới
         if (!cart) {
             cart = await Cart.create({ student: studentId, items: [] });
+            cart = cart.toObject();
         }
 
-        return cart;
+        return signCartThumbnails(cart);
     }
 
     /**
@@ -62,7 +76,7 @@ class CartService {
         await cart.save();
 
         // Populate và return
-        return await Cart.findById(cart._id)
+        const updatedCart = await Cart.findById(cart._id)
             .populate({
                 path: 'items.course',
                 select: 'title slug thumbnail price priceDiscount instructor categories',
@@ -70,7 +84,9 @@ class CartService {
                     { path: 'instructor', select: 'name avatar' },
                     { path: 'categories', select: 'name slug' }
                 ]
-            });
+            })
+            .lean();
+        return signCartThumbnails(updatedCart);
     }
 
     /**
@@ -92,7 +108,7 @@ class CartService {
         await cart.save();
 
         // Populate và return
-        return await Cart.findById(cart._id)
+        const updatedCart = await Cart.findById(cart._id)
             .populate({
                 path: 'items.course',
                 select: 'title slug thumbnail price priceDiscount instructor categories',
@@ -100,7 +116,9 @@ class CartService {
                     { path: 'instructor', select: 'name avatar' },
                     { path: 'categories', select: 'name slug' }
                 ]
-            });
+            })
+            .lean();
+        return signCartThumbnails(updatedCart);
     }
 
     /**
@@ -149,7 +167,7 @@ class CartService {
         cart.calculateTotals();
         await cart.save();
 
-        return await Cart.findById(cart._id)
+        const updatedCart = await Cart.findById(cart._id)
             .populate({
                 path: 'items.course',
                 select: 'title slug thumbnail price priceDiscount instructor categories',
@@ -157,7 +175,9 @@ class CartService {
                     { path: 'instructor', select: 'name avatar' },
                     { path: 'categories', select: 'name slug' }
                 ]
-            });
+            })
+            .lean();
+        return signCartThumbnails(updatedCart);
     }
     /**
      * Xóa danh sách các khóa học đã thanh toán khỏi giỏ hàng

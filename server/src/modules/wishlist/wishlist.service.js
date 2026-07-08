@@ -1,5 +1,6 @@
 import Wishlist from './wishlist.model.js';
 import Course from '../course/course.model.js'; 
+import { signThumbnailUrl } from '../../config/aws.js';
 
 /**
  * Lấy danh sách yêu thích của user
@@ -14,10 +15,17 @@ export const getWishlist = async (userId) => {
         path: 'instructor',
         select: 'name avatar'
       }
-    });
+    })
+    .lean();
 
   if (!wishlist) {
     return [];
+  }
+
+  if (wishlist.courses) {
+    wishlist.courses.forEach(c => {
+      if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+    });
   }
 
   return wishlist.courses;

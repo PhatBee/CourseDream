@@ -12,6 +12,7 @@ import slugify from "slugify";
 import mongoose from "mongoose";
 import notificationService from "../notification/notification.service.js";
 import User from "../auth/auth.model.js";
+import { signThumbnailUrl } from '../../config/aws.js';
 // NOTE: Video uploads now go directly to S3 via presigned URLs from the frontend.
 // This service no longer handles video file uploads.
 /**
@@ -100,6 +101,10 @@ export const getCourseDetailsBySlug = async (slug, currentUser) => {
 
   const reviewCount = await Review.countDocuments({ course: course._id });
 
+  if (course && course.thumbnail) {
+    course.thumbnail = signThumbnailUrl(course.thumbnail);
+  }
+
   return {
     course,
     reviews,
@@ -118,6 +123,10 @@ export const getPopularCourses = async () => {
     .populate("instructor", "name avatar")
     .populate("categories", "name")
     .lean();
+
+  courses.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
 
   return courses;
 };
@@ -155,6 +164,10 @@ export const getAllCourses = async (query) => {
       return course;
     })
   );
+
+  coursesWithReviewCount.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
 
   const totalCourses = await Course.countDocuments(filter);
   const totalPages = Math.ceil(totalCourses / limit);
@@ -225,6 +238,10 @@ export const getLearningDetails = async (slug, userId) => {
       percentage: 0,
       completedQuizzes: [],
     };
+  }
+
+  if (course && course.thumbnail) {
+    course.thumbnail = signThumbnailUrl(course.thumbnail);
   }
 
   return {
@@ -330,6 +347,10 @@ export const searchCourses = async (query) => {
       })
     );
 
+    coursesWithReviewCount.forEach(c => {
+      if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+    });
+
     return { total, page, limit, courses: coursesWithReviewCount };
   } catch (err) {
     console.error("Error in searchCourses:", err);
@@ -402,6 +423,8 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
       "dreamcourse/thumbnails"
     );
     thumbnailUrl = uploadResult.secure_url;
+  } else if (courseData.thumbnail) {
+    thumbnailUrl = courseData.thumbnail.split('?')[0];
   }
 
   // 2. Tạo Slug unique

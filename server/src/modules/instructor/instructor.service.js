@@ -11,6 +11,7 @@ import notificationService from "../notification/notification.service.js";
 import { uploadToCloudinary } from "../../config/cloudinary.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
+import { signThumbnailUrl } from '../../config/aws.js';
 
 const parseArrayField = (fieldData) => {
   if (!fieldData) return [];
@@ -360,6 +361,10 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     .select('title slug thumbnail status studentsCount price createdAt')
     .lean();
 
+  recentCourses.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
+
   return {
     stats: {
       totalCourses,
@@ -531,6 +536,10 @@ export const getInstructorCourses = async (instructorId, query) => {
   const total = finalCourses.length;
   const paginatedData = finalCourses.slice((page - 1) * limit, page * limit);
 
+  paginatedData.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
+
   return {
     courses: paginatedData,
     stats,
@@ -566,6 +575,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
     if (existingRevision && existingRevision.status === 'draft') {
       return {
         ...existingRevision.data, // Bung dữ liệu trong field 'data' ra
+        thumbnail: signThumbnailUrl(existingRevision.data.thumbnail),
         _id: existingRevision._id, // ID của revision
         courseId: liveCourse._id,  // ID của course gốc
         status: 'draft',
@@ -578,6 +588,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
     if (existingRevision && existingRevision.status === 'rejected') {
       return {
         ...existingRevision.data,
+        thumbnail: signThumbnailUrl(existingRevision.data.thumbnail),
         _id: existingRevision._id,
         courseId: liveCourse._id,
         status: 'rejected',
@@ -591,6 +602,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
     if (existingRevision && existingRevision.status === 'changes_requested') {
       return {
         ...existingRevision.data,
+        thumbnail: signThumbnailUrl(existingRevision.data.thumbnail),
         _id: existingRevision._id,
         courseId: liveCourse._id,
         status: 'changes_requested',
@@ -640,7 +652,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
     return {
       title: populatedCourse.title,
       slug: populatedCourse.slug, // Giữ slug cũ
-      thumbnail: populatedCourse.thumbnail,
+      thumbnail: signThumbnailUrl(populatedCourse.thumbnail),
       previewUrl: populatedCourse.previewUrl,
       shortDescription: populatedCourse.shortDescription,
       description: populatedCourse.description,
@@ -690,6 +702,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
   if (freshDraft) {
     return {
       ...freshDraft.data,
+      thumbnail: signThumbnailUrl(freshDraft.data?.thumbnail),
       _id: freshDraft._id,
       revisionId: freshDraft._id, // ✨ Thêm revisionId để frontend gửi lại khi save
       status: 'draft',
@@ -742,6 +755,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
   if (freshRejected) {
     return {
       ...freshRejected.data,
+      thumbnail: signThumbnailUrl(freshRejected.data?.thumbnail),
       _id: freshRejected._id,
       revisionId: freshRejected._id,
       status: 'rejected',
@@ -772,6 +786,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
   if (freshChangesRequested) {
     return {
       ...freshChangesRequested.data,
+      thumbnail: signThumbnailUrl(freshChangesRequested.data?.thumbnail),
       _id: freshChangesRequested._id,
       revisionId: freshChangesRequested._id,
       status: 'changes_requested',
@@ -797,6 +812,10 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     // Fallback: nếu thumbnail gửi qua FormData file (legacy)
     const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
     thumbnailUrl = uploadResult.secure_url;
+  }
+  
+  if (thumbnailUrl) {
+    thumbnailUrl = thumbnailUrl.split('?')[0];
   }
 
   // 2. Xử lý Category (Giống bài trước)
