@@ -46,29 +46,6 @@ const ProfileHeader = () => {
           </div>
         </div>
 
-        {/* Cột phải: Logic chuyển đổi */}
-        <div className="flex items-center gap-3">
-          {user.role === 'student' ? (
-            <Link
-              to="/profile/become-instructor"
-              className="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-bold hover:bg-gray-100 transition-all"
-            >
-              Become an Instructor
-            </Link>
-          ) : (
-            <button
-              onClick={handleToggle}
-              className={`px-4 py-2 rounded-full text-sm font-bold transition-all shadow-md bg-white text-gray-800 ${
-                viewMode === 'student'
-                ? 'border border-emerald-400 hover:bg-emerald-50' 
-                : 'border border-rose-400 hover:bg-rose-50'
-              }`}
-            >
-              Switch to {viewMode === 'student' ? 'Instructor' : 'Student'} Dashboard
-            </button>
-          )}
-        </div>
-
       </div>
     </div>
   );

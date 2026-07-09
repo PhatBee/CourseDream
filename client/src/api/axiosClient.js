@@ -1,4 +1,10 @@
 import axios from "axios";
+import { setApiError } from "../features/error/errorSlice";
+
+let store;
+export const injectStore = (_store) => {
+  store = _store;
+};
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -79,8 +85,11 @@ axiosClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      // Nếu chưa retry, không phải public auth endpoint, và không phải refresh endpoint
+      const errorCode = error.response?.data?.code;
+
+      // Nếu chưa retry, không phải public auth endpoint, không phải refresh endpoint, và là lỗi hết hạn token
       if (
+        errorCode === "TOKEN_EXPIRED" &&
         !originalRequest._retry &&
         !isPublicAuthEndpoint &&
         !isRefreshEndpoint
@@ -117,12 +126,40 @@ axiosClient.interceptors.response.use(
               !window.location.pathname.includes("/courses") &&
               !window.location.pathname.includes("/login")
             ) {
-              window.location.href = "/login";
+              if (store) {
+                store.dispatch(
+                  setApiError({
+                    status: 401,
+                    message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+                  })
+                );
+              } else {
+                window.location.href = "/login";
+              }
             }
           }
 
           return Promise.reject(refreshError);
         }
+      }
+    }
+
+    // Xử lý các mã lỗi hệ thống tập trung
+    const status = error.response?.status;
+    const message = error.response?.data?.message || error.message;
+    const isAccountBanned =
+      status === 403 && error.response?.data?.code === "ACCOUNT_BANNED";
+    const isChangePasswordEndpoint = originalRequest.url?.includes("/users/password");
+
+    if (
+      status &&
+      [403, 404, 429, 500, 502, 503, 504].includes(status) &&
+      !isAccountBanned &&
+      !isPublicAuthEndpoint &&
+      !isChangePasswordEndpoint
+    ) {
+      if (store) {
+        store.dispatch(setApiError({ status, message }));
       }
     }
 

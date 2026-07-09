@@ -33,6 +33,7 @@ const LoginScreen = ({ navigation }) => {
 
     // --- GOOGLE SETUP ---
     const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+        clientId: EXPO_CLIENT_ID,       // Web Client ID – required for Expo Go
         androidClientId: GOOGLE_CLIENT_ID,
         expoClientId: EXPO_CLIENT_ID,
     });
@@ -126,12 +127,12 @@ const LoginScreen = ({ navigation }) => {
                             className="self-end mb-6"
                         >
                             <Text className="text-rose-500 text-base font-medium underline">
-                                Back to Home
+                                Trang chủ
                             </Text>
                         </TouchableOpacity>
 
                         <Text className="text-[44px] leading-tight font-extrabold text-gray-900 tracking-tight">
-                            Sign into Your Account
+                            Đăng nhập
                         </Text>
                     </View>
 
@@ -145,7 +146,7 @@ const LoginScreen = ({ navigation }) => {
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Enter your email"
+                                    placeholder="Nhập email"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.email}
                                     onChangeText={(text) => onChange('email', text)}
@@ -163,12 +164,12 @@ const LoginScreen = ({ navigation }) => {
                         {/* Password Input */}
                         <View>
                             <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                Password <Text className="text-rose-500">*</Text>
+                                Mật khẩu <Text className="text-rose-500">*</Text>
                             </Text>
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Enter your password"
+                                    placeholder="Nhập mật khẩu"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.password}
                                     onChangeText={(text) => onChange('password', text)}
@@ -193,7 +194,7 @@ const LoginScreen = ({ navigation }) => {
                         {/* Remember Me & Forgot Password */}
                         <View className="flex-row items-center justify-end">
                             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                                <Text className="text-rose-500 text-[15px]">Forgot Password?</Text>
+                                <Text className="text-rose-500 text-[15px]">Quên mật khẩu?</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -208,7 +209,7 @@ const LoginScreen = ({ navigation }) => {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Text className="text-white text-lg font-semibold">Login</Text>
+                                    <Text className="text-white text-lg font-semibold">Đăng nhập</Text>
                                     <ArrowRight size={20} color="#fff" />
                                 </>
                             )}
@@ -218,7 +219,7 @@ const LoginScreen = ({ navigation }) => {
                     {/* Divider */}
                     <View className="my-9 flex-row items-center gap-6">
                         <View className="flex-1 h-px bg-gray-200" />
-                        <Text className="text-sm text-gray-500">Or</Text>
+                        <Text className="text-sm text-gray-500">Hoặc</Text>
                         <View className="flex-1 h-px bg-gray-200" />
                     </View>
 
@@ -232,7 +233,7 @@ const LoginScreen = ({ navigation }) => {
                         >
                             <View className="w-5 h-5 bg-blue-500 rounded-full" />
                             <Text className="text-gray-700 text-sm font-medium">
-                                Continue with Google
+                                Tiếp tục với Google
                             </Text>
                         </TouchableOpacity>
 
@@ -244,16 +245,16 @@ const LoginScreen = ({ navigation }) => {
                         >
                             <View className="w-5 h-5 bg-blue-600 rounded-full" />
                             <Text className="text-gray-700 text-sm font-medium">
-                                Continue with Facebook
+                                Tiếp tục với Facebook
                             </Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Sign Up Link */}
                     <View className="flex-row justify-center items-center mb-10">
-                        <Text className="text-sm text-gray-600">Don't you have an account? </Text>
+                        <Text className="text-sm text-gray-600">Bạn chưa có tài khoản? </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                            <Text className="text-rose-500 text-sm font-medium">Sign up</Text>
+                            <Text className="text-rose-500 text-sm font-medium">Đăng ký</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

@@ -17,14 +17,14 @@ const Step4_Details = ({
 }) => {
     return (
         <div className="space-y-6 animate-fadeIn">
-            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Additional Details</h2>
+            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Chi tiết khóa học</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Requirements - BẮT BUỘC */}
                 <DynamicListInput
-                    title="Requirements"
+                    title="Yêu cầu"
                     items={courseData.requirements}
-                    placeholder="e.g. Basic HTML knowledge"
+                    placeholder="e.g. Kiến thức HTML cơ bản"
                     onAdd={() => handleArrayAction('requirements', 'add')}
                     onRemove={(idx) => handleArrayAction('requirements', 'remove', idx)}
                     onChange={(idx, val) => handleArrayAction('requirements', 'update', idx, val)}
@@ -34,9 +34,9 @@ const Step4_Details = ({
 
                 {/* Course Includes */}
                 <DynamicListInput
-                    title="Course Includes"
+                    title="Khóa học bao gồm"
                     items={courseData.includes}
-                    placeholder="e.g. 10 hours video, Certificate"
+                    placeholder="e.g. 10 giờ video, Chứng chỉ"
                     onAdd={() => handleArrayAction('includes', 'add')}
                     onRemove={(idx) => handleArrayAction('includes', 'remove', idx)}
                     onChange={(idx, val) => handleArrayAction('includes', 'update', idx, val)}
@@ -45,13 +45,13 @@ const Step4_Details = ({
 
             {/* Detailed Description */}
             <div>
-                <label className="block text-sm font-bold mb-2">Detailed Description</label>
+                <label className="block text-sm font-bold mb-2 text-justify">Mô tả chi tiết</label>
                 <textarea
                     name="description"
                     value={courseData.description}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border rounded-lg h-40 outline-none focus:ring-2 focus:ring-rose-400 resize-none transition-all"
-                    placeholder="Describe your course in detail..."
+                    placeholder="Hãy mô tả khóa học của bạn..."
                 />
             </div>
         </div>

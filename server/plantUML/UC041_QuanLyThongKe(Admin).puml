@@ -1,0 +1,140 @@
+@startuml
+!theme plain
+autonumber
+
+' Khai báo các thành phần
+actor "Quản trị viên (Admin)" as Admin
+boundary "Admin Dashboard UI" as UI
+    control "Router & Middleware" as Middleware
+    control "Admin Controller" as Controller
+    participant "Admin Service" as Service
+    entity ":User" as UserEntity
+    entity ":Course" as CourseEntity
+    entity ":Payment" as PaymentEntity
+== Phase 1: Load Dashboard Stats (Overview) ==
+
+Admin -> UI: Click menu "Dashboard"
+activate UI
+
+' Gửi Request Stats
+note right of UI
+  API Endpoint:
+  GET /api/admin/dashboard-stats
+end note
+UI -> Middleware: Gửi Request (Token)
+activate Middleware
+
+' Middleware Check Role
+group Middleware Processing
+    Middleware -> Middleware: verifyToken()
+    Middleware -> Middleware: checkRole('admin')
+    
+    alt Auth/Role Failed
+        Middleware --> UI: Trả về lỗi 403 Forbidden
+    end
+end group
+
+Middleware -> Controller: getDashboardStats(req, res, next)
+activate Controller
+
+' Gọi Service
+Controller -> Service: getDashboardStats()
+activate Service
+
+' Truy vấn DB song song (Promise.all)
+note right of Service
+  Sử dụng Promise.all để chạy song song
+  các query thống kê nhằm tối ưu tốc độ
+end note
+
+par Parallel Queries
+    group Count Users
+        Service -> UserEntity: countDocuments({ role: 'student' })
+        activate UserEntity
+        UserEntity --> Service: totalStudents
+        deactivate UserEntity
+        
+        Service -> UserEntity: countDocuments({ role: 'instructor' })
+        activate UserEntity
+        UserEntity --> Service: totalInstructors
+        deactivate UserEntity
+    end
+
+    group Count Courses & Top Courses
+        Service -> CourseEntity: countDocuments({ status: 'published' })
+        activate CourseEntity
+        CourseEntity --> Service: totalCourses
+        deactivate CourseEntity
+
+        Service -> CourseEntity: find().sort({studentsCount: -1}).limit(5)
+        activate CourseEntity
+        CourseEntity --> Service: topCourses List
+        deactivate CourseEntity
+    end
+    
+    group Category Stats
+        Service -> CourseEntity: aggregate([ $group, $lookup... ])
+        activate CourseEntity
+        CourseEntity --> Service: categoryStats List
+        deactivate CourseEntity
+    end
+end
+
+' Trả kết quả Phase 1
+Service --> Controller: Return { counts, topCourses, categoryStats }
+deactivate Service
+
+Controller --> UI: Response 200 OK\n{ success: true, data: { ... } }
+deactivate Controller
+
+' ==========================================
+' PHASE 2: LẤY DỮ LIỆU BIỂU ĐỒ DOANH THU
+' ==========================================
+== Phase 2: Load Revenue Analytics (Chart) ==
+
+' UI tự động gọi hoặc User chọn filter
+UI -> Middleware: Gửi Request Analytics
+note right of UI
+  API Endpoint:
+  GET /api/admin/revenue-analytics
+  Query: ?type=year (hoặc month/week)
+end note
+
+Middleware -> Controller: getRevenueAnalytics(req, res, next)
+activate Controller
+
+Controller -> Service: getRevenueStats(type, year, month)
+activate Service
+
+' Logic tính toán doanh thu
+Service -> Service: Tính toán start/end date\ndựa trên query type
+
+' Truy vấn Payment Entity
+Service -> PaymentEntity: aggregate([{ $match }, { $group }, { $sum }])
+activate PaymentEntity
+note right of PaymentEntity
+  Tính tổng tiền (amount) từ các
+  giao dịch có status: 'success'
+end note
+PaymentEntity --> Service: Trả về aggregated data
+deactivate PaymentEntity
+
+' Service format dữ liệu
+Service -> Service: Format data (Fill 0 cho các tháng/ngày trống)
+Service -> PaymentEntity: aggregate (Tính Total Revenue All Time)
+activate PaymentEntity
+PaymentEntity --> Service: totalRevenue
+deactivate PaymentEntity
+
+' Trả kết quả Phase 2
+Service --> Controller: Return { chartData, totalRevenue }
+deactivate Service
+
+Controller --> UI: Response 200 OK
+deactivate Controller
+deactivate Middleware
+
+UI -> Admin: Hiển thị Dashboard hoàn chỉnh\n(Biểu đồ & Số liệu)
+deactivate UI
+
+@enduml

@@ -11,7 +11,7 @@ import ShareModal from "../common/ShareModal";
 import { toast } from "react-hot-toast";
 
 const formatPrice = (price) => {
-  if (price === 0) return "FREE";
+  if (price === 0) return "MIỄN PHÍ";
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -102,7 +102,7 @@ const EnrollCard = ({ course, isInstructor }) => {
                     {formatPrice(price)}
                   </span>
                   <span className="text-red-500 font-medium">
-                    {discountPercentage}% off
+                    {discountPercentage}% giảm giá
                   </span>
                 </p>
               )}
@@ -122,14 +122,14 @@ const EnrollCard = ({ course, isInstructor }) => {
                 }`}
             >
               <Heart size={18} className={isInWishlist ? "fill-current" : ""} />
-              {isInWishlist ? "Wishlisted" : "Add to Wishlist"}
+              {isInWishlist ? "Đã yêu thích" : "Thêm vào danh sách yêu thích"}
             </button>
 
             <button
               onClick={() => setIsShareOpen(true)}
               className="btn-wishlist flex items-center justify-center gap-2"
             >
-              <Share2 size={18} /> Share
+              <Share2 size={18} /> Chia sẻ
             </button>
           </div>
 
@@ -140,10 +140,10 @@ const EnrollCard = ({ course, isInstructor }) => {
               className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg group"
             >
               {user?.role === "admin"
-                ? "View as Admin"
+                ? "Xem với tư cách quản trị viên"
                 : isInstructor
-                  ? "View as Instructor"
-                  : "Go to Course"}
+                  ? "Xem với tư cách giảng viên"
+                  : "Đi tới khóa học"}
             </button>
           ) : (
             /* Các nút mua hàng (Hiển thị khi chưa đăng ký) */
@@ -160,14 +160,14 @@ const EnrollCard = ({ course, isInstructor }) => {
                   size={20}
                   className={`group-hover:scale-110 transition-transform ${isInCart ? "fill-current" : ""}`}
                 />
-                {isInCart ? "Remove from Cart" : "Add to Cart"}
+                {isInCart ? "Xóa khỏi giỏ hàng" : "Thêm vào giỏ hàng"}
               </button>
               {/* Enroll Now Button - Secondary CTA */}
               <button
                 onClick={handleEnrollNow}
                 className="w-full border-2 border-rose-600 text-rose-600 hover:bg-rose-50 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
               >
-                Enroll Now
+                Ghi danh ngay
               </button>
             </>
           )}

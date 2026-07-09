@@ -11,6 +11,7 @@ import {
   deleteDiscussion,
   getDiscussionById,
   getDiscussionReplies,
+  deleteReply,
 } from "../discussion/discussion.controller.js";
 
 const router = express.Router();
@@ -35,5 +36,6 @@ router.delete("/:discussionId", verifyToken, deleteDiscussion);
 
 router.get("/:discussionId", getDiscussionById);
 router.get("/:discussionId/replies", getDiscussionReplies); // GET /api/discussions/123/replies?page=1&limit=5
+router.delete("/replies/:replyId", verifyToken, checkEnrollment, deleteReply);
 
 export default router;

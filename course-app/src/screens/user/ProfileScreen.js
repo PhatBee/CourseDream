@@ -60,12 +60,12 @@ const ProfileScreen = ({ navigation }) => {
 
     const handleLogout = () => {
         Alert.alert(
-            'Logout',
-            'Are you sure you want to logout?',
+            'Đăng xuất',
+            'Bạn có chắc chắn muốn đăng xuất?',
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: 'Hủy', style: 'cancel' },
                 {
-                    text: 'Logout',
+                    text: 'Đăng xuất',
                     style: 'destructive',
                     onPress: async () => {
                         await dispatch(logout());
@@ -90,15 +90,15 @@ const ProfileScreen = ({ navigation }) => {
 
     const menuItems = [
         {
-            section: 'Dashboard',
+            section: 'Tổng quan',
             items: [
-                { id: 'dashboard', label: 'Dashboard', icon: Grid, screen: 'Dashboard', show: true },
-                { id: 'profile', label: 'My Profile', icon: User, screen: 'MyProfile', show: true },
-                { id: 'enrolled', label: 'Enrolled Courses', icon: BookOpen, screen: 'EnrolledCourses', show: true },
-                { id: 'wishlist', label: 'Wishlist', icon: Heart, screen: 'Wishlist', show: true },
+                { id: 'dashboard', label: 'Tổng quan', icon: Grid, screen: 'Dashboard', show: true },
+                { id: 'profile', label: 'Thông tin cá nhân', icon: User, screen: 'MyProfile', show: true },
+                { id: 'enrolled', label: 'Các khóa học đã đăng ký', icon: BookOpen, screen: 'EnrolledCourses', show: true },
+                { id: 'wishlist', label: 'Danh sách yêu thích', icon: Heart, screen: 'Wishlist', show: true },
                 {
                     id: 'my-courses',
-                    label: 'My Courses',
+                    label: 'Khóa học của tôi',
                     icon: Book,
                     screen: 'MyCourses',
                     show: user?.role === 'instructor' || user?.role === 'admin',
@@ -106,11 +106,11 @@ const ProfileScreen = ({ navigation }) => {
             ],
         },
         {
-            section: 'Account Settings',
+            section: 'Cài đặt tài khoản',
             items: [
-                { id: 'instructor-profile', label: 'Instructor Profile', icon: User, screen: 'InstructorProfile', show: user?.role === 'instructor' || user?.role === 'admin' },
-                { id: 'change-password', label: 'Change Password', icon: Lock, screen: 'ChangePassword', show: true },
-                { id: 'settings', label: 'Settings', icon: Settings, screen: 'Settings', show: true },
+                { id: 'instructor-profile', label: 'Thông tin giảng viên', icon: User, screen: 'InstructorProfile', show: user?.role === 'instructor' || user?.role === 'admin' },
+                { id: 'change-password', label: 'Đổi mật khẩu', icon: Lock, screen: 'ChangePassword', show: true },
+                { id: 'settings', label: 'Cài đặt', icon: Settings, screen: 'Settings', show: true },
             ],
         },
     ];
@@ -176,7 +176,7 @@ const ProfileScreen = ({ navigation }) => {
                                 onPress={() => navigation.navigate('BecomeInstructor')}
                             >
                                 <Text className="text-rose-600 text-center font-semibold text-sm">
-                                    Become an Instructor
+                                    Trở thành giảng viên
                                 </Text>
                             </TouchableOpacity>
                         ) : (
@@ -184,13 +184,13 @@ const ProfileScreen = ({ navigation }) => {
                                 className="flex-1 bg-white/20 px-4 py-3 rounded-full"
                                 onPress={() =>
                                     Alert.alert(
-                                        'Coming Soon',
-                                        'Instructor Dashboard is coming soon!'
+                                        'Sắp ra mắt',
+                                        'Trang dành cho giảng viên sẽ sớm ra mắt!'
                                     )
                                 }
                             >
                                 <Text className="text-white text-center font-semibold text-sm">
-                                    Instructor Dashboard
+                                    Bảng điều khiển giảng viên
                                 </Text>
                             </TouchableOpacity>
                         )}
@@ -220,7 +220,7 @@ const ProfileScreen = ({ navigation }) => {
                         >
                             <LogOut size={20} color="#e11d48" />
                             <Text className="text-rose-600 text-base font-semibold ml-2">
-                                Logout
+                                Đăng xuất
                             </Text>
                         </TouchableOpacity>
                     </View>

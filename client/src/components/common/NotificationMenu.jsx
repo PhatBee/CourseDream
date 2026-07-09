@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
+import { getDiscussionById } from "../../api/discussionApi";
+import toast from "react-hot-toast";
 
 // Helper lấy Icon và Màu sắc tương ứng với từng loại thông báo
 const getNotificationUI = (type) => {
@@ -47,7 +49,7 @@ const NotificationMenu = ({ open, onClose }) => {
   const { notifications, loading } = useSelector((state) => state.notification);
   const menuRef = useRef();
 
-  const [deletedPopup, setDeletedPopup] = useState(null);
+  const [warningDetailPopup, setWarningDetailPopup] = useState(null);
 
   useEffect(() => {
     if (open) dispatch(getNotifications());
@@ -57,12 +59,12 @@ const NotificationMenu = ({ open, onClose }) => {
     if (!open) return;
     const handleClick = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
-        if (!deletedPopup) onClose();
+        if (!warningDetailPopup) onClose();
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [open, onClose, deletedPopup]);
+  }, [open, onClose, warningDetailPopup]);
 
   const handleNotificationClick = async (notification) => {
     if (!notification.read) {
@@ -71,41 +73,42 @@ const NotificationMenu = ({ open, onClose }) => {
 
     const { type, metadata } = notification;
 
-    if (metadata?.isDeleted) {
-      setDeletedPopup(notification);
+    // YÊU CẦU: Nếu là báo cáo (warning), luôn mở popup để xem chi tiết
+    if (type === "warning" || metadata?.isDeleted) {
+      setWarningDetailPopup(notification);
       return;
     }
 
     switch (type) {
-      case "warning":
-        if (
-          metadata?.courseSlug &&
-          metadata?.lessonId &&
-          metadata?.discussionId
-        ) {
-          navigate(
-            `/courses/${metadata.courseSlug}/learn/lecture/${metadata.lessonId}?discussionId=${metadata.discussionId}${metadata.replyId ? `&replyId=${metadata.replyId}` : ""}`,
-          );
-        } else if (metadata?.courseSlug) {
-          navigate(`/courses/${metadata.courseSlug}`);
-        }
-        break;
-      case "report":
-        navigate("/admin/reports");
-        break;
-      case "system":
-        if (metadata?.url) navigate(metadata.url);
-        break;
       case "reply":
         if (
           metadata?.courseSlug &&
           metadata?.lessonId &&
           metadata?.discussionId
         ) {
-          navigate(
-            `/courses/${metadata.courseSlug}/learn/lecture/${metadata.lessonId}?discussionId=${metadata.discussionId}${metadata.replyId ? `&replyId=${metadata.replyId}` : ""}`,
-          );
+          try {
+            // Pre-fetch check: Nếu thảo luận không tồn tại, sẽ ném ra lỗi 404
+            await getDiscussionById(metadata.discussionId);
+            // Nếu tồn tại, nhảy vào trang học
+            navigate(
+              `/courses/${metadata.courseSlug}/learn/lecture/${metadata.lessonId}?discussionId=${metadata.discussionId}${metadata.replyId ? `&replyId=${metadata.replyId}` : ""}`,
+            );
+          } catch {
+            // Nếu không tìm thấy, đá về trang overview và báo lỗi ngay, tránh load trang VideoPlayer
+            toast.error("Không tìm thấy thảo luận. Thảo luận này có thể đã bị xóa.");
+            navigate(`/courses/${metadata.courseSlug}/overview`);
+          }
         }
+        break;
+      case "report":
+        if (metadata?.reportId) {
+          navigate(`/admin/reports?reportId=${metadata.reportId}`);
+        } else {
+          navigate("/admin/reports");
+        }
+        break;
+      case "system":
+        if (metadata?.url) navigate(metadata.url);
         break;
       case "reminder_learning":
         if (metadata?.courseSlug)
@@ -200,7 +203,7 @@ const NotificationMenu = ({ open, onClose }) => {
                           </div>
 
                           <div
-                            className={`text-[13px] whitespace-pre-line mt-1 leading-relaxed ${
+                            className={`text-[13px] whitespace-pre-line mt-1 leading-relaxed text-justify ${
                               !n.read
                                 ? "text-gray-700"
                                 : "text-gray-500 line-clamp-2"
@@ -208,8 +211,16 @@ const NotificationMenu = ({ open, onClose }) => {
                           >
                             {n.message}
                           </div>
+                          
+                          {n.type === "warning" && n.metadata?.reportReasonLabel && (
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                               <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 uppercase">
+                                 {n.metadata.reportReasonLabel}
+                               </span>
+                            </div>
+                          )}
 
-                          <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                          <p className="text-[11px] text-gray-400 mt-2 font-medium text-justify">
                             {new Date(n.createdAt).toLocaleString("vi-VN")}
                           </p>
                         </div>
@@ -223,8 +234,8 @@ const NotificationMenu = ({ open, onClose }) => {
         </div>
       ) : null}
 
-      {/* === MODAL POPUP HIỂN THỊ NỘI DUNG ĐÃ BỊ XÓA (SỬ DỤNG PORTAL) === */}
-      {deletedPopup &&
+      {/* === MODAL POPUP HIỂN THỊ CHI TIẾT WARNING/REPORT (SỬ DỤNG PORTAL) === */}
+      {warningDetailPopup &&
         createPortal(
           <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 p-4 transition-all">
             <div className="bg-white rounded-xl overflow-hidden shadow-2xl p-0 w-full max-w-[600px] relative max-h-[90vh] flex flex-col transform scale-100">
@@ -238,12 +249,12 @@ const NotificationMenu = ({ open, onClose }) => {
                     Chi tiết xử lý vi phạm
                   </h3>
                   <p className="text-sm font-semibold text-rose-600 truncate">
-                    {deletedPopup.title}
+                    {warningDetailPopup.title}
                   </p>
                 </div>
                 <button
                   onClick={() => {
-                    setDeletedPopup(null);
+                    setWarningDetailPopup(null);
                     onClose();
                   }}
                   className="text-gray-400 hover:text-gray-700 bg-white hover:bg-gray-100 p-2.5 rounded-full transition-colors shadow-sm ml-auto"
@@ -254,55 +265,106 @@ const NotificationMenu = ({ open, onClose }) => {
 
               {/* Body Popup được phân tách nội dung */}
               <div className="px-6 py-6 overflow-y-auto custom-scrollbar">
-                <div className="space-y-5">
-                  {/* Ý 1: Nội dung vi phạm do user Báo Cáo */}
-                  <div>
-                    <h4 className="text-xs font-bold text-rose-500 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                      Lý do hệ thống tiếp nhận
-                    </h4>
-                    <p className="text-base text-rose-700 font-semibold bg-rose-50 border border-rose-200 rounded-lg p-3">
-                      {deletedPopup.metadata?.reportReasonLabel ||
-                        "Vi phạm tiêu chuẩn cộng đồng"}
-                    </p>
+                <div className="space-y-6">
+                  {/* Row 1: Lý do */}
+                  <div className="flex items-start gap-4">
+                     <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">Lý do vi phạm</div>
+                     <div className="flex-1">
+                        <span className="inline-block px-3 py-1 bg-rose-100 text-rose-700 font-bold rounded-lg text-[13px] border border-rose-200">
+                           {warningDetailPopup.metadata?.reportReasonLabel || "Vi phạm tiêu chuẩn cộng đồng"}
+                        </span>
+                     </div>
                   </div>
 
-                  {/* Ý 2: Ghi chú của Admin (nếu có) sang ý mới */}
-                  {deletedPopup.metadata?.adminNote && (
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                        Ghi chú từ quản trị viên
-                      </h4>
-                      <p className="text-[15px] font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        {deletedPopup.metadata.adminNote}
-                      </p>
-                    </div>
+                  {/* Row 2: Nội dung gốc & Link */}
+                  <div className="flex items-start gap-4">
+                     <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">
+                        {(warningDetailPopup.metadata?.targetType === "course" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.courseSlug && !warningDetailPopup.metadata?.discussionId))
+                           ? "Khóa học"
+                           : (warningDetailPopup.metadata?.targetType === "discussion" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.discussionId && !warningDetailPopup.metadata?.replyId))
+                           ? "Thảo luận"
+                           : (warningDetailPopup.metadata?.targetType === "reply" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.replyId))
+                           ? "Bình luận"
+                           : "Nội dung"}
+                     </div>
+                     <div className="flex-1 min-w-0">
+                        {(() => {
+                           const m = warningDetailPopup.metadata;
+                           const isCourse = m?.targetType === "course" || (!m?.targetType && m?.courseSlug && !m?.discussionId);
+                           const isDiscussion = m?.targetType === "discussion" || (!m?.targetType && m?.discussionId && !m?.replyId);
+                           const isReply = m?.targetType === "reply" || (!m?.targetType && m?.replyId);
+
+                           if (isCourse) {
+                              return m?.isDeleted ? (
+                                <span className="text-[15px] font-bold text-gray-500 line-through">
+                                  {m?.originalContent?.replace("Khóa học: ", "") || "Khóa học"}
+                                </span>
+                              ) : (
+                                <button 
+                                  onClick={() => {
+                                    setWarningDetailPopup(null);
+                                    onClose();
+                                    navigate(`/courses/${m?.courseSlug}`);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800 font-medium underline decoration-blue-300 underline-offset-2 break-words block text-[14px] text-justify"
+                                >
+                                  {m?.originalContent?.replace("Khóa học: ", "") || "Đi đến khóa học"}
+                                </button>
+                              );
+                           } else {
+                              return (
+                                 <div>
+                                    <div className="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200 italic shadow-sm whitespace-pre-line break-words text-justify">
+                                      "{m?.originalContent}"
+                                    </div>
+                                    
+                                    {!m?.isDeleted && (
+                                       <button
+                                         onClick={() => {
+                                            setWarningDetailPopup(null);
+                                            onClose();
+                                            navigate(`/courses/${m?.courseSlug}/learn/lecture/${m?.lessonId}?discussionId=${m?.discussionId}${isReply ? `&replyId=${m?.replyId}` : ""}`);
+                                         }}
+                                         className="inline-block mt-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors text-left"
+                                       >
+                                          {isDiscussion ? "Thảo luận gốc " : "Bình luận gốc "}
+                                       </button>
+                                    )}
+                                 </div>
+                              );
+                           }
+                        })()}
+                     </div>
+                  </div>
+
+                  {/* Ghi chú Admin */}
+                  {warningDetailPopup.metadata?.adminNote && (
+                     <div className="flex items-start gap-4 pt-4 border-t border-gray-100">
+                        <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">Ghi chú</div>
+                        <div className="flex-1">
+                           <div className="text-[14px] font-medium text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-200 text-justify">
+                             {warningDetailPopup.metadata.adminNote}
+                           </div>
+                        </div>
+                     </div>
                   )}
 
-                  {/* Ý 3: Hiển thị đầy đủ bài thảo luận, khóa học bị gỡ bỏ */}
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                      Nội dung đã đăng tải
-                    </h4>
-                    <div className="text-[14px] text-gray-700 whitespace-pre-line bg-gray-50 p-4 py-5 rounded-lg border border-gray-200 shadow-inner leading-relaxed max-h-[30vh] overflow-y-auto">
-                      {deletedPopup.metadata?.originalContent ||
-                        deletedPopup.message}
-                    </div>
-                    <p className="text-xs text-gray-400 font-medium italic mt-2 text-right">
-                      ** Việc vi phạm nhiều lần có thể dẫn tới khóa tài khoản
-                      vĩnh viễn.
-                    </p>
-                  </div>
+                  {warningDetailPopup.metadata?.isDeleted && (
+                     <p className="text-xs text-rose-500 font-medium italic mt-2 text-right">
+                       ** Nội dung vi phạm đã bị gỡ bỏ khỏi hệ thống.
+                     </p>
+                  )}
                 </div>
               </div>
 
               {/* Footer Popup */}
-              <div className="px-6 py-5 border-t border-gray-100 bg-gray-50/70 flex justify-end">
+              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/70 flex justify-end items-center">
                 <button
                   onClick={() => {
-                    setDeletedPopup(null);
+                    setWarningDetailPopup(null);
                     onClose();
                   }}
-                  className="px-7 py-2.5 bg-gray-900 hover:bg-black text-white text-[15px] font-bold rounded-lg transition-transform hover:scale-[1.02] shadow-md"
+                  className="px-6 py-2 bg-gray-900 hover:bg-black text-white text-[14px] font-bold rounded-lg transition-transform hover:scale-[1.02] shadow-md"
                 >
                   Đóng
                 </button>

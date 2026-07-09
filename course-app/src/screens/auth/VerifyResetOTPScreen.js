@@ -11,6 +11,7 @@ import {
     Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
 import { verifyResetOTP, reset } from '../../features/auth/authSlice';
 import { ArrowRight, Mail } from 'lucide-react-native';
 
@@ -19,17 +20,18 @@ const VerifyResetOTPScreen = ({ navigation }) => {
     const inputRefs = useRef([]);
 
     const dispatch = useDispatch();
+    const isFocused = useIsFocused();
     const { isLoading, isError, message, isVerifyResetSuccess, resetEmail } = useSelector(
         (state) => state.auth
     );
 
     // Nếu không có email, đá về trang ForgotPassword
     useEffect(() => {
-        if (!resetEmail) {
+        if (isFocused && !resetEmail) {
             Alert.alert('Thông báo', 'Vui lòng bắt đầu từ trang Quên mật khẩu.');
             navigation.navigate('ForgotPassword');
         }
-    }, [resetEmail, navigation]);
+    }, [resetEmail, isFocused, navigation]);
 
     // Xử lý kết quả
     useEffect(() => {
@@ -96,18 +98,18 @@ const VerifyResetOTPScreen = ({ navigation }) => {
                             className="self-end mb-6"
                         >
                             <Text className="text-rose-500 text-base font-medium underline">
-                                Back
+                                Quay lại
                             </Text>
                         </TouchableOpacity>
 
                         <Text className="text-[44px] leading-tight font-extrabold text-gray-900 tracking-tight">
-                            Verify OTP
+                            Xác thực mã OTP
                         </Text>
                         <View className="flex-row items-center mt-4 bg-rose-50 p-4 rounded-2xl">
                             <Mail size={20} color="#f43f5e" />
                             <Text className="text-gray-700 ml-2 flex-1">
-                                We've sent a 6-digit code to{' '}
-                                <Text className="font-bold">{resetEmail || 'your email'}</Text>
+                                Chúng tôi đã gửi một mã gồm 6 chữ số tới{' '}
+                                <Text className="font-bold">{resetEmail || 'email của bạn'}</Text>
                             </Text>
                         </View>
                     </View>
@@ -115,7 +117,7 @@ const VerifyResetOTPScreen = ({ navigation }) => {
                     {/* OTP Input */}
                     <View className="mb-8">
                         <Text className="mb-4 text-[15px] font-medium text-gray-900 text-center">
-                            Enter OTP Code
+                            Nhập mã OTP
                         </Text>
                         <View className="flex-row justify-between gap-2">
                             {otp.map((digit, index) => (
@@ -145,7 +147,7 @@ const VerifyResetOTPScreen = ({ navigation }) => {
                             <ActivityIndicator color="#fff" />
                         ) : (
                             <>
-                                <Text className="text-white text-lg font-semibold">Verify</Text>
+                                <Text className="text-white text-lg font-semibold">Xác thực</Text>
                                 <ArrowRight size={20} color="#fff" />
                             </>
                         )}
@@ -154,7 +156,7 @@ const VerifyResetOTPScreen = ({ navigation }) => {
                     {/* Info Box */}
                     <View className="mt-8 p-4 bg-gray-50 rounded-2xl">
                         <Text className="text-gray-600 text-sm text-center">
-                            💡 Check your spam folder if you don't see the email in your inbox
+                            Kiểm tra thư mục spam nếu bạn không thấy email trong hộp thư đến
                         </Text>
                     </View>
                 </View>

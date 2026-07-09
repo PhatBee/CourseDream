@@ -1,7 +1,9 @@
 import axios from "axios";
 import { API_URL } from "../utils/config";
-import { getToken, saveToken, removeToken, removeUser } from "../utils/storage";
+import { getToken, saveToken, removeToken, removeUser, getRefreshToken, saveRefreshToken, removeRefreshToken } from "../utils/storage";
 import { getStore } from "../app/storeHolder";
+import * as RootNavigation from "../utils/navigation";
+import Toast from 'react-native-toast-message';
 
 const axiosClient = axios.create({
     baseURL: API_URL,
@@ -66,30 +68,29 @@ axiosClient.interceptors.response.use(
             try {
                 console.log('🔄 Token expired, attempting to refresh...');
 
-                // Get current token
-                const currentToken = await getToken();
+                // Get refresh token
+                const refreshToken = await getRefreshToken();
 
-                if (!currentToken) {
-                    // No token, logout
-                    throw new Error('No token available');
+                if (!refreshToken) {
+                    throw new Error('No refresh token available');
                 }
 
-                // Call refresh token API
+                // Call refresh token API by passing refreshToken in the request body
                 const response = await axios.post(
                     `${API_URL}/auth/refresh-token`,
-                    {},
-                    {
-                        headers: {
-                            Authorization: `Bearer ${currentToken}`,
-                        },
-                    }
+                    { refreshToken }
                 );
 
                 console.log('✅ Token refreshed successfully');
 
-                // Save new access token
+                // Save new access token & refresh token
                 const newAccessToken = response.data.accessToken;
+                const newRefreshToken = response.data.refreshToken;
+
                 await saveToken(newAccessToken);
+                if (newRefreshToken) {
+                    await saveRefreshToken(newRefreshToken);
+                }
 
                 // Update the failed request with new token
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -100,9 +101,18 @@ axiosClient.interceptors.response.use(
                 // If refresh fails, logout user
                 console.error('❌ Refresh token failed:', refreshError.response?.data || refreshError.message);
 
+                // Show Toast message
+                Toast.show({
+                    type: 'error',
+                    text1: 'Phiên đăng nhập đã hết hạn',
+                    text2: 'Vui lòng đăng nhập lại.',
+                    position: 'bottom',
+                });
+
                 // Clear storage
                 await removeToken();
                 await removeUser();
+                await removeRefreshToken();
 
                 // Dispatch logout action (dùng getStore() từ storeHolder — không có require cycle)
                 const store = getStore();
@@ -111,6 +121,9 @@ axiosClient.interceptors.response.use(
                 store?.dispatch({ type: 'wishlist/clearWishlistState' });
                 store?.dispatch({ type: 'cart/resetCart' });
                 store?.dispatch({ type: 'enrollment/resetEnrollment' });
+
+                // Redirect to Login Screen
+                RootNavigation.navigate('Login');
 
                 return Promise.reject(refreshError);
             }

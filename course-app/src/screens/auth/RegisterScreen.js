@@ -62,8 +62,8 @@ const RegisterScreen = ({ navigation }) => {
             return Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp');
         }
 
-        if (formData.password.length < 6) {
-            return Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+        if (formData.password.length < 8) {
+            return Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự');
         }
 
         // Ghi nhớ email để gửi đi
@@ -94,15 +94,15 @@ const RegisterScreen = ({ navigation }) => {
                             className="self-end mb-6"
                         >
                             <Text className="text-rose-500 text-base font-medium underline">
-                                Back to Login
+                                Đăng nhập
                             </Text>
                         </TouchableOpacity>
 
                         <Text className="text-[44px] leading-tight font-extrabold text-gray-900 tracking-tight">
-                            Create Your Account
+                            Tạo tài khoản
                         </Text>
                         <Text className="text-gray-600 mt-2 text-base">
-                            Sign up to get started
+                            Đăng ký để bắt đầu
                         </Text>
                     </View>
 
@@ -111,12 +111,12 @@ const RegisterScreen = ({ navigation }) => {
                         {/* Name */}
                         <View>
                             <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                Full Name <Text className="text-rose-500">*</Text>
+                                Họ tên <Text className="text-rose-500">*</Text>
                             </Text>
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Enter your full name"
+                                    placeholder="Nhập họ tên"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.name}
                                     onChangeText={(text) => onChange('name', text)}
@@ -136,7 +136,7 @@ const RegisterScreen = ({ navigation }) => {
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Enter your email"
+                                    placeholder="Nhập email"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.email}
                                     onChangeText={(text) => onChange('email', text)}
@@ -154,12 +154,12 @@ const RegisterScreen = ({ navigation }) => {
                         {/* Password */}
                         <View>
                             <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                Password <Text className="text-rose-500">*</Text>
+                                Mật khẩu mới<Text className="text-rose-500">*</Text>
                             </Text>
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Enter your password"
+                                    placeholder="Nhập mật khẩu"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.password}
                                     onChangeText={(text) => onChange('password', text)}
@@ -183,12 +183,12 @@ const RegisterScreen = ({ navigation }) => {
                         {/* Confirm Password */}
                         <View>
                             <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                Confirm Password <Text className="text-rose-500">*</Text>
+                                Xác nhận mật khẩu <Text className="text-rose-500">*</Text>
                             </Text>
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Confirm your password"
+                                    placeholder="Nhập lại mật khẩu"
                                     placeholderTextColor="#9CA3AF"
                                     value={formData.confirmPassword}
                                     onChangeText={(text) => onChange('confirmPassword', text)}
@@ -220,7 +220,7 @@ const RegisterScreen = ({ navigation }) => {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Text className="text-white text-lg font-semibold">Sign Up</Text>
+                                    <Text className="text-white text-lg font-semibold">Đăng ký</Text>
                                     <ArrowRight size={20} color="#fff" />
                                 </>
                             )}
@@ -229,9 +229,9 @@ const RegisterScreen = ({ navigation }) => {
 
                     {/* Login Link */}
                     <View className="flex-row justify-center items-center mt-8">
-                        <Text className="text-sm text-gray-600">Already have an account? </Text>
+                        <Text className="text-sm text-gray-600">Bạn đã có tài khoản? </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text className="text-rose-500 text-sm font-medium">Sign in</Text>
+                            <Text className="text-rose-500 text-sm font-medium">Đăng nhập</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

@@ -14,7 +14,7 @@ const HomeHeader = ({ user }) => {
       <View>
         <Text className="text-gray-500 text-sm font-medium">Hello,</Text>
         <Text className="text-2xl font-bold text-gray-900">
-          {`${user ? user.name : 'Guest User'} 👋`}
+          {`${user ? user.name : 'Người dùng khách'} 👋`}
         </Text>
       </View>
 
@@ -29,7 +29,9 @@ const HomeHeader = ({ user }) => {
             <Bell size={24} color="#6b7280" />
             {/* Badge nếu có */}
             {user && unreadCount > 0 && (
-              <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />
+              <View className="absolute top-0 -right-1 min-w-[16px] h-4 bg-rose-500 rounded-full items-center justify-center px-1 border border-white">
+                <Text className="text-[10px] text-white font-bold">{unreadCount > 99 ? '99+' : unreadCount}</Text>
+              </View>
             )}
           </TouchableOpacity>
 
@@ -47,7 +49,7 @@ const HomeHeader = ({ user }) => {
           onPress={() => navigation.navigate('Login')}
         >
           <LogIn size={18} color="#fff" />
-          <Text className="text-white font-semibold text-sm">Sign In</Text>
+          <Text className="text-white font-semibold text-sm">Đăng nhập</Text>
         </TouchableOpacity>
       )}
     </View>

@@ -23,7 +23,7 @@ const Spinner = ({ size = 'w-12 h-12', color = 'border-rose-600' }) => {
         }}
         role="status"
       >
-        <span className="sr-only">Loading...</span>
+        <span className="sr-only">Đang tải...</span>
       </div>
     </div>
   );

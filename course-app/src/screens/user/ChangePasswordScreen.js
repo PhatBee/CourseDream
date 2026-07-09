@@ -74,16 +74,19 @@ const ChangePasswordScreen = ({ navigation }) => {
     }, [isError, isSuccess, message, dispatch, navigation]);
 
     const handleSubmit = () => {
+        if (hasPassword && !formData.newPassword) {
+            return Alert.alert('Lỗi', 'Mật khẩu không được để trống!');
+        }
         if (formData.newPassword !== formData.confirmPassword) {
-            return Alert.alert('Error', 'Passwords do not match!');
+            return Alert.alert('Lỗi', 'Mật khẩu nhập lại không khớp!');
         }
 
         if (strength < 2) {
-            return Alert.alert('Error', 'Password is too weak!');
+            return Alert.alert('Lỗi', 'Mật khẩu quá yếu!');
         }
 
         if (hasPassword && !formData.oldPassword) {
-            return Alert.alert('Error', 'Please enter your current password!');
+            return Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu hiện tại!');
         }
 
         dispatch(
@@ -110,11 +113,11 @@ const ChangePasswordScreen = ({ navigation }) => {
     };
 
     const getStrengthText = () => {
-        if (strength === 0) return 'Enter a new password.';
-        if (strength === 1) return 'Weak. Add numbers or symbols.';
-        if (strength === 2) return 'Medium. Add uppercase letters.';
-        if (strength === 3) return 'Strong. Almost there.';
-        if (strength === 4) return "Very Strong! You're good to go.";
+        if (strength === 0) return 'Nhập mật khẩu mới.';
+        if (strength === 1) return 'Yếu. Thêm số hoặc ký tự đặc biệt.';
+        if (strength === 2) return 'Trung bình. Thêm chữ in hoa.';
+        if (strength === 3) return 'Mạnh. Gần được rồi.';
+        if (strength === 4) return "Rất mạnh! Bạn đã sẵn sàng.";
         return '';
     };
 
@@ -138,7 +141,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                         <ArrowLeft size={24} color="#000" />
                     </TouchableOpacity>
                     <Text className="text-xl font-bold">
-                        {hasPassword ? 'Change Password' : 'Set Password'}
+                        {hasPassword ? 'Đổi Mật Khẩu' : 'Đặt Mật Khẩu'}
                     </Text>
                 </View>
 
@@ -158,12 +161,12 @@ const ChangePasswordScreen = ({ navigation }) => {
                             )}
                             <View className="flex-1">
                                 <Text className="text-gray-900 font-semibold mb-1">
-                                    {hasPassword ? 'Security First' : 'Set Your Password'}
+                                    {hasPassword ? 'Bảo Mật Tài Khoản' : 'Đặt Mật Khẩu'}
                                 </Text>
                                 <Text className="text-gray-600 text-sm">
                                     {hasPassword
-                                        ? 'Use a long, random password to keep your account secure.'
-                                        : 'You logged in via Social Media. Set a password to log in with email next time.'}
+                                        ? 'Sử dụng mật khẩu dài, ngẫu nhiên để bảo mật tài khoản của bạn.'
+                                        : 'Bạn đã đăng nhập qua Social Media. Tạo mật khẩu để đăng nhập qua email.'}
                                 </Text>
                             </View>
                         </View>
@@ -174,12 +177,12 @@ const ChangePasswordScreen = ({ navigation }) => {
                             {hasPassword && (
                                 <View>
                                     <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                        Current Password <Text className="text-rose-500">*</Text>
+                                        Mật khẩu hiện tại <Text className="text-rose-500">*</Text>
                                     </Text>
                                     <View className="relative">
                                         <TextInput
                                             className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                            placeholder="Enter your current password"
+                                            placeholder="Nhập mật khẩu hiện tại"
                                             placeholderTextColor="#9CA3AF"
                                             value={formData.oldPassword}
                                             onChangeText={(text) =>
@@ -206,12 +209,12 @@ const ChangePasswordScreen = ({ navigation }) => {
                             {/* New Password */}
                             <View>
                                 <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                    New Password <Text className="text-rose-500">*</Text>
+                                    Mật khẩu mới <Text className="text-rose-500">*</Text>
                                 </Text>
                                 <View className="relative">
                                     <TextInput
                                         className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                        placeholder="Enter new password (min 8 chars)"
+                                        placeholder="Nhập mật khẩu mới"
                                         placeholderTextColor="#9CA3AF"
                                         value={formData.newPassword}
                                         onChangeText={(text) =>
@@ -263,12 +266,12 @@ const ChangePasswordScreen = ({ navigation }) => {
                             {/* Confirm Password */}
                             <View>
                                 <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                    Confirm Password <Text className="text-rose-500">*</Text>
+                                    Xác nhận mật khẩu <Text className="text-rose-500">*</Text>
                                 </Text>
                                 <View className="relative">
                                     <TextInput
                                         className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                        placeholder="Re-enter new password"
+                                        placeholder="Nhập lại mật khẩu"
                                         placeholderTextColor="#9CA3AF"
                                         value={formData.confirmPassword}
                                         onChangeText={(text) =>
@@ -302,7 +305,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text className="text-white text-lg font-semibold">
-                                        {hasPassword ? 'Change Password' : 'Set Password'}
+                                        {hasPassword ? 'Đổi Mật Khẩu' : 'Đặt Mật Khẩu'}
                                     </Text>
                                 )}
                             </TouchableOpacity>

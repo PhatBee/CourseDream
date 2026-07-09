@@ -54,7 +54,7 @@ const StudentDashboard = () => {
     setCurrentPage(pageNumber);
     const listElement = document.getElementById('learning-list');
     if (listElement) {
-        listElement.scrollIntoView({ behavior: 'smooth' });
+      listElement.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -62,28 +62,28 @@ const StudentDashboard = () => {
     <div className="space-y-8">
       {/* 1. Header Section */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Dashboard</h2>
-        <p className="text-gray-500">Welcome back, <span className="font-semibold text-gray-900">{user?.name}</span>! Ready to learn something new?</p>
-        
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Tổng quan</h2>
+        <p className="text-gray-500">Chào mừng trở lại , <span className="font-semibold text-gray-900">{user?.name}</span>! Bạn đã sẵn sàng học điều gì mới chưa?</p>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <StatBadge 
-            icon={<BookOpen size={20} />} 
-            label="Enrolled Courses" 
-            value={totalCourses} 
-            color="bg-blue-500" 
+          <StatBadge
+            icon={<BookOpen size={20} />}
+            label="Khóa học đã đăng ký"
+            value={totalCourses}
+            color="bg-blue-500"
           />
-          <StatBadge 
-            icon={<Clock size={20} />} 
-            label="In Progress" 
-            value={inProgressCourses} 
-            color="bg-yellow-500" 
+          <StatBadge
+            icon={<Clock size={20} />}
+            label="Đang học"
+            value={inProgressCourses}
+            color="bg-yellow-500"
           />
-          <StatBadge 
-            icon={<Award size={20} />} 
-            label="Completed" 
-            value={completedCourses} 
-            color="bg-green-500" 
+          <StatBadge
+            icon={<Award size={20} />}
+            label="Hoàn thành"
+            value={completedCourses}
+            color="bg-green-500"
           />
         </div>
       </div>
@@ -91,7 +91,7 @@ const StudentDashboard = () => {
       {/* 2. Course In Progress Section */}
       <div id="learning-list">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-800">My Learning</h3>
+          <h3 className="text-xl font-bold text-gray-800">Khóa học đang học</h3>
           {/* Có thể thêm Filter: All / In Progress / Completed */}
         </div>
 
@@ -112,8 +112,8 @@ const StudentDashboard = () => {
             </>
           ) : (
             <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-              <p className="text-gray-500 mb-4">You haven't enrolled in any courses yet.</p>
-              <a href="/courses" className="text-rose-600 font-bold hover:underline">Browse Courses</a>
+              <p className="text-gray-500 mb-4">Bạn chưa ghi danh khóa học nào.</p>
+              <a href="/courses" className="text-rose-600 font-bold hover:underline">Tìm khóa học</a>
             </div>
           )}
         </div>

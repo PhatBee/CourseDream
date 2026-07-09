@@ -11,6 +11,73 @@ import InstructorApplication from '../user/instructorApplication.model.js';
 import InstructorProfile from '../user/InstructorProfile.model.js';
 import notificationService from "../notification/notification.service.js";
 import { generateCourseEmbedding } from '../../utils/ai.service.js';
+import { comparePassword } from '../../utils/password.utils.js';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils.js';
+
+/**
+ * Service: Đăng nhập dành riêng cho Admin
+ * - CHỈ cho phép role 'admin'
+ * - CHỈ cho phép phương thức local (email + password)
+ * - KHÔNG hỗ trợ Google/Facebook
+ */
+export const loginAdmin = async ({ email, password }) => {
+    const user = await User.findOne({ email });
+    if (!user) {
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // [BẢO MẬT] Chỉ cho phép tài khoản Admin
+    if (user.role !== 'admin') {
+        const error = new Error('Bạn không có quyền truy cập trang quản trị.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // [BẢO MẬT] Chỉ cho phép đăng nhập bằng Local
+    if (user.authProvider !== 'local' || !user.password) {
+        const error = new Error('Tài khoản Admin phải đăng nhập bằng Email và Mật khẩu.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    if (!user.isVerified) {
+        const error = new Error('Tài khoản Admin chưa được kích hoạt.');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    if (!user.isActive) {
+        const error = new Error('Tài khoản Admin đã bị vô hiệu hóa. Vui lòng liên hệ hệ thống.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) {
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    const userResponse = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+    };
+
+    return { user: userResponse, accessToken, refreshToken };
+};
 
 export const getPendingApplications = async () => {
   const applications = await User.find({
@@ -47,7 +114,7 @@ export const reviewApplication = async (targetUserId, decision, adminNotes) => {
       type: "system",
       title: "Hồ sơ giảng viên được duyệt",
       message: "Chúc mừng! Yêu cầu trở thành giảng viên của bạn đã được phê duyệt. Bạn có thể bắt đầu tạo khóa học ngay bây giờ.",
-      metadata: { adminNote: adminNotes, url: '/profile/instructor/courses' }
+      metadata: { adminNote: adminNotes, url: "/instructor/dashboard" }
     }).catch(err => console.error("Lỗi gửi thông báo:", err));
 
   } else if (decision === 'reject') {
@@ -59,8 +126,8 @@ export const reviewApplication = async (targetUserId, decision, adminNotes) => {
       recipient: user._id,
       type: "system",
       title: "Hồ sơ giảng viên bị từ chối",
-      message: "Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.",
-      metadata: { adminNote: adminNotes }
+      message: `Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.${adminNotes ? `\n\nGhi chú từ admin: ${adminNotes}` : ""}`,
+      metadata: { adminNote: adminNotes, url: "/profile/become-instructor" }
     }).catch(err => console.error("Lỗi gửi thông báo:", err));
   } else {
     const error = new Error('Quyết định không hợp lệ.');
@@ -351,16 +418,16 @@ export const getPendingRevisions = async (query) => {
  * Sử dụng MongoDB Aggregation Pipeline để join Payment & Enrollment
  */
 export const getAllCoursesForAdmin = async (query) => {
-  const page    = parseInt(query.page)  || 1;
-  const limit   = parseInt(query.limit) || 10;
-  const skip    = (page - 1) * limit;
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-  const statusFilter = query.status  || '';
-  const search       = query.search  || '';
-  const sortBy       = query.sortBy  || 'createdAt';   // revenue | students | price | createdAt
-  const sortOrder    = query.sortOrder === 'asc' ? 1 : -1;
-  const minPrice     = query.minPrice != null ? Number(query.minPrice) : null;
-  const maxPrice     = query.maxPrice != null ? Number(query.maxPrice) : null;
+  const statusFilter = query.status || '';
+  const search = query.search || '';
+  const sortBy = query.sortBy || 'createdAt';   // revenue | students | price | createdAt
+  const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+  const minPrice = query.minPrice != null ? Number(query.minPrice) : null;
+  const maxPrice = query.maxPrice != null ? Number(query.maxPrice) : null;
 
   // ---------- Build $match ----------
   const matchStage = {};
@@ -378,10 +445,10 @@ export const getAllCoursesForAdmin = async (query) => {
 
   // ---------- Sort field mapping ----------
   const sortFieldMap = {
-    revenue:    'totalRevenue',
-    students:   'totalStudents',
-    price:      'price',
-    createdAt:  'createdAt',
+    revenue: 'totalRevenue',
+    students: 'totalStudents',
+    price: 'price',
+    createdAt: 'createdAt',
   };
   const sortField = sortFieldMap[sortBy] || 'createdAt';
 
@@ -393,7 +460,7 @@ export const getAllCoursesForAdmin = async (query) => {
     {
       $lookup: {
         from: 'payments',
-        let:  { courseId: '$_id' },
+        let: { courseId: '$_id' },
         pipeline: [
           {
             $match: {
@@ -420,7 +487,7 @@ export const getAllCoursesForAdmin = async (query) => {
             $group: {
               _id: null,
               totalRevenue: { $sum: '$perCourseRevenue' },
-              totalOrders:  { $sum: 1 }
+              totalOrders: { $sum: 1 }
             }
           }
         ],
@@ -451,16 +518,16 @@ export const getAllCoursesForAdmin = async (query) => {
     // Thêm các trường computed
     {
       $addFields: {
-        totalRevenue:  { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalRevenue', 0] }, 0] },
-        totalOrders:   { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalOrders',  0] }, 0] },
+        totalRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalRevenue', 0] }, 0] },
+        totalOrders: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalOrders', 0] }, 0] },
         totalStudents: { $size: '$enrollmentDocs' },
-        instructor:    {
+        instructor: {
           $let: {
             vars: { inst: { $arrayElemAt: ['$instructorDoc', 0] } },
             in: {
-              _id:    '$$inst._id',
-              name:   '$$inst.name',
-              email:  '$$inst.email',
+              _id: '$$inst._id',
+              name: '$$inst.name',
+              email: '$$inst.email',
               avatar: '$$inst.avatar'
             }
           }
@@ -471,9 +538,9 @@ export const getAllCoursesForAdmin = async (query) => {
     // Bỏ các mảng raw không cần thiết
     {
       $project: {
-        paymentStats:    0,
-        enrollmentDocs:  0,
-        instructorDoc:   0,
+        paymentStats: 0,
+        enrollmentDocs: 0,
+        instructorDoc: 0,
       }
     },
 
@@ -496,7 +563,7 @@ export const getAllCoursesForAdmin = async (query) => {
 
   const [result] = await Course.aggregate(pipeline);
   const courses = result?.data || [];
-  const total   = result?.totalCount?.[0]?.count || 0;
+  const total = result?.totalCount?.[0]?.count || 0;
 
   // ---------- Stats theo status (tất cả courses, không filter) ----------
   const statusCounts = await Course.aggregate([
@@ -597,12 +664,12 @@ export const approveRevision = async (revisionId, adminId) => {
           resources: lecData.resources || [],
           // ── Copy quiz data từ revision ──────────────────────────────────────
           quizzes: (lecData.quizzes || []).map(q => ({
-            question:      q.question,
-            options:       q.options || [],
+            question: q.question,
+            options: q.options || [],
             correctAnswer: q.correctAnswer,
-            hint:          q.hint || '',
-            timestamp:     Number(q.timestamp) || 0,
-            isActive:      q.isActive !== false,
+            hint: q.hint || '',
+            timestamp: Number(q.timestamp) || 0,
+            isActive: q.isActive !== false,
           })),
         });
         lectureIds.push(newLecture._id);
@@ -706,12 +773,12 @@ export const approveRevision = async (revisionId, adminId) => {
           resources: lecData.resources || [],
           // ── Copy quiz data từ revision ──────────────────────────────────────
           quizzes: (lecData.quizzes || []).map(q => ({
-            question:      q.question,
-            options:       q.options || [],
+            question: q.question,
+            options: q.options || [],
             correctAnswer: q.correctAnswer,
-            hint:          q.hint || '',
-            timestamp:     Number(q.timestamp) || 0,
-            isActive:      q.isActive !== false,
+            hint: q.hint || '',
+            timestamp: Number(q.timestamp) || 0,
+            isActive: q.isActive !== false,
           })),
         });
         lectureIds.push(newLecture._id);
@@ -805,7 +872,7 @@ export const approveRevision = async (revisionId, adminId) => {
     metadata: {
       courseId: revision._id,
       courseSlug: revision.data.slug || undefined,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -849,7 +916,7 @@ export const rejectRevision = async (revisionId, reviewMessage, adminId) => {
     metadata: {
       courseId: revision._id,
       courseSlug: revision.data.slug || undefined,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -908,7 +975,7 @@ export const requestRevisionChanges = async (revisionId, reviewMessage, adminId)
     metadata: {
       courseId: revision._id,
       courseSlug: revision.data.slug || undefined,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -951,7 +1018,7 @@ export const unpublishCourse = async (courseId, adminId, reason = '') => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -1001,7 +1068,7 @@ export const suspendCourse = async (courseId, adminId, reason) => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -1041,7 +1108,7 @@ export const restoreSuspendedCourse = async (courseId, adminId) => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -1080,7 +1147,7 @@ export const republishCourse = async (courseId, adminId) => {
     metadata: {
       courseId: course._id,
       courseSlug: course.slug,
-      url: '/profile/instructor/courses'
+      url: '/instructor/courses'
     }
   });
 
@@ -1227,6 +1294,15 @@ export const reviewInstructorApplication = async (applicationId, action, reason)
       });
     }
 
+    // 4. Gửi thông báo cho user được duyệt
+    await notificationService.createNotification({
+      recipient: user._id,
+      type: "system",
+      title: "Hồ sơ giảng viên được duyệt",
+      message: "Chúc mừng! Yêu cầu trở thành giảng viên của bạn đã được phê duyệt. Bạn có thể bắt đầu tạo khóa học ngay bây giờ.",
+      metadata: { url: "/instructor/dashboard" }
+    }).catch(err => console.error("Lỗi gửi thông báo approve:", err));
+
     return { message: "Approved successfully. User is now an Instructor." };
   }
 
@@ -1236,6 +1312,15 @@ export const reviewInstructorApplication = async (applicationId, action, reason)
     application.status = 'rejected';
     application.rejectionReason = reason;
     await application.save();
+
+    // Gửi thông báo cho user bị từ chối
+    await notificationService.createNotification({
+      recipient: application.user._id,
+      type: "system",
+      title: "Hồ sơ giảng viên bị từ chối",
+      message: `Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.${reason ? `\n\nLý do: ${reason}` : ""}`,
+      metadata: { adminNote: reason, url: "/profile/become-instructor" }
+    }).catch(err => console.error("Lỗi gửi thông báo reject:", err));
 
     return { message: "Application rejected." };
   }
@@ -1276,17 +1361,17 @@ export const getQuizzesPreview = async (courseId) => {
       totalQuizzes += activeQuizzes.length;
 
       return {
-        lectureId:    lecture._id,
+        lectureId: lecture._id,
         lectureTitle: lecture.title,
-        duration:     lecture.duration,
-        quizzes:      activeQuizzes.map(q => ({
-          _id:           q._id,
-          question:      q.question,
-          options:       q.options,
+        duration: lecture.duration,
+        quizzes: activeQuizzes.map(q => ({
+          _id: q._id,
+          question: q.question,
+          options: q.options,
           correctAnswer: q.correctAnswer, // Admin được phép xem đáp án đúng
-          hint:          q.hint,
-          timestamp:     q.timestamp,
-          isActive:      q.isActive,
+          hint: q.hint,
+          timestamp: q.timestamp,
+          isActive: q.isActive,
         })),
       };
     }),

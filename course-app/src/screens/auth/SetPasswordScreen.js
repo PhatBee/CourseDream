@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
     Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
 import { setPassword, clearReset, reset } from '../../features/auth/authSlice';
 import { Lock, ArrowRight, Eye, EyeOff } from 'lucide-react-native';
 
@@ -21,17 +22,19 @@ const SetPasswordScreen = ({ navigation }) => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const dispatch = useDispatch();
+    const isFocused = useIsFocused();
+    const isRedirecting = useRef(false); // Flag tránh race condition khi clearReset()
     const { isLoading, isError, isSetPasswordSuccess, message, resetToken } = useSelector(
         (state) => state.auth
     );
 
     // Nếu không có token, không cho ở lại trang này
     useEffect(() => {
-        if (!resetToken) {
+        if (isFocused && !resetToken && !isRedirecting.current) {
             Alert.alert('Lỗi', 'Phiên đặt lại mật khẩu không hợp lệ.');
             navigation.navigate('ForgotPassword');
         }
-    }, [resetToken, navigation]);
+    }, [resetToken, isFocused, navigation]);
 
     // Xử lý kết quả
     useEffect(() => {
@@ -42,6 +45,7 @@ const SetPasswordScreen = ({ navigation }) => {
 
         // Khi setPassword() thành công
         if (isSetPasswordSuccess) {
+            isRedirecting.current = true; // Đánh dấu đang chuyển hướng thành công
             Alert.alert('Thành công', message, [
                 {
                     text: 'OK',
@@ -66,11 +70,11 @@ const SetPasswordScreen = ({ navigation }) => {
     const strength = getStrength();
 
     const getStrengthText = () => {
-        if (strength === 0) return 'Use at least 8 characters';
-        if (strength === 1) return 'Weak password';
-        if (strength === 2) return 'Fair password';
-        if (strength === 3) return 'Strong password';
-        if (strength === 4) return 'Very strong password';
+        if (strength === 0) return 'Mật khẩu phải có ít nhất 8 ký tự';
+        if (strength === 1) return 'Mật khẩu yếu';
+        if (strength === 2) return 'Mật khẩu trung bình';
+        if (strength === 3) return 'Mật khẩu mạnh';
+        if (strength === 4) return 'Mật khẩu rất mạnh';
         return '';
     };
 
@@ -88,8 +92,8 @@ const SetPasswordScreen = ({ navigation }) => {
             return Alert.alert('Thông báo', 'Vui lòng nhập mật khẩu mới');
         }
 
-        if (password.length < 6) {
-            return Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+        if (password.length < 8) {
+            return Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự');
         }
 
         if (password !== confirmPassword) {
@@ -118,15 +122,15 @@ const SetPasswordScreen = ({ navigation }) => {
                             className="self-end mb-6"
                         >
                             <Text className="text-rose-500 text-base font-medium underline">
-                                Back
+                                Quay lại
                             </Text>
                         </TouchableOpacity>
 
                         <Text className="text-[44px] leading-tight font-extrabold text-gray-900 tracking-tight">
-                            Set New Password
+                            Đặt lại mật khẩu
                         </Text>
                         <Text className="text-gray-600 mt-2 text-base">
-                            Your new password must be different from previous password
+                            Mật khẩu mới của bạn phải khác với mật khẩu cũ
                         </Text>
                     </View>
 
@@ -135,12 +139,12 @@ const SetPasswordScreen = ({ navigation }) => {
                         {/* New Password */}
                         <View>
                             <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                New Password <Text className="text-rose-500">*</Text>
+                                Mật khẩu mới <Text className="text-rose-500">*</Text>
                             </Text>
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Enter new password"
+                                    placeholder="Nhập mật khẩu mới"
                                     placeholderTextColor="#9CA3AF"
                                     value={password}
                                     onChangeText={setPasswordValue}
@@ -184,12 +188,12 @@ const SetPasswordScreen = ({ navigation }) => {
                         {/* Confirm Password */}
                         <View>
                             <Text className="mb-2 text-[15px] font-medium text-gray-900">
-                                Confirm Password <Text className="text-rose-500">*</Text>
+                                Xác nhận mật khẩu <Text className="text-rose-500">*</Text>
                             </Text>
                             <View className="relative">
                                 <TextInput
                                     className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 pr-12 text-[15px] text-gray-900"
-                                    placeholder="Confirm your password"
+                                    placeholder="Xác nhận mật khẩu"
                                     placeholderTextColor="#9CA3AF"
                                     value={confirmPassword}
                                     onChangeText={setConfirmPassword}
@@ -221,7 +225,7 @@ const SetPasswordScreen = ({ navigation }) => {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Text className="text-white text-lg font-semibold">Reset Password</Text>
+                                    <Text className="text-white text-lg font-semibold">Đặt lại mật khẩu</Text>
                                     <ArrowRight size={20} color="#fff" />
                                 </>
                             )}
@@ -230,9 +234,9 @@ const SetPasswordScreen = ({ navigation }) => {
 
                     {/* Login Link */}
                     <View className="flex-row justify-center items-center mt-8">
-                        <Text className="text-sm text-gray-600">Remember Password? </Text>
+                        <Text className="text-sm text-gray-600">Bạn nhớ mật khẩu? </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text className="text-rose-500 text-sm font-medium">Sign In</Text>
+                            <Text className="text-rose-500 text-sm font-medium">Đăng nhập</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

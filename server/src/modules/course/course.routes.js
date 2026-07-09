@@ -2,10 +2,7 @@
 import express from 'express';
 import {
   searchCourses, getLecture, getCourseDetailsBySlug, getCourses, getLearningContent,
-  getLevels, getCourseStats, createCourseRevision, getMyCourses, getCourseForEdit,
-  deleteCourse, activateCourse, getPopularCourses,
-  // AWS S3 Presign Controllers
-  presignVideoUpload, presignThumbnailUpload, presignPreviewUpload, presignResourceUpload,
+  getLevels, getCourseStats, getPopularCourses,
   // Video Playback (CloudFront Signed URL)
   getVideoPlayUrl, getCoursePreviewUrl,
 } from './course.controller.js';
@@ -27,31 +24,6 @@ router.get('/stats', getCourseStats);
 router.get('/search', searchCourses);
 router.get('/popular', getPopularCourses);
 
-// ==================== AWS S3 PRESIGN ROUTES (Instructor/Admin) ====================
-
-// Upload video lên S3 (presigned URL)
-router.post('/videos/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignVideoUpload);
-
-// Upload thumbnail lên S3
-router.post('/thumbnails/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignThumbnailUpload);
-
-// Upload preview video lên S3
-router.post('/previews/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignPreviewUpload);
-
-// Upload resource (PDF, Doc...) lên S3
-router.post('/resources/presign-upload', verifyToken, checkRole('instructor', 'admin'), presignResourceUpload);
-
-// ==================== INSTRUCTOR ROUTES ====================
-
-router.get('/instructor/my-courses', verifyToken, getMyCourses);
-router.get('/instructor/edit/:slug', verifyToken, getCourseForEdit);
-
-// Tạo khóa học mới (Course Revision)
-router.post('/', verifyToken, upload.single('thumbnail'), createCourseRevision);
-
-// Xóa / Kích hoạt khóa học
-router.delete('/:id', verifyToken, deleteCourse);
-router.patch('/:id/activate', verifyToken, activateCourse);
 
 // ==================== VIDEO PLAYBACK (CloudFront Signed URL) ====================
 
@@ -71,7 +43,7 @@ router.get('/:courseId/lectures/:lectureId/play', optionalAuth, getVideoPlayUrl)
 
 // ==================== DETAIL / LEARNING ROUTES ====================
 
-router.get('/:slug', getCourseDetailsBySlug);
+router.get('/:slug', optionalAuth, getCourseDetailsBySlug);
 
 router.get('/:slug/learn', verifyToken, checkEnrollment, getLearningContent);
 

@@ -52,6 +52,7 @@ const ReportModalMobile = ({
   const [reason, setReason] = useState("");
   const [detail, setDetail] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [inlineError, setInlineError] = useState("");
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.report);
 
@@ -59,8 +60,12 @@ const ReportModalMobile = ({
 
   useEffect(() => {
     if (success) {
-      Toast.show({ type: "success", text1: "Báo cáo thành công!" });
+      // Đóng modal trước, đợi animation dismiss xong mới show Toast ở root
+      // để Toast không bị che bởi native Modal layer
       handleClose();
+      setTimeout(() => {
+        Toast.show({ type: "success", text1: "Báo cáo thành công!" });
+      }, 350);
     }
   }, [success]);
 
@@ -70,23 +75,21 @@ const ReportModalMobile = ({
     setReason("");
     setDetail("");
     setIsDropdownOpen(false);
+    setInlineError("");
   };
 
   const handleSend = async () => {
     if (!isEnrolled) {
-      Toast.show({
-        type: "error",
-        text1: "Bạn cần ghi danh để sử dụng chức năng báo cáo.",
-      });
+      // Hiển thị lỗi inline trong modal, không dùng Toast (bị che bởi Modal layer)
+      setInlineError("Bạn cần ghi danh để sử dụng chức năng báo cáo.");
       return;
     }
     if (!reason) {
-      Toast.show({
-        type: "error",
-        text1: "Vui lòng chọn loại vấn đề muốn báo cáo!",
-      });
+      // Hiển thị lỗi inline trong modal, không dùng Toast (bị che bởi Modal layer)
+      setInlineError("Vui lòng chọn loại vấn đề muốn báo cáo!");
       return;
     }
+    setInlineError("");
     // Web backend expect: reason là value, detail là description
     dispatch(
       sendReport({
@@ -135,6 +138,16 @@ const ReportModalMobile = ({
 
           {/* Body Báo Cáo */}
           <View className="p-6">
+            {/* Inline error cho validation - không dùng Toast để tránh bị Modal che */}
+            {inlineError ? (
+              <View className="flex-row items-center gap-2 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <AlertTriangle size={16} color="#dc2626" />
+                <Text className="text-red-600 text-sm font-medium flex-1">
+                  {inlineError}
+                </Text>
+              </View>
+            ) : null}
+
             <Text className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
               Loại vấn đề <Text className="text-rose-500">*</Text>
             </Text>
@@ -162,6 +175,7 @@ const ReportModalMobile = ({
                         onPress={() => {
                           setReason(r.value);
                           setIsDropdownOpen(false);
+                          setInlineError(""); // Xóa lỗi khi user đã chọn
                         }}
                       >
                         <Text

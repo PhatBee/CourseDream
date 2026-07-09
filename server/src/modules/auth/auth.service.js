@@ -244,7 +244,51 @@ export const verifyOTP = async ({ email, otp }) => {
 };
 
 /**
- * Service: Đăng nhập người dùng
+ * Service: Gửi lại OTP đăng ký tài khoản
+ */
+export const resendOTP = async ({ email }) => {
+    // 1. Tìm user bằng email
+    const user = await User.findOne({ email });
+    if (!user) {
+        const error = new Error('Email không tồn tại hoặc chưa đăng ký.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. Kiểm tra trạng thái kích hoạt
+    if (user.isVerified) {
+        const error = new Error('Tài khoản này đã được kích hoạt. Vui lòng đăng nhập.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 3. Tạo OTP mới và thời gian hết hạn mới (15 phút)
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    // 4. Gửi email chứa OTP mới
+    try {
+        await sendEmail({
+            to: user.email,
+            subject: 'Mã xác thực đăng ký DreamsLMS (Gửi lại)',
+            html: `<p>Chào ${user.name},</p>
+             <p>Mã OTP mới của bạn là: <strong>${otp}</strong></p>
+             <p>Mã này sẽ hết hạn sau 15 phút.</p>`,
+        });
+
+        return { email: user.email };
+    } catch (emailError) {
+        console.error("Lỗi gửi email:", emailError);
+        const error = new Error('Không thể gửi email. Vui lòng thử lại.');
+        error.statusCode = 500;
+        throw error;
+    }
+};
+
+/**
+ * Service: Đăng nhập người dùng (legacy - dùng cho mobile app)
  */
 export const login = async ({ email, password }) => {
     // 1. Tìm người dùng bằng email
@@ -277,6 +321,145 @@ export const login = async ({ email, password }) => {
         throw error;
     }
 
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) {
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    const userResponse = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+    };
+
+    return { user: userResponse, accessToken, refreshToken };
+};
+
+/**
+ * Service: Đăng nhập dành cho Student/Instructor
+ * - Kiểm tra xác thực mật khẩu local
+ * - CHẶN tài khoản có role 'admin'
+ */
+export const loginUser = async ({ email, password }) => {
+    // 1. Tìm người dùng bằng email
+    const user = await User.findOne({ email });
+    if (!user) {
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // 2. [BẢO MẬT] Chặn tài khoản Admin truy cập trang Student/Instructor
+    if (user.role === 'admin') {
+        const error = new Error('Tài khoản không có quyền truy cập vùng này.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. Kiểm tra tài khoản đã kích hoạt chưa
+    if (!user.isVerified) {
+        const error = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email hoặc đăng ký lại.');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // 4. Kiểm tra trạng thái active (bị ban)
+    if (!user.isActive) {
+        const reason = user.banReason || 'Vi phạm điều khoản.';
+        const error = new Error('Tài khoản của bạn đã bị vô hiệu hóa.');
+        error.statusCode = 403;
+        error.reason = reason;
+        throw error;
+    }
+
+    // 5. So sánh mật khẩu
+    if (!user.password) {
+        const error = new Error('Tài khoản này chưa thiết lập mật khẩu. Vui lòng đăng nhập bằng Google/Facebook hoặc sử dụng chức năng Quên mật khẩu.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) {
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    const userResponse = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+    };
+
+    return { user: userResponse, accessToken, refreshToken };
+};
+
+/**
+ * Service: Đăng nhập dành riêng cho Admin
+ * - CHỈ cho phép role 'admin'
+ * - CHỈ cho phép phương thức local (email + password)
+ * - KHÔNG hỗ trợ Google/Facebook
+ */
+export const loginAdmin = async ({ email, password }) => {
+    // 1. Tìm người dùng bằng email
+    const user = await User.findOne({ email });
+    if (!user) {
+        // Thông báo chung chung để tránh enumeration attack
+        const error = new Error('Email hoặc mật khẩu không đúng');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // 2. [BẢO MẬT] Chỉ cho phép tài khoản Admin
+    if (user.role !== 'admin') {
+        const error = new Error('Bạn không có quyền truy cập trang quản trị.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. [BẢO MẬT] Chỉ cho phép đăng nhập bằng Local (không dùng OAuth)
+    if (user.authProvider !== 'local' || !user.password) {
+        const error = new Error('Tài khoản Admin phải đăng nhập bằng Email và Mật khẩu.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. Kiểm tra trạng thái kích hoạt
+    if (!user.isVerified) {
+        const error = new Error('Tài khoản Admin chưa được kích hoạt.');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // 5. Kiểm tra trạng thái active
+    if (!user.isActive) {
+        const error = new Error('Tài khoản Admin đã bị vô hiệu hóa. Vui lòng liên hệ hệ thống.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 6. So sánh mật khẩu
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
         const error = new Error('Email hoặc mật khẩu không đúng');

@@ -39,12 +39,12 @@ const BanUserModal = ({ isOpen, onClose, onConfirm, user, isBanning }) => {
                         {isBanning ? <ShieldAlert size={32} /> : <CheckCircle size={32} />}
                     </div>
                     <h3 className={`text-xl font-bold ${isBanning ? 'text-rose-600' : 'text-green-600'}`}>
-                        {isBanning ? 'Ban User Account' : 'Unban User Account'}
+                        {isBanning ? 'Vô hiệu người dùng' : 'Mở khóa'}
                     </h3>
                     <p className="text-gray-500 text-sm mt-1">
                         {isBanning
-                            ? `Are you sure you want to ban ${user.name}?`
-                            : `Are you sure you want to reactivate ${user.name}?`}
+                            ? `Bạn có chắc chắn muốn khóa tài khoản ${user.name}?`
+                            : `Bạn có chắc chắn muốn mở khóa tài khoản ${user.name}?`}
                     </p>
                 </div>
 
@@ -53,22 +53,22 @@ const BanUserModal = ({ isOpen, onClose, onConfirm, user, isBanning }) => {
                     {isBanning ? (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Reason for banning <span className="text-red-500">*</span>
+                                Lý do khóa tài khoản <span className="text-red-500">*</span>
                             </label>
                             <textarea
                                 rows={4}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/50 resize-none text-sm"
-                                placeholder="Ex: Violated community guidelines..."
+                                placeholder="VD: Vi phạm điều khoản sử dụng, spam, v.v."
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                             ></textarea>
                             <p className="text-xs text-gray-400 mt-2">
-                                This reason will be displayed to the user when they try to login.
+                                Lý do này sẽ được hiển thị cho người dùng khi họ cố gắng đăng nhập.
                             </p>
                         </div>
                     ) : (
                         <p className="text-sm text-gray-600 text-center">
-                            The user will regain access to all features immediately.
+                            Người dùng sẽ nhanh chóng được cấp lại quyền truy cập vào tất cả các tính năng.
                         </p>
                     )}
 
@@ -78,7 +78,7 @@ const BanUserModal = ({ isOpen, onClose, onConfirm, user, isBanning }) => {
                             onClick={onClose}
                             className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
                         >
-                            Cancel
+                            Hủy
                         </button>
                         <button
                             onClick={handleConfirm}
@@ -88,7 +88,7 @@ const BanUserModal = ({ isOpen, onClose, onConfirm, user, isBanning }) => {
                                     : 'bg-green-500 hover:bg-green-600 shadow-green-200'
                                 }`}
                         >
-                            {isBanning ? 'Confirm Ban' : 'Confirm Unban'}
+                            {isBanning ? 'Xác nhận Khóa' : 'Xác nhận Mở khóa'}
                         </button>
                     </div>
                 </div>

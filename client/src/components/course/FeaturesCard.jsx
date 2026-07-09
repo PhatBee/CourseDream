@@ -10,18 +10,34 @@ const FeaturesCard = ({ course }) => {
     level = 'beginner'
   } = course;
 
+  // chuyển level thành tiếng việt (beginner, advanced, intermediate, alllevels)
+  const levelText = (level) => {
+    switch (level) {
+      case 'beginner':
+        return 'Người mới bắt đầu';
+      case 'advanced':
+        return 'Nâng cao';
+      case 'intermediate':
+        return 'Trung cấp';
+      case 'alllevels':
+        return 'Mọi trình độ';
+      default:
+        return level;
+    }
+  };
+
   const features = [
-    { icon: <Users size={18} />, text: `Enrolled: ${studentsCount} students` },
-    { icon: <Clock size={18} />, text: `Duration: ${totalHours.toFixed(1)} hours` },
-    { icon: <Layers size={18} />, text: `Chapters: ${sections.length}` },
-    { icon: <PlayCircle size={18} />, text: `Video: ${totalLectures} lectures` },
-    { icon: <BarChart2 size={18} />, text: `Level: ${level.charAt(0).toUpperCase() + level.slice(1)}` },
+    { icon: <Users size={18} />, text: `Học viên: ${studentsCount}` },
+    { icon: <Clock size={18} />, text: `Thời lượng: ${totalHours.toFixed(1)} giờ` },
+    { icon: <Layers size={18} />, text: `Số chương: ${sections.length}` },
+    { icon: <PlayCircle size={18} />, text: `Video: ${totalLectures} bài giảng` },
+    { icon: <BarChart2 size={18} />, text: `Cấp độ: ${levelText(level)}` },
   ];
 
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200">
       <div className="p-5">
-        <h5 className="text-lg font-semibold text-gray-800 mb-4">Course Features</h5>
+        <h5 className="text-lg font-semibold text-gray-800 mb-4 text-justify">Thông tin khóa học</h5>
         <ul className="space-y-3">
           {features.map((item, index) => (
             <li key={index} className="flex items-center text-sm text-gray-700">

@@ -15,6 +15,7 @@ const VideoQuizOverlay = ({ quiz, onSubmit, onCorrect }) => {
   const [feedback, setFeedback]       = useState(null); // null | 'correct' | 'wrong'
   const [hint, setHint]               = useState(null);
   const [isSubmitting, setSubmitting] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
 
   const handleSelect = (id) => {
     if (feedback === 'correct' || isSubmitting) return;
@@ -26,6 +27,7 @@ const VideoQuizOverlay = ({ quiz, onSubmit, onCorrect }) => {
   const handleSubmit = async () => {
     if (!selected || isSubmitting || feedback === 'correct') return;
     setSubmitting(true);
+    setAttemptCount(prev => prev + 1);
 
     const result = await onSubmit(selected);
 
@@ -121,8 +123,18 @@ const VideoQuizOverlay = ({ quiz, onSubmit, onCorrect }) => {
           {feedback === 'wrong' && !hint && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
               <XCircle size={17} className="text-red-500 flex-shrink-0" />
-              <p className="text-sm text-red-700">Chưa đúng rồi, hãy thử lại!</p>
+              <div>
+                <p className="text-sm text-red-700">Chưa đúng rồi, hãy thử lại!</p>
+                {attemptCount > 1 && (
+                  <p className="text-xs text-red-400 mt-0.5">Lần thử thứ {attemptCount}</p>
+                )}
+              </div>
             </div>
+          )}
+
+          {/* Feedback: Wrong (with hint) — show attempt count */}
+          {feedback === 'wrong' && hint && attemptCount > 1 && (
+            <p className="text-xs text-gray-400 mb-2 text-center">Lần thử thứ {attemptCount}</p>
           )}
 
           {/* Submit Button */}
@@ -137,6 +149,18 @@ const VideoQuizOverlay = ({ quiz, onSubmit, onCorrect }) => {
             {isSubmitting && <Loader2 size={16} className="animate-spin" />}
             {isSubmitting ? 'Đang kiểm tra...' : 'Xác nhận đáp án'}
           </button>
+
+          {/* ✅ Manual Continue Button — backup khi setTimeout không trigger */}
+          {feedback === 'correct' && (
+            <button
+              onClick={onCorrect}
+              className="w-full py-2.5 mt-2 bg-emerald-600 text-white font-semibold rounded-xl
+                         hover:bg-emerald-700 transition-all text-sm flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 size={15} />
+              Tiếp tục xem video
+            </button>
+          )}
         </div>
       </div>
 

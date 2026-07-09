@@ -81,8 +81,8 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
         transition={500}
       />
       <View className="p-4">
-        <Text className="text-xl font-bold text-gray-900 mb-2">{course.title}</Text>
-        <Text className="text-gray-600 mb-2">{course.shortDescription}</Text>
+        <Text className="text-xl font-bold text-gray-900 mb-2 text-justify">{course.title}</Text>
+        <Text className="text-gray-600 mb-2 text-justify">{course.shortDescription}</Text>
         <View className="flex-row items-center mb-2">
           <Star size={16} color="#f59e0b" fill="#f59e0b" />
           <Text className="ml-1 font-bold">{course.rating?.toFixed(1) || '0.0'}</Text>
@@ -157,7 +157,7 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
             className="bg-rose-500 px-3 py-3 rounded-lg items-center justify-center mb-2"
             onPress={() => navigation.navigate('Learning', { slug: course.slug })}
           >
-            <Text className="text-white font-bold text-base">Go to Course</Text>
+            <Text className="text-white font-bold text-base">Đi tới khóa học</Text>
           </TouchableOpacity>
         )}
         <View className="flex-row gap-3 mt-2">

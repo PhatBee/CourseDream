@@ -3,17 +3,17 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { verifyResetOTP, reset } from "../features/auth/authSlice";
 import { toast } from "react-hot-toast";
-import auth1 from "../assets/img/auth/auth-1.svg"; 
+import auth1 from "../assets/img/auth/auth-1.svg";
 
 const VerifyResetOTP = () => {
   const [otp, setOtp] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  const { 
-    isLoading, 
-    isError, 
-    message, 
+
+  const {
+    isLoading,
+    isError,
+    message,
     isVerifyResetSuccess, // <-- Dùng cờ riêng
     resetEmail // <-- Lấy email từ state
   } = useSelector(
@@ -34,7 +34,7 @@ const VerifyResetOTP = () => {
       toast.error(message || "Xác thực thất bại");
       dispatch(reset());
     }
-    
+
     // Khi verifyResetOTP() thành công
     if (isVerifyResetSuccess && message) {
       toast.success(message); // "Xác thực OTP thành công!"
@@ -54,32 +54,32 @@ const VerifyResetOTP = () => {
       <div className="mx-auto flex min-h-screen w-full">
         {/* LEFT: banner (Giống ForgotPassword.jsx) */}
         <div className="hidden lg:flex lg:w-1/2 bg-rose-50">
-                  <div className="flex w-full items-center justify-center p-12">
-                    <div className="max-w-[640px] w-full text-center">
-                      <div className="mb-10">
-                        <img
-                          src={auth1}
-                          alt="Illustration"
-                          className="mx-auto w-full max-w-[520px]"
-                        />
-                      </div>
-                      <h3 className="text-[34px] leading-snug font-semibold mb-3">
-                        Welcome to <br />
-                        Dreams<span className="text-rose-500">LMS</span> Courses.
-                      </h3>
-                      <p className="text-gray-600 mx-auto max-w-[560px]">
-                        Platform designed to help organizations, educators, and learners
-                        manage, deliver, and track learning and training activities.
-                      </p>
-                      {/* Dots (giả lập slider như bản HTML) */}
-                      <div className="mt-10 flex items-center justify-center gap-2">
-                        <span className="h-2 w-14 rounded-full bg-rose-500/90" />
-                        <span className="h-2 w-2 rounded-full bg-gray-300" />
-                        <span className="h-2 w-2 rounded-full bg-gray-300" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <div className="flex w-full items-center justify-center p-12">
+            <div className="max-w-[640px] w-full text-center">
+              <div className="mb-10">
+                <img
+                  src={auth1}
+                  alt="Illustration"
+                  className="mx-auto w-full max-w-[520px]"
+                />
+              </div>
+              <h3 className="text-[34px] leading-snug font-semibold mb-3">
+                Chào mừng đến với <br />
+                Dreams<span className="text-rose-500">LMS</span> Courses.
+              </h3>
+              <p className="text-gray-600 mx-auto max-w-[560px]">
+                Nền tảng được thiết kế để giúp các tổ chức, nhà giáo dục và người học
+                quản lý, cung cấp và theo dõi các hoạt động học tập và đào tạo.
+              </p>
+              {/* Dots (giả lập slider như bản HTML) */}
+              <div className="mt-10 flex items-center justify-center gap-2">
+                <span className="h-2 w-14 rounded-full bg-rose-500/90" />
+                <span className="h-2 w-2 rounded-full bg-gray-300" />
+                <span className="h-2 w-2 rounded-full bg-gray-300" />
+              </div>
+            </div>
+          </div>
+        </div>
         {/* RIGHT: form */}
         <div className="w-full lg:w-1/2 flex">
           <div className="mx-auto flex w-full max-w-[820px] flex-col px-6 sm:px-10 py-8">
@@ -89,7 +89,7 @@ const VerifyResetOTP = () => {
             </p>
             <form onSubmit={onSubmit} className="mt-10 space-y-6">
               <div>
-                <label htmlFor="otp" className="mb-2 block text-[15px] font-medium">
+                <label htmlFor="otp" className="mb-2 block text-[15px] font-medium text-left">
                   Mã OTP <span className="text-rose-500">*</span>
                 </label>
                 <input

@@ -47,3 +47,7 @@ export const getDiscussionReplies = (discussionId, page = 1, limit = 5) =>
   axiosClient.get(
     `/discussions/${discussionId}/replies?page=${page}&limit=${limit}`,
   );
+
+// Xoá reply
+export const deleteReply = (replyId) =>
+  axiosClient.delete(`/discussions/replies/${replyId}`);

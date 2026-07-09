@@ -15,6 +15,10 @@ const verifyOTP = (otpData) => {
   return axiosClient.post(`${path}/verify-otp`, otpData);
 };
 
+const resendOTP = (email) => {
+  return axiosClient.post(`${path}/resend-otp`, { email });
+};
+
 const googleLogin = (credential) => {
   return axiosClient.post(`${path}/google`, { credential });
 };
@@ -39,4 +43,4 @@ const logout = () => {
   return axiosClient.post(`${path}/logout`);
 };
 
-export const authApi = { login, register, verifyOTP, googleLogin, facebookLogin, forgotPassword, verifyResetOTP, setPassword, logout };
+export const authApi = { login, register, verifyOTP, resendOTP, googleLogin, facebookLogin, forgotPassword, verifyResetOTP, setPassword, logout };

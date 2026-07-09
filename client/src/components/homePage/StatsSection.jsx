@@ -3,10 +3,10 @@ import { BookOpen, UserCheck, Award, Users } from 'lucide-react';
 
 const StatsSection = () => {
   const stats = [
-    { count: '10K', label: 'Online Courses', icon: <BookOpen size={28} />, color: 'bg-rose-100 text-rose-600' },
-    { count: '200K', label: 'Expert Tutors', icon: <UserCheck size={28} />, color: 'bg-blue-100 text-blue-600' },
-    { count: '6K', label: 'Certified Courses', icon: <Award size={28} />, color: 'bg-orange-100 text-orange-600' },
-    { count: '60K', label: 'Online Students', icon: <Users size={28} />, color: 'bg-teal-100 text-teal-600' },
+    { count: '10K', label: 'Khóa học', icon: <BookOpen size={28} />, color: 'bg-rose-100 text-rose-600' },
+    { count: '200K', label: 'Chuyên gia', icon: <UserCheck size={28} />, color: 'bg-blue-100 text-blue-600' },
+    { count: '6K', label: 'Chứng chỉ', icon: <Award size={28} />, color: 'bg-orange-100 text-orange-600' },
+    { count: '60K', label: 'Học viên', icon: <Users size={28} />, color: 'bg-teal-100 text-teal-600' },
   ];
 
   return (

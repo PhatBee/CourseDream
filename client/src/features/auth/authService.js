@@ -51,6 +51,16 @@ const verifyOTP = async (otpData) => {
 };
 
 /**
+ * Gọi API gửi lại OTP
+ * @param {string} email - Email cần gửi lại OTP
+ * @returns {Promise<object>} - Dữ liệu trả về từ API
+ */
+const resendOTP = async (email) => {
+  const response = await authApi.resendOTP(email);
+  return response.data;
+};
+
+/**
  * Gọi API đăng nhập Google
  * @param {string} credential - id_token từ Google
  * @returns {Promise<object>} - Dữ liệu trả về từ API (token, user)
@@ -139,6 +149,7 @@ const authService = {
   logout,
   register,
   verifyOTP,
+  resendOTP,
   googleLogin,
   facebookLogin,
   forgotPassword,

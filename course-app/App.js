@@ -5,6 +5,7 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from './src/app/store.js';
 import Toast from 'react-native-toast-message';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './src/utils/navigation';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setCredentials } from './src/features/auth/authSlice';
 import { getUser, getToken, removeToken, removeUser } from './src/utils/storage';
@@ -14,7 +15,7 @@ import { toastConfig } from './src/utils/toastConfig';
 import "./global.css"
 import { getCart } from './src/features/cart/cartSlice';
 import io from 'socket.io-client';
-import { fetchNotifications } from './src/features/notification/notificationSlice';
+import { fetchNotifications, addRealtimeNotification } from './src/features/notification/notificationSlice';
 
 // Import Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -124,7 +125,7 @@ const MainNavigator = () => {
 
       socket.on('new_notification', (data) => {
         console.log('Socket event new_notification', data);
-        dispatch(fetchNotifications());
+        dispatch(addRealtimeNotification(data));
       });
     }
     return () => {
@@ -187,7 +188,7 @@ export default function App() {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <NavigationContainer linking={linking}>
+        <NavigationContainer ref={navigationRef} linking={linking}>
           <MainNavigator />
         </NavigationContainer>
         <Toast config={toastConfig} />

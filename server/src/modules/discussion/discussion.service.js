@@ -213,7 +213,7 @@ export const getRepliesByDiscussion = async (
   limit = 5,
 ) => {
   const skip = (page - 1) * limit;
-  const query = { discussionId, isHidden: false };
+  const query = { discussionId, isHidden: false, deletedAt: null };
 
   const [replies, total] = await Promise.all([
     DiscussionReply.find(query)
@@ -326,4 +326,24 @@ export const getDiscussionDetails = async (discussionId) => {
 
   if (!discussion) throw new Error("Không tìm thấy cuộc thảo luận");
   return discussion;
+};
+
+export const softDeleteReply = async (replyId, userId, isAdminOrInstructor) => {
+  const reply = await DiscussionReply.findById(replyId);
+  if (!reply) throw new Error("Không tìm thấy bình luận");
+
+  if (reply.author.toString() !== userId.toString() && !isAdminOrInstructor) {
+    throw new Error("Bạn không có quyền xoá bình luận này");
+  }
+
+  reply.isHidden = true; // Optional: hide it
+  reply.deletedAt = new Date();
+  await reply.save();
+
+  // Decrease answer count in Discussion
+  await mongoose.model("Discussion").findByIdAndUpdate(reply.discussionId, {
+    $inc: { answerCount: -1 },
+  });
+
+  return reply;
 };

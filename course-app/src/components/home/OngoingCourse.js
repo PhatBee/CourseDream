@@ -35,7 +35,7 @@ const OngoingCourse = ({ enrollment }) => {
 
   const handleContinue = () => {
     if (course.slug) {
-        navigation.navigate('Learning', { slug: course.slug });
+      navigation.navigate('Learning', { slug: course.slug });
     }
   };
 
@@ -46,9 +46,9 @@ const OngoingCourse = ({ enrollment }) => {
   return (
     <View className="mb-8 w-full">
       <View className="flex-row justify-between items-center mb-4 px-5">
-        <Text className="text-lg font-bold text-gray-900">Ongoing Course</Text>
+        <Text className="text-lg font-bold text-gray-900">Khóa học đang học</Text>
         <TouchableOpacity onPress={handleSeeAll}>
-          <Text className="text-rose-500 text-sm font-medium">See All</Text>
+          <Text className="text-rose-500 text-sm font-medium">Xem tất cả</Text>
         </TouchableOpacity>
       </View>
 
@@ -90,7 +90,7 @@ const OngoingCourse = ({ enrollment }) => {
 
           <View className="flex-row items-center justify-between mb-2">
             <Text className="text-xs text-gray-500 font-medium">
-              {completedCount} / {totalCount} Lessons
+              {completedCount} / {totalCount} Bài học
             </Text>
             <Text className="text-xs text-rose-500 font-bold">{Math.round(percentage || 0)}%</Text>
           </View>

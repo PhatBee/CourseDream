@@ -30,7 +30,7 @@ const InstructorBio = ({ instructor = {} }) => {
 
   return (
     <div className="space-y-5 text-left">
-      <h5 className="text-xl font-semibold text-gray-800">About the instructor</h5>
+      <h5 className="text-xl font-semibold text-gray-800 text-justify">Giảng viên</h5>
 
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center">
@@ -43,22 +43,25 @@ const InstructorBio = ({ instructor = {} }) => {
           />
         </div>
         <div className="flex-1">
-          <Link to={`/instructor/${name}`} className="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors">
+          {/* Name */}
+          {/* Bỏ Link */}
+          <p className="text-lg font-bold text-gray-900 transition-colors">
             {name}
-          </Link>
-          {headline && <p className="text-blue-600 font-medium text-sm mb-2">{headline}</p>}
+          </p>
+          {/* Headline */}
+          {headline && <p className="text-blue-600 font-medium text-sm mb-2 text-justify">{headline}</p>}
 
           {/* Stats */}
           <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-3">
             <div className="flex items-center gap-1">
               <Star size={16} className="text-yellow-400 fill-current" />
-              <span className="font-bold text-gray-700">{rating}</span> Rating
+              <span className="font-bold text-gray-700">{rating}</span> Sao
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-bold text-gray-700">{totalReviews}</span> Reviews
+              <span className="font-bold text-gray-700">{totalReviews}</span> Đánh giá
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-bold text-gray-700">{totalStudents.toLocaleString()}</span> Students
+              <span className="font-bold text-gray-700">{totalStudents.toLocaleString()}</span> Học viên
             </div>
           </div>
 
@@ -76,7 +79,7 @@ const InstructorBio = ({ instructor = {} }) => {
       {/* Bio */}
       {bio && (
         <div>
-          <h6 className="font-bold text-gray-800 mb-2">About Me</h6>
+          <h6 className="font-bold text-gray-800 mb-2">Giới thiệu</h6>
           <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-line">{bio}</p>
         </div>
       )}
@@ -84,7 +87,7 @@ const InstructorBio = ({ instructor = {} }) => {
       {/* Specialties */}
       {specialties && specialties.length > 0 && (
         <div>
-          <h6 className="font-bold text-gray-800 mb-2">Specialties</h6>
+          <h6 className="font-bold text-gray-800 mb-2">Kỹ năng</h6>
           <div className="flex flex-wrap gap-2">
             {specialties.map((spec, idx) => (
               <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium border border-gray-200">
@@ -99,7 +102,7 @@ const InstructorBio = ({ instructor = {} }) => {
       {experience && (
         <div>
           <h6 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <Briefcase size={16} className="text-blue-500" /> Experience
+            <Briefcase size={16} className="text-blue-500" /> Kinh nghiệm
           </h6>
           <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-line bg-gray-50 p-3 rounded-lg">
             {experience}
@@ -111,7 +114,7 @@ const InstructorBio = ({ instructor = {} }) => {
       {education && (
         <div>
           <h6 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <GraduationCap size={16} className="text-green-500" /> Education
+            <GraduationCap size={16} className="text-green-500" /> Học vấn
           </h6>
           <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-line bg-gray-50 p-3 rounded-lg">
             {education}

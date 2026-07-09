@@ -310,7 +310,7 @@ const EditProfileScreen = ({ navigation }) => {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text className="text-white text-lg font-semibold">
-                                        Cập nhật hồ sơ
+                                        Cập nhật
                                     </Text>
                                 )}
                             </TouchableOpacity>

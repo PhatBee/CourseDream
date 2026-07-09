@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
+import AdminLogin from "../pages/AdminLogin";
 import Register from "../pages/Register";
 import VerifyOTP from "../pages/VerifyOTP";
 import ForgotPassword from "../pages/ForgotPassword";
@@ -10,6 +11,10 @@ import SetPassword from "../pages/SetPassword";
 import CourseDetail from "../pages/CourseDetail";
 // import Header from '../components/Header'; // Không dùng trực tiếp ở đây
 import ProfileLayout from "../layouts/ProfileLayout";
+import InstructorLayout from "../layouts/InstructorLayout";
+import InstructorProfileLayout from "../layouts/InstructorProfileLayout";
+import InstructorSettingsLayout from "../layouts/InstructorSettingsLayout";
+
 import MyProfile from "../components/profile/MyProfile";
 import SettingsPage from "../pages/SettingsPage";
 import EditProfile from "../components/profile/EditProfile";
@@ -43,19 +48,24 @@ import SocialPayoutEdit from "../components/profile/SocialPayoutEdit";
 import StudentDashboard from "../pages/StudentDashboard";
 import ReportsManagement from "../pages/admin/ReportsManagement";
 import PromotionsManagement from "../pages/admin/PromotionsManagement";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { io } from "socket.io-client";
+import { addRealtimeNotification } from "../features/notification/notificationSlice";
+import ApiErrorWatcher from "../components/common/ApiErrorWatcher";
+import ErrorPage from "../pages/ErrorPage";
 
 export default function AppRoutes() {
   const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     // Nếu chưa đăng nhập thì không mở socket để tiết kiệm hiệu năng
     if (!user?._id) return;
 
     // Gắn userId để backend biết ai đang truy cập, khớp với logic server
-    const socket = io(import.meta.env.VITE_API_URL, {
+    // Socket.io cần kết nối đến root URL (không có /api)
+    const socket = io(import.meta.env.VITE_SOCKET_URL, {
       query: { userId: user._id },
     });
 
@@ -72,12 +82,18 @@ export default function AppRoutes() {
       window.location.href = "/login";
     });
 
+    // Lắng nghe thông báo realtime từ server (ví dụ: admin duyệt/từ chối giảng viên)
+    socket.on("new_notification", (notification) => {
+      dispatch(addRealtimeNotification(notification));
+    });
+
     return () => socket.disconnect();
-  }, [user]);
+  }, [user?._id, dispatch]);
 
   return (
     <BrowserRouter>
-      <Routes>
+      <ApiErrorWatcher>
+        <Routes>
         {/* ===================== PUBLIC + USER AREA ===================== */}
         {/* Những route nào cần header thì bọc bởi MainLayout */}
 
@@ -124,36 +140,39 @@ export default function AppRoutes() {
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="enrolled-courses" element={<EnrolledCoursesPage />} />
 
-            <Route
-              element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}
-            >
-              <Route
-                path="instructor/courses"
-                element={<InstructorCourses />}
-              />
-              <Route
-                path="instructor/dashboard"
-                element={<InstructorDashboard />}
-              />
-            </Route>
             {/* (Thêm route cho "Become Instructor" ở đây sau) */}
             {/* Khi vào /profile, tự động nhảy sang /my-profile */}
             <Route index element={<Navigate to="my-profile" replace />} />
           </Route>
         </Route>
 
-        <Route
-          element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}
-        >
-          <Route path="instructor/add-course" element={<AddCoursePage />} />
-          <Route
-            path="instructor/courses/:slug/edit"
-            element={<EditCoursePage />}
-          />
+        <Route element={<PrivateRoute allowedRoles={["instructor", "admin"]} />}>
+          <Route path="/instructor" element={<InstructorLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<InstructorDashboard />} />
+            <Route path="courses" element={<InstructorCourses />} />
+            <Route path="add-course" element={<AddCoursePage />} />
+            <Route path="courses/:slug/edit" element={<EditCoursePage />} />
+
+            {/* Instructor Profile*/}
+            <Route path="profile" element={<InstructorProfileLayout />}>
+              <Route index element={<MyProfile isInstructorView={true} />} />
+
+              <Route path="settings" element={<InstructorSettingsLayout />}>
+                <Route index element={<Navigate to="edit" replace />} />
+                <Route path="edit" element={<EditProfile />} />
+                <Route path="security" element={<ChangePassword />} />
+                <Route path="instructor-profile" element={<InstructorInfoEdit />} />
+                <Route path="social-payout" element={<SocialPayoutEdit />} />
+              </Route>
+            </Route>
+          </Route>
         </Route>
+
 
         {/* No header Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login-ptk2026" element={<AdminLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -198,7 +217,11 @@ export default function AppRoutes() {
             element={<AdminPendingCourseDetail />}
           />
         </Route>
+
+        {/* Fallback route cho 404 Client-side */}
+        <Route path="*" element={<ErrorPage status={404} />} />
       </Routes>
+      </ApiErrorWatcher>
     </BrowserRouter>
   );
 }

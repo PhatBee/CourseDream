@@ -8,7 +8,7 @@ import Spinner from "../components/common/Spinner";
 import Avatar from "../components/common/Avatar";
 
 const formatPrice = (price) => {
-    if (price === 0) return 'FREE';
+    if (price === 0) return 'Miễn phí';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
@@ -98,7 +98,7 @@ export default function Cart() {
                         Hãy thêm khóa học vào giỏ hàng để bắt đầu học tập!
                     </p>
                     <Link
-                        to="/"
+                        to="/courses"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                     >
                         <ArrowLeft size={20} />
@@ -178,7 +178,7 @@ export default function Cart() {
 
                                                     {/* Title */}
                                                     <Link to={`/courses/${course.slug}`}>
-                                                        <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-rose-600 transition-colors line-clamp-2">
+                                                        <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-rose-600 transition-colors line-clamp-2 text-justify">
                                                             {course.title}
                                                         </h3>
                                                     </Link>
@@ -283,7 +283,7 @@ export default function Cart() {
 
                             {/* Continue Shopping */}
                             <Link
-                                to="/"
+                                to="/courses"
                                 className="w-full border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
                             >
                                 <ArrowLeft size={18} />

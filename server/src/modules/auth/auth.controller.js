@@ -36,6 +36,7 @@ export const googleLogin = async (req, res, next) => {
             message: 'Đăng nhập Google thành công!',
             user,
             accessToken,
+            refreshToken,
         });
     } catch (error) {
         next(error);
@@ -59,6 +60,7 @@ export const facebookLogin = async (req, res, next) => {
             message: 'Đăng nhập Facebook thành công!',
             user,
             accessToken,
+            refreshToken,
         });
     } catch (error) {
         console.error("Lỗi Facebook Login:", error.response?.data || error.message);
@@ -106,7 +108,33 @@ export const verifyOTP = async (req, res, next) => {
 };
 
 /**
- * @desc    Đăng nhập người dùng
+ * @desc    Gửi lại OTP đăng ký tài khoản
+ * @route   POST /api/auth/resend-otp
+ * @access  Public
+ */
+export const resendOTP = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            const error = new Error('Vui lòng cung cấp email.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const result = await authService.resendOTP({ email });
+
+        res.status(200).json({
+            message: 'Mã OTP mới đã được gửi. Vui lòng kiểm tra email.',
+            email: result.email,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Đăng nhập người dùng (Student/Instructor) - chặn Admin
  * @route   POST /api/auth/login
  * @access  Public
  */
@@ -114,7 +142,7 @@ export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        const { user, accessToken, refreshToken } = await authService.login({ email, password });
+        const { user, accessToken, refreshToken } = await authService.loginUser({ email, password });
 
         setCookies(res, accessToken, refreshToken);
 
@@ -122,6 +150,7 @@ export const login = async (req, res, next) => {
             message: 'Đăng nhập thành công!',
             user,
             accessToken,
+            refreshToken,
         });
     } catch (error) {
         // Xử lý đặc biệt cho trường hợp tài khoản bị ban
@@ -142,7 +171,7 @@ export const login = async (req, res, next) => {
  */
 export const refreshToken = async (req, res, next) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers['x-refresh-token'];
 
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
             await authService.refreshTokenService(refreshToken);
@@ -152,6 +181,7 @@ export const refreshToken = async (req, res, next) => {
         res.status(200).json({
             message: 'Refresh token thành công!',
             accessToken: newAccessToken,
+            refreshToken: newRefreshToken, // Trả thêm ở body để mobile app có thể lưu lại
         });
     } catch (error) {
         next(error);
@@ -165,7 +195,7 @@ export const refreshToken = async (req, res, next) => {
  */
 export const logout = async (req, res, next) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers['x-refresh-token'];
 
         const result = await authService.logout(refreshToken);
 

@@ -127,7 +127,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                 ? 'bg-rose-50 text-rose-500 hover:bg-rose-100'
                 : 'bg-white/80 text-gray-400 hover:text-rose-500 hover:bg-white'
               }`}
-            title={isHeartFilled ? "Remove from Wishlist" : "Add to Wishlist"}
+            title={isHeartFilled ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
           >
             <Heart size={18} className={isHeartFilled ? "fill-current" : ""} />
           </button>
@@ -162,7 +162,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <span className={`text-lg font-bold ${isEnrolled ? 'text-green-600' : 'text-rose-600'}`}>
-                {isEnrolled ? '' : (priceDiscount === 0 ? 'Free' : formatPrice(priceDiscount))}
+                {isEnrolled ? '' : (priceDiscount === 0 ? 'Miễn phí' : formatPrice(priceDiscount))}
               </span>
               {!isEnrolled && price > 0 && (
                 <span className="text-xs text-gray-400 line-through">
@@ -177,7 +177,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                   to={`/courses/${slug}/overview`}
                   className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
                 >
-                  Go to Course
+                  Vào khóa học
                 </Link>
               ) : (
                 <>
@@ -187,7 +187,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                       ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'  // ← Filled state
                       : 'text-gray-500 hover:text-rose-600 hover:bg-rose-50'
                       }`}
-                    title={isInCart ? "Remove from Cart" : "Add to Cart"}
+                    title={isInCart ? "Xóa khỏi giỏ hàng" : "Thêm vào giỏ hàng"}
                   >
                     <ShoppingCart size={20} className={isInCart ? "fill-current" : ""} />
                   </button>
@@ -196,7 +196,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                     onClick={handleEnrollNow}
                     className="px-4 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                   >
-                    Enroll
+                    Ghi danh ngay
                   </button>
                 </>
               )}
@@ -250,7 +250,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
           <div className="flex flex-col">
             <span className={`text-2xl font-bold ${isEnrolled ? 'text-green-600' : 'text-rose-600'}`}>
-              {isEnrolled ? 'Enrolled' : (priceDiscount === 0 ? 'Free' : formatPrice(priceDiscount))}
+              {isEnrolled ? 'Vào khóa học' : (priceDiscount === 0 ? 'Miễn phí' : formatPrice(priceDiscount))}
             </span>
             {!isEnrolled && price > 0 && (
               <span className="text-sm text-gray-400 line-through">
@@ -267,7 +267,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                   ? 'bg-rose-50 text-rose-500 hover:bg-rose-100'
                   : 'bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-50'
                 }`}
-              title={isHeartFilled ? "Remove from Wishlist" : "Add to Wishlist"}
+              title={isHeartFilled ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
             >
               <Heart size={20} className={isHeartFilled ? "fill-current" : ""} />
             </button>
@@ -277,7 +277,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                 to={`/courses/${slug}/overview`}
                 className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
               >
-                Go to Course
+                Vào khóa học
               </Link>
             ) : (
               <>
@@ -287,7 +287,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                     ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'
                     : 'text-gray-500 hover:text-rose-600 hover:bg-rose-50'
                     }`}
-                  title={isInCart ? "Remove from Cart" : "Add to Cart"}
+                  title={isInCart ? "Xóa khỏi giỏ hàng" : "Thêm vào giỏ hàng"}
                 >
                   <ShoppingCart size={22} className={isInCart ? "fill-current" : ""} />
                 </button>
@@ -296,7 +296,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                   onClick={handleEnrollNow}
                   className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-full hover:bg-rose-700 transition-colors shadow-md hover:shadow-lg"
                 >
-                  Enroll Now
+                  Ghi danh ngay
                 </button>
               </>
             )}

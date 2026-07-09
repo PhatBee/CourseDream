@@ -25,7 +25,7 @@ import Avatar from "../components/common/Avatar";
 const formatPrice = (price) => {
   // Ép kiểu về số để đảm bảo so sánh đúng
   const amount = Number(price);
-  if (price === 0) return "FREE";
+  if (price === 0) return "Miễn phí";
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -61,14 +61,14 @@ export default function Checkout() {
   const items =
     isDirectCheckout && directCourse
       ? [
-          {
-            course: directCourse,
-            price: Number(directCourse.price || 0),
-            priceDiscount: Number(
-              directCourse.priceDiscount ?? directCourse.price ?? 0
-            ), // Ưu tiên priceDiscount, nếu null/undefined thì lấy price            _id: directCourse._id
-          },
-        ]
+        {
+          course: directCourse,
+          price: Number(directCourse.price || 0),
+          priceDiscount: Number(
+            directCourse.priceDiscount ?? directCourse.price ?? 0
+          ), // Ưu tiên priceDiscount, nếu null/undefined thì lấy price            _id: directCourse._id
+        },
+      ]
       : cartItems;
 
   const totalItems = isDirectCheckout ? 1 : cartTotalItems;
@@ -419,16 +419,14 @@ export default function Checkout() {
                       }
                       disabled={method.disabled}
                       className={`p-4 border-2 rounded-xl transition-all duration-200 relative
-                                                ${
-                                                  selectedMethod === method.id
-                                                    ? "border-rose-500 bg-rose-50 shadow-md"
-                                                    : "border-gray-200"
-                                                }
-                                                ${
-                                                  method.disabled
-                                                    ? "opacity-50 cursor-not-allowed bg-gray-50 grayscale"
-                                                    : "hover:border-rose-300 cursor-pointer"
-                                                }
+                                                ${selectedMethod === method.id
+                          ? "border-rose-500 bg-rose-50 shadow-md"
+                          : "border-gray-200"
+                        }
+                                                ${method.disabled
+                          ? "opacity-50 cursor-not-allowed bg-gray-50 grayscale"
+                          : "hover:border-rose-300 cursor-pointer"
+                        }
                                             `}
                     >
                       <div className="text-center">
@@ -590,36 +588,35 @@ export default function Checkout() {
 
               {/* Promo Code Section */}
               <div className="my-6 pt-4 border-t">
-                  <label className="block text-sm font-bold text-gray-800 mb-3">Ưu đãi dành cho bạn</label>
-                  <div className="flex flex-wrap gap-3">
-                      {availableLoading && (
-                          <div className="flex items-center gap-2 text-gray-500 text-sm">
-                              <Spinner size="xs" /> Đang tìm mã giảm giá...
-                          </div>
-                      )}
-                      {available.map((promo) => (
-                          <button
-                              key={promo._id}
-                              className={`px-4 py-2 rounded-xl transition-all duration-200 border-2 font-medium shadow-sm hover:shadow-md text-sm ${
-                                  selectedPromotion === promo.code 
-                                      ? "bg-gradient-to-r from-rose-600 to-rose-700 text-white border-transparent hover:from-rose-700 hover:to-rose-800 shadow-rose-200" 
-                                      : "bg-white text-gray-700 border-gray-200 hover:border-rose-300 hover:bg-rose-50"
-                              }`}
-                              onClick={() => handleSelectPromotion(promo)}
-                              type="button"
-                              disabled={previewLoading}
-                          >
-                              <b className="tracking-wide">{promo.code}</b> 
-                              <span className="mx-1">•</span> 
-                              Giảm {promo.discountType === "percent" ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString("vi-VN")}₫`}
-                          </button>
-                      ))}
-                  </div>
-                  {previewError && (
-                      <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-                          {previewError}
-                      </div>
+                <label className="block text-sm font-bold text-gray-800 mb-3">Ưu đãi dành cho bạn</label>
+                <div className="flex flex-wrap gap-3">
+                  {availableLoading && (
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <Spinner size="xs" /> Đang tìm mã giảm giá...
+                    </div>
                   )}
+                  {available.map((promo) => (
+                    <button
+                      key={promo._id}
+                      className={`px-4 py-2 rounded-xl transition-all duration-200 border-2 font-medium shadow-sm hover:shadow-md text-sm ${selectedPromotion === promo.code
+                          ? "bg-gradient-to-r from-rose-600 to-rose-700 text-white border-transparent hover:from-rose-700 hover:to-rose-800 shadow-rose-200"
+                          : "bg-white text-gray-700 border-gray-200 hover:border-rose-300 hover:bg-rose-50"
+                        }`}
+                      onClick={() => handleSelectPromotion(promo)}
+                      type="button"
+                      disabled={previewLoading}
+                    >
+                      <b className="tracking-wide">{promo.code}</b>
+                      <span className="mx-1">•</span>
+                      Giảm {promo.discountType === "percent" ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString("vi-VN")}₫`}
+                    </button>
+                  ))}
+                </div>
+                {previewError && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                    {previewError}
+                  </div>
+                )}
               </div>
 
               {/* Info */}

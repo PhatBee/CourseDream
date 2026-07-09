@@ -5,6 +5,7 @@ import {
   FaCheck,
   FaUserCircle,
   FaFlag,
+  FaTrash,
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -14,12 +15,14 @@ import {
   replyToDiscussion,
   voteDiscussion,
   markBestAnswer,
+  deleteReply,
 } from "../../api/discussionApi";
 
 // Tích hợp Report của hệ thống
 import { sendReport, resetReportState } from "../report/reportSlice";
 import ReportModal from "../../components/common/ReportModal";
-import { useLocation } from "react-router-dom";
+import RemoveModal from "../../components/common/RemoveModal";
+import { useLocation, useNavigate } from "react-router-dom";
 import Avatar from "../../components/common/Avatar";
 
 const DiscussionModal = ({
@@ -42,6 +45,9 @@ const DiscussionModal = ({
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [replyInput, setReplyInput] = useState("");
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [replyToDelete, setReplyToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Quản lý Modal báo cáo riêng cho Replies (Báo cáo câu trả lời)
   const [reportConfig, setReportConfig] = useState({
@@ -176,6 +182,29 @@ const DiscussionModal = ({
     }
   };
 
+  const handleDeleteReply = (replyId) => {
+    setReplyToDelete(replyId);
+    setIsRemoveModalOpen(true);
+  };
+
+  const handleConfirmDeleteReply = async () => {
+    if (!replyToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteReply(replyToDelete);
+      toast.success("Đã xóa bình luận!");
+      setReplies((prev) => prev.filter((r) => r._id !== replyToDelete));
+      refreshParent();
+    } catch (err) {
+      console.error(err);
+      toast.error("Xóa bình luận thất bại");
+    } finally {
+      setIsDeleting(false);
+      setIsRemoveModalOpen(false);
+      setReplyToDelete(null);
+    }
+  };
+
   // Component Skeleton
   const SkeletonReply = () => (
     <div className="p-4 rounded-xl border border-gray-100 bg-white animate-pulse">
@@ -195,6 +224,7 @@ const DiscussionModal = ({
 
   // Logic Scroll đến Reply cụ thể nếu có replyId trong URL query
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -208,13 +238,58 @@ const DiscussionModal = ({
           el.scrollIntoView({ behavior: "smooth", block: "center" });
           el.classList.add("ring-2", "ring-rose-400", "bg-rose-50"); // Tạo hiệu ứng Highlight chớp nhoáng
           setTimeout(
-            () => el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50"),
+            () => {
+              if (el) el.classList.remove("ring-2", "ring-rose-400", "bg-rose-50");
+            },
             3000,
           );
+          
+          // Xóa param ngay sau khi cuộn xong (Xóa CẢ replyId và discussionId để CourseDiscussion không bị kích hoạt nhánh đánh dấu Thảo luận)
+          const newParams = new URLSearchParams(window.location.search);
+          let changed = false;
+          if (newParams.has("replyId")) {
+             newParams.delete("replyId");
+             changed = true;
+          }
+          if (newParams.has("discussionId")) {
+             newParams.delete("discussionId");
+             changed = true;
+          }
+          if (changed) {
+             navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
+          }
+        } else {
+          const existsInArray = replies.some(r => String(r._id) === String(replyId));
+          if (!existsInArray) {
+            if (hasMore) {
+              // Câu trả lời có thể ở trang tiếp theo, tự động tải thêm
+              setPage((prev) => {
+                const nextPage = prev + 1;
+                fetchReplies(nextPage);
+                return nextPage;
+              });
+            } else {
+              // Đã tải hết nhưng không thấy -> Xóa param và báo lỗi
+              toast.error("Không tìm thấy bình luận. Bình luận này có thể đã bị xóa.");
+              const newParams = new URLSearchParams(window.location.search);
+              let changed = false;
+              if (newParams.has("replyId")) {
+                 newParams.delete("replyId");
+                 changed = true;
+              }
+              if (newParams.has("discussionId")) {
+                 newParams.delete("discussionId");
+                 changed = true;
+              }
+              if (changed) {
+                 navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
+              }
+            }
+          }
         }
       }, 600); // Delay 600ms để đảm bảo rằng các phần tử đã được nạp xong
     }
-  }, [location.search, replies, loading]);
+  }, [location.search, replies, loading, hasMore, navigate, location.pathname]);
 
   return (
     <>
@@ -328,21 +403,30 @@ const DiscussionModal = ({
                       </div>
                     </div>
 
-                    {/* Nút báo cáo Reply cụ thể */}
-                    {user && user._id !== reply.author?._id && (
-                      <button
-                        onClick={() =>
-                          setReportConfig({
-                            open: true,
-                            targetId: reply._id,
-                            type: "reply",
-                          })
-                        }
-                        className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2 py-1 text-[11px] text-gray-400 hover:text-rose-500 bg-gray-50 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100"
-                      >
-                        <FaFlag /> Báo cáo
-                      </button>
-                    )}
+                    {/* Nút Phụ Trợ (Xóa/Báo cáo) */}
+                    <div className="ml-auto flex items-center gap-3">
+                      {user?._id === reply.author?._id || isInstructor ? (
+                        <button
+                          onClick={() => handleDeleteReply(reply._id)}
+                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-[11px] flex gap-1 items-center px-2 py-1 bg-gray-50 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                        >
+                          <FaTrash /> Xóa
+                        </button>
+                      ) : user && user._id !== reply.author?._id ? (
+                        <button
+                          onClick={() =>
+                            setReportConfig({
+                              open: true,
+                              targetId: reply._id,
+                              type: "reply",
+                            })
+                          }
+                          className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2 py-1 text-[11px] text-gray-400 hover:text-rose-500 bg-gray-50 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100"
+                        >
+                          <FaFlag /> Báo cáo
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
 
                   <p className="text-gray-700 text-sm ml-11 mb-3 whitespace-pre-wrap">
@@ -363,8 +447,8 @@ const DiscussionModal = ({
                         className="text-xs font-semibold text-gray-500 hover:text-green-600 transition-colors"
                       >
                         {reply.isBestAnswer
-                          ? "Bỏ Best Answer"
-                          : "Mark Best Answer"}
+                          ? "Bỏ đánh dấu hay nhất"
+                          : "Đánh dấu hay nhất"}
                       </button>
                     )}
                   </div>
@@ -422,6 +506,20 @@ const DiscussionModal = ({
           loading={reporting}
         />
       )}
+
+      <RemoveModal
+        isOpen={isRemoveModalOpen}
+        onClose={() => {
+          if (!isDeleting) {
+            setIsRemoveModalOpen(false);
+            setReplyToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDeleteReply}
+        title="Xóa bình luận"
+        message="Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác."
+        isDeleting={isDeleting}
+      />
     </>
   );
 };

@@ -23,29 +23,29 @@ const AdminSidebar = () => {
     {
       path: "/admin/dashboard",
       icon: <LayoutDashboard size={20} />,
-      label: "Dashboard",
+      label: "Tổng quan",
     },
-    { path: "/admin/users", icon: <Users size={20} />, label: "Students" },
+    { path: "/admin/users", icon: <Users size={20} />, label: "Học viên" },
     {
       path: "/admin/instructors",
       icon: <Users size={20} />,
-      label: "Instructors",
+      label: "Giảng viên",
     },
-    { path: "/admin/courses", icon: <BookOpen size={20} />, label: "Courses" },
+    { path: "/admin/courses", icon: <BookOpen size={20} />, label: "Khóa học" },
     {
       path: "/admin/pending-courses",
       icon: <Clock size={20} />,
-      label: "Censor",
+      label: "Kiểm duyệt ",
     },
     {
       path: "/admin/categories",
       icon: <BookOpen size={20} />,
-      label: "Categories",
+      label: "Danh mục",
     },
     // { path: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
-    { path: "/admin/reports", icon: <BarChart2 size={20} />, label: "Reports" },
+    { path: "/admin/reports", icon: <BarChart2 size={20} />, label: "Báo cáo" },
     // { path: '/admin/messages', icon: <MessageSquare size={20} />, label: 'Messages' },
-    { path: '/admin/promotions', icon: <Tag size={20} />, label: 'Promotions' },
+    { path: '/admin/promotions', icon: <Tag size={20} />, label: 'Khuyến mãi' },
   ];
 
   return (
@@ -96,7 +96,7 @@ const AdminSidebar = () => {
               className="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
             >
               <LogOut size={20} />
-              <span className="ml-3">Logout</span>
+              <span className="ml-3">Đăng xuất</span>
             </button>
           </li>
         </ul>

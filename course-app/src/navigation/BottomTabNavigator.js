@@ -40,7 +40,7 @@ const BottomTabNavigator = () => {
                 component={HomeScreen}
                 options={{
                     tabBarLabel: ({ color }) => (
-                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>Home</Text>
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>Trang chủ</Text>
                     ),
                     tabBarIcon: ({ color }) => <Home size={24} color={color} />,
                 }}
@@ -52,7 +52,7 @@ const BottomTabNavigator = () => {
                 component={CoursesScreen}
                 options={{
                     tabBarLabel: ({ color }) => (
-                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>Courses</Text>
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>Khóa học</Text>
                     ),
                     tabBarIcon: ({ color }) => <Compass size={24} color={color} />,
                 }}
@@ -76,7 +76,7 @@ const BottomTabNavigator = () => {
                 component={MyLearningScreen}
                 options={{
                     tabBarLabel: ({ color }) => (
-                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>My Learning</Text>
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>Học tập</Text>
                     ),
                     tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
                 }}
@@ -88,7 +88,7 @@ const BottomTabNavigator = () => {
                 component={ProfileScreen}
                 options={{
                     tabBarLabel: ({ color }) => (
-                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>Profile</Text>
+                        <Text style={{ color, fontSize: 12, fontWeight: '500' }}>Tài khoản</Text>
                     ),
                     tabBarIcon: ({ color }) => <User size={24} color={color} />,
                 }}

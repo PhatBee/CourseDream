@@ -97,10 +97,10 @@ const BecomeInstructorScreen = ({ navigation }) => {
     };
 
     const handleSubmit = () => {
-        if (!formData.bio || !formData.experience) {
-            Alert.alert('Error', 'Please fill in Bio and Experience fields');
-            return;
-        }
+        // if (!formData.bio || !formData.experience) {
+        //     Alert.alert('Lỗi', 'Hãy điền vào Bio và Experience');
+        //     return;
+        // }
 
         dispatch(applyToBecomeInstructor(formData));
     };
@@ -123,10 +123,10 @@ const BecomeInstructorScreen = ({ navigation }) => {
                         <Clock size={24} color="#ca8a04" />
                         <View className="ml-3 flex-1">
                             <Text className="font-bold text-yellow-800 text-lg">
-                                Application Pending
+                                Đơn đăng ký đang chờ xử lý
                             </Text>
                             <Text className="text-yellow-700 text-sm mt-1">
-                                Your application is under review. This usually takes 24-48 hours.
+                                Đơn đăng ký của bạn đang được xem xét. Việc này thường mất 24-48 giờ.
                             </Text>
                         </View>
                     </View>
@@ -162,7 +162,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                         }
                     >
                         <Text className="text-white text-center font-bold">
-                            Go to Dashboard
+                            Đi đến bảng điều khiển
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -178,10 +178,10 @@ const BecomeInstructorScreen = ({ navigation }) => {
                             <AlertCircle size={24} color="#dc2626" />
                             <View className="ml-3 flex-1">
                                 <Text className="font-bold text-red-800 text-lg">
-                                    Application Rejected
+                                    Đơn đăng ký không thành công
                                 </Text>
                                 <Text className="text-red-700 text-sm mt-1">
-                                    Reason: {instructorApplication.rejectionReason || 'Not specified'}
+                                    Lý do: {instructorApplication.rejectionReason || 'Không được chỉ định'}
                                 </Text>
                             </View>
                         </View>
@@ -191,7 +191,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                         onPress={() => setIsModalOpen(true)}
                     >
                         <Text className="text-white text-center font-bold text-base">
-                            Update & Re-Apply
+                            Cập nhật và gửi lại
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -206,7 +206,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                     onPress={() => setIsModalOpen(true)}
                 >
                     <Text className="text-white text-center font-bold text-lg">
-                        Register Now
+                        Đăng ký ngay
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -215,26 +215,26 @@ const BecomeInstructorScreen = ({ navigation }) => {
 
     const benefits = [
         {
-            title: 'Flexible Work',
-            desc: 'Teach at your own pace.',
+            title: 'Linh hoạt thời gian',
+            desc: 'Dạy theo tốc độ của riêng bạn.',
             icon: '⏰',
             color: '#3b82f6',
         },
         {
-            title: 'Earning Potential',
-            desc: 'Monetize your expertise.',
+            title: 'Tiềm năng thu nhập',
+            desc: 'Kiếm tiền từ kiến thức chuyên môn của bạn.',
             icon: '💰',
             color: '#10b981',
         },
         {
-            title: 'Impact',
-            desc: 'Reach and educate learners.',
+            title: 'Tạo ảnh hưởng',
+            desc: 'Tiếp cận và giáo dục người học.',
             icon: '🌍',
             color: '#f59e0b',
         },
         {
-            title: 'Support',
-            desc: 'Access to dedicated support.',
+            title: 'Hỗ trợ',
+            desc: 'Truy cập hỗ trợ chuyên dụng',
             icon: '🎧',
             color: '#8b5cf6',
         },
@@ -242,18 +242,18 @@ const BecomeInstructorScreen = ({ navigation }) => {
 
     const steps = [
         {
-            title: 'Apply & Get Approved',
-            desc: 'Submit your application and get approved to access the platform.',
+            title: 'Đăng ký & Được phê duyệt',
+            desc: 'Gửi đơn đăng ký và được phê duyệt để truy cập nền tảng.',
             icon: '✅',
         },
         {
-            title: 'Create & Upload Content',
-            desc: 'Develop and upload your courses, including videos.',
+            title: 'Tạo và tải nội dung',
+            desc: 'Phát triển và tải lên các khóa học của bạn, bao gồm cả video.',
             icon: '📹',
         },
         {
-            title: 'Teach & Earn',
-            desc: 'Reach learners worldwide and start earning.',
+            title: 'Dạy và Kiếm tiền',
+            desc: 'Tiếp cận người học trên toàn thế giới và bắt đầu kiếm tiền.',
             icon: '💸',
         },
     ];
@@ -272,13 +272,13 @@ const BecomeInstructorScreen = ({ navigation }) => {
                         onPress={() => navigation.goBack()}
                         className="mb-4"
                     >
-                        <Text className="text-white text-base">← Back</Text>
+                        <Text className="text-white text-base">← Trở về</Text>
                     </TouchableOpacity>
                     <Text className="text-white text-3xl font-bold">
-                        Become an Instructor
+                        Trở thành Giảng viên
                     </Text>
                     <Text className="text-white/90 text-base mt-2">
-                        Share your knowledge and inspire the future
+                        Trao giá trị. Kiến tạo tương lai.
                     </Text>
                 </LinearGradient>
 
@@ -286,15 +286,13 @@ const BecomeInstructorScreen = ({ navigation }) => {
                 <View className="px-6 py-8">
                     <View className="mb-6">
                         <Text className="text-rose-600 font-semibold mb-2">
-                            SHARE KNOWLEDGE
+                            TRAO GIÁ TRỊ. KIẾN TẠO TƯƠNG LAI.
                         </Text>
                         <Text className="text-gray-900 text-2xl font-bold mb-3">
-                            Share Your Knowledge. Inspire the Future.
+                            Trao giá trị. Kiến tạo tương lai.
                         </Text>
                         <Text className="text-gray-600 text-base leading-6">
-                            Share your knowledge, inspire learners worldwide, and earn while
-                            doing what you love. Join a community of experts transforming
-                            education through engaging and accessible content.
+                            Đừng ngần ngại, hãy chia sẻ kiến thức, truyền cảm hứng đến những người yêu thích học tập trên khắp thế giới, và kiếm tiền từ chính đam mê của bạn. Hãy tham gia cộng đồng các chuyên gia đang thay đổi ngành giáo dục bằng những nội dung hấp dẫn và dễ tiếp cận.
                         </Text>
                     </View>
 
@@ -325,13 +323,13 @@ const BecomeInstructorScreen = ({ navigation }) => {
                 {/* How It Works Section */}
                 <View className="bg-gray-50 px-6 py-8">
                     <Text className="text-rose-600 font-semibold text-center mb-2">
-                        OUR WORKFLOW
+                        QUY TRÌNH
                     </Text>
                     <Text className="text-gray-900 text-2xl font-bold text-center mb-2">
-                        How It Works
+                        Các bước để trở thành giảng viên
                     </Text>
                     <Text className="text-gray-500 text-center mb-8">
-                        Turn Your Expertise into Impact in Just 3 Simple Steps!
+                        Kiến tạo sự thay đổi trong 3 bước đơn giản!
                     </Text>
 
                     {steps.map((step, idx) => (
@@ -361,7 +359,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                         {/* Modal Header */}
                         <View className="flex-row justify-between items-center px-6 py-4 border-b border-gray-200">
                             <Text className="text-xl font-bold text-gray-900">
-                                Instructor Application
+                                Đăng ký giảng viên
                             </Text>
                             <TouchableOpacity onPress={() => setIsModalOpen(false)}>
                                 <X size={24} color="#6b7280" />
@@ -373,7 +371,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                             {/* Bio */}
                             <View className="mb-4">
                                 <Text className="text-sm font-bold text-gray-700 mb-2">
-                                    Professional Bio <Text className="text-red-500">*</Text>
+                                    Giới thiệu bản thân <Text className="text-red-500">*</Text>
                                 </Text>
                                 <TextInput
                                     multiline
@@ -389,7 +387,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                             {/* Experience */}
                             <View className="mb-4">
                                 <Text className="text-sm font-bold text-gray-700 mb-2">
-                                    Experience & Qualifications{' '}
+                                    Kinh nghiệm và chứng chỉ{' '}
                                     <Text className="text-red-500">*</Text>
                                 </Text>
                                 <TextInput
@@ -408,7 +406,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                             {/* Intended Topics */}
                             <View className="mb-4">
                                 <Text className="text-sm font-bold text-gray-700 mb-2">
-                                    Intended Topics
+                                    Các lĩnh vực dự định giảng dạy
                                 </Text>
                                 <TextInput
                                     value={formData.intendedTopics}
@@ -423,7 +421,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                             {/* Sample Video URL */}
                             <View className="mb-4">
                                 <Text className="text-sm font-bold text-gray-700 mb-2">
-                                    Sample Video URL (Optional)
+                                    Video giới thiệu (Tùy chọn)
                                 </Text>
                                 <TextInput
                                     value={formData.sampleVideoUrl}
@@ -435,7 +433,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                                     keyboardType="url"
                                 />
                                 <Text className="text-xs text-gray-500 mt-1">
-                                    Providing a sample video increases your chances of approval.
+                                    Cung cấp video mẫu sẽ tăng cơ hội được duyệt.
                                 </Text>
                             </View>
 
@@ -446,7 +444,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                                     onPress={() => setIsModalOpen(false)}
                                 >
                                     <Text className="text-gray-600 text-center font-semibold">
-                                        Cancel
+                                        Hủy
                                     </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
@@ -458,7 +456,7 @@ const BecomeInstructorScreen = ({ navigation }) => {
                                         <ActivityIndicator color="white" />
                                     ) : (
                                         <Text className="text-white text-center font-bold">
-                                            Submit Application
+                                            Gửi đơn đăng ký
                                         </Text>
                                     )}
                                 </TouchableOpacity>

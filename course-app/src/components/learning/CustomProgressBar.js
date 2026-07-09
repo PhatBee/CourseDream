@@ -148,9 +148,14 @@ const CustomProgressBar = ({
           {/* Chấm tròn Quiz (Markers) */}
           {trackWidth > 0 && activeQuizzes.map((quiz, idx) => {
             const quizIndex = quizzes.indexOf(quiz);
-            const isDone = completedQuizzes.some(
-              q => String(q.lectureId) === String(lectureId) && q.quizIndex === quizIndex
-            );
+            const isDone = completedQuizzes.some((q) => {
+              // ✅ FIX: Ép kiểu an toàn — MongoDB có thể trả về quizIndex là String hoặc Number.
+              // Hỗ trợ cả q.lectureId (chuẩn) và q.lecture (fallback từ populate).
+              const qLectureId = String(q.lectureId || q.lecture || '');
+              const qLectureMatch = qLectureId === String(lectureId);
+              const qIndexMatch = Number(q.quizIndex) === Number(quizIndex);
+              return qLectureMatch && qIndexMatch && q.isCorrect !== false;
+            });
             const markerPct = duration > 0 ? (quiz.timestamp / duration) * 100 : 0;
             const cappedMarkerPct = Math.min(Math.max(markerPct, 0.5), 99.5);
 

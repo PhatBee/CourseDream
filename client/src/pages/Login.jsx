@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   login,
@@ -24,6 +24,7 @@ const Login = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
   const { user, isLoading, isError, isSuccess, message, banReason } =
     useSelector((state) => state.auth);
   const [showBanModal, setShowBanModal] = useState(false);
@@ -60,14 +61,25 @@ const Login = () => {
       dispatch(reset());
     }
     if (isSuccess || user) {
+      // [BẢO MẬT - CLIENT GUARD] Chặn admin ngay tại đây nếu lọt qua
+      if (user?.role === "admin") {
+        toast.error("Tài khoản không có quyền truy cập vùng này.");
+        dispatch(reset());
+        return;
+      }
+
       if (isSuccess) toast.success("Đăng nhập thành công");
 
-      if (user?.role === "admin") navigate("/admin/dashboard");
-      else if (user?.role === "instructor")
-        navigate("/profile/instructor/dashboard");
-      else navigate("/");
+      const callbackUrl = searchParams.get("callbackUrl");
+      if (callbackUrl) {
+        navigate(callbackUrl);
+      } else if (user?.role === "instructor") {
+        navigate("/instructor/dashboard");
+      } else {
+        navigate("/");
+      }
     }
-  }, [user, isError, isSuccess, message, banReason, navigate, dispatch]);
+  }, [user, isError, isSuccess, message, banReason, navigate, dispatch, searchParams]);
 
   const closeBanModal = () => {
     setShowBanModal(false);
@@ -129,13 +141,13 @@ const Login = () => {
               </div>
 
               <h3 className="text-[34px] leading-snug font-semibold mb-3">
-                Welcome to <br />
+                Chào mừng đến với <br />
                 Dreams<span className="text-rose-500">LMS</span> Courses.
               </h3>
 
               <p className="text-gray-600 mx-auto max-w-[560px]">
-                Platform designed to help organizations, educators, and learners
-                manage, deliver, and track learning and training activities.
+                Nền tảng được thiết kế để giúp các tổ chức, nhà giáo dục và người học
+                quản lý, cung cấp và theo dõi các hoạt động học tập và đào tạo.
               </p>
 
               {/* fake carousel dots */}
@@ -156,12 +168,12 @@ const Login = () => {
                 to="/"
                 className="text-rose-500 underline underline-offset-2"
               >
-                Back to Home
+                Trang chủ
               </Link>
             </div>
 
             <h1 className="mt-14 text-[44px] leading-[1.1] font-extrabold tracking-tight">
-              Sign into Your Account
+              Đăng nhập vào tài khoản của bạn
             </h1>
 
             <form onSubmit={onSubmit} className="mt-10 space-y-7">
@@ -196,7 +208,7 @@ const Login = () => {
                   htmlFor="password"
                   className="mb-2 block text-[15px] font-medium text-left"
                 >
-                  Password <span className="text-rose-500">*</span>
+                  Mật khẩu <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -220,18 +232,11 @@ const Login = () => {
 
               {/* Row options */}
               <div className="flex items-center justify-between">
-                <label className="inline-flex items-center gap-2 select-none">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-rose-500 focus:ring-rose-400"
-                  />
-                  <span className="text-gray-700 text-[15px]">Remember Me</span>
-                </label>
                 <a
                   href="/forgot-password"
                   className="text-rose-500 text-[15px]"
                 >
-                  Forgot Password ?
+                  Quên mật khẩu ?
                 </a>
               </div>
 
@@ -243,7 +248,7 @@ const Login = () => {
                            bg-rose-500 hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-200
                            inline-flex items-center justify-center gap-2"
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
                 <i className="isax isax-arrow-right-3" />
               </button>
             </form>
@@ -251,7 +256,7 @@ const Login = () => {
             {/* Divider Or */}
             <div className="my-9 flex items-center gap-6 text-sm text-gray-500">
               <div className="h-px flex-1 bg-gray-200" />
-              <span>Or</span>
+              <span>Hoặc</span>
               <div className="h-px flex-1 bg-gray-200" />
             </div>
 
@@ -280,9 +285,9 @@ const Login = () => {
             </div>
 
             <p className="mb-10 text-center text-sm text-gray-600">
-              Don't you have an account?
+              Bạn chưa có tài khoản?
               <a href="/register" className="ml-1 text-rose-500">
-                Sign up
+                Đăng ký
               </a>
             </p>
           </div>

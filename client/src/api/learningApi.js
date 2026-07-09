@@ -56,6 +56,45 @@ const submitQuizAnswer = ({ courseSlug, lectureId, quizIndex, answer }) => {
   });
 };
 
+/**
+ * Reset 1 quiz cụ thể để làm lại
+ * @param {{ courseSlug, lectureId, quizIndex }} params
+ */
+const resetQuiz = ({ courseSlug, lectureId, quizIndex }) => {
+  return axiosClient.delete(`${progressPath}/quiz-reset`, {
+    data: { courseSlug, lectureId, quizIndex },
+  });
+};
+
+/**
+ * Reset tất cả quiz của 1 bài giảng
+ * @param {{ courseSlug, lectureId }} params
+ */
+const resetAllQuizzes = ({ courseSlug, lectureId }) => {
+  return axiosClient.delete(`${progressPath}/quiz-reset-all`, {
+    data: { courseSlug, lectureId },
+  });
+};
+
+/**
+ * Lấy lịch sử quiz đã làm của 1 bài giảng
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ */
+const getQuizHistory = (courseSlug, lectureId) => {
+  return axiosClient.get(`${progressPath}/quiz-history/${courseSlug}/${lectureId}`);
+};
+
+/**
+ * Lấy dữ liệu đầy đủ cho Review Mode:
+ * câu hỏi, đáp án đã chọn, đáp án đúng, giải thích (chỉ cho quiz đã làm)
+ * @param {string} courseSlug
+ * @param {string} lectureId
+ */
+const getQuizReview = (courseSlug, lectureId) => {
+  return axiosClient.get(`${progressPath}/quiz-review/${courseSlug}/${lectureId}`);
+};
+
 export const learningApi = {
   getCourseContent,
   getProgress,
@@ -63,4 +102,8 @@ export const learningApi = {
   saveVideoProgress,
   getVideoProgress,
   submitQuizAnswer,
+  resetQuiz,
+  resetAllQuizzes,
+  getQuizHistory,
+  getQuizReview,
 };

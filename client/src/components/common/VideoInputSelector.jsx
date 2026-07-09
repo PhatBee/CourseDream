@@ -16,7 +16,7 @@ const VideoInputSelector = ({ type, urlValue, onTypeChange, onUrlChange, onFileC
                 onClick={() => onTypeChange('upload')}
                 className={`flex items-center gap-2 pb-2 px-2 transition-colors ${type === 'upload' ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
             >
-                <Upload size={18} /> Upload Video
+                <Upload size={18} /> Tải lên
             </button>
         </div>
 
@@ -33,14 +33,14 @@ const VideoInputSelector = ({ type, urlValue, onTypeChange, onUrlChange, onFileC
             </div>
         ) : (
             <div className="animate-fadeIn">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Video File (.mp4, .mov, .mkv)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tải lên Tập tin Video (.mp4, .mov, .mkv)</label>
                 <input
                     type="file"
                     accept="video/*"
                     className="w-full px-3 py-2 border rounded-lg bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     onChange={onFileChange}
                 />
-                <p className="text-xs text-gray-500 mt-1">Max size: 100MB</p>
+                <p className="text-xs text-gray-500 mt-1">Dung lượng tối đa: 100MB</p>
             </div>
         )}
     </div>

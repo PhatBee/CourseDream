@@ -32,7 +32,13 @@ const notificationSlice = createSlice({
     unreadCount: 0,
     loading: false,
   },
-  reducers: {},
+  reducers: {
+    addRealtimeNotification: (state, action) => {
+      // Thêm notification mới vào đầu danh sách
+      state.notifications = [action.payload, ...state.notifications];
+      state.unreadCount += 1;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getNotifications.pending, (state) => {
@@ -50,15 +56,29 @@ const notificationSlice = createSlice({
         state.notifications = state.notifications.map((n) => ({ ...n, read: true }));
         state.unreadCount = 0;
       })
-      .addCase(markNotificationAsRead.fulfilled, (state, action) => {
-        const id = action.payload;
+      // Optimistic update: Cập nhật giao diện ngay lập tức khi user click
+      .addCase(markNotificationAsRead.pending, (state, action) => {
+        const id = action.meta.arg; // ID truyền vào thunk
         const notification = state.notifications.find((n) => n._id === id);
         if (notification && !notification.read) {
           notification.read = true;
           state.unreadCount = Math.max(0, state.unreadCount - 1);
         }
+      })
+      .addCase(markNotificationAsRead.fulfilled, () => {
+        // Đã cập nhật ở pending rồi nên không cần làm gì thêm
+      })
+      .addCase(markNotificationAsRead.rejected, (state, action) => {
+        // Nếu API lỗi, hoàn tác (revert) lại trạng thái ban đầu
+        const id = action.meta.arg;
+        const notification = state.notifications.find((n) => n._id === id);
+        if (notification && notification.read) {
+          notification.read = false;
+          state.unreadCount += 1;
+        }
       });
   },
 });
 
+export const { addRealtimeNotification } = notificationSlice.actions;
 export default notificationSlice.reducer;

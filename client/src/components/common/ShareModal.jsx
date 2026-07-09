@@ -74,7 +74,7 @@ const ShareModal = ({ isOpen, onClose, url, title }) => {
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Share this course</h3>
+          <h3 className="text-lg font-bold text-gray-900">Chia sẻ khóa học</h3>
           <button 
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
@@ -105,7 +105,7 @@ const ShareModal = ({ isOpen, onClose, url, title }) => {
         {/* Copy Link */}
         <div className="relative">
           <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-            Page Link
+            Liên kết
           </label>
           <div className="flex items-center shadow-sm rounded-lg overflow-hidden">
             <input 
@@ -116,16 +116,16 @@ const ShareModal = ({ isOpen, onClose, url, title }) => {
             />
             <button 
               onClick={handleCopy}
-              className={`p-3 text-sm font-medium text-white rounded-r-lg border border-l-0 transition-all w-28 flex justify-center items-center
+              className={`p-3 text-sm font-medium text-white rounded-r-lg border border-l-0 transition-all w-45 flex justify-center items-center
                 ${isCopied 
                   ? 'bg-green-500 border-green-500 hover:bg-green-600' 
                   : 'bg-gray-900 border-gray-900 hover:bg-gray-800'
                 }`}
             >
               {isCopied ? (
-                <><Check size={16} className="mr-1.5" /> Copied</>
+                <><Check size={16} className="mr-1.5" /> Đã sao chép</>
               ) : (
-                <><Copy size={16} className="mr-1.5" /> Copy</>
+                <><Copy size={16} className="mr-1.5" /> Sao chép</>
               )}
             </button>
           </div>

@@ -202,7 +202,9 @@ const QuizProgressMarkersMobile = ({
             : 0;
 
           const isDone = completedQuizzes.some(
-            q => String(q.lectureId) === String(lectureId) && q.quizIndex === quizIndex
+            q => String(q.lectureId) === String(lectureId)
+              && q.quizIndex === quizIndex
+              && q.isCorrect !== false
           );
           const isNear = Math.abs(currentTime - ts) <= 3 && !isDone;
 

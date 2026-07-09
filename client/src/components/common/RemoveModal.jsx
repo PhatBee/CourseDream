@@ -2,18 +2,18 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Trash2, X } from 'lucide-react';
 
-const RemoveModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title = "Remove Item", 
-  message = "Are you sure you want to remove this item? This action cannot be undone.",
-  confirmLabel = "Yes, Remove",
-  cancelLabel = "Cancel",
+const RemoveModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = "Remove Item",
+  message = "Bạn có chắc chắn muốn xóa mục này? Hành động này không thể hoàn tác.",
+  confirmLabel = "Xóa",
+  cancelLabel = "Hủy",
   isDeleting = false,
   confirmBtnClass = 'bg-red-500 hover:bg-red-600 shadow-red-200' // custom button color
 }) => {
-  
+
   // Ngăn cuộn trang khi mở modal
   useEffect(() => {
     if (isOpen) {
@@ -33,7 +33,7 @@ const RemoveModal = ({
 
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative z-10 animate-scaleIn text-center">
         {/* Nút đóng góc phải */}
-        <button 
+        <button
           onClick={onClose}
           disabled={isDeleting}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
@@ -67,8 +67,8 @@ const RemoveModal = ({
             className={`px-6 py-2.5 rounded-full text-white font-medium shadow-lg transition-all transform hover:scale-105 min-w-[140px] flex justify-center items-center disabled:transform-none disabled:opacity-70 ${confirmBtnClass}`}
           >
             {isDeleting ? (
-                // Simple Loading Spinner nhỏ
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              // Simple Loading Spinner nhỏ
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : confirmLabel}
           </button>
         </div>
@@ -78,7 +78,7 @@ const RemoveModal = ({
 
   // Sử dụng createPortal để render modal ra ngoài root div (tránh bị ảnh hưởng bởi z-index của cha)
   if (typeof document !== 'undefined') {
-      return createPortal(modalContent, document.body);
+    return createPortal(modalContent, document.body);
   }
   return null;
 };

@@ -2,6 +2,13 @@ import axiosClient from "./axiosClient";
 
 const path = "/admin";
 
+/**
+ * Đăng nhập Admin - endpoint public, không cần token
+ */
+const adminLogin = (userData) => {
+    return axiosClient.post(`${path}/login`, userData);
+};
+
 const getDashboardStats = () => {
     return axiosClient.get(`${path}/dashboard-stats`);
 };
@@ -91,6 +98,7 @@ const republishCourse = (courseId) => {
 };
 
 export const adminApi = {
+    adminLogin,
     getDashboardStats,
     getRevenueAnalytics,
     getPendingApplications,

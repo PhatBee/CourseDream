@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchLearningCourse,
@@ -15,6 +15,7 @@ import CoursePlayer from "../components/learning/CoursePlayer";
 const LearningPage = () => {
   const { slug, lectureId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   const { course, sections, progress, currentLecture, lastWatchedTime, isLoading } =
@@ -34,21 +35,21 @@ const LearningPage = () => {
 
     const allLectures = course.sections.flatMap((s) => s.lectures);
 
-    if (lectureId) {
+    if (lectureId && lectureId !== "undefined") {
       const lectureToPlay = allLectures.find((l) => l._id === lectureId);
       if (lectureToPlay) {
         dispatch(setCurrentLecture(lectureToPlay));
       } else {
         const first = allLectures[0];
         if (first)
-          navigate(`/courses/${slug}/learn/lecture/${first._id}`, { replace: true });
+          navigate(`/courses/${slug}/learn/lecture/${first._id}${location.search}`, { replace: true });
       }
     } else {
       const first = allLectures[0];
       if (first)
-        navigate(`/courses/${slug}/learn/lecture/${first._id}`, { replace: true });
+        navigate(`/courses/${slug}/learn/lecture/${first._id}${location.search}`, { replace: true });
     }
-  }, [course, lectureId, dispatch, navigate, slug]);
+  }, [course, lectureId, dispatch, navigate, slug, location.search]);
 
   // ─── Effect 3: Khi currentLecture thay đổi → lấy last_watched_time ────────
   useEffect(() => {

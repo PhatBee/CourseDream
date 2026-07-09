@@ -21,12 +21,6 @@ router.post('/video', progressController.saveVideoProgress);
 router.get('/video/:courseSlug/:lectureId', progressController.getVideoProgress);
 
 /**
- * @route   GET /api/progress/:courseSlug
- * @desc    Lấy thông tin tiến độ học tập theo SLUG
- */
-router.get('/:courseSlug', progressController.getProgress);
-
-/**
  * @route   POST /api/progress/toggle
  * @desc    Đánh dấu hoàn thành / bỏ hoàn thành bài giảng
  */
@@ -39,4 +33,37 @@ router.post('/toggle', progressController.toggleLectureCompletion);
  */
 router.post('/quiz-answer', progressController.submitQuizAnswer);
 
-export default router;
+/**
+ * @route   DELETE /api/progress/quiz-reset
+ * @desc    Reset 1 quiz cụ thể để làm lại
+ * @body    { courseSlug, lectureId, quizIndex }
+ */
+router.delete('/quiz-reset', progressController.resetQuiz);
+
+/**
+ * @route   DELETE /api/progress/quiz-reset-all
+ * @desc    Reset tất cả quiz của 1 bài giảng
+ * @body    { courseSlug, lectureId }
+ */
+router.delete('/quiz-reset-all', progressController.resetAllQuizzes);
+
+/**
+ * @route   GET /api/progress/quiz-history/:courseSlug/:lectureId
+ * @desc    Lấy lịch sử quiz đã làm của 1 bài giảng
+ */
+router.get('/quiz-history/:courseSlug/:lectureId', progressController.getQuizHistory);
+
+/**
+ * @route   GET /api/progress/quiz-review/:courseSlug/:lectureId
+ * @desc    Lấy dữ liệu đầy đủ cho Review Mode (câu hỏi + đáp án đúng + giải thích)
+ * @note    correctAnswer chỉ được trả về cho quiz mà user đã trả lời (bảo mật)
+ */
+router.get('/quiz-review/:courseSlug/:lectureId', progressController.getQuizReview);
+
+/**
+ * @route   GET /api/progress/:courseSlug
+ * @desc    Lấy thông tin tiến độ học tập theo SLUG
+ */
+router.get('/:courseSlug', progressController.getProgress);
+
+export default router;

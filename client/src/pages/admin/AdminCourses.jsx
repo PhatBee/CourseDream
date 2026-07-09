@@ -434,6 +434,9 @@ const AdminCourses = () => {
                                             <SortHeader label="Giá gốc" field="price" current={sortBy} order={sortOrder} onSort={handleSort} />
                                         </th>
                                         <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-right">
+                                            <SortHeader label="Giá bán" field="priceDiscount" current={sortBy} order={sortOrder} onSort={handleSort} />
+                                        </th>
+                                        <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-right">
                                             <SortHeader label="Học viên" field="students" current={sortBy} order={sortOrder} onSort={handleSort} />
                                         </th>
                                         <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-right">
@@ -514,10 +517,10 @@ const CourseRow = ({ course, index, onAction }) => {
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm line-clamp-1 group-hover:text-rose-600 transition-colors">
+                        <p className="font-semibold text-gray-900 text-sm line-clamp-1 group-hover:text-rose-600 transition-colors text-justify">
                             {course.title}
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5 truncate">
+                        <p className="text-xs text-gray-400 mt-0.5 truncate text-justify">
                             {course.instructor?.name || '—'}
                         </p>
                         {course.suspendReason && (
@@ -536,6 +539,16 @@ const CourseRow = ({ course, index, onAction }) => {
                         <span className="text-emerald-600 font-bold">Miễn phí</span>
                     ) : formatVND(course.price)}
                 </span>
+            </td>
+
+            <td className="px-4 py-3 text-right whitespace-nowrap">
+                <div className="flex items-center justify-end gap-1.5">
+                    <span className="font-semibold text-gray-800">
+                        {course.priceDiscount === 0 ? (
+                            <span className="text-emerald-600 font-bold">Miễn phí</span>
+                        ) : formatVND(course.priceDiscount)}
+                    </span>
+                </div>
             </td>
 
             {/* Students */}

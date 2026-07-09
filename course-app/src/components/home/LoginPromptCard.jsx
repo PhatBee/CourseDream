@@ -7,10 +7,10 @@ const LoginPromptCard = ({ navigation }) => {
         <View className="bg-rose-500 rounded-3xl p-6 mb-6 shadow-lg">
             <View className="mb-4">
                 <Text className="text-white text-2xl font-bold mb-2">
-                    Start Your Learning Journey! 🚀
+                    Bắt đầu hành trình! 🚀
                 </Text>
                 <Text className="text-white/90 text-sm">
-                    Sign in to access exclusive courses, track your progress, and earn certificates
+                    Đăng nhập để truy cập các khóa học, theo dõi tiến độ của bạn và nhận chứng chỉ
                 </Text>
             </View>
 
@@ -18,15 +18,15 @@ const LoginPromptCard = ({ navigation }) => {
             <View className="space-y-2 mb-5">
                 <View className="flex-row items-center gap-2 mb-2">
                     <BookOpen size={16} color="#fff" />
-                    <Text className="text-white text-sm">Access 1000+ premium courses</Text>
+                    <Text className="text-white text-sm">Truy cập khóa học</Text>
                 </View>
                 <View className="flex-row items-center gap-2 mb-2">
                     <Award size={16} color="#fff" />
-                    <Text className="text-white text-sm">Earn verified certificates</Text>
+                    <Text className="text-white text-sm">Nhận chứng chỉ</Text>
                 </View>
                 <View className="flex-row items-center gap-2">
                     <Users size={16} color="#fff" />
-                    <Text className="text-white text-sm">Join our learning community</Text>
+                    <Text className="text-white text-sm">Tham gia cộng đồng học tập</Text>
                 </View>
             </View>
 
@@ -36,7 +36,7 @@ const LoginPromptCard = ({ navigation }) => {
                     className="flex-1 flex-row items-center justify-center gap-2 bg-white px-4 py-3 rounded-full"
                     onPress={() => navigation.navigate('Login')}
                 >
-                    <Text className="text-rose-500 font-bold text-sm">Sign In</Text>
+                    <Text className="text-rose-500 font-bold text-sm">Đăng nhập</Text>
                     <ArrowRight size={16} color="#f43f5e" />
                 </TouchableOpacity>
 
@@ -44,7 +44,7 @@ const LoginPromptCard = ({ navigation }) => {
                     className="flex-1 flex-row items-center justify-center gap-2 bg-white/20 px-4 py-3 rounded-full border border-white/30"
                     onPress={() => navigation.navigate('Register')}
                 >
-                    <Text className="text-white font-bold text-sm">Sign Up</Text>
+                    <Text className="text-white font-bold text-sm">Đăng ký</Text>
                 </TouchableOpacity>
             </View>
         </View>

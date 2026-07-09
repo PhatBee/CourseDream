@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { verifyOTP, reset } from "../features/auth/authSlice";
+import { verifyOTP, reset, resendOTP } from "../features/auth/authSlice";
 import { toast } from "react-hot-toast";
 
 // (Bạn có thể dùng lại các ảnh tương tự trang Register)
@@ -13,12 +13,15 @@ const VerifyOTP = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  const { 
-    isLoading, 
-    isError, 
-    message, 
+  const isRedirecting = useRef(false); // Flag tránh race condition khi clear/reset registrationEmail
+
+  const {
+    isLoading,
+    isError,
+    message,
     isVerifySuccess, // <-- Dùng cờ riêng
+    isResendSuccess,
+    isResendLoading,
     registrationEmail // <-- Lấy email từ state
   } = useSelector(
     (state) => state.auth
@@ -26,26 +29,42 @@ const VerifyOTP = () => {
 
   // Nếu không có email (ví dụ: user tự gõ /verify-otp), đá về trang đăng ký
   useEffect(() => {
-    if (!registrationEmail) {
+    // Chỉ kiểm tra khi chưa xác thực thành công và không phải đang chuyển hướng
+    if (!registrationEmail && !isVerifySuccess && !isRedirecting.current) {
       toast.error("Vui lòng đăng ký trước.");
       navigate("/register");
     }
-  }, [registrationEmail, navigate]);
+  }, [registrationEmail, isVerifySuccess, navigate]);
 
-  // Toast + điều hướng sau khi XÁC THỰC
+  // Toast + điều hướng sau khi XÁC THỰC hoặc GỬI LẠI OTP
   useEffect(() => {
     if (isError) {
-      toast.error(message || "Xác thực thất bại");
+      toast.error(message || "Có lỗi xảy ra");
       dispatch(reset());
     }
-    
+
     // Khi verifyOTP() thành công
     if (isVerifySuccess && message) {
+      isRedirecting.current = true; // Đánh dấu đang chuyển hướng thành công
       toast.success(message); // "Xác thực thành công! Vui lòng đăng nhập."
       dispatch(reset());
       navigate("/login"); // Chuyển sang trang đăng nhập
     }
-  }, [isError, isVerifySuccess, message, navigate, dispatch]);
+
+    // Khi resendOTP() thành công
+    if (isResendSuccess && message) {
+      toast.success(message);
+      dispatch(reset());
+    }
+  }, [isError, isVerifySuccess, isResendSuccess, message, navigate, dispatch]);
+
+  const handleResend = () => {
+    if (!registrationEmail) {
+      toast.error("Không tìm thấy email đăng ký.");
+      return;
+    }
+    dispatch(resendOTP(registrationEmail));
+  };
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -61,31 +80,31 @@ const VerifyOTP = () => {
       <div className="mx-auto flex min-h-screen w-full">
         {/* LEFT: banner (Giống Register.jsx) */}
         <div className="hidden lg:flex lg:w-1/2 bg-rose-50">
-                  <div className="flex w-full items-center justify-center p-12">
-                    <div className="max-w-[640px] w-full text-center">
-                      <div className="mb-10">
-                        <img
-                          src={authImg}
-                          alt="Illustration"
-                          className="mx-auto w-full max-w-[520px]"
-                        />
-                      </div>
-                      <h3 className="text-[34px] leading-snug font-semibold mb-3">
-                        Welcome to <br />
-                        Dreams<span className="text-rose-500">LMS</span> Courses.
-                      </h3>
-                      <p className="text-gray-600 mx-auto max-w-[560px]">
-                        Platform designed to help organizations, educators, and learners
-                        manage, deliver, and track learning and training activities.
-                      </p>
-                      <div className="mt-10 flex items-center justify-center gap-2">
-                        <span className="h-2 w-14 rounded-full bg-rose-500/90" />
-                        <span className="h-2 w-2 rounded-full bg-gray-300" />
-                        <span className="h-2 w-2 rounded-full bg-gray-300" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <div className="flex w-full items-center justify-center p-12">
+            <div className="max-w-[640px] w-full text-center">
+              <div className="mb-10">
+                <img
+                  src={authImg}
+                  alt="Illustration"
+                  className="mx-auto w-full max-w-[520px]"
+                />
+              </div>
+              <h3 className="text-[34px] leading-snug font-semibold mb-3">
+                Chào mừng đến với <br />
+                Dreams<span className="text-rose-500">LMS</span>.
+              </h3>
+              <p className="text-gray-600 mx-auto max-w-[560px]">
+                Nền tảng được thiết kế để giúp các tổ chức, nhà giáo dục và người học
+                quản lý, cung cấp và theo dõi các hoạt động học tập và đào tạo.
+              </p>
+              <div className="mt-10 flex items-center justify-center gap-2">
+                <span className="h-2 w-14 rounded-full bg-rose-500/90" />
+                <span className="h-2 w-2 rounded-full bg-gray-300" />
+                <span className="h-2 w-2 rounded-full bg-gray-300" />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* RIGHT: form */}
         <div className="w-full lg:w-1/2 flex">
@@ -94,7 +113,7 @@ const VerifyOTP = () => {
             <div className="flex items-center justify-between">
               <img src={logo} alt="Logo" className="h-10 hidden sm:block" />
               <Link to="/" className="text-rose-500 underline underline-offset-2 ml-auto">
-                Back to Home
+                Trang chủ
               </Link>
             </div>
 
@@ -138,12 +157,17 @@ const VerifyOTP = () => {
                 {isLoading ? "Đang xác thực..." : "Xác thực"}
               </button>
             </form>
-            
+
             <p className="mb-10 text-center text-sm text-gray-600 mt-6">
-              Chưa nhận được mã?
-              <Link to="/register" className="ml-1 text-rose-500">
-                Gửi lại
-              </Link>
+              Chưa nhận được mã?{" "}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isLoading || isResendLoading}
+                className="ml-1 text-rose-500 hover:underline font-semibold focus:outline-none disabled:opacity-50"
+              >
+                {isResendLoading ? "Đang gửi lại..." : "Gửi lại"}
+              </button>
             </p>
           </div>
         </div>

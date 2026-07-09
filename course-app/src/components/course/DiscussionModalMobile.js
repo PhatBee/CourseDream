@@ -16,15 +16,17 @@ import { useDispatch } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   X,
-  Send,
-  ThumbsUp,
   MoreVertical,
-  CheckCircle2,
+  ThumbsUp,
   MessageCircle,
+  CheckCircle2,
+  Send,
+  Trash2,
 } from "lucide-react-native";
 import Toast from "react-native-toast-message";
 import { replyDiscussion } from "../../features/discussion/discussionSlice";
 import discussionApi from "../../api/discussionApi";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
 import { useRoute } from "@react-navigation/native";
 
 const DiscussionModalMobile = ({
@@ -46,6 +48,9 @@ const DiscussionModalMobile = ({
   const [replies, setReplies] = useState([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [replyInput, setReplyInput] = useState("");
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [replyToDelete, setReplyToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [sending, setSending] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -221,6 +226,29 @@ const DiscussionModalMobile = ({
     }
   };
 
+  const handleOpenDeleteReplyModal = (replyId) => {
+    setReplyToDelete(replyId);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDeleteReply = async () => {
+    if (!replyToDelete) return;
+    setIsDeleting(true);
+    try {
+      await discussionApi.deleteReply(replyToDelete);
+      Toast.show({ type: "success", text1: "Đã xóa bình luận" });
+      fetchReplies(1);
+      fetchDiscussionDetail(localDiscussion._id);
+      if (onRefreshParent) onRefreshParent();
+    } catch (err) {
+      Toast.show({ type: "error", text1: "Xóa bình luận thất bại" });
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalVisible(false);
+      setReplyToDelete(null);
+    }
+  };
+
   if (!localDiscussion) return null;
 
   return (
@@ -246,64 +274,7 @@ const DiscussionModalMobile = ({
           </View>
         </View>
 
-        <View className="p-4 bg-white mb-2 shadow-sm border-b border-gray-100 z-10">
-          <View className="flex-row justify-between mb-3">
-            <View className="flex-row gap-2 flex-1 items-center">
-              <Image
-                source={
-                  localDiscussion.author?.avatar?.url
-                    ? { uri: localDiscussion.author.avatar.url }
-                    : localDiscussion.author?.avatar
-                      ? { uri: localDiscussion.author.avatar }
-                      : require("../../../assets/images/default-avatar.jpg")
-                }
-                style={{ width: 32, height: 32, borderRadius: 16 }}
-              />
-              <Text className="text-sm font-semibold text-gray-600">
-                {localDiscussion.author?.name}
-              </Text>
-            </View>
 
-            <TouchableOpacity
-              onPress={() => onReport(localDiscussion._id, "discussion")}
-              className="p-2 -mr-2"
-            >
-              <MoreVertical size={20} color="#9ca3af" />
-            </TouchableOpacity>
-          </View>
-
-          <Text className="font-bold text-lg text-gray-900 mb-2">
-            {localDiscussion.title}
-          </Text>
-          <Text className="text-gray-700 leading-6 mb-4">
-            {localDiscussion.content}
-          </Text>
-
-          <View className="flex-row items-center justify-between border-t border-gray-100 pt-3">
-            <TouchableOpacity
-              className="flex-row items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100"
-              onPress={handleVoteLocalDiscussion}
-            >
-              <ThumbsUp
-                size={16}
-                color={
-                  localDiscussion.upvotedBy?.includes(user?._id)
-                    ? "#3b82f6"
-                    : "#6b7280"
-                }
-              />
-              <Text className="text-sm font-semibold text-gray-600">
-                {localDiscussion.upvoteCount || 0}
-              </Text>
-            </TouchableOpacity>
-            <View className="flex-row items-center gap-1">
-              <MessageCircle size={16} color="#6b7280" />
-              <Text className="text-gray-500 text-sm">
-                {localDiscussion.answerCount} câu trả lời
-              </Text>
-            </View>
-          </View>
-        </View>
 
         <FlatList
           ref={listRef}
@@ -311,7 +282,6 @@ const DiscussionModalMobile = ({
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item._id}
           keyboardShouldPersistTaps="handled"
-          // ---------- THÊM DÒNG NÀY ----------
           onScrollToIndexFailed={(info) => {
             const wait = new Promise((resolve) => setTimeout(resolve, 500));
             wait.then(() => {
@@ -321,7 +291,66 @@ const DiscussionModalMobile = ({
               });
             });
           }}
-          // -----------------------------------
+          ListHeaderComponent={
+            <View className="p-4 bg-white mb-2 shadow-sm border-b border-gray-100">
+              <View className="flex-row justify-between mb-3">
+                <View className="flex-row gap-2 flex-1 items-center">
+                  <Image
+                    source={
+                      localDiscussion.author?.avatar?.url
+                        ? { uri: localDiscussion.author.avatar.url }
+                        : localDiscussion.author?.avatar
+                          ? { uri: localDiscussion.author.avatar }
+                          : require("../../../assets/images/default-avatar.jpg")
+                    }
+                    style={{ width: 32, height: 32, borderRadius: 16 }}
+                  />
+                  <Text className="text-sm font-semibold text-gray-600">
+                    {localDiscussion.author?.name}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => onReport(localDiscussion._id, "discussion")}
+                  className="p-2 -mr-2"
+                >
+                  <MoreVertical size={20} color="#9ca3af" />
+                </TouchableOpacity>
+              </View>
+
+              <Text className="font-bold text-lg text-gray-900 mb-2">
+                {localDiscussion.title}
+              </Text>
+              <Text className="text-gray-700 leading-6 mb-4">
+                {localDiscussion.content}
+              </Text>
+
+              <View className="flex-row items-center justify-between border-t border-gray-100 pt-3">
+                <TouchableOpacity
+                  className="flex-row items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100"
+                  onPress={handleVoteLocalDiscussion}
+                >
+                  <ThumbsUp
+                    size={16}
+                    color={
+                      localDiscussion.upvotedBy?.includes(user?._id)
+                        ? "#3b82f6"
+                        : "#6b7280"
+                    }
+                  />
+                  <Text className="text-sm font-semibold text-gray-600">
+                    {localDiscussion.upvoteCount || 0}
+                  </Text>
+                </TouchableOpacity>
+                <View className="flex-row items-center gap-1">
+                  <MessageCircle size={16} color="#6b7280" />
+                  <Text className="text-gray-500 text-sm">
+                    {localDiscussion.answerCount} câu trả lời
+                  </Text>
+                </View>
+              </View>
+            </View>
+          }
 
           renderItem={({ item }) => {
             const isHighlighted = item._id === highlightedReply;
@@ -366,14 +395,25 @@ const DiscussionModalMobile = ({
                     </Text>
                   </View>
 
-                  {user?._id && item.author?._id !== user._id && (
+                  {user?._id === item.author?._id || isInstructor ? (
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleOpenDeleteReplyModal(item._id);
+                      }}
+                      className="p-2 -mr-2 -mt-2"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Trash2 size={17} color="#EF4444" />
+                    </TouchableOpacity>
+                  ) : user?._id && item.author?._id !== user._id ? (
                     <TouchableOpacity
                       onPress={() => onReport(item._id, "reply")}
                       className="p-1"
                     >
                       <MoreVertical size={16} color="#9ca3af" />
                     </TouchableOpacity>
-                  )}
+                  ) : null}
                 </View>
 
                 <Text className="text-gray-700 text-[15px] mb-3 leading-5 ml-9">
@@ -399,13 +439,12 @@ const DiscussionModalMobile = ({
                   </TouchableOpacity>
 
                   {(isInstructor ||
-                    user?._id === localDiscussion.author?._id) &&
-                    !item.isBestAnswer && (
+                    user?._id === localDiscussion.author?._id) && (
                       <TouchableOpacity
                         onPress={() => handleMarkBestAnswer(item._id)}
                       >
-                        <Text className="text-green-600 text-xs font-semibold">
-                          Đánh dấu hay nhất
+                        <Text className={`${item.isBestAnswer ? "text-gray-500" : "text-green-600"} text-xs font-semibold`}>
+                          {item.isBestAnswer ? "Bỏ đánh dấu hay nhất" : "Đánh dấu hay nhất"}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -454,6 +493,20 @@ const DiscussionModalMobile = ({
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <DeleteConfirmModal
+        visible={deleteModalVisible}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteModalVisible(false);
+            setReplyToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDeleteReply}
+        title="Xóa bình luận"
+        message="Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác."
+        isDeleting={isDeleting}
+      />
     </Modal>
   );
 };

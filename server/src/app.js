@@ -18,7 +18,7 @@ import { verifyToken } from "./middlewares/auth.middleware.js"
 import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
 import paymentRoutes from "./modules/payment/payment.routes.js";
 import reviewRoutes from "./modules/review/review.routes.js";
-import instructorRoutes from "./modules/instructor/instructor.routes.js";
+import instructorRoutes, { instructorCourseRouter } from "./modules/instructor/instructor.routes.js";
 import reportRoutes from "./modules/report/report.routes.js";
 import notificationRoutes from "./modules/notification/notification.routes.js";
 import discussionRoutes from "./modules/discussion/discussion.routes.js";
@@ -83,6 +83,7 @@ app.use("/api/users", verifyToken, userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/courses", instructorCourseRouter);
 app.use("/api/enrollments", enrollmentRoutes);
 // app.use("/api/payments", paymentRoutes);
 app.use("/api/progress", progressRoutes);
@@ -104,7 +105,7 @@ app.use("/api/chatbot", chatbotRoutes);
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
-  res.status(err.status || 500).json({
+  res.status(err.statusCode || err.status || 500).json({
     message: err.message || "Server Error",
   });
 });

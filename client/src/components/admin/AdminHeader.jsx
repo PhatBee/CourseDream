@@ -6,27 +6,27 @@ import NotificationMenu from '../common/NotificationMenu';
 import Avatar from '../common/Avatar';
 
 const AdminHeader = ({ user }) => {
-    const location = useLocation();
-    const [notificationOpen, setNotificationOpen] = useState(false);
-    const unreadCount = useSelector(state => state.notification.unreadCount);
+  const location = useLocation();
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const unreadCount = useSelector(state => state.notification.unreadCount);
 
-    const getPageTitle = () => {
-        const path = location.pathname;
-        if (path.includes('/dashboard')) return 'Dashboard';
-        if (path.includes('/users')) return 'Manage Students';
-        if (path.includes('/instructors')) return 'Manage Instructors';
-        if (path.includes('/courses')) return 'All Courses';
-        if (path.includes('/blogs')) return 'Blog Posts';
-        return 'Admin Panel';
-    };
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path.includes('/dashboard')) return 'Tổng quan';
+    if (path.includes('/users')) return 'Quản lý học viên';
+    if (path.includes('/instructors')) return 'Quản lý giảng viên';
+    if (path.includes('/courses')) return 'Tất cả khóa học';
+    if (path.includes('/blogs')) return 'Bài viết Blog';
+    return 'Admin Panel';
+  };
 
-    const title = getPageTitle();
-    return (
+  const title = getPageTitle();
+  return (
     <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm flex-shrink-0 z-10 text-left">
-      
+
       <div>
         <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-        <p className="text-sm text-gray-500 mt-1">Welcome, {user?.name || 'Admin'}!</p>
+        <p className="text-sm text-gray-500 mt-1">Chào mừng, {user?.name || 'Admin'}!</p>
       </div>
 
       <div className="flex items-center gap-5">
@@ -62,11 +62,11 @@ const AdminHeader = ({ user }) => {
               {user?.role || "Admin"}
             </p>
           </div>
-          
+
           {/* Avatar */}
-          <Avatar 
-            src={user?.avatar} 
-            alt="Admin Avatar" 
+          <Avatar
+            src={user?.avatar}
+            alt="Admin Avatar"
             className="w-11 h-11 rounded-full border-2 border-white shadow-sm object-cover ring-2 ring-transparent group-hover:ring-rose-200 transition-all bg-gray-50"
           />
         </div>

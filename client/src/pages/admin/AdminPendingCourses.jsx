@@ -73,7 +73,7 @@ const CourseRow = ({ course, onView }) => (
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-justify">
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
                     <TypeBadge type={course.type} />
                     <RevStatusBadge status={course.revisionStatus} />
@@ -151,7 +151,7 @@ const AdminPendingCourses = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
                     <div>
                         <h1 className="text-2xl font-black text-gray-900">Kiểm duyệt khóa học</h1>
-                        <p className="text-sm text-gray-400 mt-0.5">
+                        <p className="text-sm text-gray-400 mt-0.5 text-justify">
                             {total} khóa học đang chờ xem xét
                         </p>
                     </div>

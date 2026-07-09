@@ -79,6 +79,7 @@ const ChangePassword = () => {
   const onSubmit = (e) => {
     e.preventDefault();
     if (formData.newPassword !== formData.confirmPassword) return toast.error('Mật khẩu nhập lại không khớp!');
+    if (!formData.newPassword || !formData.confirmPassword) return toast.error('Mật khẩu không được để trống!');
     if (strength < 2) return toast.error('Mật khẩu quá yếu!'); // Tùy chọn: bắt buộc mật khẩu mạnh
 
     // Nếu có password cũ thì bắt buộc nhập, nếu chưa có thì gửi string rỗng hoặc null
@@ -111,33 +112,33 @@ const ChangePassword = () => {
           {hasPassword ? <ShieldCheck size={24} /> : <AlertCircle size={24} />}
         </div>
         <h3 className="text-lg font-bold text-gray-800">
-          {hasPassword ? 'Change Password' : 'Set Password'}
+          {hasPassword ? 'Đổi Mật Khẩu' : 'Đặt Mật Khẩu'}
         </h3>
       </div>
       <p className="text-sm text-gray-500 mb-6 ml-12">
         {hasPassword
-          ? 'Ensuring your account is using a long, random password to stay secure.'
-          : 'You logged in via Social Media. Set a password to log in with email next time.'}
+          ? 'Đảm bảo tài khoản của bạn đang sử dụng mật khẩu mạnh để bảo mật.'
+          : 'Bạn đã đăng nhập qua Social Media. Hãy đặt mật khẩu để có thể đăng nhập bằng email lần sau.'}
       </p>
 
       <form onSubmit={onSubmit} className="max-w-2xl">
         {/* Chỉ hiện ô nhập mật khẩu cũ nếu user đã có mật khẩu */}
         {hasPassword && (
           <PasswordInput
-            label="Current Password"
+            label="Mật khẩu hiện tại"
             name="oldPassword"
             value={formData.oldPassword}
             onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
-            placeholder="Enter your current password"
+            placeholder="Nhập mật khẩu hiện tại"
           />
         )}
 
         <PasswordInput
-          label="New Password"
+          label="Mật khẩu mới"
           name="newPassword"
           value={formData.newPassword}
           onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
-          placeholder="Enter new password (min 8 chars)"
+          placeholder="Nhập mật khẩu mới"
         />
 
         {/* Thanh Progress Bar Dynamic */}
@@ -152,19 +153,19 @@ const ChangePassword = () => {
 
         {/* Text hướng dẫn dynamic */}
         <p className={`text-xs mb-5 transition-colors ${strength === 4 ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
-          {strength === 0 && "Enter a new password."}
-          {strength === 1 && "Weak. Add numbers or symbols."}
-          {strength === 2 && "Medium. Add uppercase letters."}
-          {strength === 3 && "Strong. Almost there."}
-          {strength === 4 && "Very Strong! You're good to go."}
+          {strength === 0 && "Nhập mật khẩu mới."}
+          {strength === 1 && "Mật khẩu yếu. Thêm số hoặc ký tự đặc biệt."}
+          {strength === 2 && "Mật khẩu trung bình. Thêm chữ hoa."}
+          {strength === 3 && "Mật khẩu mạnh. Gần hoàn hảo."}
+          {strength === 4 && "Mật khẩu rất mạnh! Bạn đã sẵn sàng."}
         </p>
 
         <PasswordInput
-          label="Confirm Password"
+          label="Xác nhận mật khẩu"
           name="confirmPassword"
           value={formData.confirmPassword}
           onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
-          placeholder="Re-enter new password"
+          placeholder="Nhập lại mật khẩu"
         />
 
         <button
@@ -172,7 +173,7 @@ const ChangePassword = () => {
           disabled={isLoading}
           className="mt-2 px-8 py-3 bg-rose-500 text-white rounded-lg font-bold hover:bg-rose-600 transition shadow-lg shadow-rose-200 disabled:opacity-70"
         >
-          {isLoading ? 'Updating...' : (hasPassword ? 'Change Password' : 'Set Password')}
+          {isLoading ? 'Đang xử lý...' : (hasPassword ? 'Đổi Mật Khẩu' : 'Đặt Mật Khẩu')}
         </button>
       </form>
     </div>

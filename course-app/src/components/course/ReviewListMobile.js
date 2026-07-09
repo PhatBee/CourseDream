@@ -84,11 +84,11 @@ const ReviewListMobile = ({ reviews = [], instructorId }) => {
           const isInstructor =
             currentUser &&
             String(currentUser._id) ===
-              String(
-                typeof instructorId === "object"
-                  ? instructorId?._id
-                  : instructorId,
-              );
+            String(
+              typeof instructorId === "object"
+                ? instructorId?._id
+                : instructorId,
+            );
 
           return (
             <View

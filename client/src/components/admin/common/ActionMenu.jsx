@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MoreVertical, Ban, CheckCircle, Eye } from 'lucide-react';
+import { MoreVertical, Ban, CheckCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
-const ActionMenu = ({ user, onToggleBlock, onViewDetails }) => {
+const ActionMenu = ({ user, onToggleBlock}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
@@ -56,26 +56,14 @@ const ActionMenu = ({ user, onToggleBlock, onViewDetails }) => {
       >
         {!user.isActive ? (
           <>
-            <CheckCircle size={16} /> Unban User
+            <CheckCircle size={16} /> Mở khóa
           </>
         ) : (
           <>
-            <Ban size={16} /> Ban User
+            <Ban size={16} /> Vô hiệu
           </>
         )}
       </button>
-      
-      {onViewDetails && (
-        <button 
-          onClick={() => {
-            onViewDetails();
-            setIsOpen(false);
-          }}
-          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium"
-        >
-          <Eye size={16} className="text-gray-400" /> View Details
-        </button>
-      )}
     </div>
   ) : null;
 

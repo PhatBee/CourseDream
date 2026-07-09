@@ -4,22 +4,22 @@ import { LayoutGrid, List, Search } from 'lucide-react';
 const CourseListHeader = ({ totalCourses, viewMode, setViewMode }) => {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-      
+
       {/* Result Count */}
       <p className="text-gray-600 text-sm">
-        Showing <span className="font-bold text-gray-900">1-9</span> of <span className="font-bold text-gray-900">{totalCourses}</span> results
+        Hiển thị <span className="font-bold text-gray-900">1-9</span> của <span className="font-bold text-gray-900">{totalCourses}</span> kết quả
       </p>
 
       <div className="flex items-center gap-3 w-full sm:w-auto">
         {/* View Toggle Buttons */}
         <div className="flex items-center bg-white border border-gray-200 rounded-lg p-1">
-          <button 
+          <button
             onClick={() => setViewMode('grid')}
             className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-rose-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
           >
             <LayoutGrid size={18} />
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('list')}
             className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-rose-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
           >

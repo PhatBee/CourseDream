@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { X, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -11,6 +11,7 @@ import {
 
 const BecomeInstructor = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const {
         instructorApplication,
@@ -34,8 +35,10 @@ const BecomeInstructor = () => {
 
     // 1. Fetch trạng thái đơn khi load trang
     useEffect(() => {
-        dispatch(getInstructorApplication());
-    }, [dispatch]);
+        if (user) {
+            dispatch(getInstructorApplication());
+        }
+    }, [dispatch, user]);
 
     // 2. Handle success/error messages
     useEffect(() => {
@@ -76,6 +79,15 @@ const BecomeInstructor = () => {
         dispatch(applyToBecomeInstructor(formData));
     };
 
+    const handleApplyClick = () => {
+        if (!user) {
+            toast.error("Vui lòng đăng nhập để đăng ký làm giảng viên");
+            navigate('/login?callbackUrl=/profile/become-instructor');
+        } else {
+            setIsModalOpen(true);
+        }
+    };
+
     // --- Helper Render UI dựa trên Status ---
     const renderActionSection = () => {
         if (isApplicationLoading) return <div className="animate-pulse h-10 w-32 bg-gray-200 rounded"></div>;
@@ -96,7 +108,7 @@ const BecomeInstructor = () => {
         }
 
         // Trường hợp 2: Đã là Instructor (Approved)
-        if (user.role === 'instructor' || (instructorApplication && instructorApplication.status === 'approved')) {
+        if (user?.role === 'instructor' || (instructorApplication && instructorApplication.status === 'approved')) {
             return (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-lg">
                     <div className="flex items-center gap-3">
@@ -121,16 +133,16 @@ const BecomeInstructor = () => {
                             <div>
                                 <h4 className="font-bold text-red-800">Đăng ký không thành công</h4>
                                 <p className="text-sm text-red-700 mt-1">
-                                    <span className="font-semibold">Reason: {instructorApplication?.rejectionReason}</span>
+                                    <span className="font-semibold">Lý do: {instructorApplication?.rejectionReason}</span>
                                 </p>
                             </div>
                         </div>
                     </div>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleApplyClick}
                         className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-lg"
                     >
-                        Update & Re-Apply
+                        Cập nhật và đăng ký lại
                     </button>
                 </div>
             );
@@ -139,10 +151,10 @@ const BecomeInstructor = () => {
         // Trường hợp 4: Chưa từng đăng ký (Null)
         return (
             <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleApplyClick}
                 className="px-8 py-4 bg-rose-600 text-white rounded-full font-bold text-lg hover:bg-rose-700 transition shadow-xl flex items-center gap-2"
             >
-                Register Now <i className="isax isax-arrow-right-3"></i>
+                Đăng ký ngay <i className="isax isax-arrow-right-3"></i>
             </button>
         );
     };
@@ -157,18 +169,18 @@ const BecomeInstructor = () => {
                     <div className="flex flex-wrap items-center">
                         <div className="w-full lg:w-7/12 lg:pr-12">
                             <div className="mb-8">
-                                <span className="text-blue-600 font-medium underline mb-2 inline-block">Share Knowledge</span>
-                                <h2 className="text-4xl font-bold text-gray-900 mb-4">Share Your Knowledge. Inspire the Future.</h2>
-                                <p className="text-gray-600 text-lg leading-relaxed">Share your knowledge, inspire learners worldwide, and earn while doing what you love. Join a community of experts transforming education through engaging and accessible content.</p>
+                                <span className="text-blue-600 font-medium underline mb-2 inline-block">Trao đổi kiến thức</span>
+                                <h2 className="text-4xl font-bold text-gray-900 mb-4">Trao đổi kiến thức. Truyền cảm hứng cho tương lai.</h2>
+                                <p className="text-gray-600 text-lg leading-relaxed">Trao đổi kiến thức, truyền cảm hứng cho người học trên toàn thế giới và kiếm tiền khi làm những gì bạn yêu thích. Tham gia cộng đồng các chuyên gia đang thay đổi nền giáo dục thông qua nội dung hấp dẫn và dễ tiếp cận.</p>
                             </div>
 
                             {/* Benefits Cards Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 {[ // icon
-                                    { title: "Flexible Work", desc: "Teach at your own pace.", icon: "/instructor-icon1.svg" },
-                                    { title: "Earning Potential", desc: "Monetize your expertise.", icon: "/instructor-icon2.svg" },
-                                    { title: "Impact", desc: "Reach and educate learners.", icon: "/instructor-icon3.svg" },
-                                    { title: "Support", desc: "Access to dedicated support.", icon: "/instructor-icon4.svg" }
+                                    { title: "Linh hoạt thời gian", desc: "Giảng dạy theo tốc độ của riêng bạn.", icon: "/instructor-icon1.svg" },
+                                    { title: "Tiềm năng thu nhập", desc: "Kiếm tiền từ kiến thức chuyên môn của bạn.", icon: "/instructor-icon2.svg" },
+                                    { title: "Tác động", desc: "Tiếp cận và giáo dục người học.", icon: "/instructor-icon3.svg" },
+                                    { title: "Hỗ trợ", desc: "Được hỗ trợ bởi đội ngũ chuyên nghiệp.", icon: "/instructor-icon4.svg" }
                                 ].map((item, idx) => (
                                     <div key={idx} className="bg-white p-4 rounded-xl border hover:shadow-md transition">
                                         <div className="flex items-center">
@@ -204,15 +216,15 @@ const BecomeInstructor = () => {
             {/* How it works Section */}
             <div className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4 text-center">
-                    <span className="text-blue-600 font-medium underline mb-2 inline-block">Our Workflow</span>
-                    <h2 className="text-3xl font-bold mb-2">How It Works</h2>
-                    <p className="text-gray-500 mb-12">Turn Your Expertise into Impact in Just 3 Simple Steps!</p>
+                    <span className="text-blue-600 font-medium underline mb-2 inline-block">Quy trình làm việc</span>
+                    <h2 className="text-3xl font-bold mb-2">Quy trình làm việc</h2>
+                    <p className="text-gray-500 mb-12">Biến chuyên môn của bạn thành tác động chỉ trong 3 bước đơn giản!</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                            { title: "Apply & Get Approved", desc: "Submit your application and get approved to access the platform.", icon: "/how-it-works-1.svg" },
-                            { title: "Create & Upload Content", desc: "Develop and upload your courses, including videos and quizzes.", icon: "/how-it-works-2.svg" },
-                            { title: "Teach & Earn", desc: "Reach learners worldwide and start earning.", icon: "/how-it-works-3.svg" }
+                            { title: "Đăng ký & Được phê duyệt", desc: "Gửi đơn đăng ký và được phê duyệt để truy cập nền tảng.", icon: "/how-it-works-1.svg" },
+                            { title: "Tạo & Tải lên nội dung", desc: "Phát triển và tải lên các khóa học của bạn, bao gồm video và câu đố.", icon: "/how-it-works-2.svg" },
+                            { title: "Giảng dạy & Kiếm tiền", desc: "Tiếp cận người học trên toàn thế giới và bắt đầu kiếm tiền.", icon: "/how-it-works-3.svg" }
                         ].map((step, idx) => (
                             <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm text-center">
                                 <div className="text-blue-600 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
@@ -231,7 +243,7 @@ const BecomeInstructor = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-                            <h3 className="text-xl font-bold text-gray-800">Instructor Application</h3>
+                            <h3 className="text-xl font-bold text-gray-800">Đăng ký trở thành giảng viên</h3>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X size={24} />
                             </button>
@@ -239,33 +251,33 @@ const BecomeInstructor = () => {
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-5">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Professional Bio <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Giới thiệu bản thân <span className="text-red-500">*</span></label>
                                 <textarea
                                     name="bio"
                                     required
                                     value={formData.bio}
                                     onChange={handleInputChange}
                                     rows="4"
-                                    placeholder="Tell us about yourself, your expertise, and why you want to teach..."
+                                    placeholder="Hãy cho chúng tôi biết về bản thân, chuyên môn và lý do bạn muốn trở thành giảng viên..."
                                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                                 ></textarea>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Experience & Qualifications <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Kinh nghiệm & Chứng chỉ <span className="text-red-500">*</span></label>
                                 <textarea
                                     name="experience"
                                     required
                                     value={formData.experience}
                                     onChange={handleInputChange}
                                     rows="3"
-                                    placeholder="List your relevant work experience, certifications, or degrees..."
+                                    placeholder="Hãy liệt kê kinh nghiệm làm việc, chứng chỉ hoặc bằng cấp có liên quan của bạn..."
                                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                                 ></textarea>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Intended Topics</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Các lĩnh vực dự định giảng dạy</label>
                                 <input
                                     type="text"
                                     name="intendedTopics"
@@ -277,16 +289,16 @@ const BecomeInstructor = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Sample Video URL (Optional)</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Video Giới thiệu (Tùy chọn)</label>
                                 <input
                                     type="url"
                                     name="sampleVideoUrl"
                                     value={formData.sampleVideoUrl}
                                     onChange={handleInputChange}
-                                    placeholder="Link to a YouTube video demonstrating your teaching style"
+                                    placeholder="Link video YouTube giới thiệu về phong cách giảng dạy của bạn"
                                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">Providing a sample video increases your chances of approval.</p>
+                                <p className="text-xs text-gray-500 mt-1">Cung cấp video mẫu sẽ tăng cơ hội được phê duyệt.</p>
                             </div>
 
                             <div className="pt-4 flex justify-end gap-3">
@@ -295,7 +307,7 @@ const BecomeInstructor = () => {
                                     onClick={() => setIsModalOpen(false)}
                                     className="px-6 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
                                 >
-                                    Cancel
+                                    Hủy
                                 </button>
                                 <button
                                     type="submit"
@@ -303,9 +315,9 @@ const BecomeInstructor = () => {
                                     className="px-8 py-2.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition disabled:opacity-70 flex items-center gap-2"
                                 >
                                     {isLoading ? (
-                                        <>Processing...</>
+                                        <>Đang xử lý...</>
                                     ) : (
-                                        <>Submit Application</>
+                                        <>Gửi đơn đăng ký</>
                                     )}
                                 </button>
                             </div>

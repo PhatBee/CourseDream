@@ -91,7 +91,7 @@ const Step3_Curriculum = ({
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">📚 Nội dung khóa học</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Nội dung khóa học</h2>
                     <p className="text-sm text-gray-400 mt-1">
                         {sections.length} section • {totalLectures} bài học •{' '}
                         <span className="text-rose-500 font-medium">{formatDuration(totalDuration)}</span> tổng
@@ -104,15 +104,15 @@ const Step3_Curriculum = ({
                     onClick={addSection}
                     className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm text-sm font-semibold"
                 >
-                    <PlusCircle size={16} /> Thêm Section
+                    <PlusCircle size={16} /> Thêm chương
                 </button>
             </div>
 
             {/* Empty state */}
             {sections.length === 0 && (
                 <div className={`text-center py-16 border-2 border-dashed rounded-2xl transition-all ${errorFields.sections
-                        ? 'border-red-400 bg-red-50/40 ring-2 ring-red-300'
-                        : 'border-gray-200 bg-gray-50'
+                    ? 'border-red-400 bg-red-50/40 ring-2 ring-red-300'
+                    : 'border-gray-200 bg-gray-50'
                     }`}>
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 ${errorFields.sections ? 'bg-red-100' : 'bg-gray-100'
                         }`}>
@@ -122,17 +122,17 @@ const Step3_Curriculum = ({
                     </div>
                     <p className={`font-semibold mb-1 ${errorFields.sections ? 'text-red-600' : 'text-gray-500'
                         }`}>
-                        {errorFields.sections ? 'Cần thêm ít nhất 1 section!' : 'Chưa có section nào'}
+                        {errorFields.sections ? 'Cần thêm ít nhất 1 chương!' : 'Chưa có chương nào'}
                     </p>
                     <p className={`text-sm mb-4 ${errorFields.sections ? 'text-red-500' : 'text-gray-400'
                         }`}>
-                        {errorFields.sections || 'Nhấn "Thêm Section" để bắt đầu xây dựng nội dung'}
+                        {errorFields.sections || 'Nhấn "Thêm chương" để bắt đầu xây dựng nội dung'}
                     </p>
                     <button
                         onClick={addSection}
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-semibold text-sm transition-colors"
                     >
-                        <PlusCircle size={16} /> Tạo Section đầu tiên
+                        <PlusCircle size={16} /> Tạo chương đầu tiên
                     </button>
                 </div>
             )}
@@ -185,7 +185,7 @@ const Step3_Curriculum = ({
                     onClick={addSection}
                     className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:text-rose-600 hover:border-rose-300 font-semibold text-sm transition-all flex items-center justify-center gap-2"
                 >
-                    <PlusCircle size={16} /> Thêm Section mới
+                    <PlusCircle size={16} /> Thêm chương mới
                 </button>
             )}
         </div>
@@ -247,7 +247,7 @@ const SortableSectionCard = ({
                             value={section.title}
                             onChange={(e) => updateSection(sIdx, { title: e.target.value })}
                             className="flex-1 bg-white border border-rose-300 rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-rose-200 text-sm font-medium"
-                            placeholder="Tên section..."
+                            placeholder="Tên chương..."
                             autoFocus
                             onKeyDown={(e) => e.key === 'Enter' && updateSection(sIdx, { isEditing: false })}
                         />
@@ -261,7 +261,7 @@ const SortableSectionCard = ({
                 ) : (
                     <div className="flex-1 flex items-center gap-2">
                         <span className="font-semibold text-gray-800 text-sm">
-                            {section.title || '(Chưa đặt tên section)'}
+                            {section.title || '(Chưa đặt tên chương)'}
                         </span>
                         <span className="text-xs text-gray-400">
                             • {section.lectures?.length || 0} bài • {formatDuration(sectionDuration)}
@@ -282,7 +282,7 @@ const SortableSectionCard = ({
                     <button
                         onClick={() => removeSection(sIdx)}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                        title="Xóa section"
+                        title="Xóa chương"
                     >
                         <Trash2 size={15} />
                     </button>
