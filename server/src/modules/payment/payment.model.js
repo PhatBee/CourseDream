@@ -3,6 +3,14 @@ import mongoose from "mongoose";
 const PaymentSchema = new mongoose.Schema({
   student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }], // Hỗ trợ nhiều khóa học
+  items: [{
+    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+    originalPrice: Number,      // Giá gốc của khóa
+    discountPercentage: Number, // % giảm (tiered hoặc 0)
+    discountAmount: Number,     // Số tiền giảm
+    finalPrice: Number,         // Giá thực trả
+    appliedType: { type: String, enum: ['tiered', 'coupon', 'none'] }
+  }],
   orderId: { type: String, required: true, unique: true, index: true }, // vnp_TxnRef - Mã đơn hàng
   amount: { type: Number, required: true }, // Số tiền thanh toán
   method: { type: String, enum: ["vnpay", "momo", "zalopay", "free"], default: "vnpay" },
@@ -26,6 +34,7 @@ const PaymentSchema = new mongoose.Schema({
   originalPrice: { type: Number }, // Tổng tiền gốc
   discountAmount: { type: Number, default: 0 }, // Số tiền được giảm
   couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Promotion" }, // Mã giảm giá đã dùng
+  discountType: { type: String, enum: ['tiered', 'coupon', 'none'], default: 'none' }, // Loại khuyến mãi được áp dụng
 
   // Metadata hệ thống
 

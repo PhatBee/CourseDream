@@ -20,6 +20,9 @@ router.get('/zalopay_return', paymentController.zalopayReturn);
 // Route mới cho đơn hàng 0 đồng
 router.post('/create_free_enrollment', verifyToken, paymentController.createFreeEnrollment);
 
+// Preview tiered discount cho giỏ hàng / checkout
+router.get('/preview-discount', verifyToken, paymentController.previewDiscount);
+
 // ==========================================
 // IPN / WEBHOOK ROUTES (Server-to-Server)
 // ==========================================

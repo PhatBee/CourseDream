@@ -2,8 +2,9 @@ import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { getCart, removeFromCart, clearCart } from "../features/cart/cartSlice";
+import { fetchTieredPreview } from "../features/promotion/promotionSlice";
 import { toast } from "react-hot-toast";
-import { Trash2, ShoppingBag, ArrowLeft, Star } from "lucide-react";
+import { Trash2, ShoppingBag, ArrowLeft, Star, Gift } from "lucide-react";
 import Spinner from "../components/common/Spinner";
 import Avatar from "../components/common/Avatar";
 
@@ -17,6 +18,7 @@ export default function Cart() {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const { items, totalItems, totalPrice, isLoading } = useSelector((state) => state.cart);
+    const { tieredPreview } = useSelector((state) => state.promotion);
 
     useEffect(() => {
         if (user) {
@@ -25,13 +27,20 @@ export default function Cart() {
         }
     }, [user, dispatch]);
 
+    const courseIds = items.map(item => item.course?._id).filter(Boolean);
+    useEffect(() => {
+        if (courseIds.length > 0) {
+            dispatch(fetchTieredPreview(courseIds));
+        }
+    }, [dispatch, courseIds.join(',')]);
+
     // 2. Cập nhật hàm xóa 1 item
     const handleRemove = (courseId) => {
         try {
             // Gọi Redux action, UI sẽ tự cập nhật khi action fulfilled
             // Không set isLoading toàn trang nên không bị nháy
             dispatch(removeFromCart(courseId));
-        } catch (error) {
+        } catch {
             toast.error("Xóa khóa học thất bại");
         }
     };
@@ -40,7 +49,7 @@ export default function Cart() {
     const handleClearCart = () => {
         try {
             dispatch(clearCart());
-        } catch (error) {
+        } catch {
             toast.error("Xóa giỏ hàng thất bại");
         }
 
@@ -255,13 +264,23 @@ export default function Cart() {
 
                                             {discount > 0 && (
                                                 <div className="flex justify-between text-green-600">
-                                                    <span>Giảm giá:</span>
+                                                    <span>Khuyến mãi (Đã giảm):</span>
                                                     <span className="font-semibold">-{formatPrice(discount)}</span>
                                                 </div>
                                             )}
                                         </>
                                     );
                                 })()}
+                                
+                                {tieredPreview && tieredPreview.totalTieredDiscount > 0 && (
+                                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2 mt-4">
+                                        <Gift className="w-5 h-5 text-rose-600 mt-0.5 flex-shrink-0" />
+                                        <div className="text-sm text-rose-800">
+                                            <p className="font-semibold text-justify">Chính sách thân thiết</p>
+                                            <p className="text-justify">Thanh toán ngay để tiết kiệm thêm <strong>{formatPrice(tieredPreview.totalTieredDiscount)}</strong></p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="border-t pt-4">
                                     <div className="flex justify-between items-center">
@@ -292,7 +311,7 @@ export default function Cart() {
 
                             {/* Info */}
                             <div className="mt-6 p-4 bg-rose-50 rounded-lg border border-rose-100">
-                                <p className="text-sm text-rose-800">
+                                <p className="text-sm text-rose-800 text-justify">
                                     💡 <strong>Lưu ý:</strong> Giá có thể thay đổi. Vui lòng kiểm tra kỹ trước khi thanh toán.
                                 </p>
                             </div>

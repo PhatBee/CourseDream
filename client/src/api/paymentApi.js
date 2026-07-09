@@ -30,6 +30,12 @@ const paymentApi = {
     // Hàm mới cho 0 đồng
     createFreeEnrollment: (data) => {
         return axiosClient.post(`${path}/create_free_enrollment`, data);
+    },
+    // Hàm preview discount
+    previewDiscount: (courseIds) => {
+        return axiosClient.get(`${path}/preview-discount`, {
+            params: { courseIds: courseIds.join(',') }
+        });
     }
 };
 
