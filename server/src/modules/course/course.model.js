@@ -60,6 +60,8 @@ const CourseSchema = new mongoose.Schema({
   // Admin feedback khi suspend
   suspendReason: { type: String, default: null },
 
+  durationInWeeks: { type: Number, default: 12 }, // Thời hạn khóa học theo tuần
+
   embedding: { type: [Number], select: false },
 
 }, { timestamps: true });
