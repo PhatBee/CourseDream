@@ -4,6 +4,7 @@ import { Star, Heart, ShoppingCart, Share2, Flag } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
+import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import Toast from 'react-native-toast-message';
 import ReportModalMobile from '../common/ReportModalMobile';
 import { Image } from 'expo-image';
@@ -24,10 +25,51 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
   const navigation = useNavigation();
   const [reportVisible, setReportVisible] = useState(false);
 
+  const enrollmentInfo = useSelector((state) => 
+    state.enrollment.items.find(item => item.course?._id === course._id || item.course === course._id)
+  );
+
+  const isActivated = enrollmentInfo ? enrollmentInfo.isActivated : false;
+  const enrollmentId = enrollmentInfo ? enrollmentInfo._id : null;
+  const isExpired = enrollmentInfo?.endedAt && new Date(enrollmentInfo.endedAt) < new Date();
+
+  const handleActivate = () => {
+    if (!enrollmentId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không tìm thấy thông tin kích hoạt khóa học.',
+        position: 'top',
+      });
+      return;
+    }
+    dispatch(activateEnrollmentThunk(enrollmentId))
+      .unwrap()
+      .then(() => {
+        Toast.show({
+          type: 'success',
+          text1: 'Kích hoạt khóa học thành công!',
+          position: 'top',
+        });
+      })
+      .catch((err) => {
+        Toast.show({
+          type: 'error',
+          text1: 'Kích hoạt khóa học thất bại',
+          text2: err || 'Có lỗi xảy ra',
+          position: 'top',
+        });
+      });
+  };
+
   const isWishlisted = wishlistItems.some(item => item._id === course._id);
   const inCart = cartItems.some(item => item.course._id === course._id);
   const userId = user?._id;
   const instructorId = typeof instructor === "object" ? instructor._id : instructor;
+
+  const isInstructor = user && instructorId && user._id === String(instructorId);
+  const isAdmin = user && user.role === 'admin';
+  const needsActivation = isEnrolled && !isInstructor && !isAdmin && !isActivated;
 
   const handleAddToCart = () => {
     if (!user) {
@@ -153,12 +195,28 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
             )}
           </>
         ) : (
-          <TouchableOpacity
-            className="bg-rose-500 px-3 py-3 rounded-lg items-center justify-center mb-2"
-            onPress={() => navigation.navigate('Learning', { slug: course.slug })}
-          >
-            <Text className="text-white font-bold text-base">Đi tới khóa học</Text>
-          </TouchableOpacity>
+          isExpired ? (
+            <TouchableOpacity
+              disabled
+              className="bg-gray-300 px-3 py-3 rounded-lg items-center justify-center mb-2"
+            >
+              <Text className="text-gray-500 font-bold text-base">Khóa học đã hết hạn học</Text>
+            </TouchableOpacity>
+          ) : needsActivation ? (
+            <TouchableOpacity
+              className="bg-amber-500 px-3 py-3 rounded-lg items-center justify-center mb-2 active:bg-amber-600 border border-amber-600"
+              onPress={handleActivate}
+            >
+              <Text className="text-white font-bold text-base">Kích hoạt khóa học</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className="bg-rose-500 px-3 py-3 rounded-lg items-center justify-center mb-2 active:bg-rose-600"
+              onPress={() => navigation.navigate('Learning', { slug: course.slug })}
+            >
+              <Text className="text-white font-bold text-base">Đi tới khóa học</Text>
+            </TouchableOpacity>
+          )
         )}
         <View className="flex-row gap-3 mt-2">
           <TouchableOpacity onPress={handleWishlist} className="bg-gray-100 p-2 rounded-full">

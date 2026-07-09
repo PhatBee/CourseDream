@@ -7,6 +7,7 @@ import {
   removeFromWishlist,
 } from "../../features/wishlist/wishlistSlice";
 import { addToCart, removeFromCart } from "../../features/cart/cartSlice";
+import { activateEnrollmentThunk } from "../../features/enrollment/enrollmentSlice";
 import ShareModal from "../common/ShareModal";
 import { toast } from "react-hot-toast";
 
@@ -34,10 +35,38 @@ const EnrollCard = ({ course, isInstructor }) => {
 
   const { _id, title, price = 0, priceDiscount = 0, slug } = course;
   const discountPercentage = countPercentage(price, priceDiscount);
-  const isEnrolled = enrolledCourseIds.includes(_id);
+
+  const enrollmentInfo = useSelector((state) => 
+    state.enrollment.items.find(item => item.course?._id === _id || item.course === _id)
+  );
+
+  const isEnrolled = enrolledCourseIds.includes(_id) || !!course.isEnrolled;
+  const isActivated = enrollmentInfo ? enrollmentInfo.isActivated : course.isActivated;
+  const enrollmentId = enrollmentInfo ? enrollmentInfo._id : course.enrollmentId;
+  const isExpired = enrollmentInfo?.endedAt
+    ? new Date(enrollmentInfo.endedAt) < new Date()
+    : course.endedAt
+    ? new Date(course.endedAt) < new Date()
+    : false;
+
+  const isAdmin = user && user.role === "admin";
+  const needsActivation = isEnrolled && !isInstructor && !isAdmin && !isActivated;
+
+  const handleActivateCourse = async () => {
+    if (!enrollmentId) {
+      toast.error("Không tìm thấy mã kích hoạt khóa học.");
+      return;
+    }
+    try {
+      await dispatch(activateEnrollmentThunk(enrollmentId)).unwrap();
+      toast.success("Kích hoạt khóa học thành công!");
+    } catch (err) {
+      toast.error(err || "Kích hoạt khóa học thất bại.");
+    }
+  };
 
   // Xác định quyền vào học (Đã mua HOẶC chính là giảng viên tạo ra)
-  const canAccessCourse = isEnrolled || isInstructor || user?.role === "admin";
+  const canAccessCourse = isEnrolled || isInstructor || isAdmin;
 
   const isInCart = cartItems?.some((item) => item.course._id === _id);
 
@@ -133,18 +162,33 @@ const EnrollCard = ({ course, isInstructor }) => {
             </button>
           </div>
 
-          {canAccessCourse ? ( // Đổi isEnrolled thành canAccessCourse
-            /* Nút Go to Course (Rose/Pink tone) */
-            <button
-              onClick={handleGoToCourse}
-              className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg group"
-            >
-              {user?.role === "admin"
-                ? "Xem với tư cách quản trị viên"
-                : isInstructor
-                  ? "Xem với tư cách giảng viên"
-                  : "Đi tới khóa học"}
-            </button>
+          {canAccessCourse ? (
+            isExpired ? (
+              <button
+                disabled
+                className="w-full bg-gray-300 text-gray-500 font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed shadow-inner"
+              >
+                Khóa học đã hết hạn học
+              </button>
+            ) : needsActivation ? (
+              <button
+                onClick={handleActivateCourse}
+                className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg group"
+              >
+                Kích hoạt khóa học
+              </button>
+            ) : (
+              <button
+                onClick={handleGoToCourse}
+                className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg group"
+              >
+                {user?.role === "admin"
+                  ? "Xem với tư cách quản trị viên"
+                  : isInstructor
+                    ? "Xem với tư cách giảng viên"
+                    : "Đi tới khóa học"}
+              </button>
+            )
           ) : (
             /* Các nút mua hàng (Hiển thị khi chưa đăng ký) */
             <>

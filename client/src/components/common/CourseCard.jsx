@@ -4,6 +4,7 @@ import { Heart, Star, ShoppingCart, User } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
+import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import { toast } from 'react-toastify';
 
 const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist, viewMode = 'grid' }) => {
@@ -27,9 +28,43 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
     categories = []
   } = course;
 
+  const enrollmentInfo = useSelector((state) =>
+    state.enrollment.items.find(item => item.course?._id === _id || item.course === _id)
+  );
+
+  const isEnrolled = enrolledCourseIds?.includes(_id) || !!course.isEnrolled;
+  const isActivated = enrollmentInfo ? enrollmentInfo.isActivated : course.isActivated;
+  const enrollmentId = enrollmentInfo ? enrollmentInfo._id : course.enrollmentId;
+  const isExpired = enrollmentInfo?.endedAt
+    ? new Date(enrollmentInfo.endedAt) < new Date()
+    : course.endedAt
+    ? new Date(course.endedAt) < new Date()
+    : false;
+
+  const isInstructor = user && instructor && (
+    typeof instructor === 'object' 
+      ? user._id === instructor._id 
+      : user._id === instructor
+  );
+  const isAdmin = user && user.role === 'admin';
+  const needsActivation = isEnrolled && !isInstructor && !isAdmin && !isActivated;
+
+  const handleActivateCourse = async (e) => {
+    e.preventDefault();
+    if (!enrollmentId) {
+      toast.error("Không tìm thấy mã kích hoạt khóa học.");
+      return;
+    }
+    try {
+      await dispatch(activateEnrollmentThunk(enrollmentId)).unwrap();
+      toast.success("Kích hoạt khóa học thành công!");
+    } catch (err) {
+      toast.error(err || "Kích hoạt khóa học thất bại.");
+    }
+  };
+
   const categoryName = categories[0]?.name || 'General';
   const instructorName = instructor?.name || 'Instructor';
-  const isEnrolled = enrolledCourseIds?.includes(_id);
   const isInCart = cartItems?.some(item => item.course._id === _id);
 
   const formatPrice = (amount) => {
@@ -173,12 +208,28 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
 
             <div className="flex items-center gap-2">
               {isEnrolled ? (
-                <Link
-                  to={`/courses/${slug}/overview`}
-                  className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
-                >
-                  Vào khóa học
-                </Link>
+                isExpired ? (
+                  <button
+                    disabled
+                    className="px-4 py-2 bg-gray-300 text-gray-500 text-sm font-medium rounded-full cursor-not-allowed shadow-inner"
+                  >
+                    Đã hết hạn
+                  </button>
+                ) : needsActivation ? (
+                  <button
+                    onClick={handleActivateCourse}
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-sm font-medium rounded-full transition-all shadow-md hover:shadow-lg"
+                  >
+                    Kích hoạt
+                  </button>
+                ) : (
+                  <Link
+                    to={`/courses/${slug}/overview`}
+                    className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
+                  >
+                    Vào khóa học
+                  </Link>
+                )
               ) : (
                 <>
                   <button
@@ -250,7 +301,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
           <div className="flex flex-col">
             <span className={`text-2xl font-bold ${isEnrolled ? 'text-green-600' : 'text-rose-600'}`}>
-              {isEnrolled ? 'Vào khóa học' : (priceDiscount === 0 ? 'Miễn phí' : formatPrice(priceDiscount))}
+              {isEnrolled ? (isExpired ? 'Đã hết hạn' : (needsActivation ? 'Chưa kích hoạt' : 'Đã kích hoạt')) : (priceDiscount === 0 ? 'Miễn phí' : formatPrice(priceDiscount))}
             </span>
             {!isEnrolled && price > 0 && (
               <span className="text-sm text-gray-400 line-through">
@@ -273,12 +324,28 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
             </button>
 
             {isEnrolled ? (
-              <Link
-                to={`/courses/${slug}/overview`}
-                className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
-              >
-                Vào khóa học
-              </Link>
+              isExpired ? (
+                <button
+                  disabled
+                  className="px-6 py-2.5 bg-gray-300 text-gray-500 font-medium rounded-full cursor-not-allowed shadow-inner"
+                >
+                  Đã hết hạn
+                </button>
+              ) : needsActivation ? (
+                <button
+                  onClick={handleActivateCourse}
+                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg"
+                >
+                  Kích hoạt khóa học
+                </button>
+              ) : (
+                <Link
+                  to={`/courses/${slug}/overview`}
+                  className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
+                >
+                  Vào khóa học
+                </Link>
+              )
             ) : (
               <>
                 <button

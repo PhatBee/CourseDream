@@ -232,6 +232,34 @@ export const getLearningDetails = async (slug, userId) => {
     }));
   }
 
+  const enrolled = await Enrollment.findOne({
+    student: userId,
+    course: course._id,
+  });
+
+  const isInstructorOrAdmin = userId && (
+    userId.toString() === String(course.instructor?._id || course.instructor) ||
+    await User.exists({ _id: userId, role: "admin" })
+  );
+
+  if (!isInstructorOrAdmin) {
+    if (!enrolled) {
+      const error = new Error("Bạn chưa mua khóa học này.");
+      error.statusCode = 403;
+      throw error;
+    }
+    if (!enrolled.isActivated) {
+      const error = new Error("Khóa học chưa được kích hoạt.");
+      error.statusCode = 403;
+      throw error;
+    }
+    if (enrolled.endedAt && enrolled.endedAt < new Date()) {
+      const error = new Error("Khóa học đã hết thời hạn sử dụng.");
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
   await Enrollment.findOneAndUpdate(
     { student: userId, course: course._id },
     { lastViewedAt: new Date() }
@@ -391,12 +419,22 @@ export const getLecture = async ({ courseId, lectureId, user }) => {
       error: { status: 401, message: "Vui lòng đăng nhập để xem bài giảng" },
     };
 
-  const enrolled = await Enrollment.findOne({
-    student: user._id,
-    course: courseId,
-  });
-  if (!enrolled)
-    return { error: { status: 403, message: "Bạn chưa mua khóa học này" } };
+  const isInstructorOrAdmin = user.role === "admin" || await Course.exists({ _id: courseId, instructor: user._id });
+
+  if (!isInstructorOrAdmin) {
+    const enrolled = await Enrollment.findOne({
+      student: user._id,
+      course: courseId,
+    });
+    if (!enrolled)
+      return { error: { status: 403, message: "Bạn chưa mua khóa học này" } };
+
+    if (!enrolled.isActivated)
+      return { error: { status: 403, message: "Khóa học chưa được kích hoạt" } };
+
+    if (enrolled.endedAt && enrolled.endedAt < new Date())
+      return { error: { status: 403, message: "Khóa học đã hết thời hạn sử dụng" } };
+  }
 
   const lectureObj = lecture.toObject();
   if (lectureObj.resources) {

@@ -14,6 +14,10 @@ const enrollmentApi = {
   getStudentDashboard: () => {
     return axiosClient.get(`${path}/dashboard`);
   },
+
+  activateEnrollment: (enrollmentId) => {
+    return axiosClient.post(`${path}/${enrollmentId}/activate`);
+  },
 };
 
 export default enrollmentApi;

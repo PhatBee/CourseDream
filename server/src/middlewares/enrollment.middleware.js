@@ -120,6 +120,19 @@ export const checkEnrollment = async (req, res, next) => {
         .json({ message: "Bạn chưa đăng ký khóa học này." });
     }
 
+    if (enrollment && req.user.role !== "admin" && !isInstructor) {
+      if (!enrollment.isActivated) {
+        return res
+          .status(403)
+          .json({ message: "Khóa học chưa được kích hoạt." });
+      }
+      if (enrollment.endedAt && enrollment.endedAt < new Date()) {
+        return res
+          .status(403)
+          .json({ message: "Khóa học đã hết hạn sử dụng." });
+      }
+    }
+
     req.courseId = targetCourseId;
 
     next();

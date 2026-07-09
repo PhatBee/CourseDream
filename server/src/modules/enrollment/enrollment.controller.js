@@ -21,3 +21,20 @@ export const getStudentDashboard = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const activateCourse = async (req, res, next) => {
+  try {
+    const { enrollmentId } = req.params;
+    const userId = req.user.id || req.user._id;
+
+    const enrollment = await enrollmentService.activateCourse(enrollmentId, userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Kích hoạt khóa học thành công",
+      enrollment
+    });
+  } catch (err) {
+    next(err);
+  }
+};
