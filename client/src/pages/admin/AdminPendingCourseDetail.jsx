@@ -35,6 +35,20 @@ const diffField = (oldVal, newVal) => {
   return { changed, oldVal, newVal };
 };
 
+// #TODO: util convert abcd => Ab CD
+const convertLevelEnum = (level) => {
+  switch (level) {
+    case 'beginner': return 'Cơ bản';
+    case 'intermediate': return 'Trung cấp';
+    case 'advanced': return 'Nâng cao';
+    case 'alllevels': return 'Mọi cấp độ';
+    case 'en': return 'Tiếng Anh';
+    case 'vi': return 'Tiếng Việt';
+    default: return level;
+  }
+}
+
+
 /**
  * So sánh hai mảng string (learnOutcomes, requirements, audience, includes).
  * @returns {{ changed: boolean, added: string[], removed: string[], unchanged: string[] }}
@@ -938,7 +952,7 @@ const AdminPendingCourseDetail = () => {
                 <BookOpen size={18} className="text-rose-500" /> Mô tả khóa học
                 {isDiffMode && diffField(originalCourse?.shortDescription, revision.shortDescription).changed && (
                   <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
-                    Ä Đã sửa
+                    Đã sửa
                   </span>
                 )}
               </h2>
@@ -1386,18 +1400,25 @@ const AdminPendingCourseDetail = () => {
                       oldVal={formatVND(originalCourse?.priceDiscount)}
                       newVal={formatVND(revision.priceDiscount)}
                     />
+                    {/* Thời hạn hoàn thành khóa học */}
+                    <DiffInfoItem
+                      icon={Clock}
+                      label="Thời hạn hoàn thành"
+                      oldVal={originalCourse?.durationInWeeks ? `${originalCourse.durationInWeeks} tuần` : 'N/A tuần'}
+                      newVal={revision.durationInWeeks ? `${revision.durationInWeeks} tuần` : 'N/A tuần'}
+                    />
                     {/* Cấp độ & Ngôn ngữ */}
                     <DiffInfoItem
                       icon={Award}
                       label="Cấp độ"
-                      oldVal={originalCourse?.level}
-                      newVal={revision.level}
+                      oldVal={convertLevelEnum(originalCourse?.level)}
+                      newVal={convertLevelEnum(revision.level)}
                     />
                     <DiffInfoItem
                       icon={Globe}
                       label="Ngôn ngữ"
-                      oldVal={originalCourse?.language}
-                      newVal={revision.language}
+                      oldVal={convertLevelEnum(originalCourse?.language)}
+                      newVal={convertLevelEnum(revision.language)}
                     />
                     {/* Slug không thay đổi khi update → hiển thị bình thường */}
                     <InfoItem icon={Tag} label="Slug (không đổi)" value={revision.slug} />

@@ -10,30 +10,45 @@ import Course from '../course/course.model.js';
 import * as promotionService from '../promotion/promotion.service.js';
 import Promotion from '../promotion/promotion.model.js';
 import notificationService from '../notification/notification.service.js';
+import { countValidPurchasedCourses, calculateTieredDiscount, evaluateBestDiscount } from '../../utils/discount.helper.js';
 
-// Helper function to calculate price securely
-const calculateOrderPricing = async (courseIds, couponCode, userId) => {
+// Helper function to calculate price securely with tiered discount and coupon
+const calculateOrderPricing = async (courseIds, couponCode, userId, forceCoupon = false) => {
     const courses = await Course.find({ _id: { $in: courseIds } });
     if (courses.length !== courseIds.length) {
         throw new Error('Một hoặc nhiều khóa học không tồn tại');
     }
 
-    let originalPrice = courses.reduce((sum, item) => sum + (item.priceDiscount ?? item.price ?? 0), 0); 
-    let discountAmount = 0;
-    let couponId = null;
+    // Build cartItems format cho discount helper
+    const cartItems = courses.map(c => ({
+        course: { _id: c._id },
+        price: c.price ?? 0,
+        priceDiscount: c.priceDiscount ?? c.price ?? 0
+    }));
 
+    // Đếm khóa học hợp lệ đã mua
+    const previousCount = await countValidPurchasedCourses(userId);
+
+    // Tính tiered discount
+    const tieredResult = calculateTieredDiscount(cartItems, previousCount);
+
+    // Tính coupon discount nếu có
+    let couponPreview = null;
+    let couponId = null;
     if (couponCode) {
         const promotion = await Promotion.findOne({ code: couponCode.toUpperCase() });
         if (!promotion) throw new Error("Mã giảm giá không tồn tại");
 
-        // Gọi service để tính toán discountAmount, bắt cả các rules appliesTo, minPrice, v.v.
-        const preview = await promotionService.previewPromotion(promotion, courseIds, userId);
-        discountAmount = preview.discountAmount;
-        couponId = preview.promotionId;
+        couponPreview = await promotionService.previewPromotion(promotion, courseIds, userId);
+        couponId = couponPreview.promotionId;
     }
 
-    
-    let amountAfterPromo = originalPrice - discountAmount;
+    // So sánh và chọn ưu đãi tốt nhất
+    const bestResult = evaluateBestDiscount(tieredResult, couponPreview, forceCoupon);
+
+    // Tính tax & finalPrice
+    const originalPrice = cartItems.reduce((s, i) => s + (i.priceDiscount ?? i.price), 0);
+    let amountAfterPromo = originalPrice - bestResult.totalDiscount;
     if (amountAfterPromo < 0) amountAfterPromo = 0;
 
     const tax = amountAfterPromo > 0 ? Math.round(amountAfterPromo * 0.1) : 0;
@@ -43,7 +58,24 @@ const calculateOrderPricing = async (courseIds, couponCode, userId) => {
         finalPrice = 1000;
     }
 
-    return { originalPrice, finalPrice, discountAmount, couponId };
+    // Map items list object to match schema structure
+    const itemsSnapshot = bestResult.items.map(i => ({
+        course: i.course._id,
+        originalPrice: i.priceDiscount ?? i.price,
+        discountPercentage: i.discountPercentage || 0,
+        discountAmount: i.appliedDiscountAmount || 0,
+        finalPrice: i.finalPrice || 0,
+        appliedType: bestResult.appliedType
+    }));
+
+    return { 
+        originalPrice, 
+        finalPrice, 
+        discountAmount: bestResult.totalDiscount, 
+        couponId: bestResult.appliedType === 'coupon' ? couponId : null,
+        appliedType: bestResult.appliedType,
+        items: itemsSnapshot
+    };
 };
 
 
@@ -98,7 +130,7 @@ const processPaymentSuccess = async (payment, transactionDetails) => {
 
 export const createPaymentUrl = async (req, res) => {
     try {
-        const { bankCode, language, courseIds, platform = 'web', couponCode } = req.body;
+        const { bankCode, language, courseIds, platform = 'web', couponCode, forceCoupon = false } = req.body;
         // Lấy IP thật của user (quan trọng với VNPAY)
         const ipAddr = req.headers['x-forwarded-for'] ||
             req.connection.remoteAddress ||
@@ -106,7 +138,7 @@ export const createPaymentUrl = async (req, res) => {
             req.connection.socket.remoteAddress;
 
         // Tính toán lại giá tiền an toàn trên backend
-        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
+        const { originalPrice, finalPrice: amount, discountAmount, couponId, appliedType, items } = await calculateOrderPricing(courseIds, couponCode, req.user._id, forceCoupon);
 
         // Tạo mã đơn hàng unique
         const date = new Date();
@@ -122,6 +154,8 @@ export const createPaymentUrl = async (req, res) => {
             originalPrice,
             discountAmount,
             couponId,
+            discountType: appliedType,
+            items,
             orderInfo,
             ipAddr,
             locale: language,
@@ -220,11 +254,11 @@ export const vnpayReturn = async (req, res) => {
  */
 export const createMomoPaymentUrl = async (req, res) => {
     try {
-        const { language, courseIds, platform = 'web', couponCode } = req.body;
+        const { language, courseIds, platform = 'web', couponCode, forceCoupon = false } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         // Tính toán lại giá tiền an toàn trên backend
-        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
+        const { originalPrice, finalPrice: amount, discountAmount, couponId, appliedType, items } = await calculateOrderPricing(courseIds, couponCode, req.user._id, forceCoupon);
 
         // Tạo mã đơn hàng unique (Momo yêu cầu unique requestId và orderId)
         const date = new Date();
@@ -240,6 +274,8 @@ export const createMomoPaymentUrl = async (req, res) => {
             originalPrice,
             discountAmount,
             couponId,
+            discountType: appliedType,
+            items,
             orderInfo,
             ipAddr,
             locale: language,
@@ -342,11 +378,11 @@ export const momoReturn = async (req, res) => {
  */
 export const createZaloPayPaymentUrl = async (req, res) => {
     try {
-        const { courseIds, platform = 'web', couponCode } = req.body;
+        const { courseIds, platform = 'web', couponCode, forceCoupon = false } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         // Tính toán lại giá tiền an toàn trên backend
-        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
+        const { originalPrice, finalPrice: amount, discountAmount, couponId, appliedType, items } = await calculateOrderPricing(courseIds, couponCode, req.user._id, forceCoupon);
 
         // Tạo mã giao dịch theo format ZaloPay yêu cầu: YYMMDD_xxxx
         const transID = Math.floor(Math.random() * 1000000);
@@ -367,6 +403,8 @@ export const createZaloPayPaymentUrl = async (req, res) => {
             originalPrice,
             discountAmount,
             couponId,
+            discountType: appliedType,
+            items,
             orderInfo,
             ipAddr,
             method: 'zalopay',
@@ -469,11 +507,11 @@ export const zalopayReturn = async (req, res) => {
  */
 export const createFreeEnrollment = async (req, res) => {
     try {
-        const { courseIds, couponCode } = req.body;
+        const { courseIds, couponCode, forceCoupon = false } = req.body;
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         // Tính toán lại giá tiền an toàn trên backend
-        const { originalPrice, finalPrice: amount, discountAmount, couponId } = await calculateOrderPricing(courseIds, couponCode, req.user._id);
+        const { originalPrice, finalPrice: amount, discountAmount, couponId, appliedType, items } = await calculateOrderPricing(courseIds, couponCode, req.user._id, forceCoupon);
 
         // 1. Validate: Chắc chắn amount là 0 (Backend tự tính)
         if (amount !== 0) {
@@ -493,6 +531,8 @@ export const createFreeEnrollment = async (req, res) => {
             originalPrice,
             discountAmount,
             couponId,
+            discountType: appliedType,
+            items,
             orderInfo,
             ipAddr,
             method: 'free', // Method mới
@@ -537,6 +577,35 @@ export const createFreeEnrollment = async (req, res) => {
  * WEBHOOK / IPN HANDLERS (SERVER-TO-SERVER)
  * ========================================================
  */
+
+export const previewDiscount = async (req, res) => {
+    try {
+        let courseIds = req.query.courseIds;
+        if (typeof courseIds === 'string') courseIds = courseIds.split(',');
+
+        if (!courseIds || courseIds.length === 0) {
+            return res.status(400).json({ message: 'Danh sách khóa học không hợp lệ' });
+        }
+
+        const courses = await Course.find({ _id: { $in: courseIds } });
+        const cartItems = courses.map(c => ({
+            course: { _id: c._id },
+            price: c.price ?? 0,
+            priceDiscount: c.priceDiscount ?? c.price ?? 0
+        }));
+
+        const previousValidCount = await countValidPurchasedCourses(req.user._id);
+        const tieredResult = calculateTieredDiscount(cartItems, previousValidCount);
+
+        res.status(200).json({
+            previousValidCount,
+            ...tieredResult
+        });
+    } catch (error) {
+        console.error('Preview discount error:', error);
+        res.status(500).json({ message: 'Lỗi tính toán giảm giá', error: error.message });
+    }
+};
 
 export const vnpayIpn = async (req, res) => {
     try {

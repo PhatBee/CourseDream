@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as promotionApi from "../../api/promotionApi";
+import paymentApi from "../../api/paymentApi";
 import toast from "react-hot-toast";
 
 export const fetchPromotions = createAsyncThunk(
@@ -97,6 +98,19 @@ export const fetchAvailablePromotions = createAsyncThunk(
   }
 );
 
+// New thunk for tiered discount preview
+export const fetchTieredPreview = createAsyncThunk(
+  "promotion/fetchTieredPreview",
+  async (courseIds, thunkAPI) => {
+    try {
+      const response = await paymentApi.previewDiscount(courseIds);
+      return response.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 const initialState = {
   items: [], // admin list
   isLoading: false,
@@ -112,6 +126,11 @@ const initialState = {
   available: [],
   availableLoading: false,
   availableError: null,
+  // Tiered discount preview
+  tieredPreview: null,
+  tieredLoading: false,
+  tieredError: null,
+  forceCoupon: false,
 };
 
 const promotionSlice = createSlice({
@@ -127,6 +146,9 @@ const promotionSlice = createSlice({
       state.commitResult = null;
       state.commitError = null;
       state.commitLoading = false;
+    },
+    setForceCoupon(state, action) {
+      state.forceCoupon = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -201,8 +223,23 @@ const promotionSlice = createSlice({
         state.availableLoading = false;
         state.availableError = action.payload;
       });
+
+    // --- Tiered Preview ---
+    builder
+      .addCase(fetchTieredPreview.pending, (state) => {
+        state.tieredLoading = true;
+        state.tieredError = null;
+      })
+      .addCase(fetchTieredPreview.fulfilled, (state, action) => {
+        state.tieredLoading = false;
+        state.tieredPreview = action.payload;
+      })
+      .addCase(fetchTieredPreview.rejected, (state, action) => {
+        state.tieredLoading = false;
+        state.tieredError = action.payload;
+      });
   },
 });
 
-export const { clearPreview, clearCommit } = promotionSlice.actions;
+export const { clearPreview, clearCommit, setForceCoupon } = promotionSlice.actions;
 export default promotionSlice.reducer;

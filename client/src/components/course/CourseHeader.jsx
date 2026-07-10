@@ -26,6 +26,7 @@ const CourseHeader = ({ course, reviewCount }) => {
     instructor = {},
     categories = [],
     rating = 0,
+    durationInWeeks = 0,
   } = course;
 
   useEffect(() => {
@@ -106,6 +107,10 @@ const CourseHeader = ({ course, reviewCount }) => {
             <span className="flex items-center gap-1.5 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl">
               <HiOutlineUsers className="text-rose-500" size={16} />
               {(studentsCount || 0).toLocaleString('vi-VN')} học viên
+            </span>
+            <span className="flex items-center gap-1.5 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl">
+              <HiOutlineClock className="text-rose-500" size={16} />
+              Thời hạn truy cập: {durationInWeeks} tuần
             </span>
           </div>
 

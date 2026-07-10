@@ -23,7 +23,7 @@ import { signThumbnailUrl } from '../../config/aws.js';
 export const getCourseDetailsBySlug = async (slug, currentUser) => {
   const course = await Course.findOne({ slug: slug })
     .select(
-      "title slug thumbnail previewUrl shortDescription topics includes " +
+      "title slug thumbnail previewUrl shortDescription topics includes durationInWeeks " +
       "audience description price priceDiscount level language requirements " +
       "learnOutcomes instructor categories sections rating studentsCount " +
       "totalLectures totalHours totalDurationSeconds status"
@@ -638,6 +638,11 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
   savedCourse.totalHours = parseFloat(
     (calculatedTotalDuration / 3600).toFixed(1)
   ); // Đổi ra giờ, lấy 1 số lẻ
+
+  const durationInWeeks = Number(courseData.durationInWeeks);
+  if (!durationInWeeks || durationInWeeks <= 0) {
+    throw new Error('Thời hạn truy cập khóa học không hợp lệ.');
+  }
 
   await savedCourse.save();
 
