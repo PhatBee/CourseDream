@@ -23,7 +23,7 @@ import { signThumbnailUrl } from '../../config/aws.js';
 export const getCourseDetailsBySlug = async (slug, currentUser) => {
   const course = await Course.findOne({ slug: slug })
     .select(
-      "title slug thumbnail previewUrl shortDescription topics includes " +
+      "title slug thumbnail previewUrl shortDescription topics includes durationInWeeks " +
       "audience description price priceDiscount level language requirements " +
       "learnOutcomes instructor categories sections rating studentsCount " +
       "totalLectures totalHours totalDurationSeconds status"

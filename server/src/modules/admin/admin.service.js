@@ -623,7 +623,7 @@ export const getPendingRevisionDetail = async (revisionId) => {
     status: { $in: ['pending', 'changes_requested'] } // ✅ Fix Bug 1: chấp nhận cả 2 status
   })
     .populate('instructor', 'name email avatar')
-    .populate('course', 'title slug status version')
+    .populate('course', 'title slug status version durationInWeeks')
     .populate('data.categories', 'name slug')
     .lean();
 
@@ -1103,7 +1103,7 @@ export const suspendCourse = async (courseId, adminId, reason) => {
     recipient: course.instructor,
     sender: adminId,
     type: 'system',
-    title: '🚫 Khóa học bị đình chỉ vi phạm chính sách',
+    title: 'Khóa học bị đình chỉ vi phạm chính sách',
     message: `Khóa học "${course.title}" đã bị đình chỉ. Lý do: ${reason}. Vui lòng liên hệ Admin để được hỗ trợ.`,
     metadata: {
       courseId: course._id,
@@ -1182,7 +1182,7 @@ export const republishCourse = async (courseId, adminId) => {
     recipient: course.instructor,
     sender: adminId,
     type: 'system',
-    title: '✅ Khóa học đã được publish lại',
+    title: 'Khóa học đã được publish lại',
     message: `Khóa học "${course.title}" đã được admin hiển thị lại trên marketplace. Học viên mới có thể tiếp tục đăng ký.`,
     metadata: {
       courseId: course._id,
