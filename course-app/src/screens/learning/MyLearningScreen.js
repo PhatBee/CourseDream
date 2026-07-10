@@ -10,12 +10,15 @@ import axiosClient from '../../api/axiosClient';
 import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
+import { fetchMyRewardVouchers } from '../../features/promotion/promotionSlice';
+import RewardVoucherCard from '../../components/common/RewardVoucherCard';
 
 const MyLearningScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user); // THÊM DÒNG NÀY
   const { items: enrollments = [], isLoading, isError, message } = useSelector(state => state.enrollment);
   const { items: categories = [] } = useSelector(state => state.categories);
+  const { myRewards = [] } = useSelector(state => state.promotion);
 
   // State filter
   const [search, setSearch] = useState('');
@@ -48,11 +51,12 @@ const MyLearningScreen = ({ navigation }) => {
     setProgressMap(prev => ({ ...prev, ...newMap }));
   }, []);
 
-  // Chỉ fetch enrollments khi user đã login
+  // Chỉ fetch enrollments và vouchers khi user đã login
   useFocusEffect(
     useCallback(() => {
       if (user) {
         dispatch(fetchMyEnrollments());
+        dispatch(fetchMyRewardVouchers());
       }
     }, [dispatch, user])
   );
@@ -150,6 +154,18 @@ const MyLearningScreen = ({ navigation }) => {
           keyExtractor={item => item._id}
           contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            myRewards.length > 0 ? (
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1f2937', marginBottom: 4 }}>
+                  Ưu đãi đặc quyền của bạn
+                </Text>
+                {myRewards.map(voucher => (
+                  <RewardVoucherCard key={voucher._id} voucher={voucher} />
+                ))}
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => {
             const course = item?.course;
             if (!course) return null;

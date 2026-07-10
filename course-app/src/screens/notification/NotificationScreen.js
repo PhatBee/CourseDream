@@ -28,6 +28,7 @@ import {
   CheckCheck,
   ShieldAlert,
   X,
+  Gift,
 } from "lucide-react-native";
 
 // 1. Đồng bộ Icon và Màu sắc giống Web (getNotificationUI)
@@ -55,6 +56,8 @@ const getNotifIcon = (type) => {
       return <AlertTriangle size={20} color="#ec4899" />;
     case "course_completed":
       return <CheckCircle size={20} color="#14b8a6" />;
+    case "reward_voucher":
+      return <Gift size={20} color="#d97706" />;
     default:
       return <Bell size={20} color="#9ca3af" />;
   }
@@ -84,6 +87,8 @@ const getNotifBg = (type) => {
       return "bg-pink-100";
     case "course_completed":
       return "bg-teal-100";
+    case "reward_voucher":
+      return "bg-amber-100";
     default:
       return "bg-gray-100";
   }
@@ -177,7 +182,8 @@ const NotificationScreen = () => {
         }
         break;
       case "purchase_success":
-        navigation.navigate("MyCourses");
+      case "reward_voucher":
+        navigation.navigate("MainTabs", { screen: "MyLearningTab" });
         break;
       case "enrollment_course":
       case "reminder_learning":

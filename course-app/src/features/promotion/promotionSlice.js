@@ -43,6 +43,19 @@ export const fetchTieredPreview = createAsyncThunk(
   }
 );
 
+// Fetch student completion reward vouchers
+export const fetchMyRewardVouchers = createAsyncThunk(
+  "promotion/fetchMyRewardVouchers",
+  async (_, thunkAPI) => {
+    try {
+      const data = await promotionService.getMyRewardVouchers();
+      return data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 const initialState = {
   // User coupon state
   preview: null,
@@ -61,6 +74,11 @@ const initialState = {
 
   // User override: force use coupon even if tiered is better
   forceCoupon: false,
+
+  // Reward vouchers state
+  myRewards: [],
+  myRewardsLoading: false,
+  myRewardsError: null,
 };
 
 const promotionSlice = createSlice({
@@ -121,6 +139,21 @@ const promotionSlice = createSlice({
       .addCase(fetchTieredPreview.rejected, (state, action) => {
         state.tieredLoading = false;
         state.tieredError = action.payload;
+      });
+
+    // --- USER: Fetch My Reward Vouchers ---
+    builder
+      .addCase(fetchMyRewardVouchers.pending, (state) => {
+        state.myRewardsLoading = true;
+        state.myRewardsError = null;
+      })
+      .addCase(fetchMyRewardVouchers.fulfilled, (state, action) => {
+        state.myRewardsLoading = false;
+        state.myRewards = action.payload;
+      })
+      .addCase(fetchMyRewardVouchers.rejected, (state, action) => {
+        state.myRewardsLoading = false;
+        state.myRewardsError = action.payload;
       });
   },
 });

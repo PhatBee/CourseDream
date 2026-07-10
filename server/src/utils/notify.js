@@ -25,6 +25,21 @@ export const sendEmailNotification = async ({ to, name, title, message, metadata
       if (metadata.courseTitle) {
         metadataHtml += `<p><strong>Khóa học:</strong> ${metadata.courseTitle}</p>`;
       }
+      if (metadata.voucherCode) {
+        metadataHtml += `
+          <div style="text-align: center; margin: 20px 0; padding: 20px; border: 2px dashed #ffc107; background-color: #fffdf5; border-radius: 10px;">
+            <p style="font-size: 16px; font-weight: bold; color: #ff9800; margin: 0 0 10px 0;">🎁 MÃ ƯU ĐÃI ĐẶC QUYỀN HOÀN THÀNH KHÓA HỌC 🎁</p>
+            <div style="font-size: 28px; font-weight: bold; letter-spacing: 2px; color: #e11d48; margin: 10px 0; background: #fff; padding: 10px 15px; border-radius: 5px; border: 1px solid #ffeeba; display: inline-block;">
+              ${metadata.voucherCode}
+            </div>
+            <p style="font-size: 14px; margin: 10px 0 0 0; color: #666; line-height: 1.5;">
+              Mức giảm: <strong>${metadata.discountValue}%</strong> cho đơn hàng tiếp theo<br/>
+              Hạn dùng đến: <strong>${new Date(metadata.expiredAt).toLocaleDateString('vi-VN')}</strong><br/>
+              <span style="font-size: 12px; color: #888;">(Voucher chỉ áp dụng cho tài khoản của bạn và có giá trị trong vòng 7 ngày)</span>
+            </p>
+          </div>
+        `;
+      }
     }
 
     await transporter.sendMail({

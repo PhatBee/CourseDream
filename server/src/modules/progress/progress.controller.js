@@ -45,7 +45,7 @@ export const toggleLectureCompletion = async (req, res, next) => {
 export const saveVideoProgress = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { courseSlug, lectureId, watchedSeconds } = req.body;
+    const { courseSlug, lectureId, watchedSeconds, playbackRate } = req.body;
 
     if (!courseSlug || !lectureId || watchedSeconds == null) {
       const error = new Error('Thiếu courseSlug, lectureId hoặc watchedSeconds');
@@ -60,7 +60,16 @@ export const saveVideoProgress = async (req, res, next) => {
       throw error;
     }
 
-    const result = await progressService.saveVideoProgress(userId, courseSlug, lectureId, parsed);
+    // Tốc độ phát mặc định là 1.0, giới hạn tối đa là 2.0x và tối thiểu là 0.25x để chống hack gửi số lớn
+    let rate = 1.0;
+    if (playbackRate != null) {
+      const parsedRate = parseFloat(playbackRate);
+      if (!isNaN(parsedRate)) {
+        rate = Math.min(2.0, Math.max(0.25, parsedRate));
+      }
+    }
+
+    const result = await progressService.saveVideoProgress(userId, courseSlug, lectureId, parsed, rate);
     res.status(200).json({
       success: true,
       message: 'Đã lưu tiến độ video',

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   BellOff,
   AlertTriangle,
+  Gift,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
@@ -37,6 +38,8 @@ const getNotificationUI = (type) => {
       return { icon: MessageCircle, bg: "bg-blue-100", text: "text-blue-500" };
     case "reminder_learning":
       return { icon: BookOpen, bg: "bg-indigo-100", text: "text-indigo-500" };
+    case "reward_voucher":
+      return { icon: Gift, bg: "bg-amber-100", text: "text-amber-600" };
     case "system":
     default:
       return { icon: Info, bg: "bg-gray-100", text: "text-gray-500" };
@@ -113,6 +116,9 @@ const NotificationMenu = ({ open, onClose }) => {
       case "reminder_learning":
         if (metadata?.courseSlug)
           navigate(`/courses/${metadata.courseSlug}/learn`);
+        break;
+      case "reward_voucher":
+        navigate("/profile/dashboard");
         break;
       default:
         break;

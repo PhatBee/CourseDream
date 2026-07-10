@@ -3,6 +3,7 @@ import Course from '../course/course.model.js';
 import Lecture from '../course/lecture.model.js';
 import notificationService from '../notification/notification.service.js';
 import Enrollment from '../enrollment/enrollment.model.js';
+import { generateCourseCompletionReward } from '../promotion/reward.service.js';
 
 
 const getCourseBySlug = async (slug) => {
@@ -89,6 +90,54 @@ export const toggleLectureCompletion = async (userId, courseSlug, lectureId) => 
   if (lectureIndex > -1) {
     progress.completedLectures.splice(lectureIndex, 1);
   } else {
+    // ── ANTI-FRAUD GATE ─────────────────────────────────────────────
+    const lecture = await Lecture.findById(lectureId)
+      .select('duration quizzes')
+      .lean();
+
+    if (!lecture) {
+      const err = new Error('Bài giảng không tồn tại');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const activeQuizzes = (lecture.quizzes || []).filter(q => q.isActive !== false);
+    const hasVideo = (lecture.duration || 0) > 0;
+    const MIN_WATCH_RATIO = 0.7; // Yêu cầu của người dùng là 70%
+
+    // Kiểm tra 1: Toàn bộ Quiz active phải được trả lời đúng
+    if (activeQuizzes.length > 0) {
+      const correctlyAnswered = (progress.completedQuizzes || []).filter(
+        q => String(q.lectureId) === String(lectureId) && q.isCorrect === true
+      );
+      const allQuizPassed = activeQuizzes.every((_, idx) =>
+        correctlyAnswered.some(q => q.quizIndex === idx)
+      );
+      if (!allQuizPassed) {
+        const err = new Error('Bạn cần trả lời đúng tất cả câu hỏi trong bài giảng trước khi hoàn thành.');
+        err.statusCode = 403;
+        throw err;
+      }
+    }
+
+    // Kiểm tra 2: Phải xem học tập thực tế ít nhất 70% thời lượng video (chống tua)
+    if (hasVideo) {
+      const watchEntry = (progress.watchTimes || []).find(
+        w => w.lecture.toString() === String(lectureId)
+      );
+      const segments = watchEntry?.watchedSegments || [];
+      const accumulatedSeconds = segments.reduce((sum, seg) => sum + (seg.end - seg.start), 0);
+      const minRequired = Math.floor(lecture.duration * MIN_WATCH_RATIO);
+      if (accumulatedSeconds < minRequired) {
+        const err = new Error(
+          `Bạn cần xem học tập thực tế ít nhất 70% thời lượng video (${minRequired}s) trước khi đánh dấu hoàn thành. Thời gian đã học: ${Math.round(accumulatedSeconds)}s.`
+        );
+        err.statusCode = 403;
+        throw err;
+      }
+    }
+    // ── END ANTI-FRAUD GATE ─────────────────────────────────────────
+
     progress.completedLectures.push(lectureId);
   }
 
@@ -109,11 +158,61 @@ export const toggleLectureCompletion = async (userId, courseSlug, lectureId) => 
       message: `Bạn đã hoàn thành xuất sắc khóa học "${course.title}". Hãy xem lại các kiến thức đã học và tiếp tục chinh phục những khóa học khác nhé!`,
       metadata: { courseTitle: course.title }
     }).catch(err => console.error("Lỗi gửi thông báo hoàn thành khóa học:", err));
+
+    // Tự động sinh mã voucher ưu đãi đặc quyền
+    generateCourseCompletionReward(userId, course._id)
+      .then(async (reward) => {
+        if (reward) {
+          await notificationService.createNotification({
+            recipient: userId,
+            type: "reward_voucher",
+            title: "Bạn nhận được voucher ưu đãi đặc quyền!",
+            message: `Cảm ơn bạn đã hoàn thành khóa học "${course.title}" đúng hạn. Bạn nhận được mã giảm giá 7% đặc quyền cho tất cả khóa học tiếp theo: ${reward.code} (Hạn sử dụng trong 7 ngày).`,
+            metadata: {
+              voucherCode: reward.code,
+              discountValue: reward.discountValue,
+              discountType: reward.discountType,
+              expiredAt: reward.endDate,
+              courseTitle: course.title,
+              sourceType: 'course_completion_reward'
+            }
+          }).catch(err => console.error("Lỗi gửi thông báo voucher phần thưởng:", err));
+        }
+      })
+      .catch(err => console.error("Lỗi xử lý voucher phần thưởng:", err));
   }
 
   await syncProgressStatus(userId, course._id);
 
   return progress;
+};
+
+// Helper: Hợp nhất các phân đoạn video chồng lấn hoặc nối tiếp nhau
+const mergeSegments = (segments) => {
+  if (segments.length <= 1) return segments;
+
+  // Clone mảng và sắp xếp tăng dần theo điểm bắt đầu
+  const sorted = [...segments].sort((a, b) => a.start - b.start);
+  const merged = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+
+    if (current.start <= last.end) {
+      // Có phần chồng lấn hoặc tiếp giáp -> gộp lại
+      last.end = Math.max(last.end, current.end);
+    } else {
+      // Không chồng lấn -> thêm phân đoạn mới
+      merged.push(current);
+    }
+  }
+  return merged;
+};
+
+// Helper: Tính tổng thời gian đã xem từ mảng phân đoạn
+const getSegmentsDuration = (segments) => {
+  return segments.reduce((sum, seg) => sum + (seg.end - seg.start), 0);
 };
 
 // ─── saveVideoProgress — Lưu thời gian xem video (gọi mỗi 10s) ─────────────
@@ -123,74 +222,106 @@ export const toggleLectureCompletion = async (userId, courseSlug, lectureId) => 
  * @param {string} lectureId
  * @param {number} watchedSeconds - thời điểm hiện tại (giây)
  */
-export const saveVideoProgress = async (userId, courseSlug, lectureId, watchedSeconds) => {
+export const saveVideoProgress = async (userId, courseSlug, lectureId, watchedSeconds, playbackRate = 1.0) => {
   const course = await getCourseBySlug(courseSlug);
+  const progress = await findOrCreateProgress(userId, course._id);
 
-  // Đảm bảo progress document tồn tại
-  await Progress.findOneAndUpdate(
-    { student: userId, course: course._id },
-    {
-      $setOnInsert: {
-        student: userId,
-        course: course._id,
-        completedLectures: [],
-        watchTimes: [],
-        percentage: 0,
-      },
-    },
-    { upsert: true, new: true }
+  const lecture = await Lecture.findById(lectureId).select('duration quizzes').lean();
+  const duration = lecture?.duration || 0;
+
+  const watchEntryIndex = progress.watchTimes.findIndex(
+    (w) => w.lecture.toString() === lectureId
   );
 
-  // Cập nhật watchTime nếu entry đã tồn tại
-  await Progress.updateOne(
-    { student: userId, course: course._id, 'watchTimes.lecture': lectureId },
-    {
-      $set: {
-        'watchTimes.$.watchedSeconds': watchedSeconds,
-        'watchTimes.$.updatedAt': new Date(),
-      },
+  const now = new Date();
+  let segments = [];
+
+  if (watchEntryIndex > -1) {
+    const entry = progress.watchTimes[watchEntryIndex];
+    const oldPlayhead = entry.watchedSeconds || 0;
+    segments = entry.watchedSegments || [];
+    const oldUpdatedAt = entry.updatedAt ? new Date(entry.updatedAt) : now;
+
+    const playheadDiff = watchedSeconds - oldPlayhead;
+    const realTimeElapsed = (now.getTime() - oldUpdatedAt.getTime()) / 1000;
+
+    // Giới hạn khoảng nhảy playhead cho phép theo tốc độ phát (playbackRate)
+    const maxAllowedDiff = realTimeElapsed * playbackRate + 3;
+
+    if (playheadDiff > 0) {
+      if (playheadDiff <= maxAllowedDiff) {
+        // Xem bình thường (không tua, có tính đến tốc độ playbackRate)
+        const segStart = Math.max(0, Math.min(oldPlayhead, duration));
+        const segEnd = Math.max(0, Math.min(watchedSeconds, duration));
+        if (segEnd > segStart) {
+          segments.push({ start: segStart, end: segEnd });
+        }
+      } else {
+        // Học viên tua video nhanh về phía trước: 
+        // 1. Vẫn ghi nhận thời lượng xem thực tế trôi qua trước khi tua
+        const segStart = Math.max(0, Math.min(oldPlayhead, duration));
+        const segEnd = Math.max(0, Math.min(oldPlayhead + Math.max(0, realTimeElapsed * playbackRate), duration));
+        if (segEnd > segStart) {
+          segments.push({ start: segStart, end: segEnd });
+        }
+        // 2. Playhead vẫn cập nhật lên mốc tua mới để tính tiếp ở lần sau từ điểm tua
+      }
+      segments = mergeSegments(segments);
     }
-  );
 
-  // Nếu không có entry thì push mới
-  const existsInDb = await Progress.findOne({
-    student: userId,
-    course: course._id,
-    'watchTimes.lecture': lectureId,
-  });
-
-  if (!existsInDb) {
-    await Progress.updateOne(
-      { student: userId, course: course._id },
-      {
-        $push: { watchTimes: { lecture: lectureId, watchedSeconds } },
-      },
-      { upsert: true }
-    );
+    // Luôn lưu playhead currentTime hiện tại
+    progress.watchTimes[watchEntryIndex].watchedSeconds = Math.min(watchedSeconds, duration);
+    progress.watchTimes[watchEntryIndex].watchedSegments = segments;
+    progress.watchTimes[watchEntryIndex].updatedAt = now;
+  } else {
+    // Xem lần đầu: Nếu playhead <= 15s thì coi như xem bình thường từ đầu
+    const segEnd = Math.min(watchedSeconds, duration);
+    if (watchedSeconds > 0) {
+      if (watchedSeconds <= 15) {
+        segments.push({ start: 0, end: segEnd });
+      } else {
+        // Tua ngay từ đầu: chỉ tạo 1 phân đoạn nhỏ ở điểm đích
+        segments.push({ start: Math.max(0, segEnd - 1), end: segEnd });
+      }
+    }
+    progress.watchTimes.push({
+      lecture: lectureId,
+      watchedSeconds: segEnd,
+      watchedSegments: segments,
+      updatedAt: now
+    });
   }
 
-  // Tự động đánh dấu hoàn thành bài học nếu đạt điều kiện (Học dồn real-time)
-  const lecture = await Lecture.findById(lectureId).select('duration').lean();
-  if (lecture && lecture.duration > 0) {
+  // Tải thông tin thời gian thực tế đã xem tích lũy
+  const accumulatedSeconds = getSegmentsDuration(segments);
+
+  // Tự động đánh dấu hoàn thành bài học nếu đạt điều kiện (Học dồn real-time + Chống tua)
+  if (duration > 0) {
+    const activeQuizzes = (lecture.quizzes || []).filter(q => q.isActive !== false);
+    const correctlyAnswered = (progress.completedQuizzes || []).filter(
+      q => String(q.lectureId) === String(lectureId) && q.isCorrect === true
+    );
+    const allQuizPassed = activeQuizzes.length > 0 && activeQuizzes.every((_, idx) =>
+      correctlyAnswered.some(q => q.quizIndex === idx)
+    );
+
     const isCompletedCondition = 
-      (watchedSeconds >= 0.9 * lecture.duration) || 
-      ((watchedSeconds / lecture.duration) * 100 >= 95);
+      (watchedSeconds >= 0.9 * duration && accumulatedSeconds >= 0.9 * duration) ||
+      (accumulatedSeconds >= 0.7 * duration && allQuizPassed);
 
     if (isCompletedCondition) {
-      const fullProgress = await findOrCreateProgress(userId, course._id);
-      const exists = fullProgress.completedLectures.some(id => id.toString() === lectureId);
+      const exists = progress.completedLectures.some(id => id.toString() === lectureId);
       
       if (!exists) {
-        fullProgress.completedLectures.push(lectureId);
-        const oldPercentage = fullProgress.percentage;
+        progress.completedLectures.push(lectureId);
+        const oldPercentage = progress.percentage;
         const totalLectures = course.totalLectures || 1;
-        fullProgress.percentage = Math.min(
+        progress.percentage = Math.min(
           100,
-          Math.round((fullProgress.completedLectures.length / totalLectures) * 100)
+          Math.round((progress.completedLectures.length / totalLectures) * 100)
         );
-        await fullProgress.save();
 
-        if (oldPercentage < 100 && fullProgress.percentage === 100) {
+        if (oldPercentage < 100 && progress.percentage === 100) {
           await notificationService.createNotification({
             recipient: userId,
             type: "course_completed",
@@ -198,20 +329,48 @@ export const saveVideoProgress = async (userId, courseSlug, lectureId, watchedSe
             message: `Bạn đã hoàn thành xuất sắc khóa học "${course.title}". Hãy xem lại các kiến thức đã học và tiếp tục chinh phục những khóa học khác nhé!`,
             metadata: { courseTitle: course.title }
           }).catch(err => console.error("Lỗi gửi thông báo hoàn thành khóa học:", err));
+
+          // Tự động sinh mã voucher ưu đãi đặc quyền
+          generateCourseCompletionReward(userId, course._id)
+            .then(async (reward) => {
+              if (reward) {
+                await notificationService.createNotification({
+                  recipient: userId,
+                  type: "reward_voucher",
+                  title: "Bạn nhận được voucher ưu đãi đặc quyền!",
+                  message: `Cảm ơn bạn đã hoàn thành khóa học "${course.title}" đúng hạn. Bạn nhận được mã giảm giá 7% đặc quyền cho tất cả khóa học tiếp theo: ${reward.code} (Hạn sử dụng trong 7 ngày).`,
+                  metadata: {
+                    voucherCode: reward.code,
+                    discountValue: reward.discountValue,
+                    discountType: reward.discountType,
+                    expiredAt: reward.endDate,
+                    courseTitle: course.title,
+                    sourceType: 'course_completion_reward'
+                  }
+                }).catch(err => console.error("Lỗi gửi thông báo voucher phần thưởng:", err));
+              }
+            })
+            .catch(err => console.error("Lỗi xử lý voucher phần thưởng:", err));
         }
       }
     }
   }
 
+  await progress.save();
   await syncProgressStatus(userId, course._id);
 
   const finalProgress = await Progress.findOne({ student: userId, course: course._id }).lean();
-  return { lectureId, watchedSeconds, progress: finalProgress };
+  return { 
+    lectureId, 
+    watchedSeconds: Math.min(watchedSeconds, duration), 
+    accumulatedSeconds, 
+    progress: finalProgress 
+  };
 };
 
 // ─── getVideoProgress — Lấy last_watched_time của một bài giảng ─────────────
 /**
- * @returns {{ lectureId, watchedSeconds }}
+ * @returns {{ lectureId, watchedSeconds, accumulatedSeconds }}
  */
 export const getVideoProgress = async (userId, courseSlug, lectureId) => {
   const course = await getCourseBySlug(courseSlug);
@@ -220,13 +379,20 @@ export const getVideoProgress = async (userId, courseSlug, lectureId) => {
     { watchTimes: 1 }
   );
 
-  if (!progress) return { lectureId, watchedSeconds: 0 };
+  if (!progress) return { lectureId, watchedSeconds: 0, accumulatedSeconds: 0 };
 
   const entry = progress.watchTimes.find(
     (w) => w.lecture.toString() === lectureId
   );
 
-  return { lectureId, watchedSeconds: entry ? entry.watchedSeconds : 0 };
+  const segments = entry ? (entry.watchedSegments || []) : [];
+  const accumulatedSeconds = getSegmentsDuration(segments);
+
+  return {
+    lectureId,
+    watchedSeconds: entry ? (entry.watchedSeconds || 0) : 0,
+    accumulatedSeconds
+  };
 };
 
 // ─── submitQuizAnswer — Kiểm tra đáp án quiz & lưu tiến độ ─────────────────

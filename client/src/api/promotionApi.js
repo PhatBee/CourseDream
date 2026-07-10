@@ -36,3 +36,8 @@ export const commitPromotion = async ({ promotionId }) => {
   const res = await axiosClient.post("/promotions/commit", { promotionId });
   return res.data;
 };
+
+export const getMyRewardVouchers = async () => {
+  const res = await axiosClient.get("/promotions/my-rewards");
+  return res.data;
+};

@@ -15,6 +15,7 @@ import {
   previewPromotionCtrl,
   commitPromotionCtrl,
   getAvailablePromotionsCtrl,
+  getMyRewardVouchersCtrl,
 } from "./promotion.controller.js";
 
 const router = express.Router();
@@ -33,6 +34,7 @@ router.delete("/:id", verifyToken, checkRole("admin"), deletePromotionCtrl);
 router.get("/", verifyToken, checkRole("admin"), getAllPromotionsCtrl);
 
 // === USER ===
+router.get("/my-rewards", verifyToken, getMyRewardVouchersCtrl);
 router.post("/preview", verifyToken, validateAndLoadPromotion, previewPromotionCtrl); // Thay apply thành preview
 router.post("/commit", verifyToken, commitPromotionCtrl); // Route mới cho commit
 router.get("/available", verifyToken, getAvailablePromotionsCtrl);

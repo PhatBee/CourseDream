@@ -1,5 +1,8 @@
 // server/src/modules/promotion/promotion.validation.js
 export function promotionPreSave(next) {
+  if (this.isDynamicReward) {
+    return next();
+  }
   if (this.startDate >= this.endDate) {
     return next(new Error("startDate phải trước endDate"));
   }
