@@ -3,14 +3,28 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Image } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCart, removeFromCart, clearCart } from '../../features/cart/cartSlice';
-import { ArrowLeft } from 'lucide-react-native';
+import { fetchTieredPreview } from '../../features/promotion/promotionSlice';
+import { ArrowLeft, Gift } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 
 const CartScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { items, totalItems, total, isLoading } = useSelector(state => state.cart);
+  const { tieredPreview } = useSelector(state => state.promotion);
 
   useEffect(() => { dispatch(getCart()); }, [dispatch]);
+
+  const courseIds = useMemo(
+    () => items.map(item => item.course?._id).filter(Boolean),
+    [items]
+  );
+
+  // Fetch tiered preview khi giỏ hàng thay đổi
+  useEffect(() => {
+    if (courseIds.length > 0) {
+      dispatch(fetchTieredPreview(courseIds));
+    }
+  }, [dispatch, courseIds.join(',')]);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.price, 0),
@@ -25,7 +39,6 @@ const CartScreen = ({ navigation }) => {
     ({ item }) => {
       const course = item.course;
       const hasDiscount = item.price > item.priceDiscount;
-      const saved = item.price - item.priceDiscount;
 
       return (
         <View className="flex-row items-center p-4 border-b border-gray-100 bg-white">
@@ -132,6 +145,24 @@ const CartScreen = ({ navigation }) => {
               -{discount.toLocaleString()} đ
             </Text>
           </View>
+
+          {/* Banner Tiered Discount - giống web */}
+          {tieredPreview && tieredPreview.totalTieredDiscount > 0 && (
+            <View className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl flex-row items-start gap-2">
+              <View className="p-1.5 bg-rose-100 rounded-full mt-0.5">
+                <Gift size={16} color="#e11d48" />
+              </View>
+              <View className="flex-1">
+                <Text className="font-bold text-gray-800 text-sm mb-1">
+                  Chiết khấu khách hàng thân thiết
+                </Text>
+                <Text className="text-rose-600 text-sm font-semibold">
+                  Thanh toán ngay để tiết kiệm thêm {tieredPreview.totalTieredDiscount.toLocaleString()} đ
+                </Text>
+              </View>
+            </View>
+          )}
+
           <View className="border-t border-gray-100 my-2" />
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-lg font-bold">Tổng cộng:</Text>

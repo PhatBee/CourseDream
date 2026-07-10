@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import promotionService from "./promotionService";
+import paymentService from "../payment/paymentService";
 
 // --- USER: Preview Promotion (Coupon) ---
 export const previewPromotionThunk = createAsyncThunk(
@@ -27,16 +28,39 @@ export const fetchAvailablePromotions = createAsyncThunk(
   }
 );
 
+// Fetch Tiered Discount Preview
+export const fetchTieredPreview = createAsyncThunk(
+  "promotion/fetchTieredPreview",
+  async (courseIds, thunkAPI) => {
+    try {
+      // paymentService.previewDiscount đã unwrap response.data rồi
+      // nên ta return trực tiếp (KHÔNG thêm .data nữa)
+      const data = await paymentService.previewDiscount(courseIds);
+      return data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 const initialState = {
   // User coupon state
-  preview: null, // {discountedPrice, ...}
+  preview: null,
   previewLoading: false,
   previewError: null,
-  
+
   // Available promotions state
   available: [],
   availableLoading: false,
   availableError: null,
+
+  // Tiered discount preview
+  tieredPreview: null,
+  tieredLoading: false,
+  tieredError: null,
+
+  // User override: force use coupon even if tiered is better
+  forceCoupon: false,
 };
 
 const promotionSlice = createSlice({
@@ -47,6 +71,9 @@ const promotionSlice = createSlice({
       state.preview = null;
       state.previewError = null;
       state.previewLoading = false;
+    },
+    setForceCoupon(state, action) {
+      state.forceCoupon = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -80,8 +107,23 @@ const promotionSlice = createSlice({
         state.availableLoading = false;
         state.availableError = action.payload;
       });
+
+    // --- Tiered Preview ---
+    builder
+      .addCase(fetchTieredPreview.pending, (state) => {
+        state.tieredLoading = true;
+        state.tieredError = null;
+      })
+      .addCase(fetchTieredPreview.fulfilled, (state, action) => {
+        state.tieredLoading = false;
+        state.tieredPreview = action.payload;
+      })
+      .addCase(fetchTieredPreview.rejected, (state, action) => {
+        state.tieredLoading = false;
+        state.tieredError = action.payload;
+      });
   },
 });
 
-export const { clearPreview } = promotionSlice.actions;
+export const { clearPreview, setForceCoupon } = promotionSlice.actions;
 export default promotionSlice.reducer;
