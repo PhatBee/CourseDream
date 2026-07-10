@@ -117,7 +117,8 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSe
         progressIntervalRef.current = setInterval(() => {
           if (playerRef.current && !playerRef.current.paused() && !playerRef.current.ended()) {
             const currentTime = playerRef.current.currentTime();
-            if (onProgress && currentTime > 0) onProgress(currentTime);
+            const playbackRate = playerRef.current.playbackRate() || 1;
+            if (onProgress && currentTime > 0) onProgress(currentTime, playbackRate);
           }
         }, 10000);
       });
@@ -125,7 +126,8 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSe
       playerRef.current.on("pause", () => {
         if (playerRef.current && onProgress) {
           const currentTime = playerRef.current.currentTime();
-          if (currentTime > 0) onProgress(currentTime);
+          const playbackRate = playerRef.current.playbackRate() || 1;
+          if (currentTime > 0) onProgress(currentTime, playbackRate);
         }
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
@@ -240,6 +242,7 @@ const VideoPlayer = ({
   courseId,
   courseSlug,       // ── THÊM: dùng cho quiz API
   lastWatchedTime,
+  accumulatedSeconds, // Thêm prop này
   onNext,
   onPrevious,
   onToggleComplete,
@@ -250,6 +253,9 @@ const VideoPlayer = ({
   isInstructor,
 }) => {
   const location = useLocation();
+
+  const [localAccumulated, setLocalAccumulated] = useState(0);
+  const lastPlayheadRef = useRef(0);
 
   // ─── Quiz logic ───────────────────────────────────────────────────────────
   const quizzes = lecture?.quizzes || [];
@@ -271,6 +277,7 @@ const VideoPlayer = ({
     completedQuizzes, // dùng để tô màu markers đã hoàn thành
     lastKnownTimeRef, // vị trí trước khi seek
     pendingRetakeRef, // ✅ FIX v3: guaranteed trigger sau retake
+    isQuizDone,      // Thêm isQuizDone để kiểm tra tiến độ quiz
   } = useVideoQuiz(courseSlug, lecture?._id, quizzes);
 
   // Reset quiz khi đổi bài giảng
@@ -284,6 +291,12 @@ const VideoPlayer = ({
       lastKnownTimeRef.current = lastWatchedTime || 0;
     }
   }, [lastWatchedTime, lecture?._id, lastKnownTimeRef]);
+
+  // Đồng bộ localAccumulated và lastPlayheadRef
+  useEffect(() => {
+    setLocalAccumulated(accumulatedSeconds || 0);
+    lastPlayheadRef.current = lastWatchedTime || 0;
+  }, [accumulatedSeconds, lastWatchedTime, lecture?._id]);
 
   // Pause video khi có quiz active
   useEffect(() => {
@@ -345,6 +358,17 @@ const VideoPlayer = ({
   // ─── Quiz Markers state ───────────────────────────────────────────────────
   const [videoDuration, setVideoDuration] = useState(0); // tổng thời lượng video
   const [markerCurrentTime, setMarkerCurrentTime] = useState(0); // currentTime cho markers
+
+  // ── Tính toán các điều kiện hoàn thành bài giảng (chống gian lận) ──
+  const activeQuizzes = quizzes.filter(q => q.isActive !== false);
+  const allQuizPassed = activeQuizzes.every((_, idx) => isQuizDone && isQuizDone(idx));
+  const hasVideo = (lecture?.duration || 0) > 0;
+  const totalDuration = videoDuration || lecture?.duration || 1;
+  const watchRatio = hasVideo ? (localAccumulated / totalDuration) : 1;
+  const isWatchTimeOk = !hasVideo || watchRatio >= 0.7;
+
+  // Cho phép bấm hoàn thành nếu đã hoàn thành từ trước (để toggle-off) hoặc thỏa mãn điều kiện
+  const canComplete = isCompleted || (allQuizPassed && isWatchTimeOk);
 
   const fetchVideoUrl = useCallback(async () => {
     if (!lecture?._id || !courseId) return;
@@ -473,6 +497,20 @@ const VideoPlayer = ({
                 onTimeUpdate={(t) => {
                   quizTimeUpdate(t);
                   setMarkerCurrentTime(t);
+
+                  // ── Tích luỹ thời gian học thực tế cục bộ (chống tua) ──
+                  const prevPlayhead = lastPlayheadRef.current;
+                  const diff = t - prevPlayhead;
+                  const currentRate = playerInstanceRef.current ? playerInstanceRef.current.playbackRate() : 1;
+                  // Ngưỡng tối đa cho phép dựa trên tốc độ phát (playbackRate) của video player
+                  const maxAllowedClientDiff = Math.max(1.5, 1.5 * currentRate);
+                  if (diff > 0 && diff <= maxAllowedClientDiff) {
+                    setLocalAccumulated(prevAcc => {
+                      const limit = videoDuration || lecture?.duration || 1;
+                      return Math.min(prevAcc + diff, limit);
+                    });
+                  }
+                  lastPlayheadRef.current = t;
                 }}
                 onSeeking={handleSeeking}
                 onSeeked={quizSeeked}
@@ -489,7 +527,7 @@ const VideoPlayer = ({
                 }}
                 onProgress={onVideoProgress}
                 onEnded={() => {
-                  if (!isCompleted) onToggleComplete?.();
+                  // Tắt bỏ tự động hoàn thành khi hết video bài học để tránh thông báo lỗi 403 phiền hà
                 }}
               />
               {/* ── Quiz Progress Markers ─────────────────────────────────── */}
@@ -548,20 +586,43 @@ const VideoPlayer = ({
                 )}
               </div>
 
-              {/* Mark Complete Button */}
-              <button
-                onClick={onToggleComplete}
-                className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border shadow-sm ${isCompleted
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                  : "bg-rose-600 text-white border-rose-600 hover:bg-rose-700 shadow-rose-200"
+              {/* Mark Complete Button Wrapper */}
+              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <button
+                  disabled={!canComplete}
+                  onClick={onToggleComplete}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border shadow-sm ${
+                    isCompleted
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                      : canComplete
+                      ? "bg-rose-600 text-white border-rose-600 hover:bg-rose-700 shadow-rose-200"
+                      : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
                   }`}
-              >
-                <CheckCircle
-                  size={16}
-                  className={isCompleted ? "text-emerald-600" : "text-white"}
-                />
-                {isCompleted ? "Đã hoàn thành" : "Hoàn thành bài học"}
-              </button>
+                  title={
+                    !canComplete
+                      ? `Điều kiện: ${!isWatchTimeOk ? `Xem ít nhất 70% video (đã xem ${Math.round(watchRatio * 100)}%). ` : ""}${!allQuizPassed ? "Trả lời đúng toàn bộ câu hỏi." : ""}`
+                      : ""
+                  }
+                >
+                  <CheckCircle
+                    size={16}
+                    className={isCompleted ? "text-emerald-600" : canComplete ? "text-white" : "text-gray-400"}
+                  />
+                  {isCompleted ? "Đã hoàn thành" : "Hoàn thành bài học"}
+                </button>
+                
+                {/* Tooltip lý do dưới nút để học viên dễ quan sát */}
+                {!isCompleted && !canComplete && (
+                  <span className="text-[11px] text-rose-500 font-medium max-w-[200px] text-right leading-tight select-none">
+                    {!isWatchTimeOk && (
+                      <div>⏱ Xem video (tối thiểu): {Math.round(watchRatio * 100)}% / 70%</div>
+                    )}
+                    {!allQuizPassed && (
+                      <div>📝 Trả lời đúng tất cả quiz ({activeQuizzes.length} câu)</div>
+                    )}
+                  </span>
+                )}
+              </div>
 
               {/* Quiz Review Button — chỉ hiện khi có quiz active */}
               {quizzes.filter(q => q.isActive !== false).length > 0 && (

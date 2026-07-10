@@ -18,7 +18,7 @@ const LearningPage = () => {
   const location = useLocation();
   const dispatch = useDispatch();
 
-  const { course, sections, progress, currentLecture, lastWatchedTime, isLoading } =
+  const { course, sections, progress, currentLecture, lastWatchedTime, accumulatedSeconds, isLoading } =
     useSelector((state) => state.learning);
   const user = useSelector((state) => state.auth.user);
 
@@ -92,13 +92,14 @@ const LearningPage = () => {
    * Handler nhận onProgress từ VideoPlayer (mỗi 10s)
    * Dispatch saveVideoProgress để lưu lên server
    */
-  const handleVideoProgress = (watchedSeconds) => {
+  const handleVideoProgress = (watchedSeconds, playbackRate = 1) => {
     if (!currentLecture?._id || !slug) return;
     dispatch(
       saveVideoProgress({
         courseSlug: slug,
         lectureId: currentLecture._id,
         watchedSeconds,
+        playbackRate,
       })
     );
   };
@@ -128,6 +129,7 @@ const LearningPage = () => {
       progress={progress}
       currentLecture={currentLecture}
       lastWatchedTime={lastWatchedTime}
+      accumulatedSeconds={accumulatedSeconds}
       courseSlug={slug}
       onBack={handleBackToOverview}
       onNext={() => handleNavigateLecture("next")}

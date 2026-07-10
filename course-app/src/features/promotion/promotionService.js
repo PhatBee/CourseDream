@@ -14,9 +14,15 @@ const getAvailablePromotions = async (courseIds) => {
   return response.data;
 };
 
+const getMyRewardVouchers = async () => {
+  const response = await axiosClient.get(`${path}/my-rewards`);
+  return response.data;
+};
+
 const promotionService = {
   previewPromotion,
-  getAvailablePromotions
+  getAvailablePromotions,
+  getMyRewardVouchers
 };
 
 export default promotionService;

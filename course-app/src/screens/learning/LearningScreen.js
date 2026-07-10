@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -97,9 +97,32 @@ const LearningScreen = ({ route, navigation }) => {
   const [targetDiscussionId, setTargetDiscussionId] = useState(null);
   const [targetReplyId, setTargetReplyId] = useState(null);
 
-  const { course, sections, currentLecture, progress, isLoading, lastWatchedTime } = useSelector(
+  const { course, sections, currentLecture, progress, isLoading, lastWatchedTime, accumulatedSeconds } = useSelector(
     (state) => state.learning
   );
+
+  const [localAccumulated, setLocalAccumulated] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  
+  const completedQuizzes = useSelector((state) => state.learning.completedQuizzes) || [];
+
+  const isQuizDone = useCallback((quizIndex) => {
+    if (!currentLecture?._id) return false;
+    return completedQuizzes.some(
+      q => String(q.lectureId) === String(currentLecture._id)
+        && Number(q.quizIndex) === Number(quizIndex)
+        && q.isCorrect !== false
+    );
+  }, [completedQuizzes, currentLecture?._id]);
+
+  useEffect(() => {
+    setLocalAccumulated(accumulatedSeconds || 0);
+  }, [accumulatedSeconds, currentLecture?._id]);
+
+  const handleWatchStats = useCallback(({ localAccumulated: acc, videoDuration: dur }) => {
+    setLocalAccumulated(acc);
+    if (dur && dur > 0) setVideoDuration(dur);
+  }, []);
 
   // ── Phát hiện landscape để điều chỉnh layout ────────────────────────────────────
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -201,12 +224,13 @@ const LearningScreen = ({ route, navigation }) => {
    * Nhận progress từ VideoPlayer (mỗi 10s hoặc khi pause)
    * Dispatch saveVideoProgress để lưu lên server
    */
-  const handleVideoProgress = (watchedSeconds) => {
+  const handleVideoProgress = (watchedSeconds, playbackRate = 1) => {
     if (!currentLecture?._id || !slug) return;
     dispatch(saveVideoProgress({
       courseSlug: slug,
       lectureId: currentLecture._id,
       watchedSeconds,
+      playbackRate,
     }));
   };
 
@@ -226,38 +250,77 @@ const LearningScreen = ({ route, navigation }) => {
   const progressPct = totalLectures > 0 ? Math.round((completedCount / totalLectures) * 100) : 0;
 
   // ─── Shared sub-layouts (dùng lại cho cả portrait và landscape) ──────────
+  const quizzes = currentLecture?.quizzes || [];
+  const activeQuizzes = quizzes.filter(q => q.isActive !== false);
+
+  const allQuizPassed = activeQuizzes.every((_, idx) => isQuizDone(idx));
+  const hasVideo = (currentLecture?.duration || 0) > 0;
+  const totalDuration = videoDuration || currentLecture?.duration || 1;
+  const watchRatio = hasVideo ? (localAccumulated / totalDuration) : 1;
+  const isWatchTimeOk = !hasVideo || watchRatio >= 0.7;
+
+  const canComplete = isCompleted || (allQuizPassed && isWatchTimeOk);
+
   const renderInfoBar = () => currentLecture && (
-    <View style={styles.infoBar}>
-      <View style={styles.infoBarLeft}>
-        <Text style={styles.lectureTitle} numberOfLines={1}>
-          {currentLecture.title}
-        </Text>
-        <Text style={styles.progressLabel}>
-          {completedCount}/{totalLectures} bài · {progressPct}% hoàn thành
-        </Text>
-      </View>
+    <View style={styles.infoBarContainer}>
+      <View style={styles.infoBar}>
+        <View style={styles.infoBarLeft}>
+          <Text style={styles.lectureTitle} numberOfLines={1}>
+            {currentLecture.title}
+          </Text>
+          <Text style={styles.progressLabel}>
+            {completedCount}/{totalLectures} bài · {progressPct}% hoàn thành
+          </Text>
+        </View>
 
-      <TouchableOpacity
-        onPress={() => handleToggleComplete(currentLecture._id)}
-        style={[styles.completeBtn, isCompleted && styles.completeBtnDone]}
-        activeOpacity={0.8}
-      >
-        <CheckCircle size={15} color={isCompleted ? '#10b981' : '#fff'} />
-        <Text style={[styles.completeBtnText, isCompleted && styles.completeBtnTextDone]}>
-          {isCompleted ? 'Đã xong' : 'Hoàn thành'}
-        </Text>
-      </TouchableOpacity>
-
-      {(currentLecture?.quizzes?.filter(q => q.isActive !== false).length > 0) && (
         <TouchableOpacity
-          onPress={() => setIsReviewOpen(true)}
-          style={styles.quizReviewBtn}
+          disabled={!canComplete}
+          onPress={() => handleToggleComplete(currentLecture._id)}
+          style={[
+            styles.completeBtn,
+            isCompleted && styles.completeBtnDone,
+            !canComplete && styles.completeBtnDisabled
+          ]}
           activeOpacity={0.8}
         >
-          <Text style={styles.quizReviewBtnText}>
-            📋 {currentLecture.quizzes.filter(q => q.isActive !== false).length}
+          <CheckCircle size={15} color={isCompleted ? '#10b981' : !canComplete ? '#9ca3af' : '#fff'} />
+          <Text style={[
+            styles.completeBtnText,
+            isCompleted && styles.completeBtnTextDone,
+            !canComplete && styles.completeBtnTextDisabled
+          ]}>
+            {isCompleted ? 'Đã xong' : 'Hoàn thành'}
           </Text>
         </TouchableOpacity>
+
+        {(currentLecture?.quizzes?.filter(q => q.isActive !== false).length > 0) && (
+          <TouchableOpacity
+            onPress={() => setIsReviewOpen(true)}
+            style={styles.quizReviewBtn}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.quizReviewBtnText}>
+              📋 {currentLecture.quizzes.filter(q => q.isActive !== false).length}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Cảnh báo lý do chưa đủ điều kiện hoàn thành bài giảng */}
+      {!isCompleted && !canComplete && (
+        <View style={styles.warningContainer}>
+          <Text style={styles.warningTitle}>Điều kiện hoàn thành bài giảng:</Text>
+          {!isWatchTimeOk && (
+            <Text style={styles.warningText}>
+              ⏱ Xem video học thực tế: {Math.round(watchRatio * 100)}% / 70%
+            </Text>
+          )}
+          {!allQuizPassed && (
+            <Text style={styles.warningText}>
+              📝 Trả lời đúng tất cả Quiz của bài giảng
+            </Text>
+          )}
+        </View>
       )}
     </View>
   );
@@ -407,10 +470,12 @@ const LearningScreen = ({ route, navigation }) => {
               courseSlug={slug}
               thumbnail={course.thumbnail}
               lastWatchedTime={lastWatchedTime}
+              accumulatedSeconds={accumulatedSeconds}
               onProgress={handleVideoProgress}
+              onWatchStats={handleWatchStats}
               playerHeight={windowHeight}
               onComplete={() => {
-                if (!isCompleted && currentLecture?._id) {
+                if (canComplete && !isCompleted && currentLecture?._id) {
                   handleToggleComplete(currentLecture._id);
                 }
               }}
@@ -444,9 +509,11 @@ const LearningScreen = ({ route, navigation }) => {
               courseSlug={slug}
               thumbnail={course.thumbnail}
               lastWatchedTime={lastWatchedTime}
+              accumulatedSeconds={accumulatedSeconds}
               onProgress={handleVideoProgress}
+              onWatchStats={handleWatchStats}
               onComplete={() => {
-                if (!isCompleted && currentLecture?._id) {
+                if (canComplete && !isCompleted && currentLecture?._id) {
                   handleToggleComplete(currentLecture._id);
                 }
               }}
@@ -511,14 +578,17 @@ const styles = StyleSheet.create({
   },
 
   // ── Info bar ──
+  infoBarContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
   infoBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
     backgroundColor: '#fff',
   },
   infoBarLeft: { flex: 1, marginRight: 10 },
@@ -543,8 +613,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#6ee7b7',
   },
+  completeBtnDisabled: {
+    backgroundColor: '#f3f4f6',
+    borderColor: '#e5e7eb',
+    borderWidth: 1,
+  },
   completeBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   completeBtnTextDone: { color: '#10b981' },
+  completeBtnTextDisabled: { color: '#9ca3af' },
+  warningContainer: {
+    backgroundColor: '#fff1f2',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#ffe4e6',
+    gap: 2,
+  },
+  warningTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#e11d48',
+  },
+  warningText: {
+    fontSize: 11,
+    color: '#f43f5e',
+    fontWeight: '500',
+    paddingLeft: 4,
+  },
 
   // ✅ Nút Xem lại câu hỏi (trong infoBar)
   quizReviewBtn: {

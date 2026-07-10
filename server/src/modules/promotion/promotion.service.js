@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Course from "../course/course.model.js";
 import Promotion from "./promotion.model.js"; // Import trực tiếp để tránh dynamic import
 
@@ -9,6 +10,19 @@ export const previewPromotion = async (promotion, courseIds, userId) => {
   }
   if (now < promotion.startDate || now > promotion.endDate) {
     throw new Error("Mã khuyến mãi đã hết hạn hoặc chưa bắt đầu");
+  }
+
+  // Chặn trường hợp chia sẻ mã độc quyền hoặc dùng mã đã sử dụng/hết hạn
+  if (promotion.isDynamicReward && promotion.targetStudent) {
+    if (promotion.targetStudent.toString() !== userId.toString()) {
+      const error = new Error("Mã giảm giá này là đặc quyền riêng của tài khoản khác");
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
+  if (promotion.isDynamicReward && promotion.status !== "ACTIVE") {
+    throw new Error("Mã giảm giá phần thưởng này đã được sử dụng hoặc hết hạn");
   }
 
   if (!Array.isArray(courseIds)) courseIds = [courseIds];
@@ -129,52 +143,64 @@ export const previewPromotion = async (promotion, courseIds, userId) => {
   };
 };
 
-// Hàm commit (trừ lượt sau payment success, atomic)
+// Hàm commit (trừ lượt sau payment success, sử dụng atomic findOneAndUpdate an toàn không cần transaction)
 export const commitPromotion = async (promotionId, userId) => {
-  const promotion = await Promotion.findById(promotionId);
-  if (!promotion || !promotion.isActive) {
-    throw new Error("Mã khuyến mãi không tồn tại hoặc không hoạt động");
-  }
-
-  // Atomic update cho totalUsed
-  let updated = await Promotion.findOneAndUpdate(
-    {
-      _id: promotion._id,
-      $or: [
-        { maxUsage: 0 },
-        { totalUsed: { $lt: promotion.maxUsage } }
-      ]
-    },
-    { $inc: { totalUsed: 1 } },
-    { new: true }
-  );
-
-  if (!updated) {
-    throw new Error("Mã đã hết lượt sử dụng hoặc có lỗi");
-  }
-
-  // Atomic update cho usersUsed (sử dụng arrayFilters)
-  updated = await Promotion.findOneAndUpdate(
-    { _id: promotion._id },
-    {
-      $inc: { "usersUsed.$[user].count": 1 }
-    },
-    {
-      new: true,
-      arrayFilters: [{ "user.user": userId }]
+  try {
+    const promotion = await Promotion.findById(promotionId);
+    if (!promotion || !promotion.isActive) {
+      throw new Error("Mã khuyến mãi không tồn tại hoặc không hoạt động");
     }
-  );
 
-  // Nếu user chưa tồn tại, thêm mới
-  if (!updated.usersUsed.find(u => u.user.equals(userId))) {
-    updated = await Promotion.findByIdAndUpdate(
-      promotion._id,
-      { $push: { usersUsed: { user: userId, count: 1 } } },
+    // Atomic update cho totalUsed và status
+    let query = {
+      _id: promotionId,
+      isActive: true
+    };
+    
+    // Nếu là mã reward thì kiểm tra status phải là ACTIVE
+    if (promotion.isDynamicReward) {
+      query.status = "ACTIVE";
+    }
+
+    let update = {
+      $inc: { totalUsed: 1 }
+    };
+
+    if (promotion.isDynamicReward) {
+      update.$set = {
+        status: "USED",
+        isActive: false
+      };
+    }
+
+    // Chạy atomic update để trừ lượt dùng chung (totalUsed) và khoá mã reward
+    let updated = await Promotion.findOneAndUpdate(query, update, { new: true });
+    
+    if (!updated) {
+      throw new Error(promotion.isDynamicReward ? "Mã giảm giá phần thưởng đã được sử dụng hoặc hết hạn" : "Mã đã hết lượt sử dụng hoặc có lỗi");
+    }
+
+    // Atomic update cho usersUsed của user cụ thể
+    updated = await Promotion.findOneAndUpdate(
+      { _id: promotionId, "usersUsed.user": userId },
+      { $inc: { "usersUsed.$.count": 1 } },
       { new: true }
     );
-  }
 
-  return { message: "Đã trừ lượt sử dụng thành công!", promotion: updated };
+    // Nếu user chưa từng dùng mã này, push entry mới vào mảng usersUsed
+    if (!updated) {
+      updated = await Promotion.findOneAndUpdate(
+        { _id: promotionId },
+        { $push: { usersUsed: { user: userId, count: 1 } } },
+        { new: true }
+      );
+    }
+
+    return { message: "Đã trừ lượt sử dụng thành công!", promotion: updated };
+  } catch (err) {
+    console.error("Lỗi commit promotion:", err);
+    throw err;
+  }
 };
 
 // CRUD admin (giữ nguyên)

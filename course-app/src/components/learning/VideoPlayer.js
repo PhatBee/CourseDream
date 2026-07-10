@@ -48,8 +48,10 @@ const VideoPlayer = forwardRef((
   courseSlug,       // ── THÊM: dùng cho quiz API
   thumbnail,
   lastWatchedTime = 0,
+  accumulatedSeconds = 0,
   onProgress,
   onComplete,
+  onWatchStats,
   playerHeight,     // ── THÊM: chiều cao tuỳ chỉnh (dùng cho landscape)
 }, ref) => {
   const videoViewRef = useRef(null);
@@ -65,6 +67,18 @@ const VideoPlayer = forwardRef((
   const lastWatchedTimeRef = useRef(lastWatchedTime);
   const initialSeekDoneRef = useRef(false);
   const isSeekingRef = useRef(false);
+
+  // ─── Tích lũy thời gian học thực tế cục bộ (chống tua) ───
+  const [localAccumulated, setLocalAccumulated] = useState(0);
+  const localAccumulatedRef = useRef(0);
+  const lastPlayheadRef = useRef(0);
+
+  // Đồng bộ localAccumulated và lastPlayheadRef
+  useEffect(() => {
+    setLocalAccumulated(accumulatedSeconds || 0);
+    localAccumulatedRef.current = accumulatedSeconds || 0;
+    lastPlayheadRef.current = lastWatchedTime || 0;
+  }, [accumulatedSeconds, lastWatchedTime, currentLecture?._id]);
 
   // ─── Quiz state ──────────────────────────────────────────────────────────
   const [activeQuiz, setActiveQuiz]         = useState(null);  // { quizIndex, quiz }
@@ -367,7 +381,33 @@ const VideoPlayer = forwardRef((
           if (dur && isFinite(dur) && dur > 0) {
             setVideoDuration(dur);
             setPlayedPercent((ct / dur) * 100);
+            if (onWatchStats) {
+              onWatchStats({
+                localAccumulated: localAccumulatedRef.current,
+                videoDuration: dur,
+              });
+            }
           }
+
+          // ── Tích luỹ thời gian học thực tế cục bộ (chống tua) ──
+          const prevPlayhead = lastPlayheadRef.current;
+          const diff = ct - prevPlayhead;
+          const currentRate = player.playbackRate || 1;
+          const maxAllowedClientDiff = Math.max(1.5, 1.5 * currentRate);
+          
+          if (diff > 0 && diff <= maxAllowedClientDiff) {
+            const limit = dur || currentLecture?.duration || 1;
+            const updatedAcc = Math.min(localAccumulatedRef.current + diff, limit);
+            localAccumulatedRef.current = updatedAcc;
+            setLocalAccumulated(updatedAcc);
+            if (onWatchStats) {
+              onWatchStats({
+                localAccumulated: updatedAcc,
+                videoDuration: dur || currentLecture?.duration || 0,
+              });
+            }
+          }
+          lastPlayheadRef.current = ct;
 
           // ✅ FIX: Dùng refs thay vì state/closure → tránh race condition. Bỏ qua nếu đang tải tiến độ/khóa học.
           if (activeQuizRef.current || quizBlockedRef.current || !quizzes.length || isLoadingProgressRef.current) return;
@@ -439,8 +479,9 @@ const VideoPlayer = forwardRef((
         progressIntervalRef.current = setInterval(() => {
           try {
             const currentTime = player.currentTime;
+            const currentRate = player.playbackRate || 1;
             if (currentTime > 0 && !player.paused) {
-              onProgress(currentTime);
+              onProgress(currentTime, currentRate);
             }
           } catch (e) {
             // ignore
@@ -450,7 +491,8 @@ const VideoPlayer = forwardRef((
         // Khi pause: gửi ngay + clear interval
         try {
           const currentTime = player.currentTime;
-          if (currentTime > 0) onProgress(currentTime);
+          const currentRate = player.playbackRate || 1;
+          if (currentTime > 0) onProgress(currentTime, currentRate);
         } catch (e) {}
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);

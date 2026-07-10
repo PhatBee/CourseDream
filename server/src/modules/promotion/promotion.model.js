@@ -23,12 +23,17 @@ const promotionSchema = new mongoose.Schema(
       },
     ],
     isActive: { type: Boolean, default: true }, // trạng thái hoạt động
+    isDynamicReward: { type: Boolean, default: false }, // mã phần thưởng tự động
+    targetStudent: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // học viên nhận ưu đãi
+    sourceCourse: { type: mongoose.Schema.Types.ObjectId, ref: "Course", default: null }, // khóa học nguồn sinh mã
+    status: { type: String, enum: ["ACTIVE", "USED", "EXPIRED"], default: "ACTIVE" }, // trạng thái vòng đời mã reward
   },
   { timestamps: true }
 );
 
 // Thêm index cho usersUsed.user để query nhanh
 promotionSchema.index({ "usersUsed.user": 1 });
+promotionSchema.index({ targetStudent: 1, sourceCourse: 1 });
 
 promotionSchema.pre("save", promotionPreSave);
 

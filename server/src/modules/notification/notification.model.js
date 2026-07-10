@@ -18,6 +18,7 @@ const NotificationSchema = new mongoose.Schema(
         "system",
         "report",
         "warning",
+        "reward_voucher",
       ],
       required: true,
     },
@@ -38,6 +39,14 @@ const NotificationSchema = new mongoose.Schema(
       reportReasonLabel: String,
       adminNote: String,
       originalContent: String,
+
+      // Bổ sung cho reward voucher
+      voucherCode: String,
+      discountValue: Number,
+      discountType: String,
+      expiredAt: Date,
+      sourceType: String,
+      courseTitle: String,
     },
     read: { type: Boolean, default: false },
   },

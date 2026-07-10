@@ -9,6 +9,7 @@ const initialState = {
   currentLecture: null,   // Bài học đang xem
   // ─── Video progress tracking ───────────────────────────────────────────────
   lastWatchedTime: 0,     // last_watched_time của bài đang xem (giây)
+  accumulatedSeconds: 0,  // Số giây thực tế tích lũy đã xem video (chống tua)
   // ─── Interactive Quiz state ───────────────────────────────────────────
   completedQuizzes: [],   // [{ lectureId, quizIndex, selectedAnswer, isCorrect, attempts }]
   activeQuiz: null,       // { quizIndex, quiz } — quiz đang hiển thị
@@ -43,8 +44,9 @@ export const toggleLecture = createAsyncThunk(
       const response = await learningApi.toggleLectureCompletion({ courseSlug, lectureId });
       return response.data.data;
     } catch (error) {
-      toast.error("Không thể cập nhật tiến độ");
-      return thunkAPI.rejectWithValue(error.message);
+      const errMsg = error.response?.data?.message || "Không thể cập nhật tiến độ";
+      toast.error(errMsg);
+      return thunkAPI.rejectWithValue(errMsg);
     }
   }
 );
@@ -66,10 +68,10 @@ export const fetchVideoProgress = createAsyncThunk(
 // ─── Thunk: Lưu tiến độ xem video (gọi mỗi 10s) ─────────────────────────────
 export const saveVideoProgress = createAsyncThunk(
   'learning/saveVideoProgress',
-  async ({ courseSlug, lectureId, watchedSeconds }, thunkAPI) => {
+  async ({ courseSlug, lectureId, watchedSeconds, playbackRate }, thunkAPI) => {
     try {
-      await learningApi.saveVideoProgress({ courseSlug, lectureId, watchedSeconds });
-      return { watchedSeconds };
+      const response = await learningApi.saveVideoProgress({ courseSlug, lectureId, watchedSeconds, playbackRate });
+      return response.data.data; // Trả về { lectureId, watchedSeconds, accumulatedSeconds }
     } catch (error) {
       // Silent fail — không làm phiền user khi lưu định kỳ thất bại
       return thunkAPI.rejectWithValue(error.message);
@@ -98,6 +100,7 @@ export const learningSlice = createSlice({
     setCurrentLecture: (state, action) => {
       state.currentLecture = action.payload;
       state.lastWatchedTime = 0; // Reset khi chuyển bài
+      state.accumulatedSeconds = 0; // Reset khi chuyển bài
       // Reset quiz state khi chuyển bài
       state.activeQuiz = null;
       state.quizBlocked = false;
@@ -108,6 +111,7 @@ export const learningSlice = createSlice({
       state.currentLecture = null;
       state.sections = [];
       state.lastWatchedTime = 0;
+      state.accumulatedSeconds = 0;
       state.completedQuizzes = [];
       state.activeQuiz = null;
       state.quizBlocked = false;
@@ -200,14 +204,21 @@ export const learningSlice = createSlice({
       // fetchVideoProgress — set lastWatchedTime khi mở bài
       .addCase(fetchVideoProgress.fulfilled, (state, action) => {
         state.lastWatchedTime = action.payload?.watchedSeconds ?? 0;
+        state.accumulatedSeconds = action.payload?.accumulatedSeconds ?? 0;
       })
       .addCase(fetchVideoProgress.rejected, (state) => {
         state.lastWatchedTime = 0;
+        state.accumulatedSeconds = 0;
       })
 
-      // saveVideoProgress — cập nhật lastWatchedTime local (tùy chọn)
+      // saveVideoProgress — cập nhật tiến độ học thực tế
       .addCase(saveVideoProgress.fulfilled, (state, action) => {
-        // Có thể cập nhật lastWatchedTime từ response nếu cần
+        if (action.payload?.watchedSeconds !== undefined) {
+          state.lastWatchedTime = action.payload.watchedSeconds;
+        }
+        if (action.payload?.accumulatedSeconds !== undefined) {
+          state.accumulatedSeconds = action.payload.accumulatedSeconds;
+        }
       })
 
       // fetchQuizReview — load dữ liệu cho Review Modal
