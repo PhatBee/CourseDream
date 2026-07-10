@@ -787,6 +787,7 @@ export const approveRevision = async (revisionId, adminId) => {
       description: revision.data.description,
       price: revision.data.price || 0,
       priceDiscount: revision.data.priceDiscount || 0,
+      durationInWeeks: revision.data.durationInWeeks || 0,
       level: revision.data.level || 'alllevels',
       language: revision.data.language || 'Vietnamese',
       requirements: revision.data.requirements || [],
@@ -894,6 +895,7 @@ export const approveRevision = async (revisionId, adminId) => {
     liveCourse.description = revision.data.description;
     liveCourse.price = revision.data.price || 0;
     liveCourse.priceDiscount = revision.data.priceDiscount || 0;
+    liveCourse.durationInWeeks = revision.data.durationInWeeks || 0;
     liveCourse.level = revision.data.level;
     liveCourse.language = revision.data.language;
     liveCourse.requirements = revision.data.requirements || [];
