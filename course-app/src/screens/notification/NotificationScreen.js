@@ -183,7 +183,7 @@ const NotificationScreen = () => {
         break;
       case "purchase_success":
       case "reward_voucher":
-        navigation.navigate("MyCourses");
+        navigation.navigate("MainTabs", { screen: "MyLearningTab" });
         break;
       case "enrollment_course":
       case "reminder_learning":
