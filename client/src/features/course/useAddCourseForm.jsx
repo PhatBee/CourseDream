@@ -25,6 +25,7 @@ export const useAddCourseForm = () => {
         language: 'Vietnamese',
         price: 0,
         priceDiscount: 0,
+        durationInWeeks: 0,
         isFree: false,
         shortDescription: '',
         description: '',
@@ -60,6 +61,7 @@ export const useAddCourseForm = () => {
             language: apiData.language || 'Vietnamese',
             price: apiData.price || 0,
             priceDiscount: apiData.priceDiscount || 0,
+            durationInWeeks: apiData.durationInWeeks || 0,
             isFree: (apiData.price === 0),
             shortDescription: apiData.shortDescription || '',
             description: apiData.description || '',
@@ -205,4 +207,4 @@ export const useAddCourseForm = () => {
         setFullData,
         ensureSlug,   // ✨ Đảm bảo slug tồn tại trước khi upload S3
     };
-};
+};

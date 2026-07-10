@@ -709,6 +709,7 @@ export const getCourseForEdit = async (slug, instructorId) => {
       description: populatedCourse.description,
       price: populatedCourse.price,
       priceDiscount: populatedCourse.priceDiscount,
+      durationInWeeks: populatedCourse.durationInWeeks,
       level: populatedCourse.level,
       language: populatedCourse.language,
       requirements: populatedCourse.requirements || [],
@@ -995,6 +996,7 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     description: courseData.description,
     price: Number(courseData.price) || 0,
     priceDiscount: Number(courseData.priceDiscount) || 0,
+    durationInWeeks: Number(courseData.durationInWeeks) || 12,
     level: courseData.level || 'alllevels',
     language: courseData.language || 'Vietnamese',
 

@@ -267,6 +267,7 @@ const EditCoursePage = () => {
             formData.append('language', courseData.language || 'Vietnamese');
             formData.append('price', courseData.isFree ? 0 : (courseData.price || 0));
             formData.append('priceDiscount', courseData.isFree ? 0 : (courseData.priceDiscount || 0));
+            formData.append('durationInWeeks', courseData.durationInWeeks || 0);
             formData.append('shortDescription', courseData.shortDescription || '');
             formData.append('description', courseData.description || '');
 

@@ -70,6 +70,7 @@ const CourseRevisionSchema = new mongoose.Schema({
     audience: [String],
     includes: [String],
 
+    durationInWeeks: { type: Number, default: 12 },
     categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
     sections: [SectionSchema]
   },

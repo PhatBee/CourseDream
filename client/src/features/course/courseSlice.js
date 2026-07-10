@@ -58,6 +58,17 @@ export const createNewCourse = createAsyncThunk(
   'course/create',
   async (formData, thunkAPI) => {
     try {
+      let durationInWeeks;
+      if (formData instanceof FormData) {
+        durationInWeeks = formData.get('durationInWeeks');
+      } else {
+        durationInWeeks = formData.durationInWeeks;
+      }
+
+      if (!durationInWeeks || parseInt(durationInWeeks, 10) <= 0) {
+        return thunkAPI.rejectWithValue('Thời hạn truy cập khóa học là bắc buộc.');
+      }
+
       const response = await courseService.createCourse(formData);
       return response;
     } catch (error) {
@@ -119,7 +130,6 @@ export const getCourseStudents = createAsyncThunk(
     }
   }
 );
-
 
 export const courseSlice = createSlice({
   name: 'course',

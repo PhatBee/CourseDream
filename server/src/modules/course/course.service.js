@@ -601,6 +601,11 @@ export const createCourse = async (courseData, thumbnailFile, instructorId) => {
     (calculatedTotalDuration / 3600).toFixed(1)
   ); // Đổi ra giờ, lấy 1 số lẻ
 
+  const durationInWeeks = Number(courseData.durationInWeeks);
+  if (!durationInWeeks || durationInWeeks <= 0) {
+    throw new Error('Thời hạn truy cập khóa học không hợp lệ.');
+  }
+
   await savedCourse.save();
 
   return savedCourse;
