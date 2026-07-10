@@ -2,13 +2,32 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { PlayCircle, Award } from 'lucide-react';
 import ProgressBar from '../common/ProgressBar';
+import { useDispatch } from 'react-redux';
+import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
+import { toast } from 'react-hot-toast';
 
 const LearningCourseCard = ({ enrollment }) => {
-  const { course, learningProgress } = enrollment;
+  const dispatch = useDispatch();
+  const { course, learningProgress, isActivated, _id: enrollmentId, endedAt } = enrollment;
 
   if (!course) return null;
 
   const progress = learningProgress;
+  const isExpired = endedAt && new Date(endedAt) < new Date();
+
+  const handleActivateCourse = async (e) => {
+    e.preventDefault();
+    if (!enrollmentId) {
+      toast.error("Không tìm thấy mã kích hoạt khóa học.");
+      return;
+    }
+    try {
+      await dispatch(activateEnrollmentThunk(enrollmentId)).unwrap();
+      toast.success("Kích hoạt khóa học thành công!");
+    } catch (err) {
+      toast.error(err || "Kích hoạt khóa học thất bại.");
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -46,7 +65,13 @@ const LearningCourseCard = ({ enrollment }) => {
           <ProgressBar percentage={progress.percentage} color="bg-rose-500" />
 
           <div className="mt-4 flex justify-between items-center">
-            {progress.percentage === 100 ? (
+            {isExpired ? (
+              <span className="inline-flex items-center text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">
+                Đã hết hạn học
+              </span>
+            ) : !isActivated ? (
+              <span className="text-xs text-gray-500 font-medium">Chưa kích hoạt</span>
+            ) : progress.percentage === 100 ? (
               <span className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
                 <Award size={14} className="mr-1" /> Đã Hoàn thành
               </span>
@@ -54,12 +79,25 @@ const LearningCourseCard = ({ enrollment }) => {
               <span className="text-xs text-gray-400">Tiếp tục nào!</span>
             )}
 
-            <Link
-              to={`/courses/${course.slug}/overview`}
-              className="text-sm font-bold text-rose-600 hover:text-rose-700 hover:underline"
-            >
-              {progress.percentage === 0 ? 'Bắt đầu học' : 'Tiếp tục học'} →
-            </Link>
+            {isExpired ? (
+              <span className="text-sm font-bold text-gray-400 cursor-not-allowed">
+                Đã hết hạn học
+              </span>
+            ) : !isActivated ? (
+              <button
+                onClick={handleActivateCourse}
+                className="text-sm font-bold text-amber-600 hover:text-amber-700 hover:underline bg-transparent border-0 cursor-pointer p-0"
+              >
+                Kích hoạt khóa học →
+              </button>
+            ) : (
+              <Link
+                to={`/courses/${course.slug}/overview`}
+                className="text-sm font-bold text-rose-600 hover:text-rose-700 hover:underline"
+              >
+                {progress.percentage === 0 ? 'Bắt đầu học' : 'Tiếp tục học'} →
+              </Link>
+            )}
           </div>
         </div>
       </div>

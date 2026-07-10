@@ -41,6 +41,19 @@ export const fetchStudentDashboard = createAsyncThunk(
   }
 );
 
+export const activateEnrollmentThunk = createAsyncThunk(
+  'enrollment/activateEnrollment',
+  async (enrollmentId, thunkAPI) => {
+    try {
+      const response = await enrollmentApi.activateEnrollment(enrollmentId);
+      return response.data; // { success: true, message: ..., enrollment: ... }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 const enrollmentSlice = createSlice({
   name: 'enrollment',
   initialState,
@@ -89,6 +102,35 @@ const enrollmentSlice = createSlice({
         }).filter(id => id !== null);
       })
       .addCase(fetchStudentDashboard.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      .addCase(activateEnrollmentThunk.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(activateEnrollmentThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const updatedEnrollment = action.payload.enrollment;
+        if (updatedEnrollment) {
+          const index = state.items.findIndex(item => item._id === updatedEnrollment._id);
+          if (index !== -1) {
+            state.items[index] = { ...state.items[index], ...updatedEnrollment };
+          }
+          if (state.dashboardData) {
+            const dashIndex = state.dashboardData.findIndex(item => item._id === updatedEnrollment._id);
+            if (dashIndex !== -1) {
+              state.dashboardData[dashIndex] = {
+                ...state.dashboardData[dashIndex],
+                isActivated: updatedEnrollment.isActivated,
+                startedAt: updatedEnrollment.startedAt,
+                endedAt: updatedEnrollment.endedAt
+              };
+            }
+          }
+        }
+      })
+      .addCase(activateEnrollmentThunk.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;

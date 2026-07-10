@@ -41,7 +41,7 @@ class EnrollmentService {
         const enrollments = await Enrollment.find({ student: userId })
             .populate({
                 path: "course",
-                select: "title slug thumbnail price instructor totalLectures totalHours categories", // Thêm categories
+                select: "title slug thumbnail price instructor totalLectures totalHours categories durationInWeeks", // Thêm categories và durationInWeeks
                 populate: [
                     { path: "instructor", select: "name avatar" },
                     { path: "categories", select: "name slug" } // Populate categories
@@ -64,7 +64,7 @@ class EnrollmentService {
         const enrollments = await Enrollment.find({ student: userId })
             .populate({
                 path: "course",
-                select: "title slug thumbnail totalLectures totalHours instructor", // Lấy các trường cần cho Dashboard
+                select: "title slug thumbnail totalLectures totalHours instructor durationInWeeks", // Lấy các trường cần cho Dashboard
                 populate: { path: "instructor", select: "name" }
             })
             .sort({ lastViewedAt: -1, enrolledAt: -1 })
@@ -86,6 +86,9 @@ class EnrollmentService {
             return {
                 _id: enrollment._id, // ID của enrollment
                 enrolledAt: enrollment.enrolledAt,
+                isActivated: enrollment.isActivated,
+                startedAt: enrollment.startedAt,
+                endedAt: enrollment.endedAt,
                 course: enrollment.course,
                 // Object progress được tính toán riêng
                 learningProgress: {
@@ -97,6 +100,57 @@ class EnrollmentService {
         }));
 
         return data.filter(item => item !== null);
+    }
+
+    async activateCourse(enrollmentId, userId) {
+        const enrollment = await Enrollment.findOne({ _id: enrollmentId, student: userId }).populate("course");
+        if (!enrollment) {
+            const error = new Error("Không tìm thấy thông tin ghi danh của bạn.");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        if (enrollment.isActivated) {
+            const error = new Error("Khóa học này đã được kích hoạt trước đó.");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const course = enrollment.course;
+        if (!course) {
+            const error = new Error("Không tìm thấy thông tin khóa học.");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const durationInWeeks = course.durationInWeeks || 12;
+        const startedAt = new Date();
+        const durationInMs = durationInWeeks * 7 * 24 * 60 * 60 * 1000;
+        const endedAt = new Date(startedAt.getTime() + durationInMs);
+
+        enrollment.isActivated = true;
+        enrollment.startedAt = startedAt;
+        enrollment.endedAt = endedAt;
+
+        await enrollment.save();
+
+        // Populate lại giống getMyEnrollments
+        const populatedEnrollment = await Enrollment.findById(enrollment._id)
+            .populate({
+                path: "course",
+                select: "title slug thumbnail price instructor totalLectures totalHours categories durationInWeeks",
+                populate: [
+                    { path: "instructor", select: "name avatar" },
+                    { path: "categories", select: "name slug" }
+                ]
+            })
+            .lean();
+
+        if (populatedEnrollment.course && populatedEnrollment.course.thumbnail) {
+            populatedEnrollment.course.thumbnail = signThumbnailUrl(populatedEnrollment.course.thumbnail);
+        }
+
+        return populatedEnrollment;
     }
 }
 

@@ -14,9 +14,19 @@ const EnrolledCoursesScreen = ({ navigation }) => {
         dispatch(fetchMyEnrollments());
     }, [dispatch]);
 
-    // Lấy danh sách course từ enrollments
+    // Lấy danh sách course từ enrollments kèm thông tin activation
     const courses = enrollments
-        .map(enrollment => enrollment.course)
+        .map(enrollment => {
+            if (!enrollment.course) return null;
+            return {
+                ...enrollment.course,
+                enrollmentId: enrollment._id,
+                isActivated: enrollment.isActivated,
+                startedAt: enrollment.startedAt,
+                endedAt: enrollment.endedAt,
+                isEnrolled: true,
+            };
+        })
         .filter(Boolean);
 
     return (

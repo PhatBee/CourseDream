@@ -140,11 +140,21 @@ const DashboardScreen = ({ navigation }) => {
                 const course = enrollment?.course;
                 if (!course) return null;
                 const progress = enrollment?.learningProgress?.percentage ?? 0;
+
+                const isActivated = enrollment.isActivated;
+                const isExpired = enrollment.endedAt && new Date(enrollment.endedAt) < new Date();
+
                 return (
                   <TouchableOpacity
                     key={enrollment._id}
                     className="bg-white rounded-2xl p-3 flex-row items-center border border-gray-100 shadow-sm"
-                    onPress={() => navigation.navigate('Learning', { slug: course.slug })}
+                    onPress={() => {
+                      if (isExpired || !isActivated) {
+                        navigation.navigate('CourseDetail', { slug: course.slug, courseId: course._id });
+                      } else {
+                        navigation.navigate('Learning', { slug: course.slug });
+                      }
+                    }}
                     activeOpacity={0.75}
                   >
                     <Image
@@ -156,18 +166,26 @@ const DashboardScreen = ({ navigation }) => {
                       <Text className="font-semibold text-gray-900 text-sm" numberOfLines={2}>
                         {course.title}
                       </Text>
-                      {/* Progress bar */}
+                      {/* Progress bar or status */}
                       <View className="mt-2">
-                        <View className="flex-row justify-between mb-1">
-                          <Text className="text-xs text-gray-400">Tiến độ</Text>
-                          <Text className="text-xs text-rose-500 font-semibold">{progress}%</Text>
-                        </View>
-                        <View className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                          <View
-                            className="bg-rose-500 h-full rounded-full"
-                            style={{ width: `${progress}%` }}
-                          />
-                        </View>
+                        {isExpired ? (
+                          <Text className="text-xs font-semibold text-red-500">Đã hết hạn học</Text>
+                        ) : !isActivated ? (
+                          <Text className="text-xs font-semibold text-amber-500">Chưa kích hoạt - Nhấp để kích hoạt</Text>
+                        ) : (
+                          <>
+                            <View className="flex-row justify-between mb-1">
+                              <Text className="text-xs text-gray-400">Tiến độ</Text>
+                              <Text className="text-xs text-rose-500 font-semibold">{progress}%</Text>
+                            </View>
+                            <View className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                              <View
+                                className="bg-rose-500 h-full rounded-full"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </View>
+                          </>
+                        )}
                       </View>
                     </View>
                     <ChevronRight size={18} color="#9ca3af" className="ml-2" />

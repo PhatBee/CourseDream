@@ -156,10 +156,20 @@ const MyLearningScreen = ({ navigation }) => {
             const progress = progressMap[course.slug] ?? 0;
             const fallbackProgress = item.progress?.percentage ?? 0;
             const displayProgress = progress !== undefined ? progress : fallbackProgress;
+
+            const isActivated = item.isActivated;
+            const isExpired = item.endedAt && new Date(item.endedAt) < new Date();
+
             return (
               <TouchableOpacity
                 className="mb-4 flex-row bg-white rounded-2xl shadow-sm p-3 border border-gray-100"
-                onPress={() => navigation.navigate('Learning', { slug: course.slug })}
+                onPress={() => {
+                  if (isExpired || !isActivated) {
+                    navigation.navigate('CourseDetail', { slug: course.slug, courseId: course._id });
+                  } else {
+                    navigation.navigate('Learning', { slug: course.slug });
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <Image
@@ -180,7 +190,13 @@ const MyLearningScreen = ({ navigation }) => {
                   </View>
 
                   <View>
-                    <ProgressBar progress={displayProgress} showText={true} />
+                    {isExpired ? (
+                      <Text className="text-xs font-semibold text-red-500">Đã hết hạn học</Text>
+                    ) : !isActivated ? (
+                      <Text className="text-xs font-semibold text-amber-500">Chưa kích hoạt - Nhấp để kích hoạt</Text>
+                    ) : (
+                      <ProgressBar progress={displayProgress} showText={true} />
+                    )}
                   </View>
                 </View>
               </TouchableOpacity>

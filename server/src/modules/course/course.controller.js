@@ -3,6 +3,7 @@ import Course from './course.model.js';
 import * as courseService from './course.service.js';
 import { getCDNUrl, generateSignedVideoUrl, extractKeyFromCDNUrl } from '../../config/aws.js';
 import Lecture from './lecture.model.js';
+import Enrollment from '../enrollment/enrollment.model.js';
 
 /**
  * @desc    Lấy chi tiết khóa học
@@ -141,8 +142,27 @@ export const getVideoPlayUrl = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Bài giảng không tồn tại' });
     }
 
-    if (!lecture.isPreviewFree && !user) {
-      return res.status(401).json({ success: false, message: 'Vui lòng đăng nhập để xem bài giảng' });
+    if (!lecture.isPreviewFree) {
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'Vui lòng đăng nhập để xem bài giảng' });
+      }
+
+      const isInstructorOrAdmin = user.role === 'admin' || await Course.exists({ _id: courseId, instructor: user.id || user._id });
+      if (!isInstructorOrAdmin) {
+        const enrolled = await Enrollment.findOne({
+          student: user.id || user._id,
+          course: courseId,
+        });
+        if (!enrolled) {
+          return res.status(403).json({ success: false, message: 'Bạn chưa mua khóa học này' });
+        }
+        if (!enrolled.isActivated) {
+          return res.status(403).json({ success: false, message: 'Khóa học chưa được kích hoạt' });
+        }
+        if (enrolled.endedAt && enrolled.endedAt < new Date()) {
+          return res.status(403).json({ success: false, message: 'Khóa học đã hết thời hạn học' });
+        }
+      }
     }
 
     if (!lecture.videoUrl) {

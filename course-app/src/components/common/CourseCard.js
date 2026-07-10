@@ -7,13 +7,36 @@ import { useNavigation } from '@react-navigation/native';
 import { Star, Heart, ShoppingCart } from 'lucide-react-native';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
+import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import { useSelector, useDispatch } from 'react-redux';
 
 // --- SUB-COMPONENT: Footer xử lý logic hiển thị Giá hoặc Nút Học ---
-const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart, inCart }) => {
+const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart, inCart, isActivated, isExpired, onActivate }) => {
 
   // TRƯỜNG HỢP 1: Đã sở hữu khóa học
   if (isEnrolled) {
+    if (isExpired) {
+      return (
+        <View className="mt-2">
+          <View className="bg-gray-100 px-3 py-2 rounded-lg items-center justify-center border border-gray-200">
+            <Text className="text-gray-500 font-bold text-xs uppercase tracking-wider">Đã hết hạn học</Text>
+          </View>
+        </View>
+      );
+    }
+    if (!isActivated) {
+      return (
+        <View className="mt-2">
+          <TouchableOpacity
+            onPress={onActivate}
+            activeOpacity={0.8}
+            className="bg-amber-500 px-3 py-2 rounded-lg items-center justify-center border border-amber-600 active:bg-amber-600"
+          >
+            <Text className="text-white font-bold text-xs uppercase tracking-wider">Kích hoạt khóa học</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
     return (
       <View className="mt-2">
         <View className="bg-emerald-50 px-3 py-2 rounded-lg items-center justify-center border border-emerald-100">
@@ -83,8 +106,49 @@ const CourseCard = ({ course }) => {
 
 
 
+  const enrollmentInfo = useSelector((state) => 
+    state.enrollment.items.find(item => item.course?._id === _id || item.course === _id)
+  );
+
   // Logic kiểm tra trạng thái
-  const isEnrolled = enrolledCourseIds.includes(_id);
+  const isEnrolled = enrolledCourseIds.includes(_id) || !!course.isEnrolled;
+  const isActivated = enrollmentInfo ? enrollmentInfo.isActivated : course.isActivated;
+  const enrollmentId = enrollmentInfo ? enrollmentInfo._id : course.enrollmentId;
+  const isExpired = enrollmentInfo?.endedAt
+    ? new Date(enrollmentInfo.endedAt) < new Date()
+    : course.endedAt
+    ? new Date(course.endedAt) < new Date()
+    : false;
+
+  const handleActivate = () => {
+    if (!enrollmentId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không tìm thấy thông tin kích hoạt khóa học.',
+        position: 'top',
+      });
+      return;
+    }
+    dispatch(activateEnrollmentThunk(enrollmentId))
+      .unwrap()
+      .then(() => {
+        Toast.show({
+          type: 'success',
+          text1: 'Kích hoạt khóa học thành công!',
+          position: 'top',
+        });
+      })
+      .catch((err) => {
+        Toast.show({
+          type: 'error',
+          text1: 'Kích hoạt khóa học thất bại',
+          text2: err || 'Có lỗi xảy ra',
+          position: 'top',
+        });
+      });
+  };
+
   const isWishlisted = wishlistItems.some(item => item._id === _id);
   const inCart = cartItems.some(item => item.course._id === _id);
 
@@ -202,7 +266,10 @@ const CourseCard = ({ course }) => {
           hasDiscount={hasDiscount}
           formatPrice={formatCurrency}
           onAddToCart={handleAddToCart}
-          inCart={inCart} // <-- THÊM DÒNG NÀY
+          inCart={inCart}
+          isActivated={isActivated}
+          isExpired={isExpired}
+          onActivate={handleActivate}
         />
 
       </View>

@@ -6,6 +6,7 @@ import { Star, Heart, ShoppingCart } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
+import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import Toast from 'react-native-toast-message';
 
 const CourseCardAllCourse = React.memo(({ course }) => {
@@ -33,8 +34,48 @@ const CourseCardAllCourse = React.memo(({ course }) => {
 
   const categoryName = categories?.[0]?.name || 'General';
 
+  const enrollmentInfo = useSelector((state) => 
+    state.enrollment.items.find(item => item.course?._id === _id || item.course === _id)
+  );
 
-  const isEnrolled = enrolledCourseIds.includes(_id);
+  const isEnrolled = enrolledCourseIds.includes(_id) || !!course.isEnrolled;
+  const isActivated = enrollmentInfo ? enrollmentInfo.isActivated : course.isActivated;
+  const enrollmentId = enrollmentInfo ? enrollmentInfo._id : course.enrollmentId;
+  const isExpired = enrollmentInfo?.endedAt
+    ? new Date(enrollmentInfo.endedAt) < new Date()
+    : course.endedAt
+    ? new Date(course.endedAt) < new Date()
+    : false;
+
+  const handleActivate = () => {
+    if (!enrollmentId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không tìm thấy thông tin kích hoạt khóa học.',
+        position: 'top',
+      });
+      return;
+    }
+    dispatch(activateEnrollmentThunk(enrollmentId))
+      .unwrap()
+      .then(() => {
+        Toast.show({
+          type: 'success',
+          text1: 'Kích hoạt khóa học thành công!',
+          position: 'top',
+        });
+      })
+      .catch((err) => {
+        Toast.show({
+          type: 'error',
+          text1: 'Kích hoạt khóa học thất bại',
+          text2: err || 'Có lỗi xảy ra',
+          position: 'top',
+        });
+      });
+  };
+
   const isWishlisted = wishlistItems.some(item => item._id === _id);
   const inCart = cartItems.some(item => item.course._id === _id);
   const imageUrl = thumbnail?.url || thumbnail;
@@ -110,9 +151,23 @@ const CourseCardAllCourse = React.memo(({ course }) => {
         </View>
         {/* Giá hoặc trạng thái đã ghi danh */}
         {isEnrolled ? (
-          <View className="bg-emerald-50 px-2 py-1 rounded-lg items-center justify-center border border-emerald-100 mt-1">
-            <Text className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Đã ghi danh</Text>
-          </View>
+          isExpired ? (
+            <View className="bg-gray-100 px-2 py-1 rounded-lg items-center justify-center border border-gray-200 mt-1">
+              <Text className="text-gray-500 font-bold text-[10px] uppercase tracking-wider">Đã hết hạn học</Text>
+            </View>
+          ) : !isActivated ? (
+            <TouchableOpacity
+              onPress={handleActivate}
+              activeOpacity={0.8}
+              className="bg-amber-500 px-2 py-1 rounded-lg items-center justify-center border border-amber-600 mt-1 active:bg-amber-600"
+            >
+              <Text className="text-white font-bold text-[10px] uppercase tracking-wider">Kích hoạt khóa học</Text>
+            </TouchableOpacity>
+          ) : (
+            <View className="bg-emerald-50 px-2 py-1 rounded-lg items-center justify-center border border-emerald-100 mt-1">
+              <Text className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Đã ghi danh</Text>
+            </View>
+          )
         ) : (
           <View className="flex-row items-center justify-between mt-1">
             <View>
