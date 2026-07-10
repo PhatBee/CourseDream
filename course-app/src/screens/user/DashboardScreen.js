@@ -110,6 +110,18 @@ const DashboardScreen = ({ navigation }) => {
           )}
         </View>
 
+        {/* Behind Schedule Banner */}
+        {enrollments.filter(e => e.learningProgress?.scheduleStatus === 'behind').length > 0 && (
+          <View className="mx-4 my-2 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-2xl shadow-sm">
+            <View className="flex-row items-center mb-1">
+              <Text className="text-amber-800 font-extrabold text-sm">Cảnh báo tiến độ ⚠️</Text>
+            </View>
+            <Text className="text-amber-700 text-xs font-medium">
+              Bạn đang chậm hơn lộ trình ở {enrollments.filter(e => e.learningProgress?.scheduleStatus === 'behind').length} khóa học. Hãy click vào khóa học và học bù để tiếp thu bài học tốt nhất nhé!
+            </Text>
+          </View>
+        )}
+
         {/* Recent Courses */}
         <View className="px-4 pt-4">
           <View className="flex-row items-center justify-between mb-3">
@@ -175,12 +187,14 @@ const DashboardScreen = ({ navigation }) => {
                         ) : (
                           <>
                             <View className="flex-row justify-between mb-1">
-                              <Text className="text-xs text-gray-400">Tiến độ</Text>
-                              <Text className="text-xs text-rose-500 font-semibold">{progress}%</Text>
+                              <Text className="text-xs text-gray-400">
+                                Tiến độ {enrollment?.learningProgress?.scheduleStatus === 'behind' ? '(Trễ ⚠️)' : ''}
+                              </Text>
+                              <Text className={`text-xs font-semibold ${enrollment?.learningProgress?.scheduleStatus === 'behind' ? 'text-amber-600' : 'text-rose-500'}`}>{progress}%</Text>
                             </View>
                             <View className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
                               <View
-                                className="bg-rose-500 h-full rounded-full"
+                                className={`${enrollment?.learningProgress?.scheduleStatus === 'behind' ? 'bg-amber-500' : 'bg-rose-500'} h-full rounded-full`}
                                 style={{ width: `${progress}%` }}
                               />
                             </View>

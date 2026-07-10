@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudentDashboard } from '../features/enrollment/enrollmentSlice';
 import LearningCourseCard from '../components/dashboard/LearningCourseCard';
-import { BookOpen, Clock, Award } from 'lucide-react';
+import { BookOpen, Clock, Award, TrendingUp } from 'lucide-react';
 import Spinner from '../components/common/Spinner';
 import Pagination from '../components/common/Pagination';
 
@@ -88,7 +88,31 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* 2. Course In Progress Section */}
+      {/* 2. Behind Schedule Alerts */}
+      {enrolledCourses.filter(item => item.learningProgress?.scheduleStatus === 'behind').length > 0 && (
+        <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-2xl mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-pulse">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 bg-amber-100 rounded-xl text-amber-700 mt-1 md:mt-0">
+              <TrendingUp size={22} />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-amber-900 text-base">Bạn đang bị trễ tiến độ học tập!</h4>
+              <p className="text-sm text-amber-700 mt-0.5 font-medium">
+                Bạn đang chậm hơn lộ trình đề xuất ở {enrolledCourses.filter(item => item.learningProgress?.scheduleStatus === 'behind').length} khóa học.
+                khuyên bạn nên hoàn thành ít nhất 2 bài học mỗi tuần để duy trì đà tiếp thu tốt nhất!
+              </p>
+            </div>
+          </div>
+          <a
+            href="#learning-list"
+            className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-amber-200 text-center whitespace-nowrap"
+          >
+            Học bù ngay
+          </a>
+        </div>
+      )}
+
+      {/* 3. Course In Progress Section */}
       <div id="learning-list">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-gray-800">Khóa học đang học</h3>

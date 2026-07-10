@@ -48,6 +48,7 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSe
   const progressIntervalRef = useRef(null);
   // Ref luôn giữ giá trị startTime mới nhất — tránh closure stale
   const startTimeRef = useRef(startTime);
+  const initialSeekDoneRef = useRef(false);
 
   useEffect(() => {
     if (!playerRef.current && videoRef.current) {
@@ -153,32 +154,38 @@ const VideoJSPlayer = ({ src, poster, startTime = 0, onReady, onTimeUpdate, onSe
     playerRef.current.src({ src, type: "video/mp4" });
     if (poster) playerRef.current.poster(poster);
 
-    // Một lần duy nhất: seek đến vị trí resume sau khi metadata load
-    playerRef.current.one("loadedmetadata", () => {
-      if (startTimeRef.current > 0 && playerRef.current) {
-        playerRef.current.currentTime(startTimeRef.current);
-      }
-    });
+    initialSeekDoneRef.current = false;
   }, [src]);
 
   // ─── Effect: startTime prop thay đổi ─────────────────────────────────────
   useEffect(() => {
     startTimeRef.current = startTime;
 
-    if (!playerRef.current || startTime <= 0) return;
+    if (!playerRef.current || startTime <= 0 || initialSeekDoneRef.current) return;
 
-    // readyState >= 1 (HAVE_METADATA): seek ngay lập tức
-    if (playerRef.current.readyState() >= 1) {
-      playerRef.current.currentTime(startTime);
-    } else {
-      // Metadata chưa load: gắn thêm handler (trường hợp startTime update
-      // trước loadedmetadata event, đảm bảo seek không bị bỏ sót)
-      playerRef.current.one("loadedmetadata", () => {
-        if (startTimeRef.current > 0 && playerRef.current) {
-          playerRef.current.currentTime(startTimeRef.current);
+    let attempts = 0;
+    const interval = setInterval(() => {
+      try {
+        if (!playerRef.current || initialSeekDoneRef.current) {
+          clearInterval(interval);
+          return;
         }
-      });
-    }
+        playerRef.current.currentTime(startTime);
+        const diff = Math.abs(playerRef.current.currentTime() - startTime);
+        if (diff < 2) {
+          initialSeekDoneRef.current = true;
+          clearInterval(interval);
+        }
+      } catch (e) {
+        // error, retry
+      }
+      attempts++;
+      if (attempts > 15) {
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
   }, [startTime]);
 
 

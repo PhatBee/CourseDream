@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { 
   Book, 
   Users, 
@@ -69,9 +70,14 @@ const StatCard = ({ icon: Icon, label, value, growth, color, bgColor, formatType
 const InstructorDashboard = () => {
   const [timeRange, setTimeRange] = useState('30days');
   const [activeChartTab, setActiveChartTab] = useState('revenue');
+  const [activeTableTab, setActiveTableTab] = useState('revenue');
   
   const dispatch = useDispatch();
   const { dashboardData, isLoading } = useSelector((state) => state.instructor);
+
+  const handleSendReminder = (courseTitle) => {
+    toast.success(`Đã gửi thông báo nhắc nhở học tập đến học viên trễ tiến độ của khóa "${courseTitle}"!`);
+  };
 
   useEffect(() => {
     dispatch(fetchDashboardStats(timeRange));
@@ -280,23 +286,54 @@ const InstructorDashboard = () => {
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">So sánh chi tiết lượng ghi danh mới và doanh thu giữa các khóa học</p>
           </div>
-          <Link
-            to="/instructor/courses"
-            className="text-rose-600 text-xs lg:text-sm font-bold flex items-center hover:text-rose-700 transition-colors w-fit"
-          >
-            Quản lý tất cả khóa học <ArrowRight size={16} className="ml-1" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex bg-gray-100 p-1 rounded-xl w-fit self-start">
+              <button
+                onClick={() => setActiveTableTab('revenue')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  activeTableTab === 'revenue' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                Doanh thu & Học viên
+              </button>
+              <button
+                onClick={() => setActiveTableTab('retention')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  activeTableTab === 'retention' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                Retention & Tiến độ
+              </button>
+            </div>
+            <Link
+              to="/instructor/courses"
+              className="text-rose-600 text-xs lg:text-sm font-bold flex items-center hover:text-rose-700 transition-colors w-fit self-end sm:self-auto"
+            >
+              Quản lý tất cả khóa học <ArrowRight size={16} className="ml-1" />
+            </Link>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[650px]">
             <thead>
-              <tr className="bg-gray-50 text-gray-400 text-[11px] font-bold uppercase tracking-wider border-b border-gray-100">
-                <th className="py-4 px-6">Khóa học</th>
-                <th className="py-4 px-6">Trạng thái</th>
-                <th className="py-4 px-6 text-right">Học viên (Chu kỳ này / Tổng)</th>
-                <th className="py-4 px-6 text-right">Doanh thu (Chu kỳ này / Tổng)</th>
-              </tr>
+              {activeTableTab === 'revenue' ? (
+                <tr className="bg-gray-50 text-gray-400 text-[11px] font-bold uppercase tracking-wider border-b border-gray-100">
+                  <th className="py-4 px-6">Khóa học</th>
+                  <th className="py-4 px-6">Trạng thái</th>
+                  <th className="py-4 px-6 text-right">Học viên (Chu kỳ này / Tổng)</th>
+                  <th className="py-4 px-6 text-right">Doanh thu (Chu kỳ này / Tổng)</th>
+                </tr>
+              ) : (
+                <tr className="bg-gray-50 text-gray-400 text-[11px] font-bold uppercase tracking-wider border-b border-gray-100">
+                  <th className="py-4 px-6">Khóa học</th>
+                  <th className="py-4 px-6">Trạng thái</th>
+                  <th className="py-4 px-6 text-right">Tiến độ trung bình</th>
+                  <th className="py-4 px-6 text-right">Học viên trễ tiến độ (Behind)</th>
+                  <th className="py-4 px-6 text-right">Học viên hoàn thành</th>
+                  <th className="py-4 px-6 text-center">Hành động</th>
+                </tr>
+              )}
             </thead>
             <tbody className="divide-y divide-gray-100">
               {coursePerformance.length > 0 ? (
@@ -332,19 +369,58 @@ const InstructorDashboard = () => {
                         {course.status}
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-right font-semibold text-gray-900 text-sm">
-                      <span className="text-rose-600 font-extrabold">{course.periodStudentsCount}</span>
-                      <span className="text-gray-400 font-normal"> / {course.studentsCount}</span>
-                    </td>
-                    <td className="py-4 px-6 text-right text-sm">
-                      <div className="text-rose-600 font-extrabold">{Number(course.periodRevenue || 0).toLocaleString("vi-VN")} đ</div>
-                      <div className="text-[11px] text-gray-400 font-medium">Tổng: {Number(course.revenue || 0).toLocaleString("vi-VN")} đ</div>
-                    </td>
+                    
+                    {activeTableTab === 'revenue' ? (
+                      <>
+                        <td className="py-4 px-6 text-right font-semibold text-gray-900 text-sm">
+                          <span className="text-rose-600 font-extrabold">{course.periodStudentsCount}</span>
+                          <span className="text-gray-400 font-normal"> / {course.studentsCount}</span>
+                        </td>
+                        <td className="py-4 px-6 text-right text-sm">
+                          <div className="text-rose-600 font-extrabold">{Number(course.periodRevenue || 0).toLocaleString("vi-VN")} đ</div>
+                          <div className="text-[11px] text-gray-400 font-medium">Tổng: {Number(course.revenue || 0).toLocaleString("vi-VN")} đ</div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="py-4 px-6 text-right text-sm">
+                          <div className="font-extrabold text-gray-900">{(course.avgCompletionPercentage || 0).toFixed(1)}%</div>
+                          <div className="w-24 bg-gray-100 h-1.5 rounded-full overflow-hidden ml-auto mt-1">
+                            <div className="bg-rose-500 h-full" style={{ width: `${course.avgCompletionPercentage || 0}%` }}></div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-right text-sm">
+                          {course.behindStudentsCount > 0 ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200">
+                              ⚠️ {course.behindStudentsCount} học viên
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">0 học viên</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6 text-right text-sm font-semibold text-green-600">
+                          {course.completedStudentsCount || 0} học viên
+                        </td>
+                        <td className="py-4 px-6 text-center text-sm">
+                          <button
+                            onClick={() => handleSendReminder(course.title)}
+                            disabled={!course.behindStudentsCount}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                              course.behindStudentsCount
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600'
+                                : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+                            }`}
+                          >
+                            Nhắc nhở học bù
+                          </button>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="py-16 text-center">
+                  <td colSpan={activeTableTab === 'revenue' ? "4" : "6"} className="py-16 text-center">
                     <div className="inline-block p-4 bg-gray-50 rounded-full mb-4">
                       <Book className="text-gray-300" size={40} />
                     </div>

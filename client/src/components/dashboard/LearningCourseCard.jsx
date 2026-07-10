@@ -66,17 +66,25 @@ const LearningCourseCard = ({ enrollment }) => {
 
           <div className="mt-4 flex justify-between items-center">
             {isExpired ? (
-              <span className="inline-flex items-center text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">
+              <span className="inline-flex items-center text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
                 Đã hết hạn học
               </span>
             ) : !isActivated ? (
-              <span className="text-xs text-gray-500 font-medium">Chưa kích hoạt</span>
-            ) : progress.percentage === 100 ? (
-              <span className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-                <Award size={14} className="mr-1" /> Đã Hoàn thành
+              <span className="inline-flex items-center text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                Chưa kích hoạt
+              </span>
+            ) : progress.percentage === 100 || progress.scheduleStatus === 'completed' ? (
+              <span className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-100">
+                <Award size={14} className="mr-1" /> Hoàn thành
+              </span>
+            ) : progress.scheduleStatus === 'behind' ? (
+              <span className="inline-flex items-center text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                Trễ lộ trình ⚠️
               </span>
             ) : (
-              <span className="text-xs text-gray-400">Tiếp tục nào!</span>
+              <span className="inline-flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
+                Đúng tiến độ 👍
+              </span>
             )}
 
             {isExpired ? (

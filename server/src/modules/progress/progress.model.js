@@ -30,8 +30,15 @@ const ProgressSchema = new mongoose.Schema({
   watchTimes: [VideoWatchTimeSchema],
   /** Danh sách quiz đã trả lời đúng */
   completedQuizzes: { type: [CompletedQuizSchema], default: [] },
+  scheduleStatus: {
+    type: String,
+    enum: ['in-progress', 'behind', 'completed'],
+    default: 'in-progress'
+  }
 }, { timestamps: true });
 
 ProgressSchema.index({ student: 1, course: 1 }, { unique: true });
+ProgressSchema.index({ scheduleStatus: 1 });
+ProgressSchema.index({ course: 1, scheduleStatus: 1 });
 
 export default mongoose.model('Progress', ProgressSchema);

@@ -10,4 +10,7 @@ const EnrollmentSchema = new mongoose.Schema({
   endedAt: { type: Date, default: null }
 }, { timestamps: true });
 
+EnrollmentSchema.index({ student: 1, course: 1 }, { unique: true });
+EnrollmentSchema.index({ isActivated: 1 });
+
 export default mongoose.model('Enrollment', EnrollmentSchema);

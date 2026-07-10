@@ -2,6 +2,7 @@ import Progress from './progress.model.js';
 import Course from '../course/course.model.js';
 import Lecture from '../course/lecture.model.js';
 import notificationService from '../notification/notification.service.js';
+import Enrollment from '../enrollment/enrollment.model.js';
 
 
 const getCourseBySlug = async (slug) => {
@@ -35,6 +36,45 @@ export const getCourseProgress = async (userId, courseSlug) => {
   const progress = await findOrCreateProgress(userId, course._id);
   if (progress.isNew) await progress.save();
   return progress;
+};
+
+export const syncProgressStatus = async (userId, courseId) => {
+  const enrollment = await Enrollment.findOne({ student: userId, course: courseId });
+  if (!enrollment || !enrollment.isActivated || !enrollment.startedAt) {
+    await Progress.updateOne(
+      { student: userId, course: courseId },
+      { $set: { scheduleStatus: 'in-progress' } }
+    );
+    return 'in-progress';
+  }
+
+  const course = await Course.findById(courseId).select('totalLectures durationInWeeks');
+  if (!course) return 'in-progress';
+
+  const progress = await findOrCreateProgress(userId, courseId);
+
+  const totalLectures = course.totalLectures || 0;
+  const durationInWeeks = course.durationInWeeks || 12;
+  const completedCount = progress.completedLectures ? progress.completedLectures.length : 0;
+  const percentage = progress.percentage || 0;
+
+  const weeksElapsed = Math.max(0, (Date.now() - new Date(enrollment.startedAt)) / (7 * 24 * 60 * 60 * 1000));
+  const learningPaceGoal = durationInWeeks > 0 ? (totalLectures / durationInWeeks) : 0;
+  const E = Math.min(learningPaceGoal * weeksElapsed, totalLectures);
+  const A = completedCount;
+
+  let status = 'in-progress';
+  if (A < E * 0.8 && percentage < 100) {
+    status = 'behind';
+  } else if (percentage >= 100) {
+    status = 'completed';
+  } else {
+    status = 'in-progress';
+  }
+
+  progress.scheduleStatus = status;
+  await progress.save();
+  return status;
 };
 
 // ─── toggleLectureCompletion ─────────────────────────────────────────────────
@@ -71,6 +111,8 @@ export const toggleLectureCompletion = async (userId, courseSlug, lectureId) => 
     }).catch(err => console.error("Lỗi gửi thông báo hoàn thành khóa học:", err));
   }
 
+  await syncProgressStatus(userId, course._id);
+
   return progress;
 };
 
@@ -100,7 +142,7 @@ export const saveVideoProgress = async (userId, courseSlug, lectureId, watchedSe
   );
 
   // Cập nhật watchTime nếu entry đã tồn tại
-  const updateResult = await Progress.updateOne(
+  await Progress.updateOne(
     { student: userId, course: course._id, 'watchTimes.lecture': lectureId },
     {
       $set: {
@@ -127,7 +169,44 @@ export const saveVideoProgress = async (userId, courseSlug, lectureId, watchedSe
     );
   }
 
-  return { lectureId, watchedSeconds };
+  // Tự động đánh dấu hoàn thành bài học nếu đạt điều kiện (Học dồn real-time)
+  const lecture = await Lecture.findById(lectureId).select('duration').lean();
+  if (lecture && lecture.duration > 0) {
+    const isCompletedCondition = 
+      (watchedSeconds >= 0.9 * lecture.duration) || 
+      ((watchedSeconds / lecture.duration) * 100 >= 95);
+
+    if (isCompletedCondition) {
+      const fullProgress = await findOrCreateProgress(userId, course._id);
+      const exists = fullProgress.completedLectures.some(id => id.toString() === lectureId);
+      
+      if (!exists) {
+        fullProgress.completedLectures.push(lectureId);
+        const oldPercentage = fullProgress.percentage;
+        const totalLectures = course.totalLectures || 1;
+        fullProgress.percentage = Math.min(
+          100,
+          Math.round((fullProgress.completedLectures.length / totalLectures) * 100)
+        );
+        await fullProgress.save();
+
+        if (oldPercentage < 100 && fullProgress.percentage === 100) {
+          await notificationService.createNotification({
+            recipient: userId,
+            type: "course_completed",
+            title: "Chúc mừng bạn đã hoàn thành khóa học!",
+            message: `Bạn đã hoàn thành xuất sắc khóa học "${course.title}". Hãy xem lại các kiến thức đã học và tiếp tục chinh phục những khóa học khác nhé!`,
+            metadata: { courseTitle: course.title }
+          }).catch(err => console.error("Lỗi gửi thông báo hoàn thành khóa học:", err));
+        }
+      }
+    }
+  }
+
+  await syncProgressStatus(userId, course._id);
+
+  const finalProgress = await Progress.findOne({ student: userId, course: course._id }).lean();
+  return { lectureId, watchedSeconds, progress: finalProgress };
 };
 
 // ─── getVideoProgress — Lấy last_watched_time của một bài giảng ─────────────
@@ -242,6 +321,8 @@ export const submitQuizAnswer = async (userId, courseSlug, lectureId, quizIndex,
       { new: true }
     );
   }
+
+  await syncProgressStatus(userId, course._id);
 
   return {
     correct,

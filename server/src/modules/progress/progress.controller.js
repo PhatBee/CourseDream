@@ -235,3 +235,26 @@ export const getQuizReview = async (req, res, next) => {
     next(error);
   }
 };
+
+// ─── POST /api/progress/sync ──────────────────────────────────────────────────
+export const syncProgress = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { courseId } = req.body;
+
+    if (!courseId) {
+      const error = new Error('Thiếu courseId');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const status = await progressService.syncProgressStatus(userId, courseId);
+    res.status(200).json({
+      success: true,
+      message: 'Đồng bộ tiến độ học tập thành công',
+      data: { scheduleStatus: status }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

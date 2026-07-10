@@ -68,8 +68,8 @@ export const saveVideoProgress = createAsyncThunk(
   'learning/saveVideoProgress',
   async ({ courseSlug, lectureId, watchedSeconds }, thunkAPI) => {
     try {
-      await learningApi.saveVideoProgress({ courseSlug, lectureId, watchedSeconds });
-      return { watchedSeconds };
+      const response = await learningApi.saveVideoProgress({ courseSlug, lectureId, watchedSeconds });
+      return response.data.data;
     } catch (error) {
       // Silent fail — không làm phiền user khi lưu định kỳ thất bại
       return thunkAPI.rejectWithValue(error.message);
@@ -207,7 +207,9 @@ export const learningSlice = createSlice({
 
       // saveVideoProgress — cập nhật lastWatchedTime local (tùy chọn)
       .addCase(saveVideoProgress.fulfilled, (state, action) => {
-        // Có thể cập nhật lastWatchedTime từ response nếu cần
+        if (action.payload?.progress) {
+          state.progress = action.payload.progress;
+        }
       })
 
       // fetchQuizReview — load dữ liệu cho Review Modal

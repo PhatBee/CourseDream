@@ -94,7 +94,8 @@ class EnrollmentService {
                 learningProgress: {
                     percentage: progress ? progress.percentage : 0,
                     completedLessons: progress ? progress.completedLectures.length : 0,
-                    totalLessons: enrollment.course.totalLectures || 0
+                    totalLessons: enrollment.course.totalLectures || 0,
+                    scheduleStatus: progress ? (progress.scheduleStatus || 'in-progress') : 'in-progress'
                 }
             };
         }));

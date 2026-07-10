@@ -2,7 +2,8 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import app from "./app.js";
 import connectDB from "./config/db.js";
-import checkPaymentStatus from "./cron/checkPaymentStatus.js"
+import checkPaymentStatus from "./cron/checkPaymentStatus.js";
+import "./modules/notification/reminder.js";
 import { initSocket } from "./modules/socket/index.js";
 
 

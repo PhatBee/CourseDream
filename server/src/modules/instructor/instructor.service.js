@@ -339,6 +339,14 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
       }
     },
     {
+      $lookup: {
+        from: 'progresses',
+        localField: '_id',
+        foreignField: 'course',
+        as: 'progressDocs'
+      }
+    },
+    {
       $project: {
         title: 1,
         slug: 1,
@@ -354,7 +362,26 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
             cond: { $gte: ['$$e.enrolledAt', kpiGrowthCurrentStart] }
           }
         },
-        totalEnrollmentsCount: { $size: '$enrollments' }
+        totalEnrollmentsCount: { $size: '$enrollments' },
+        behindStudentsCount: {
+          $size: {
+            $filter: {
+              input: '$progressDocs',
+              as: 'p',
+              cond: { $eq: ['$$p.scheduleStatus', 'behind'] }
+            }
+          }
+        },
+        completedStudentsCount: {
+          $size: {
+            $filter: {
+              input: '$progressDocs',
+              as: 'p',
+              cond: { $eq: ['$$p.scheduleStatus', 'completed'] }
+            }
+          }
+        },
+        avgCompletionPercentage: { $ifNull: [{ $avg: '$progressDocs.percentage' }, 0] }
       }
     },
     {
@@ -368,6 +395,9 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         rating: 1,
         studentsCount: '$totalEnrollmentsCount',
         periodStudentsCount: { $size: '$periodEnrollments' },
+        behindStudentsCount: 1,
+        completedStudentsCount: 1,
+        avgCompletionPercentage: 1,
         revenue: {
           $multiply: [
             '$totalEnrollmentsCount',

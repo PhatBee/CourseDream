@@ -82,10 +82,11 @@ export const reviewApplication = async (req, res, next) => {
 export const getDashboardStats = async (req, res, next) => {
   try {
     // Chạy song song các service để tối ưu tốc độ
-    const [counts, topCourses, categoryStats] = await Promise.all([
+    const [counts, topCourses, categoryStats, progressScheduleStats] = await Promise.all([
       adminService.getDashboardCounts(),
       adminService.getTopCourses(5), // Top 5
-      adminService.getCategoryStats()
+      adminService.getCategoryStats(),
+      adminService.getProgressScheduleStats()
     ]);
 
     res.status(200).json({
@@ -93,7 +94,8 @@ export const getDashboardStats = async (req, res, next) => {
       data: {
         counts,
         topCourses,
-        categoryStats
+        categoryStats,
+        progressScheduleStats
       }
     });
   } catch (error) {

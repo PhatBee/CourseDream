@@ -296,8 +296,7 @@ const VideoPlayer = forwardRef((
     if (videoUrl) p.play();
   });
 
-  // ─── Effect: URL thay đổi → load source + seek sau khi sẵn sàng ─────────────
-  // Đọc lastWatchedTimeRef (không phải lastWatchedTime trực tiếp) để không stale
+  // ─── Effect: URL thay đổi → load source + reset seek state ─────────────
   useEffect(() => {
     if (!player || !videoUrl) return;
 
@@ -305,51 +304,47 @@ const VideoPlayer = forwardRef((
       try {
         await player.replaceAsync(videoUrl);
         player.play();
-
-        // Seek đến vị trí đã xem sau khi player ready.
-        // Dùng ref để đọc giá trị mới nhất tại thời điểm callback chạy.
-        if (lastWatchedTimeRef.current > 5 && !initialSeekDoneRef.current) {
-          // Chờ player ổn định trước khi seek
-          setTimeout(() => {
-            try {
-              if (player && lastWatchedTimeRef.current > 5 && !initialSeekDoneRef.current) {
-                player.currentTime = lastWatchedTimeRef.current;
-                initialSeekDoneRef.current = true;
-              }
-            } catch (e) {
-              console.warn('[VideoPlayer] Seek (after replaceAsync) error:', e);
-            }
-          }, 600);
-        }
       } catch (e) {
         console.warn('[VideoPlayer] replaceAsync error:', e);
       }
     };
 
+    initialSeekDoneRef.current = false;
     setupPlayer();
   }, [videoUrl]);
 
   // ─── Effect: lastWatchedTime prop thay đổi (fetchVideoProgress trả về sau) ──
-  // FIX CHÍNH: fetchVideoProgress dispatch hoàn thành SAU khi setupPlayer() đã chạy.
-  // → Sync ref + seek ngay nếu player đã sẵn sàng (đang phát hoặc pause).
+  // Sync ref + seek bằng retry loop cho đến khi thành công
   useEffect(() => {
     // Luôn sync ref trước tiên
     lastWatchedTimeRef.current = lastWatchedTime;
 
     if (!player || lastWatchedTime <= 5 || initialSeekDoneRef.current) return;
 
-    // Nếu player đang có video (đang play hoặc pause), seek ngay lập tức
-    try {
-      const currentPos = player.currentTime;
-      if (currentPos !== undefined && currentPos !== null) {
-        // Player đã sẵn sàng → seek
+    let attempts = 0;
+    const interval = setInterval(() => {
+      try {
+        if (!player || initialSeekDoneRef.current) {
+          clearInterval(interval);
+          return;
+        }
         player.currentTime = lastWatchedTime;
-        initialSeekDoneRef.current = true;
+        // Kiểm tra xem currentTime đã gần khớp với time chưa
+        const diff = Math.abs(player.currentTime - lastWatchedTime);
+        if (diff < 2) {
+          initialSeekDoneRef.current = true;
+          clearInterval(interval);
+        }
+      } catch (e) {
+        // error, retry
       }
-    } catch (e) {
-      // Player chưa sẵn sàng — sẽ được xử lý bởi timeout trong setupPlayer
-      console.warn('[VideoPlayer] Reactive seek error (will retry via setupPlayer):', e);
-    }
+      attempts++;
+      if (attempts > 15) {
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
   }, [lastWatchedTime]);
 
   // ─── Subscribe to player status — cập nhật currentTime & duration cho Markers, kiểm tra Gatekeeper ────────

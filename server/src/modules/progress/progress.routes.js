@@ -61,6 +61,12 @@ router.get('/quiz-history/:courseSlug/:lectureId', progressController.getQuizHis
 router.get('/quiz-review/:courseSlug/:lectureId', progressController.getQuizReview);
 
 /**
+ * @route   POST /api/progress/sync
+ * @desc    Đồng bộ và tính toán lại tiến độ/trạng thái trễ hạn (học dồn)
+ */
+router.post('/sync', progressController.syncProgress);
+
+/**
  * @route   GET /api/progress/:courseSlug
  * @desc    Lấy thông tin tiến độ học tập theo SLUG
  */

@@ -5,6 +5,7 @@ import Enrollment from '../enrollment/enrollment.model.js';
 import Payment from '../payment/payment.model.js';
 import Category from '../category/category.model.js';
 import CourseRevision from '../course/courseRevision.model.js';
+import Progress from '../progress/progress.model.js';
 import Lecture from '../course/lecture.model.js';
 import Section from '../course/section.model.js';
 import InstructorApplication from '../user/instructorApplication.model.js';
@@ -1429,3 +1430,86 @@ export const getQuizzesPreview = async (courseId) => {
     },
   };
 };
+
+export const getProgressScheduleStats = async () => {
+  const progressCounts = await Progress.aggregate([
+    {
+      $group: {
+        _id: '$scheduleStatus',
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const distribution = {
+    inProgress: 0,
+    behind: 0,
+    completed: 0
+  };
+  progressCounts.forEach(item => {
+    if (item._id === 'in-progress') distribution.inProgress = item.count;
+    else if (item._id === 'behind') distribution.behind = item.count;
+    else if (item._id === 'completed') distribution.completed = item.count;
+  });
+
+  const topBehindCourses = await Progress.aggregate([
+    {
+      $group: {
+        _id: '$course',
+        totalStudents: { $sum: 1 },
+        behindStudents: {
+          $sum: {
+            $cond: [{ $eq: ['$scheduleStatus', 'behind'] }, 1, 0]
+          }
+        }
+      }
+    },
+    { $match: { totalStudents: { $gt: 2 } } }, // Có ít nhất 3 học viên để tránh nhiễu
+    {
+      $addFields: {
+        behindRate: { $multiply: [{ $divide: ['$behindStudents', '$totalStudents'] }, 100] }
+      }
+    },
+    { $sort: { behindRate: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'courseInfo'
+      }
+    },
+    { $unwind: '$courseInfo' },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'courseInfo.instructor',
+        foreignField: '_id',
+        as: 'instructorInfo'
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        title: '$courseInfo.title',
+        slug: '$courseInfo.slug',
+        thumbnail: '$courseInfo.thumbnail',
+        behindRate: 1,
+        totalStudents: 1,
+        behindStudents: 1,
+        instructorName: { $arrayElemAt: ['$instructorInfo.name', 0] }
+      }
+    }
+  ]);
+
+  topBehindCourses.forEach(c => {
+    if (c.thumbnail) c.thumbnail = signThumbnailUrl(c.thumbnail);
+  });
+
+  return {
+    distribution,
+    topBehindCourses
+  };
+};
+
