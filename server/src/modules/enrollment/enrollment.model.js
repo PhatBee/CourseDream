@@ -7,7 +7,8 @@ const EnrollmentSchema = new mongoose.Schema({
   lastViewedAt: { type: Date, default: Date.now },
   isActivated: { type: Boolean, default: false },
   startedAt: { type: Date, default: null },
-  endedAt: { type: Date, default: null }
+  endedAt: { type: Date, default: null },
+  extensionCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 EnrollmentSchema.index({ student: 1, course: 1 }, { unique: true });

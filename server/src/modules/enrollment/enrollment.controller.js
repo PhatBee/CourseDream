@@ -38,3 +38,23 @@ export const activateCourse = async (req, res, next) => {
     next(err);
   }
 };
+
+export const extendCourse = async (req, res, next) => {
+  try {
+    const { enrollmentId } = req.params;
+    const { packageId } = req.body; 
+    const userId = req.user.id || req.user._id;
+
+    const result = await enrollmentService.extendCourse(enrollmentId, userId, packageId);
+
+    res.status(200).json({
+      success: true,
+      message: result.priceCharged === 0 
+        ? `Đã gia hạn thêm ${result.weeksAdded} tuần!` 
+        : `Gia hạn khóa học thành công!`,
+      enrollment: result.enrollment
+    });
+  } catch (err) {
+    next(err);
+  }
+};

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, Share2, ShoppingCart, PlayCircle } from "lucide-react";
+import { Heart, Share2, ShoppingCart, PlayCircle, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addToWishlist,
@@ -10,6 +10,7 @@ import { addToCart, removeFromCart } from "../../features/cart/cartSlice";
 import { activateEnrollmentThunk } from "../../features/enrollment/enrollmentSlice";
 import ShareModal from "../common/ShareModal";
 import { toast } from "react-hot-toast";
+import CourseExtensionModal from "../course/CourseExtensionModal";
 
 const formatPrice = (price) => {
   if (price === 0) return "MIỄN PHÍ";
@@ -31,6 +32,7 @@ const EnrollCard = ({ course, isInstructor }) => {
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const { enrolledCourseIds } = useSelector((state) => state.enrollment);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isExtensionOpen, setIsExtensionOpen] = useState(false);
   const { items: cartItems } = useSelector((state) => state.cart);
 
   const { _id, title, price = 0, priceDiscount = 0, slug } = course;
@@ -168,7 +170,7 @@ const EnrollCard = ({ course, isInstructor }) => {
                 disabled
                 className="w-full bg-gray-300 text-gray-500 font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed shadow-inner"
               >
-                Khóa học đã hết hạn học
+                Khóa học đã hết hạn
               </button>
             ) : needsActivation ? (
               <button

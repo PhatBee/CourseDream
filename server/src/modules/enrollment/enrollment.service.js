@@ -41,7 +41,7 @@ class EnrollmentService {
         const enrollments = await Enrollment.find({ student: userId })
             .populate({
                 path: "course",
-                select: "title slug thumbnail price instructor totalLectures totalHours categories durationInWeeks", // Thêm categories và durationInWeeks
+                select: "title slug thumbnail price priceDiscount instructor totalLectures totalHours categories durationInWeeks", // Thêm categories và durationInWeeks
                 populate: [
                     { path: "instructor", select: "name avatar" },
                     { path: "categories", select: "name slug" } // Populate categories
@@ -64,7 +64,7 @@ class EnrollmentService {
         const enrollments = await Enrollment.find({ student: userId })
             .populate({
                 path: "course",
-                select: "title slug thumbnail totalLectures totalHours instructor durationInWeeks", // Lấy các trường cần cho Dashboard
+                select: "title slug thumbnail totalLectures totalHours instructor durationInWeeks priceDiscount price", // Lấy các trường cần cho Dashboard
                 populate: { path: "instructor", select: "name" }
             })
             .sort({ lastViewedAt: -1, enrolledAt: -1 })
@@ -89,7 +89,9 @@ class EnrollmentService {
                 isActivated: enrollment.isActivated,
                 startedAt: enrollment.startedAt,
                 endedAt: enrollment.endedAt,
+                extensionCount: enrollment.extensionCount,
                 course: enrollment.course,
+                price: enrollment.course.priceDiscount !== undefined ? enrollment.course.priceDiscount : (enrollment.course.price || 0),
                 // Object progress được tính toán riêng
                 learningProgress: {
                     percentage: progress ? progress.percentage : 0,
@@ -152,6 +154,91 @@ class EnrollmentService {
         }
 
         return populatedEnrollment;
+    }
+
+    async extendCourse(enrollmentId, userId, packageId) {
+        const enrollment = await Enrollment.findOne({ _id: enrollmentId, student: userId }).populate("course");
+        if (!enrollment) {
+            const error = new Error("Không tìm thấy thông tin ghi danh.");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        if (!enrollment.isActivated) {
+            const error = new Error("Khóa học chưa được kích hoạt.");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const course = enrollment.course;
+        const durationInWeeks = course.durationInWeeks || 12;
+        
+        const currentPrice = course.priceDiscount !== undefined ? course.priceDiscount : (course.price || 0);
+
+        let extensionWeeks = 0;
+        let finalPrice = 0;
+
+        if (enrollment.extensionCount === 0) {
+            extensionWeeks = 2;
+            finalPrice = 0;
+        } else {
+            switch (packageId) {
+                case '2weeks':
+                    extensionWeeks = 2;
+                    finalPrice = currentPrice * (2 / durationInWeeks);
+                    break;
+                case '4weeks':
+                    extensionWeeks = 4;
+                    finalPrice = (currentPrice * (4 / durationInWeeks)) * 0.95; // Chiết khấu 5%
+                    break;
+                case 'full':
+                    extensionWeeks = durationInWeeks;
+                    finalPrice = currentPrice * 0.7; // Chiết khấu 30%
+                    break;
+                default:
+                    const error = new Error("Gói gia hạn không hợp lệ.");
+                    error.statusCode = 400;
+                    throw error;
+            }
+        }
+
+        // --- Giả lập cổng thanh toán tại đây nếu finalPrice > 0 ---
+        // logicPaymentGate(userId, finalPrice);
+
+        const now = new Date();
+        let baseDate = new Date(enrollment.endedAt);
+
+        if (baseDate <= now) {
+            baseDate = now;
+        }
+
+        const addedMs = extensionWeeks * 7 * 24 * 60 * 60 * 1000;
+        const newEndedAt = new Date(baseDate.getTime() + addedMs);
+
+        enrollment.endedAt = newEndedAt;
+        enrollment.extensionCount += 1;
+        await enrollment.save();
+
+        const populatedEnrollment = await Enrollment.findById(enrollment._id)
+            .populate({
+                path: "course",
+                select: "title slug thumbnail price instructor totalLectures totalHours categories durationInWeeks",
+                populate: [
+                    { path: "instructor", select: "name avatar" },
+                    { path: "categories", select: "name slug" }
+                ]
+            })
+            .lean();
+
+        if (populatedEnrollment.course && populatedEnrollment.course.thumbnail) {
+            populatedEnrollment.course.thumbnail = signThumbnailUrl(populatedEnrollment.course.thumbnail);
+        }
+
+        return {
+            enrollment: populatedEnrollment,
+            priceCharged: finalPrice,
+            weeksAdded: extensionWeeks
+        };
     }
 }
 

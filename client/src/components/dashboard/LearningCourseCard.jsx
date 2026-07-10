@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlayCircle, Award } from 'lucide-react';
+import { PlayCircle, Award, RefreshCw } from 'lucide-react';
 import ProgressBar from '../common/ProgressBar';
 import { useDispatch } from 'react-redux';
 import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import { toast } from 'react-hot-toast';
+import CourseExtensionModal from '../course/CourseExtensionModal';
 
 const LearningCourseCard = ({ enrollment }) => {
   const dispatch = useDispatch();
+  const [isExtensionOpen, setIsExtensionOpen] = useState(false);
   const { course, learningProgress, isActivated, _id: enrollmentId, endedAt } = enrollment;
 
   if (!course) return null;
@@ -30,6 +32,7 @@ const LearningCourseCard = ({ enrollment }) => {
   };
 
   return (
+    <>
     <div className="flex flex-col md:flex-row bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
       {/* 1. Thumbnail */}
       <div className="w-full md:w-64 h-40 md:h-auto relative flex-shrink-0">
@@ -67,7 +70,7 @@ const LearningCourseCard = ({ enrollment }) => {
           <div className="mt-4 flex justify-between items-center">
             {isExpired ? (
               <span className="inline-flex items-center text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
-                Đã hết hạn học
+                Đã hết hạn
               </span>
             ) : !isActivated ? (
               <span className="inline-flex items-center text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
@@ -79,37 +82,46 @@ const LearningCourseCard = ({ enrollment }) => {
               </span>
             ) : progress.scheduleStatus === 'behind' ? (
               <span className="inline-flex items-center text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                Trễ lộ trình ⚠️
+                Trễ lộ trình
               </span>
             ) : (
               <span className="inline-flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
-                Đúng tiến độ 👍
+                Đúng tiến độ
               </span>
             )}
 
             {isExpired ? (
-              <span className="text-sm font-bold text-gray-400 cursor-not-allowed">
-                Đã hết hạn học
-              </span>
+              <button
+                onClick={() => setIsExtensionOpen(true)}
+                className="flex items-center gap-1 text-sm font-bold text-red-600 hover:text-red-700 hover:underline bg-transparent border-0 cursor-pointer p-0"
+              >
+                <RefreshCw size={14} /> Gia hạn
+              </button>
             ) : !isActivated ? (
               <button
                 onClick={handleActivateCourse}
                 className="text-sm font-bold text-amber-600 hover:text-amber-700 hover:underline bg-transparent border-0 cursor-pointer p-0"
               >
-                Kích hoạt khóa học →
+                Kích hoạt khóa học
               </button>
             ) : (
               <Link
                 to={`/courses/${course.slug}/overview`}
                 className="text-sm font-bold text-rose-600 hover:text-rose-700 hover:underline"
               >
-                {progress.percentage === 0 ? 'Bắt đầu học' : 'Tiếp tục học'} →
+                {progress.percentage === 0 ? 'Bắt đầu học' : 'Tiếp tục học'}
               </Link>
             )}
           </div>
         </div>
       </div>
     </div>
+    <CourseExtensionModal
+        isOpen={isExtensionOpen}
+        onClose={() => setIsExtensionOpen(false)}
+        enrollment={enrollment}
+      />
+    </>
   );
 };
 

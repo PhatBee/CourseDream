@@ -18,6 +18,10 @@ const enrollmentApi = {
   activateEnrollment: (enrollmentId) => {
     return axiosClient.post(`${path}/${enrollmentId}/activate`);
   },
+
+  extendEnrollment: (enrollmentId, packageId) => {
+    return axiosClient.post(`${path}/${enrollmentId}/extend`, { packageId });
+  }
 };
 
 export default enrollmentApi;

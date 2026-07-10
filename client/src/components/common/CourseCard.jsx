@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Star, ShoppingCart, User } from 'lucide-react';
+import { Heart, Star, ShoppingCart, User, RefreshCw } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
 import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import { toast } from 'react-toastify';
+import CourseExtensionModal from '../course/CourseExtensionModal';
 
 const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist, viewMode = 'grid' }) => {
   const dispatch = useDispatch();
+  const [isExtensionOpen, setIsExtensionOpen] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const { items: cartItems } = useSelector((state) => state.cart);
@@ -48,6 +50,14 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
   );
   const isAdmin = user && user.role === 'admin';
   const needsActivation = isEnrolled && !isInstructor && !isAdmin && !isActivated;
+
+  const currentEnrollmentData = enrollmentInfo || {
+    _id: enrollmentId,
+    course: course,
+    isActivated: isActivated,
+    endedAt: course.endedAt,
+    extensionCount: course.extensionCount || 0
+  };
 
   const handleActivateCourse = async (e) => {
     e.preventDefault();
@@ -138,11 +148,16 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
     });
   };
 
+  const handleOpenExtension = (e) => {
+    e.preventDefault();
+    setIsExtensionOpen(true);
+  };
+
   // Grid view (default)
   if (viewMode === 'grid') {
     return (
+      <>
       <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden">
-
         {/* Thumbnail Area */}
         <div className="relative overflow-hidden">
           <Link to={`/courses/${slug}`}>
@@ -196,8 +211,8 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
 
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <span className={`text-lg font-bold ${isEnrolled ? 'text-green-600' : 'text-rose-600'}`}>
-                {isEnrolled ? '' : (priceDiscount === 0 ? 'Miễn phí' : formatPrice(priceDiscount))}
+              <span className={`text-lg font-bold ${isEnrolled ? 'text-red-600' : 'text-rose-600'}`}>
+                {isEnrolled ? (isExpired ? 'Hết hạn' : '') : (priceDiscount === 0 ? 'Miễn phí' : formatPrice(priceDiscount))}
               </span>
               {!isEnrolled && price > 0 && (
                 <span className="text-xs text-gray-400 line-through">
@@ -210,28 +225,28 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
               {isEnrolled ? (
                 isExpired ? (
                   <button
-                    disabled
-                    className="px-4 py-2 bg-gray-300 text-gray-500 text-sm font-medium rounded-full cursor-not-allowed shadow-inner"
-                  >
-                    Đã hết hạn
-                  </button>
-                ) : needsActivation ? (
-                  <button
-                    onClick={handleActivateCourse}
-                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-sm font-medium rounded-full transition-all shadow-md hover:shadow-lg"
-                  >
-                    Kích hoạt
-                  </button>
+                      onClick={handleOpenExtension}
+                      className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-sm font-medium rounded-full transition-all shadow-md hover:shadow-lg"
+                    >
+                      <RefreshCw size={14} /> Gia hạn
+                    </button>
+                  ) : needsActivation ? (
+                    <button
+                      onClick={handleActivateCourse}
+                      className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-sm font-medium rounded-full transition-all shadow-md hover:shadow-lg"
+                    >
+                      Kích hoạt
+                    </button>
+                  ) : (
+                    <Link
+                      to={`/courses/${slug}/overview`}
+                      className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
+                    >
+                      Vào khóa học
+                    </Link>
+                  )
                 ) : (
-                  <Link
-                    to={`/courses/${slug}/overview`}
-                    className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
-                  >
-                    Vào khóa học
-                  </Link>
-                )
-              ) : (
-                <>
+                  <>
                   <button
                     onClick={handleToggleCart}  // ← Changed
                     className={`p-2 rounded-full transition-colors ${isInCart
@@ -255,11 +270,18 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
           </div>
         </div>
       </div>
+      <CourseExtensionModal
+          isOpen={isExtensionOpen}
+          onClose={() => setIsExtensionOpen(false)}
+          enrollment={currentEnrollmentData}
+        />
+      </>
     );
   }
 
   // List view
   return (
+    <>
     <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 flex overflow-hidden">
       {/* Thumbnail */}
       <div className="relative w-64 flex-shrink-0">
@@ -326,10 +348,10 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
             {isEnrolled ? (
               isExpired ? (
                 <button
-                  disabled
-                  className="px-6 py-2.5 bg-gray-300 text-gray-500 font-medium rounded-full cursor-not-allowed shadow-inner"
+                  onClick={handleOpenExtension}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg"
                 >
-                  Đã hết hạn
+                  <RefreshCw size={18} /> Gia hạn khóa học
                 </button>
               ) : needsActivation ? (
                 <button
@@ -343,7 +365,7 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
                   to={`/courses/${slug}/overview`}
                   className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium rounded-full hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
                 >
-                  Vào khóa học
+                Vào khóa học
                 </Link>
               )
             ) : (
@@ -371,6 +393,12 @@ const CourseCard = ({ course, isWishlistPage = false, isLiked, onToggleWishlist,
         </div>
       </div>
     </div>
+    <CourseExtensionModal
+        isOpen={isExtensionOpen}
+        onClose={() => setIsExtensionOpen(false)}
+        enrollment={currentEnrollmentData}
+      />
+    </>
   );
 };
 

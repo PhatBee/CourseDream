@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { 
   Lock, 
   ShieldAlert, 
@@ -14,12 +14,19 @@ import {
 } from "lucide-react";
 
 export default function ErrorPage({ status = 404, message = "", onRetry }) {
-  const navigate = useNavigate();
-  const numericStatus = Number(status);
+  const navigateTo = (path) => {
+    if (path === -1) {
+      window.history.back(); // Quay lại trang trước bằng history của trình duyệt
+    } else {
+      window.location.href = path; // Chuyển hướng trang native
+    }
+  };
 
+  const numericStatus = Number(status);
+  
   // Đối với lỗi 429 (Spam requests), ta thiết lập countdown đếm ngược
   const [countdown, setCountdown] = useState(15);
-  
+
   useEffect(() => {
     if (numericStatus !== 429) return;
     
@@ -41,37 +48,39 @@ export default function ErrorPage({ status = 404, message = "", onRetry }) {
     switch (numericStatus) {
       case 401:
         return {
-          icon: <Lock className="w-16 h-16 text-rose-500" />,
+          icon: <Lock className="w-8 h-8 text-rose-500" />,
           title: "Phiên làm việc đã kết thúc",
           description: message || "Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn. Vui lòng đăng nhập lại để tiếp tục học tập nhé!",
           primaryCTA: {
             text: "Đăng nhập ngay",
-            action: () => navigate("/login"),
+            action: () => navigateTo("/login"),
             icon: <Lock className="w-4 h-4 mr-2" />
           },
           secondaryCTA: {
             text: "Trở về trang chủ",
-            action: () => navigate("/")
+            action: () => navigateTo("/")
           }
         };
+
       case 403:
         return {
-          icon: <ShieldAlert className="w-16 h-16 text-rose-500" />,
+          icon: <ShieldAlert className="w-8 h-8 text-amber-500" />,
           title: "Không thể truy cập nội dung này",
           description: message || "Tài khoản của bạn hiện tại không có quyền truy cập vào đường dẫn hoặc tài nguyên này. Nếu có nhầm lẫn, vui lòng liên hệ admin.",
           primaryCTA: {
             text: "Quay lại trang chủ",
-            action: () => navigate("/"),
+            action: () => navigateTo("/"),
             icon: <Home className="w-4 h-4 mr-2" />
           },
           secondaryCTA: {
             text: "Đăng nhập tài khoản khác",
-            action: () => navigate("/login")
+            action: () => navigateTo("/login")
           }
         };
+
       case 429:
         return {
-          icon: <Timer className="w-16 h-16 text-rose-500 animate-pulse" />,
+          icon: <Timer className="w-8 h-8 text-amber-500" />,
           title: "Bạn đang thao tác quá nhanh",
           description: message || "Hệ thống ghi nhận quá nhiều yêu cầu liên tiếp từ thiết bị của bạn. Xin hãy tạm nghỉ tay một lát để máy chủ của chúng tôi thở nhé!",
           primaryCTA: {
@@ -82,12 +91,13 @@ export default function ErrorPage({ status = 404, message = "", onRetry }) {
           },
           secondaryCTA: {
             text: "Về trang chủ",
-            action: () => navigate("/")
+            action: () => navigateTo("/")
           }
         };
+
       case 500:
         return {
-          icon: <ServerCrash className="w-16 h-16 text-rose-500" />,
+          icon: <ServerCrash className="w-8 h-8 text-rose-500" />,
           title: "Hệ thống đang gặp sự cố nhỏ",
           description: message || "Máy chủ đang gặp một chút sự cố kỹ thuật nội bộ. Đội ngũ kỹ sư của Dream đang tích cực khắc phục sự cố này. Xin lỗi bạn vì sự gián đoạn!",
           primaryCTA: {
@@ -97,13 +107,14 @@ export default function ErrorPage({ status = 404, message = "", onRetry }) {
           },
           secondaryCTA: {
             text: "Quay lại trang chủ",
-            action: () => navigate("/")
+            action: () => navigateTo("/")
           }
         };
+
       case 502:
       case 504:
         return {
-          icon: <WifiOff className="w-16 h-16 text-rose-500" />,
+          icon: <WifiOff className="w-8 h-8 text-gray-500" />,
           title: "Kết nối mạng không ổn định",
           description: message || "Không thể kết nối đến máy chủ do mạng chập chờn hoặc hết hạn thời gian phản hồi. Bạn hãy kiểm tra lại kết nối Wifi/4G của mình nhé.",
           primaryCTA: {
@@ -113,12 +124,13 @@ export default function ErrorPage({ status = 404, message = "", onRetry }) {
           },
           secondaryCTA: {
             text: "Về trang chủ",
-            action: () => navigate("/")
+            action: () => navigateTo("/")
           }
         };
+
       case 503:
         return {
-          icon: <Wrench className="w-16 h-16 text-rose-500 animate-bounce" />,
+          icon: <Wrench className="w-8 h-8 text-amber-500" />,
           title: "Hệ thống đang bảo trì",
           description: message || "Nhằm nâng cấp hiệu năng và đem lại trải nghiệm học tập mượt mà nhất, Dream đang thực hiện bảo trì định kỳ. Chúng tôi sẽ sớm hoạt động lại!",
           primaryCTA: {
@@ -128,23 +140,24 @@ export default function ErrorPage({ status = 404, message = "", onRetry }) {
           },
           secondaryCTA: {
             text: "Quay về trang chủ",
-            action: () => navigate("/")
+            action: () => navigateTo("/")
           }
         };
+
       case 404:
       default:
         return {
-          icon: <FileQuestion className="w-16 h-16 text-rose-500" />,
+          icon: <FileQuestion className="w-8 h-8 text-rose-500" />,
           title: "Trang không tồn tại",
           description: message || "Đường dẫn bạn truy cập không chính xác hoặc nội dung này đã được di chuyển hoặc xóa khỏi hệ thống. Cùng tiếp tục hành trình học tập ở trang chủ nhé!",
           primaryCTA: {
             text: "Trở về trang chủ",
-            action: () => navigate("/"),
+            action: () => navigateTo("/"),
             icon: <Home className="w-4 h-4 mr-2" />
           },
           secondaryCTA: {
             text: "Quay lại trang trước",
-            action: () => navigate(-1),
+            action: () => navigateTo(-1),
             icon: <ArrowLeft className="w-4 h-4 mr-2" />
           }
         };
@@ -154,38 +167,31 @@ export default function ErrorPage({ status = 404, message = "", onRetry }) {
   const config = getErrorConfig();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50/70 via-white to-pink-50/50 p-6 font-sans">
-      <div className="max-w-md w-full text-center bg-white/80 backdrop-blur-xl p-8 rounded-3xl border border-rose-100/60 shadow-2xl shadow-rose-100/40 relative overflow-hidden transition-all duration-300 hover:shadow-rose-200/50">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
+      {/* Khối bọc thiết kế Premium căn giữa */}
+      <div className="max-w-md w-full bg-white rounded-3xl border border-gray-100 p-8 shadow-xl relative z-10 flex flex-col items-center text-center">
         
-        {/* Vết sáng trang trí mờ nhạt chuẩn Premium */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-rose-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-pink-200 rounded-full blur-3xl opacity-30"></div>
-
-        {/* Khối Icon lồng trong vòng tròn kép dịu mắt */}
-        <div className="relative z-10 flex justify-center mb-6">
-          <div className="relative">
-            <div className="absolute inset-0 bg-rose-100 rounded-full scale-125 opacity-40 animate-ping duration-1000"></div>
-            <div className="relative bg-rose-50 border border-rose-100 p-5 rounded-full shadow-inner flex items-center justify-center">
-              {config.icon}
-            </div>
+        {/* Khối Icon lồng trong vòng tròn kép */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 bg-gray-100 rounded-full scale-150 opacity-50 blur-sm"></div>
+          <div className="relative w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-inner">
+            {config.icon}
           </div>
         </div>
 
         {/* Mã lỗi & Tiêu đề */}
-        <div className="relative z-10">
-          <span className="inline-block text-xs font-bold tracking-widest text-rose-500 uppercase px-3 py-1 bg-rose-50 border border-rose-100 rounded-full mb-3">
-            Mã Lỗi: {numericStatus}
-          </span>
-          <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-3">
-            {config.title}
-          </h1>
-          <p className="text-gray-600 text-sm leading-relaxed mb-8 px-2">
-            {config.description}
-          </p>
-        </div>
+        <span className="text-xs font-bold text-gray-400 tracking-widest uppercase mb-1">
+          Mã Lỗi: {numericStatus}
+        </span>
+        <h2 className="text-2xl font-extrabold text-gray-950 mb-3 tracking-tight">
+          {config.title}
+        </h2>
+        <p className="text-sm text-gray-500 leading-relaxed mb-8">
+          {config.description}
+        </p>
 
-        {/* Khu vực CTA Button */}
-        <div className="relative z-10 flex flex-col gap-3">
+        {/* Khu vực CTA Buttons */}
+        <div className="w-full space-y-3">
           <button
             onClick={config.primaryCTA.action}
             disabled={config.primaryCTA.disabled}
