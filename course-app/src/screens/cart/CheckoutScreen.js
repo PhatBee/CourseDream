@@ -16,6 +16,8 @@ import {
     fetchAvailablePromotions,
     previewPromotionThunk,
     clearPreview,
+    fetchTieredPreview,
+    setForceCoupon,
 } from '../../features/promotion/promotionSlice';
 import {
     ArrowLeft,
@@ -23,7 +25,6 @@ import {
     CreditCard,
     Gift,
     CheckCircle,
-    Tag,
 } from 'lucide-react-native';
 
 const formatPrice = (price) => {
@@ -40,13 +41,21 @@ const CheckoutScreen = ({ navigation, route }) => {
     const { items, totalItems, isLoading } = useSelector(
         (state) => state.cart
     );
-    const { available, availableLoading, preview, previewLoading, previewError } = useSelector(
-        (state) => state.promotion
-    );
+    const {
+        available,
+        availableLoading,
+        preview,
+        previewLoading,
+        previewError,
+        tieredPreview,
+        tieredLoading,
+        forceCoupon,
+    } = useSelector((state) => state.promotion);
 
     const [selectedMethod, setSelectedMethod] = useState('vnpay');
     const [isProcessing, setIsProcessing] = useState(false);
     const [selectedPromotion, setSelectedPromotion] = useState(null);
+    const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
     // Check if direct checkout
     const isDirectCheckout = route.params?.directCheckout;
@@ -64,22 +73,34 @@ const CheckoutScreen = ({ navigation, route }) => {
 
     const checkoutTotalItems = isDirectCheckout ? 1 : totalItems;
 
-    // Calculate prices
+    // --- LOGIC TÍNH TOÁN GIÁ (giống web) ---
     const subtotal = checkoutItems.reduce((sum, item) => sum + item.price, 0);
     const subtotalDiscount = checkoutItems.reduce(
         (sum, item) => sum + (item.priceDiscount ?? item.price),
         0
     );
-    
-    let promotionDiscount = preview ? preview.discountAmount : 0;
-    let amountAfterPromo = subtotalDiscount - promotionDiscount;
+
+    const tieredDiscount = tieredPreview?.totalTieredDiscount || 0;
+    const couponDiscount = preview?.discountAmount || 0;
+
+    // Tự động chọn ưu đãi cao hơn hoặc theo forceCoupon
+    const appliedDiscount = forceCoupon
+        ? couponDiscount
+        : Math.max(tieredDiscount, couponDiscount);
+
+    // Xác định loại ưu đãi đang áp dụng
+    const activeDiscountType = forceCoupon
+        ? (couponDiscount > 0 ? 'coupon' : 'none')
+        : (tieredDiscount >= couponDiscount && tieredDiscount > 0 ? 'tiered' : (couponDiscount > 0 ? 'coupon' : 'none'));
+
+    let amountAfterPromo = subtotalDiscount - appliedDiscount;
     if (amountAfterPromo < 0) amountAfterPromo = 0;
 
     const discount = subtotal - amountAfterPromo;
     const tax = amountAfterPromo > 0 ? Math.round(amountAfterPromo * 0.1) : 0;
     let finalTotal = amountAfterPromo + tax;
 
-    // Round up if < 1000
+    // Làm tròn lên 1000 nếu > 0 và < 1000
     if (finalTotal > 0 && finalTotal < 1000) {
         finalTotal = 1000;
     }
@@ -87,19 +108,25 @@ const CheckoutScreen = ({ navigation, route }) => {
     const isFreeOrder = finalTotal === 0;
     const isSmallAmount = finalTotal > 0 && finalTotal < 5000;
 
+    // Lấy courseIds
+    const courseIds = isDirectCheckout && directCourse
+        ? [directCourse._id]
+        : checkoutItems.map((item) => item.course?._id).filter(Boolean);
+
+    // Fetch cart và reset promo khi mount
     useEffect(() => {
-        // Clear previous session's promo preview on mount
         dispatch(clearPreview());
+        dispatch(setForceCoupon(false));
         if (user && !isDirectCheckout) {
             dispatch(getCart());
         }
     }, [user, dispatch, isDirectCheckout]);
 
-    // Fetch available promotions
-    const courseIds = checkoutItems.map((item) => item.course?._id).filter(Boolean);
+    // Fetch available promotions và tiered preview
     useEffect(() => {
         if (courseIds.length > 0) {
             dispatch(fetchAvailablePromotions(courseIds));
+            dispatch(fetchTieredPreview(courseIds));
         }
     }, [dispatch, courseIds.join(',')]);
 
@@ -109,6 +136,42 @@ const CheckoutScreen = ({ navigation, route }) => {
             setSelectedMethod('momo');
         }
     }, [isSmallAmount]);
+
+    // Auto-select mã giảm giá tốt nhất (giống web)
+    useEffect(() => {
+        if (!availableLoading && !tieredLoading && available.length > 0 && !hasAutoSelected) {
+            let bestPromo = null;
+            let maxDiscount = 0;
+
+            available.forEach((promo) => {
+                let estimatedDiscount = 0;
+                if (promo.discountType === 'percent') {
+                    estimatedDiscount = (subtotalDiscount * promo.discountValue) / 100;
+                    if (promo.maxDiscount && estimatedDiscount > promo.maxDiscount) {
+                        estimatedDiscount = promo.maxDiscount;
+                    }
+                } else {
+                    estimatedDiscount = promo.discountValue;
+                }
+
+                if (estimatedDiscount > maxDiscount) {
+                    maxDiscount = estimatedDiscount;
+                    bestPromo = promo;
+                }
+            });
+
+            const currentTieredDiscount = tieredPreview?.totalTieredDiscount || 0;
+
+            // Chọn mã nếu nó cao hơn Tiered Discount
+            if (bestPromo && maxDiscount > currentTieredDiscount) {
+                if (!selectedPromotion) {
+                    handleSelectPromotion(bestPromo);
+                }
+            }
+
+            setHasAutoSelected(true);
+        }
+    }, [available, availableLoading, tieredLoading, hasAutoSelected, subtotalDiscount, tieredPreview]);
 
     const handleSelectPromotion = (promo) => {
         if (selectedPromotion === promo.code) {
@@ -122,6 +185,7 @@ const CheckoutScreen = ({ navigation, route }) => {
     const handleRemovePromotion = () => {
         setSelectedPromotion(null);
         dispatch(clearPreview());
+        dispatch(setForceCoupon(false));
     };
 
     const handleFreeEnrollment = async () => {
@@ -131,9 +195,10 @@ const CheckoutScreen = ({ navigation, route }) => {
                 amount: 0,
                 courseIds: courseIds,
                 couponCode: selectedPromotion,
+                forceCoupon: forceCoupon,
             });
 
-            Alert.alert('Success', 'Ghi danh thành công!', [
+            Alert.alert('Thành công', 'Ghi danh thành công!', [
                 {
                     text: 'OK',
                     onPress: () => {
@@ -150,7 +215,7 @@ const CheckoutScreen = ({ navigation, route }) => {
             ]);
         } catch (error) {
             console.error('Free enrollment error:', error);
-            Alert.alert('Error', error.response?.data?.message || 'Lỗi khi ghi danh');
+            Alert.alert('Lỗi', error.response?.data?.message || 'Lỗi khi ghi danh');
         } finally {
             setIsProcessing(false);
         }
@@ -158,7 +223,7 @@ const CheckoutScreen = ({ navigation, route }) => {
 
     const handlePayment = async () => {
         if (checkoutItems.length === 0) {
-            Alert.alert('Error', 'Giỏ hàng trống');
+            Alert.alert('Lỗi', 'Giỏ hàng trống');
             return;
         }
 
@@ -174,7 +239,7 @@ const CheckoutScreen = ({ navigation, route }) => {
 
             if (selectedMethod === 'vnpay') {
                 if (isSmallAmount) {
-                    Alert.alert('Error', 'VNPAY yêu cầu thanh toán tối thiểu 5.000 VND');
+                    Alert.alert('Lỗi', 'VNPAY yêu cầu thanh toán tối thiểu 5.000 VND');
                     setIsProcessing(false);
                     return;
                 }
@@ -184,6 +249,7 @@ const CheckoutScreen = ({ navigation, route }) => {
                     courseIds: courseIds,
                     platform: 'mobile',
                     couponCode: selectedPromotion,
+                    forceCoupon: forceCoupon,
                 });
             } else if (selectedMethod === 'momo') {
                 paymentData = await paymentService.createMomoPayment({
@@ -192,6 +258,7 @@ const CheckoutScreen = ({ navigation, route }) => {
                     courseIds: courseIds,
                     platform: 'mobile',
                     couponCode: selectedPromotion,
+                    forceCoupon: forceCoupon,
                 });
             } else if (selectedMethod === 'zalopay') {
                 paymentData = await paymentService.createZaloPayPayment({
@@ -200,21 +267,21 @@ const CheckoutScreen = ({ navigation, route }) => {
                     courseIds: courseIds,
                     platform: 'mobile',
                     couponCode: selectedPromotion,
+                    forceCoupon: forceCoupon,
                 });
             }
 
             if (paymentData && paymentData.paymentUrl) {
-                // Navigate to WebView screen instead of opening external browser
                 navigation.navigate('PaymentWebView', {
                     paymentUrl: paymentData.paymentUrl,
                     paymentMethod: selectedMethod,
                 });
             } else {
-                Alert.alert('Error', 'Lỗi khi tạo liên kết thanh toán');
+                Alert.alert('Lỗi', 'Lỗi khi tạo liên kết thanh toán');
             }
         } catch (error) {
             console.error('Payment error:', error);
-            Alert.alert('Error', error.response?.data?.message || 'Lỗi khi xử lý thanh toán');
+            Alert.alert('Lỗi', error.response?.data?.message || 'Lỗi khi xử lý thanh toán');
         } finally {
             setIsProcessing(false);
         }
@@ -313,19 +380,55 @@ const CheckoutScreen = ({ navigation, route }) => {
                         </Text>
 
                         {/* Course Items */}
-                        <View className="space-y-6 mb-8">
+                        <View className="space-y-3 mb-4">
                             {checkoutItems.map((item) => {
                                 const course = item.course;
                                 if (!course) return null;
 
                                 const basePriceDiscount = item.priceDiscount ?? item.price;
-                                const itemPromo = preview?.itemDiscounts?.find(d => d.courseId === course._id);
-                                const currentPrice = itemPromo ? itemPromo.discountedPrice : basePriceDiscount;
+
+                                // Tìm discount theo từng item giống web
+                                const itemCouponPromo = preview?.itemDiscounts?.find(d => d.courseId === course._id);
+                                const itemTieredPromo = tieredPreview?.items?.find(d =>
+                                    d.course._id === course._id || d.course === course._id
+                                );
+
+                                let currentPrice = basePriceDiscount;
+                                let discountBadge = null;
+                                let isPromoBg = false;
+
+                                if (activeDiscountType === 'coupon' && itemCouponPromo) {
+                                    currentPrice = itemCouponPromo.discountedPrice;
+                                    isPromoBg = true;
+                                    discountBadge = (
+                                        <View className="self-start mt-1 px-2 py-0.5 bg-green-100 rounded-full">
+                                            <Text className="text-green-700 text-[10px] font-bold">
+                                                - {formatPrice(itemCouponPromo.discountAmount)} (Mã giảm giá)
+                                            </Text>
+                                        </View>
+                                    );
+                                } else if (activeDiscountType === 'tiered' && itemTieredPromo && itemTieredPromo.tieredDiscountAmount > 0) {
+                                    currentPrice = itemTieredPromo.tieredFinalPrice;
+                                    isPromoBg = true;
+                                    discountBadge = (
+                                        <View className="self-start mt-1 px-2 py-0.5 bg-rose-100 rounded-full border border-rose-200">
+                                            <Text className="text-rose-700 text-[10px] font-bold">
+                                                - {itemTieredPromo.tieredDiscountPercentage}% (Khách hàng thân thiết)
+                                            </Text>
+                                        </View>
+                                    );
+                                }
 
                                 return (
                                     <View
                                         key={item._id}
-                                        className={`flex-row items-start gap-3 p-3 rounded-lg border ${itemPromo ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-transparent'}`}
+                                        className={`flex-row items-start gap-3 p-3 rounded-lg border ${
+                                            isPromoBg
+                                                ? (activeDiscountType === 'coupon'
+                                                    ? 'bg-green-50 border-green-200'
+                                                    : 'bg-rose-50 border-rose-200')
+                                                : 'bg-gray-50 border-transparent'
+                                        }`}
                                     >
                                         <Image
                                             source={{
@@ -345,13 +448,7 @@ const CheckoutScreen = ({ navigation, route }) => {
                                                     {formatPrice(item.price)}
                                                 </Text>
                                             )}
-                                            {itemPromo && (
-                                                <View className="self-start mt-1 px-2 py-0.5 bg-green-100 rounded-full">
-                                                    <Text className="text-green-700 text-[10px] font-bold">
-                                                        - {formatPrice(itemPromo.discountAmount)} (Mã giảm giá)
-                                                    </Text>
-                                                </View>
-                                            )}
+                                            {discountBadge}
                                         </View>
                                     </View>
                                 );
@@ -360,7 +457,7 @@ const CheckoutScreen = ({ navigation, route }) => {
 
                         {/* Price Summary */}
                         <View className="space-y-3 pt-3 border-t border-gray-100">
-                            <View className="flex-row justify-between text-gray-600">
+                            <View className="flex-row justify-between">
                                 <Text className="text-gray-600">Tạm tính ({checkoutTotalItems} khóa học)</Text>
                                 <Text className="font-medium">{formatPrice(subtotal)}</Text>
                             </View>
@@ -390,10 +487,71 @@ const CheckoutScreen = ({ navigation, route }) => {
                                 </View>
                             </View>
                         </View>
-                        
+
                         {/* Promo Code Section */}
-                        <View className="mt-6 pt-3 border-t border-gray-100">
-                            <Text className="text-sm font-bold text-gray-800 mb-3">Ưu đãi dành cho bạn</Text>
+                        <View className="mt-6 pt-4 border-t border-gray-100">
+
+                            {/* Banner Tiered Discount - giống web */}
+                            {tieredPreview && tieredPreview.totalTieredDiscount > 0 && (
+                                <View className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-xl">
+                                    <View className="flex-row items-start gap-3">
+                                        <View className="p-2 bg-rose-100 rounded-full mt-0.5">
+                                            <Gift size={20} color="#e11d48" />
+                                        </View>
+                                        <View className="flex-1">
+                                            <Text className="font-bold text-gray-800 mb-1">
+                                                Chiết khấu khách hàng thân thiết
+                                            </Text>
+                                            <Text className="text-sm text-gray-600 leading-5">
+                                                Bạn đã sở hữu <Text className="font-bold">{tieredPreview.previousValidCount}</Text> khóa học phù hợp chính sách. Mua thêm hôm nay được áp dụng chính sách giảm giá thân thiết.
+                                            </Text>
+                                            <Text className="text-sm font-semibold text-rose-600 mt-2">
+                                                Tiết kiệm: -{formatPrice(tieredPreview.totalTieredDiscount)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            )}
+
+                            {/* Conflict Resolution Banner - giống web */}
+                            {preview && tieredPreview && tieredPreview.totalTieredDiscount > 0 && (
+                                <View className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    {couponDiscount > tieredDiscount ? (
+                                        <View>
+                                            <Text className="font-medium text-blue-800 mb-1">
+                                                Đang dùng mã giảm giá vì có ưu đãi tốt hơn!
+                                            </Text>
+                                            <Text className="text-blue-800 text-sm">
+                                                Mã khuyến mãi giảm nhiều hơn chiết khấu thân thiết, hệ thống đã tự động chọn mức giảm tốt nhất cho bạn.
+                                            </Text>
+                                        </View>
+                                    ) : (
+                                        <View>
+                                            <Text className="font-medium text-blue-800 mb-1">
+                                                Đang dùng chiết khấu thân thiết!
+                                            </Text>
+                                            <Text className="text-blue-800 text-sm mb-2">
+                                                Chiết khấu mua nhiều khóa học của bạn đang có ưu đãi tốt hơn mã giảm giá này.
+                                            </Text>
+                                            {!forceCoupon ? (
+                                                <TouchableOpacity onPress={() => dispatch(setForceCoupon(true))}>
+                                                    <Text className="text-blue-600 font-semibold underline text-sm">
+                                                        Bỏ qua chiết khấu thân thiết (Dùng mã coupon thay thế)
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ) : (
+                                                <TouchableOpacity onPress={() => dispatch(setForceCoupon(false))}>
+                                                    <Text className="text-blue-600 font-semibold underline text-sm">
+                                                        Quay lại dùng chiết khấu thân thiết
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            )}
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+
+                            <Text className="text-sm font-bold text-gray-800 mb-3">Mã khuyến mãi</Text>
                             <View className="flex-row flex-wrap gap-2">
                                 {availableLoading && (
                                     <View className="flex-row items-center gap-2">
@@ -415,7 +573,9 @@ const CheckoutScreen = ({ navigation, route }) => {
                                             }`}
                                         >
                                             <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-700'}`}>
-                                                {promo.code} <Text className={isSelected ? 'text-rose-200' : 'text-gray-400'}>•</Text> Giảm {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString('vi-VN')}₫`}
+                                                {promo.code}{' '}
+                                                <Text className={isSelected ? 'text-rose-200' : 'text-gray-400'}>•</Text>
+                                                {' '}Giảm {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString('vi-VN')}₫`}
                                             </Text>
                                         </TouchableOpacity>
                                     );
@@ -445,8 +605,7 @@ const CheckoutScreen = ({ navigation, route }) => {
                             <TouchableOpacity
                                 onPress={handleFreeEnrollment}
                                 disabled={isProcessing}
-                                className={`px-8 py-3 rounded-full flex-row items-center gap-2 ${isProcessing ? 'bg-green-400' : 'bg-green-600'
-                                    }`}
+                                className={`px-8 py-3 rounded-full flex-row items-center gap-2 ${isProcessing ? 'bg-green-400' : 'bg-green-600'}`}
                             >
                                 {isProcessing ? (
                                     <ActivityIndicator color="#fff" />
@@ -475,7 +634,6 @@ const CheckoutScreen = ({ navigation, route }) => {
                                 </View>
                             )}
 
-                            {/* Increased spacing between buttons using space-y-4 */}
                             <View className="space-y-4 mb-8">
                                 {paymentMethods.map((method) => (
                                     <TouchableOpacity
@@ -506,17 +664,16 @@ const CheckoutScreen = ({ navigation, route }) => {
                                 ))}
                             </View>
 
-                            <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-                                <Text className="text-sm text-blue-800">
-                                    <Text className="font-bold">🔒 Bảo mật:</Text> Thông tin thanh toán của bạn được mã hóa và bảo mật tuyệt đối.
+                            <View className="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-8">
+                                <Text className="text-sm text-rose-800">
+                                    <Text className="font-bold">Bảo mật:</Text> Thông tin thanh toán của bạn được mã hóa và bảo mật tuyệt đối.
                                 </Text>
                             </View>
 
                             <TouchableOpacity
                                 onPress={handlePayment}
                                 disabled={checkoutItems.length === 0 || isProcessing}
-                                className={`w-full py-4 rounded-lg flex-row items-center justify-center gap-2 ${isProcessing ? 'bg-rose-400' : 'bg-gradient-to-r from-rose-600 to-indigo-600'
-                                    }`}
+                                className={`w-full py-4 rounded-lg flex-row items-center justify-center gap-2`}
                                 style={{
                                     backgroundColor: isProcessing ? '#FDA4AF' : '#FB7185',
                                 }}

@@ -50,6 +50,13 @@ const createFreeEnrollment = async (data) => {
     return response.data;
 };
 
+const previewDiscount = async (courseIds) => {
+    const response = await axiosClient.get(`${path}/preview-discount`, {
+        params: { courseIds: courseIds ? courseIds.join(',') : '' },
+    });
+    return response.data;
+};
+
 const vnpayReturn = async (params) => {
     const response = await axiosClient.get(`${path}/vnpay_return${params}`);
     return response.data;
@@ -70,6 +77,7 @@ const paymentService = {
     createMomoPayment,
     createZaloPayPayment,
     createFreeEnrollment,
+    previewDiscount,
     vnpayReturn,
     momoReturn,
     zalopayReturn

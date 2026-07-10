@@ -75,7 +75,7 @@ export const getAvailablePromotionsCtrl = async (req, res) => {
   try {
     const userId = req.user._id;
     let courseIds = req.query.courseIds;
-    if (typeof courseIds === "string") courseIds = courseIds.split(",");
+    if (typeof courseIds === "string") courseIds = courseIds.split(",").filter(Boolean);
     const now = new Date();
 
     let promotions = await Promotion.find({

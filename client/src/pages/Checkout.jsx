@@ -19,6 +19,8 @@ import {
   fetchAvailablePromotions,
   previewPromotionThunk,
   clearPreview,
+  fetchTieredPreview,
+  setForceCoupon,
 } from "../features/promotion/promotionSlice";
 import Avatar from "../components/common/Avatar";
 
@@ -46,7 +48,7 @@ export default function Checkout() {
   const { available, availableLoading } = useSelector(
     (state) => state.promotion
   );
-  const { preview, previewLoading, previewError } = useSelector(
+  const { preview, previewLoading, previewError, tieredPreview, tieredLoading, forceCoupon } = useSelector(
     (state) => state.promotion
   );
 
@@ -96,11 +98,23 @@ export default function Checkout() {
     (sum, item) => sum + (item.priceDiscount ?? item.price),
     0
   );
-  // Giá trị giảm từ mã khuyến mãi (trả về trực tiếp từ Backend)
-  let promotionDiscount = preview ? preview.discountAmount : 0;
-  // 3. Số tiền sau khi áp dụng mã giảm giá
-  let amountAfterPromo = subtotalDiscount - promotionDiscount;
+
+  const tieredDiscount = tieredPreview?.totalTieredDiscount || 0;
+  const couponDiscount = preview?.discountAmount || 0;
+
+  // Tự động chọn ưu đãi cao hơn hoặc theo forceCoupon
+  const appliedDiscount = forceCoupon 
+    ? couponDiscount 
+    : Math.max(tieredDiscount, couponDiscount);
+
+  const activeDiscountType = forceCoupon 
+    ? (couponDiscount > 0 ? 'coupon' : 'none') 
+    : (tieredDiscount >= couponDiscount && tieredDiscount > 0 ? 'tiered' : (couponDiscount > 0 ? 'coupon' : 'none'));
+
+  // Số tiền sau khi áp dụng mã giảm giá
+  let amountAfterPromo = subtotalDiscount - appliedDiscount;
   if (amountAfterPromo < 0) amountAfterPromo = 0;
+
   // Tính discount (giảm giá so với giá gốc)
   const discount = subtotal - amountAfterPromo;
   // Nếu displayedPrice = 0 thì tax = 0, ngược lại tính 10%
@@ -117,9 +131,15 @@ export default function Checkout() {
   const isFreeOrder = finalTotal === 0;
   const isSmallAmount = finalTotal > 0 && finalTotal < 5000;
 
+  const [isCheckingCart, setIsCheckingCart] = useState(!isDirectCheckout);
+
   useEffect(() => {
     if (user && !isDirectCheckout) {
-      dispatch(getCart());
+      dispatch(getCart()).finally(() => {
+        setIsCheckingCart(false);
+      });
+    } else {
+      setIsCheckingCart(false);
     }
   }, [user, dispatch, isDirectCheckout]);
 
@@ -132,11 +152,11 @@ export default function Checkout() {
 
   // Redirect if no items (only for cart mode)
   useEffect(() => {
-    if (!isDirectCheckout && !isLoading && items.length === 0) {
+    if (!isCheckingCart && !isDirectCheckout && items.length === 0) {
       toast.error("Giỏ hàng trống");
       navigate("/cart");
     }
-  }, [items, isLoading, navigate, isDirectCheckout]);
+  }, [items, isCheckingCart, navigate, isDirectCheckout]);
 
   // Lấy courseIds từ cart hoặc direct checkout
   const courseIds =
@@ -146,6 +166,9 @@ export default function Checkout() {
 
   useEffect(() => {
     dispatch(fetchAvailablePromotions(courseIds));
+    if (courseIds.length > 0) {
+      dispatch(fetchTieredPreview(courseIds));
+    }
   }, [dispatch, courseIds.join(",")]);
 
   // Xử lý Ghi danh miễn phí
@@ -214,6 +237,7 @@ export default function Checkout() {
           courseIds: courseIds,
           platform: "web",
           couponCode: selectedPromotion,
+          forceCoupon: forceCoupon,
         });
       } else if (selectedMethod === "momo") {
         // === LOGIC MOMO ===
@@ -224,6 +248,7 @@ export default function Checkout() {
           courseIds: courseIds,
           platform: "web",
           couponCode: selectedPromotion,
+          forceCoupon: forceCoupon,
         });
       } else if (selectedMethod === "zalopay") {
         // === LOGIC ZALOPAY ===
@@ -234,6 +259,7 @@ export default function Checkout() {
           courseIds: courseIds,
           platform: "web",
           couponCode: selectedPromotion,
+          forceCoupon: forceCoupon,
         });
       } else {
         toast("Phương thức thanh toán này đang bảo trì");
@@ -278,7 +304,46 @@ export default function Checkout() {
   const handleRemovePromotion = () => {
     setSelectedPromotion(null);
     dispatch(clearPreview());
+    dispatch(setForceCoupon(false));
   };
+
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+
+  useEffect(() => {
+    if (!availableLoading && !tieredLoading && available.length > 0 && !hasAutoSelected) {
+      let bestPromo = null;
+      let maxDiscount = 0;
+
+      available.forEach(promo => {
+         let estimatedDiscount = 0;
+         if (promo.discountType === 'percent') {
+            estimatedDiscount = (subtotalDiscount * promo.discountValue) / 100;
+            if (promo.maxDiscount && estimatedDiscount > promo.maxDiscount) {
+                estimatedDiscount = promo.maxDiscount;
+            }
+         } else {
+            estimatedDiscount = promo.discountValue;
+         }
+         
+         if (estimatedDiscount > maxDiscount) {
+            maxDiscount = estimatedDiscount;
+            bestPromo = promo;
+         }
+      });
+
+      const currentTieredDiscount = tieredPreview?.totalTieredDiscount || 0;
+      
+      // Chọn mã nếu nó cao hơn Tiered Discount HOẶC không có Tiered Discount
+      if (bestPromo && maxDiscount > currentTieredDiscount) {
+          // Chỉ auto select nếu chưa có mã nào được chọn
+          if (!selectedPromotion) {
+             handleSelectPromotion(bestPromo);
+          }
+      }
+      
+      setHasAutoSelected(true);
+    }
+  }, [available, availableLoading, tieredLoading, hasAutoSelected, subtotalDiscount, tieredPreview, selectedPromotion]);
 
   if (!user) {
     return (
@@ -449,7 +514,7 @@ export default function Checkout() {
                 {/* Payment Info */}
                 <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-rose-800">
-                    <strong>🔒 Bảo mật:</strong> Thông tin thanh toán của bạn
+                    <strong>Bảo mật:</strong> Thông tin thanh toán của bạn
                     được mã hóa và bảo mật tuyệt đối.
                   </p>
                 </div>
@@ -505,13 +570,39 @@ export default function Checkout() {
                   if (!course) return null;
 
                   const basePriceDiscount = item.priceDiscount ?? item.price;
-                  const itemPromo = preview?.itemDiscounts?.find(d => d.courseId === course._id);
-                  const currentPrice = itemPromo ? itemPromo.discountedPrice : basePriceDiscount;
+                  
+                  // Tìm discount từng phần của item
+                  const itemCouponPromo = preview?.itemDiscounts?.find(d => d.courseId === course._id);
+                  const itemTieredPromo = tieredPreview?.items?.find(d => 
+                    d.course._id === course._id || d.course === course._id
+                  );
+                  
+                  let currentPrice = basePriceDiscount;
+                  let discountBadge = null;
+                  let isPromoBg = false;
+
+                  if (activeDiscountType === 'coupon' && itemCouponPromo) {
+                    currentPrice = itemCouponPromo.discountedPrice;
+                    isPromoBg = true;
+                    discountBadge = (
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                        - {formatPrice(itemCouponPromo.discountAmount)} (Mã giảm giá)
+                      </span>
+                    );
+                  } else if (activeDiscountType === 'tiered' && itemTieredPromo && itemTieredPromo.tieredDiscountAmount > 0) {
+                    currentPrice = itemTieredPromo.tieredFinalPrice;
+                    isPromoBg = true;
+                    discountBadge = (
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold rounded-full border border-rose-200">
+                        - {itemTieredPromo.tieredDiscountPercentage}% (Khách hàng thân thiết)
+                      </span>
+                    );
+                  }
 
                   return (
                     <div
                       key={item._id}
-                      className={`flex items-start gap-3 p-3 rounded-lg relative group transition-colors ${itemPromo ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}
+                      className={`flex items-start gap-3 p-3 rounded-lg relative group transition-colors ${isPromoBg ? (activeDiscountType === 'coupon' ? 'bg-green-50 border border-green-200' : 'bg-rose-50 border border-rose-200') : 'bg-gray-50'}`}
                     >
                       <img
                         src={
@@ -532,11 +623,7 @@ export default function Checkout() {
                             {formatPrice(item.price)}
                           </p>
                         )}
-                        {itemPromo && (
-                          <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
-                            - {formatPrice(itemPromo.discountAmount)} (Mã giảm giá)
-                          </span>
-                        )}
+                        {discountBadge}
                       </div>
 
                       {/* Only show remove button in cart mode */}
@@ -588,7 +675,72 @@ export default function Checkout() {
 
               {/* Promo Code Section */}
               <div className="my-6 pt-4 border-t">
-                <label className="block text-sm font-bold text-gray-800 mb-3">Ưu đãi dành cho bạn</label>
+                
+                {/* Banner Tiered Discount */}
+                {tieredPreview && tieredPreview.totalTieredDiscount > 0 && (
+                  <div className="mb-4 p-4 bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 rounded-xl shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-rose-100 text-rose-600 rounded-full mt-1">
+                        <Gift size={20} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                          Chiết khấu khách hàng thân thiết
+                        </h4>
+                        <p className="text-sm text-gray-600 mt-1 leading-relaxed text-justify">
+                          Bạn đã sở hữu <strong>{tieredPreview.previousValidCount}</strong> khóa học phù hợp chính sách. Mua thêm hôm nay được áp dụng chính sách giảm giá thân thiết.
+                        </p>
+                        <p className="text-sm font-semibold text-rose-600 mt-2">
+                          Tiết kiệm: -{formatPrice(tieredPreview.totalTieredDiscount)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Conflict Resolution Banner */}
+                {preview && tieredPreview && tieredPreview.totalTieredDiscount > 0 && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                    {couponDiscount > tieredDiscount ? (
+                      <div>
+                        <p className="font-medium mb-1 text-justify">Đang dùng mã giảm giá vì có ưu đãi tốt hơn!</p>
+                        <p className="text-justify">Mã khuyến mãi giảm nhiều hơn chiết khấu thân thiết, hệ thống đã tự động chọn mức giảm tốt nhất cho bạn.</p>
+                        {!forceCoupon && (
+                          <button 
+                            onClick={() => dispatch(setForceCoupon(false))} // Already false, but just in case
+                            className="text-blue-600 font-semibold underline mt-1"
+                          >
+                            Dùng mã giảm giá
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-medium mb-1 text-justify">Đang dùng chiết khấu thân thiết!</p>
+                        <p className="text-justify">Chiết khấu mua nhiều khóa học của bạn đang có ưu đãi tốt hơn mã giảm giá này.</p>
+                        <div className="flex gap-4 mt-2">
+                          {!forceCoupon ? (
+                            <button 
+                              onClick={() => dispatch(setForceCoupon(true))}
+                              className="text-blue-600 font-semibold underline"
+                            >
+                              Bỏ qua chiết khấu thân thiết (Dùng mã coupon thay thế)
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => dispatch(setForceCoupon(false))}
+                              className="text-blue-600 font-semibold underline"
+                            >
+                              Quay lại dùng chiết khấu thân thiết
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <label className="block text-sm font-bold text-gray-800 mb-3">Mã khuyến mãi</label>
                 <div className="flex flex-wrap gap-3">
                   {availableLoading && (
                     <div className="flex items-center gap-2 text-gray-500 text-sm">
