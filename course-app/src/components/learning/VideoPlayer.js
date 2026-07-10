@@ -100,10 +100,10 @@ const VideoPlayer = forwardRef((
   useEffect(() => { completedQuizzesRef.current = completedQuizzes; }, [completedQuizzes]);
   useEffect(() => { isLoadingProgressRef.current = isLoadingProgress; }, [isLoadingProgress]);
 
-  // Reset initialSeekDone khi đổi bài mới
+  // Reset initialSeekDone khi đổi bài mới hoặc URL thay đổi
   useEffect(() => {
     initialSeekDoneRef.current = false;
-  }, [currentLecture?._id]);
+  }, [currentLecture?._id, videoUrl]);
 
   const quizzes = currentLecture?.quizzes || [];
 
@@ -310,8 +310,7 @@ const VideoPlayer = forwardRef((
     if (videoUrl) p.play();
   });
 
-  // ─── Effect: URL thay đổi → load source + seek sau khi sẵn sàng ─────────────
-  // Đọc lastWatchedTimeRef (không phải lastWatchedTime trực tiếp) để không stale
+  // ─── Effect: URL thay đổi → load source mới ─────────────────────────────────
   useEffect(() => {
     if (!player || !videoUrl) return;
 
@@ -319,22 +318,6 @@ const VideoPlayer = forwardRef((
       try {
         await player.replaceAsync(videoUrl);
         player.play();
-
-        // Seek đến vị trí đã xem sau khi player ready.
-        // Dùng ref để đọc giá trị mới nhất tại thời điểm callback chạy.
-        if (lastWatchedTimeRef.current > 5 && !initialSeekDoneRef.current) {
-          // Chờ player ổn định trước khi seek
-          setTimeout(() => {
-            try {
-              if (player && lastWatchedTimeRef.current > 5 && !initialSeekDoneRef.current) {
-                player.currentTime = lastWatchedTimeRef.current;
-                initialSeekDoneRef.current = true;
-              }
-            } catch (e) {
-              console.warn('[VideoPlayer] Seek (after replaceAsync) error:', e);
-            }
-          }, 600);
-        }
       } catch (e) {
         console.warn('[VideoPlayer] replaceAsync error:', e);
       }
@@ -343,26 +326,43 @@ const VideoPlayer = forwardRef((
     setupPlayer();
   }, [videoUrl]);
 
-  // ─── Effect: lastWatchedTime prop thay đổi (fetchVideoProgress trả về sau) ──
-  // FIX CHÍNH: fetchVideoProgress dispatch hoàn thành SAU khi setupPlayer() đã chạy.
-  // → Sync ref + seek ngay nếu player đã sẵn sàng (đang phát hoặc pause).
+  // ─── Lắng nghe statusChange để thực hiện seek ban đầu (Resume) ───
   useEffect(() => {
-    // Luôn sync ref trước tiên
+    if (!player) return;
+
+    const subscription = player.addListener('statusChange', (event) => {
+      const status = event.status;
+      if (status === 'readyToPlay') {
+        if (lastWatchedTimeRef.current > 5 && !initialSeekDoneRef.current) {
+          try {
+            player.currentTime = lastWatchedTimeRef.current;
+            initialSeekDoneRef.current = true;
+          } catch (e) {
+            console.warn('[VideoPlayer] Seek on statusChange error:', e);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [player]);
+
+  // ─── Effect: lastWatchedTime prop thay đổi (fetchVideoProgress trả về sau) ──
+  // → Seek ngay lập tức nếu player đã readyToPlay và chưa seek lần đầu.
+  useEffect(() => {
     lastWatchedTimeRef.current = lastWatchedTime;
 
     if (!player || lastWatchedTime <= 5 || initialSeekDoneRef.current) return;
 
-    // Nếu player đang có video (đang play hoặc pause), seek ngay lập tức
     try {
-      const currentPos = player.currentTime;
-      if (currentPos !== undefined && currentPos !== null) {
-        // Player đã sẵn sàng → seek
+      if (player.status === 'readyToPlay') {
         player.currentTime = lastWatchedTime;
         initialSeekDoneRef.current = true;
       }
     } catch (e) {
-      // Player chưa sẵn sàng — sẽ được xử lý bởi timeout trong setupPlayer
-      console.warn('[VideoPlayer] Reactive seek error (will retry via setupPlayer):', e);
+      console.warn('[VideoPlayer] Reactive seek error:', e);
     }
   }, [lastWatchedTime]);
 
