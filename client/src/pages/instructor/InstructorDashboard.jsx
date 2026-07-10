@@ -2,42 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { 
-  Book, 
-  Users, 
-  TrendingUp, 
-  ArrowRight, 
-  PlayCircle, 
-  DollarSign, 
-  Star, 
-  Percent, 
-  ArrowUpRight, 
-  ArrowDownRight, 
+import {
+  Book,
+  Users,
+  TrendingUp,
+  ArrowRight,
+  PlayCircle,
+  DollarSign,
+  Star,
+  Percent,
+  ArrowUpRight,
+  ArrowDownRight,
   Sparkles,
   GraduationCap
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip
 } from 'recharts';
 import { fetchDashboardStats } from '../../features/instructor/instructorSlice';
+import { getCourseStudents, sendStudyReminder } from '../../features/course/courseSlice';
 
 const StatCard = ({ icon: Icon, label, value, growth, color, bgColor, formatType }) => {
   const isPositive = growth >= 0;
   const growthText = growth !== undefined && growth !== null && !isNaN(growth)
-    ? `${isPositive ? '+' : ''}${growth.toFixed(1)}%` 
+    ? `${isPositive ? '+' : ''}${growth.toFixed(1)}%`
     : null;
 
-  const displayValue = formatType === 'currency' 
+  const displayValue = formatType === 'currency'
     ? `${Number(value || 0).toLocaleString("vi-VN")} đ`
-    : formatType === 'percentage' 
+    : formatType === 'percentage'
       ? `${Number(value || 0).toFixed(1)}%`
       : formatType === 'rating'
         ? `${Number(value || 0).toFixed(1)} / 5`
@@ -51,9 +52,8 @@ const StatCard = ({ icon: Icon, label, value, growth, color, bgColor, formatType
           <Icon size={24} />
         </div>
         {growthText && (
-          <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
-            isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-          }`}>
+          <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+            }`}>
             {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
             {growthText}
           </span>
@@ -71,12 +71,54 @@ const InstructorDashboard = () => {
   const [timeRange, setTimeRange] = useState('30days');
   const [activeChartTab, setActiveChartTab] = useState('revenue');
   const [activeTableTab, setActiveTableTab] = useState('revenue');
-  
+
+  // States cho modal chi tiết tiến độ học viên
+  const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalStatus, setModalStatus] = useState('');
+  const [modalCourseId, setModalCourseId] = useState('');
+  const [modalPage, setModalPage] = useState(1);
+
+  // Trạng thái đang gửi nhắc nhở cho từng khóa học
+  const [sendingReminder, setSendingReminder] = useState({});
+
   const dispatch = useDispatch();
   const { dashboardData, isLoading } = useSelector((state) => state.instructor);
 
-  const handleSendReminder = (courseTitle) => {
-    toast.success(`Đã gửi thông báo nhắc nhở học tập đến học viên trễ tiến độ của khóa "${courseTitle}"!`);
+  // Lấy dữ liệu học viên từ courseSlice
+  const { courseStudents, courseStudentsPagination, isStudentsLoading } = useSelector((state) => state.course);
+
+  // Fetch danh sách học viên kèm phân trang và lọc theo trạng thái
+  const fetchStudentsList = async (courseId, status, page = 1) => {
+    setIsStudentModalOpen(true);
+    setModalCourseId(courseId);
+    setModalStatus(status);
+    setModalPage(page);
+    setModalTitle(status === 'behind' ? 'Học viên trễ tiến độ (Behind Schedule)' : 'Học viên đã hoàn thành khóa học');
+
+    dispatch(getCourseStudents({
+      courseId,
+      params: { scheduleStatus: status, page, limit: 5 }
+    }));
+  };
+
+  // API nhắc nhở học viên trễ của khóa học thật
+  const handleSendReminder = async (courseId, courseTitle) => {
+    setSendingReminder(prev => ({ ...prev, [courseId]: true }));
+    try {
+      const resultAction = await dispatch(sendStudyReminder(courseId));
+      if (sendStudyReminder.fulfilled.match(resultAction)) {
+        const message = resultAction.payload?.data?.message || resultAction.payload?.message || `Đã gửi thông báo nhắc nhở thành công!`;
+        toast.success(message);
+      } else {
+        toast.error(resultAction.payload || "Không thể gửi thông báo nhắc nhở.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể gửi thông báo nhắc nhở.");
+    } finally {
+      setSendingReminder(prev => ({ ...prev, [courseId]: false }));
+    }
   };
 
   useEffect(() => {
@@ -114,24 +156,23 @@ const InstructorDashboard = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 text-left p-2">
-      
+
       {/* Tiêu đề & Bộ lọc thời gian */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Bảng điều khiển Giảng viên</h1>
           <p className="text-sm text-gray-500 mt-1">Phân tích chuyên sâu về doanh thu, lượt đăng ký và hiệu suất học tập.</p>
         </div>
-        
+
         <div className="flex items-center bg-gray-100 p-1 rounded-xl w-fit self-start sm:self-auto">
           {timeFilters.map((filter) => (
             <button
               key={filter.value}
               onClick={() => setTimeRange(filter.value)}
-              className={`px-4 py-2 rounded-lg text-xs lg:text-sm font-bold transition-all ${
-                timeRange === filter.value
+              className={`px-4 py-2 rounded-lg text-xs lg:text-sm font-bold transition-all ${timeRange === filter.value
                   ? 'bg-white text-rose-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               {filter.label}
             </button>
@@ -202,25 +243,23 @@ const InstructorDashboard = () => {
             <h3 className="font-bold text-gray-900 text-lg">Biểu đồ phân tích xu hướng</h3>
             <p className="text-xs text-gray-500 mt-0.5">Biểu diễn tăng trưởng doanh thu và học viên đăng ký mới</p>
           </div>
-          
+
           <div className="flex gap-1 border-b border-gray-100 pb-1 sm:border-0 sm:pb-0">
             <button
               onClick={() => setActiveChartTab('revenue')}
-              className={`px-4 py-2 text-xs lg:text-sm font-bold border-b-2 transition-all ${
-                activeChartTab === 'revenue'
+              className={`px-4 py-2 text-xs lg:text-sm font-bold border-b-2 transition-all ${activeChartTab === 'revenue'
                   ? 'border-rose-600 text-rose-600'
                   : 'border-transparent text-gray-400 hover:text-gray-700'
-              }`}
+                }`}
             >
               Doanh thu
             </button>
             <button
               onClick={() => setActiveChartTab('enrollments')}
-              className={`px-4 py-2 text-xs lg:text-sm font-bold border-b-2 transition-all ${
-                activeChartTab === 'enrollments'
+              className={`px-4 py-2 text-xs lg:text-sm font-bold border-b-2 transition-all ${activeChartTab === 'enrollments'
                   ? 'border-rose-600 text-rose-600'
                   : 'border-transparent text-gray-400 hover:text-gray-700'
-              }`}
+                }`}
             >
               Lượng ghi danh
             </button>
@@ -234,20 +273,20 @@ const InstructorDashboard = () => {
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="date" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis 
-                    stroke="#9ca3af" 
-                    fontSize={11} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickFormatter={(val) => val === 0 ? '0' : `${(val / 1000).toLocaleString()}k`} 
+                  <YAxis
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(val) => val === 0 ? '0' : `${(val / 1000).toLocaleString()}k`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => [`${Number(value).toLocaleString("vi-VN")} đ`, "Doanh thu"]}
                     contentStyle={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
                   />
@@ -260,7 +299,7 @@ const InstructorDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="date" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
                   <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => [value, "Lượt ghi danh"]}
                     contentStyle={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
                   />
@@ -290,17 +329,15 @@ const InstructorDashboard = () => {
             <div className="flex bg-gray-100 p-1 rounded-xl w-fit self-start">
               <button
                 onClick={() => setActiveTableTab('revenue')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTableTab === 'revenue' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTableTab === 'revenue' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                  }`}
               >
                 Doanh thu & Học viên
               </button>
               <button
                 onClick={() => setActiveTableTab('retention')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTableTab === 'retention' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTableTab === 'retention' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                  }`}
               >
                 Retention & Tiến độ
               </button>
@@ -346,7 +383,7 @@ const InstructorDashboard = () => {
                         alt={course.title}
                       />
                       <div className="min-w-0">
-                        <Link 
+                        <Link
                           to={`/instructor/courses/${course.slug}/edit`}
                           className="font-bold text-gray-900 truncate hover:text-rose-600 block transition-colors text-sm"
                         >
@@ -359,17 +396,16 @@ const InstructorDashboard = () => {
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        course.status === 'published' 
-                          ? 'bg-emerald-50 text-emerald-700' 
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${course.status === 'published'
+                          ? 'bg-emerald-50 text-emerald-700'
                           : course.status === 'pending'
                             ? 'bg-amber-50 text-amber-700'
                             : 'bg-gray-100 text-gray-600'
-                      }`}>
+                        }`}>
                         {course.status}
                       </span>
                     </td>
-                    
+
                     {activeTableTab === 'revenue' ? (
                       <>
                         <td className="py-4 px-6 text-right font-semibold text-gray-900 text-sm">
@@ -391,27 +427,38 @@ const InstructorDashboard = () => {
                         </td>
                         <td className="py-4 px-6 text-right text-sm">
                           {course.behindStudentsCount > 0 ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200">
+                            <button
+                              onClick={() => fetchStudentsList(course._id, 'behind', 1)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all border border-amber-200"
+                            >
                               ⚠️ {course.behindStudentsCount} học viên
-                            </span>
+                            </button>
                           ) : (
                             <span className="text-gray-400">0 học viên</span>
                           )}
                         </td>
-                        <td className="py-4 px-6 text-right text-sm font-semibold text-green-600">
-                          {course.completedStudentsCount || 0} học viên
+                        <td className="py-4 px-6 text-right text-sm font-semibold">
+                          {course.completedStudentsCount > 0 ? (
+                            <button
+                              onClick={() => fetchStudentsList(course._id, 'completed', 1)}
+                              className="text-green-600 bg-green-50 hover:bg-green-100 transition-all px-3 py-1 rounded-full border border-green-200"
+                            >
+                              {course.completedStudentsCount} học viên
+                            </button>
+                          ) : (
+                            <span className="text-gray-400">0 học viên</span>
+                          )}
                         </td>
                         <td className="py-4 px-6 text-center text-sm">
                           <button
-                            onClick={() => handleSendReminder(course.title)}
-                            disabled={!course.behindStudentsCount}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
-                              course.behindStudentsCount
+                            onClick={() => handleSendReminder(course._id, course.title)}
+                            disabled={!course.behindStudentsCount || sendingReminder[course._id]}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${course.behindStudentsCount
                                 ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600'
                                 : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
-                            }`}
+                              }`}
                           >
-                            Nhắc nhở học bù
+                            {sendingReminder[course._id] ? "Đang gửi..." : "Nhắc nhở học bù"}
                           </button>
                         </td>
                       </>
@@ -435,7 +482,86 @@ const InstructorDashboard = () => {
           </table>
         </div>
       </div>
-      
+
+      {/* Modal hiển thị danh sách học viên */}
+      {isStudentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl border border-gray-100 text-left">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg">{modalTitle}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Danh sách chi tiết tiến độ thực tế của học viên</p>
+              </div>
+              <button
+                onClick={() => setIsStudentModalOpen(false)}
+                className="p-1.5 hover:bg-gray-150 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 max-h-[400px] overflow-y-auto min-h-[150px] flex flex-col justify-center">
+              {isStudentsLoading ? (
+                <div className="flex justify-center items-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
+                </div>
+              ) : courseStudents.length > 0 ? (
+                <div className="space-y-4">
+                  {courseStudents.map((item) => (
+                    <div key={item.student?._id} className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100/50 transition-all">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.student?.avatar || '/src/assets/img/avatar-placeholder.png'}
+                          onError={(e) => { e.target.src = '/src/assets/img/avatar-placeholder.png' }}
+                          className="w-10 h-10 rounded-full border border-gray-200 object-cover"
+                          alt={item.student?.name}
+                        />
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">{item.student?.name || 'Chưa đặt tên'}</h4>
+                          {/* <p className="text-xs text-gray-400">{item.student?.email}</p> */}
+                          {/* Không lộ email ở đây nha */}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-extrabold text-sm text-rose-600">{(item.progress?.percentage || 0).toFixed(0)}%</span>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Tiến độ thực tế</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-400 py-10">
+                  Chưa có học viên nào ở trạng thái này.
+                </div>
+              )}
+            </div>
+
+            {/* Footer & Pagination */}
+            <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <span className="text-xs text-gray-500 font-medium">Trang {courseStudentsPagination.page || 1} / {courseStudentsPagination.totalPages || 1}</span>
+              <div className="flex gap-2">
+                <button
+                  disabled={(courseStudentsPagination.page || 1) <= 1 || isStudentsLoading}
+                  onClick={() => fetchStudentsList(modalCourseId, modalStatus, (courseStudentsPagination.page || 1) - 1)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Trước
+                </button>
+                <button
+                  disabled={(courseStudentsPagination.page || 1) >= (courseStudentsPagination.totalPages || 1) || isStudentsLoading}
+                  onClick={() => fetchStudentsList(modalCourseId, modalStatus, (courseStudentsPagination.page || 1) + 1)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Tiếp theo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

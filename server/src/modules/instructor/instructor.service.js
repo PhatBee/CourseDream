@@ -469,7 +469,7 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
 /**
  * Lấy danh sách học viên đã enrolled của một khóa học
  */
-export const getCourseStudents = async (courseId, instructorId, { page = 1, limit = 10 } = {}) => {
+export const getCourseStudents = async (courseId, instructorId, { page = 1, limit = 10, scheduleStatus } = {}) => {
   const course = await Course.findOne({ _id: courseId, instructor: instructorId });
   if (!course) {
     const err = new Error("Không tìm thấy khóa học hoặc bạn không có quyền xem thông tin khóa học này.");
@@ -481,20 +481,37 @@ export const getCourseStudents = async (courseId, instructorId, { page = 1, limi
   const limitNum = parseInt(limit, 10) || 10;
   const skipNum = (pageNum - 1) * limitNum;
 
-  const totalItems = await Enrollment.countDocuments({ course: courseId });
-  const enrollments = await Enrollment.find({ course: courseId })
+  let enrollmentQuery = { course: courseId };
+  let progresses = [];
+  
+  if (scheduleStatus) {
+    // Lấy progress thỏa mãn trạng thái trước
+    const progressDocs = await Progress.find({
+      course: courseId,
+      scheduleStatus: scheduleStatus
+    }).select('student percentage scheduleStatus updatedAt').lean();
+    
+    const studentIds = progressDocs.map(p => p.student.toString());
+    enrollmentQuery.student = { $in: studentIds };
+    progresses = progressDocs;
+  }
+
+  const totalItems = await Enrollment.countDocuments(enrollmentQuery);
+  const enrollments = await Enrollment.find(enrollmentQuery)
     .populate("student", "name avatar email")
     .sort({ enrolledAt: -1 })
     .skip(skipNum)
     .limit(limitNum)
     .lean();
 
-  const studentIds = enrollments.map(e => e.student?._id).filter(id => !!id);
-
-  const progresses = await Progress.find({
-    course: courseId,
-    student: { $in: studentIds }
-  }).lean();
+  // Nếu không filter status ở trên, fetch progress cho các student đã phân trang
+  if (!scheduleStatus) {
+    const studentIds = enrollments.map(e => e.student?._id).filter(id => !!id);
+    progresses = await Progress.find({
+      course: courseId,
+      student: { $in: studentIds }
+    }).lean();
+  }
 
   const studentsData = enrollments.map(e => {
     const studentProgress = e.student
@@ -505,9 +522,11 @@ export const getCourseStudents = async (courseId, instructorId, { page = 1, limi
       enrolledAt: e.enrolledAt,
       progress: studentProgress ? {
         percentage: studentProgress.percentage || 0,
+        scheduleStatus: studentProgress.scheduleStatus || 'in-progress',
         updatedAt: studentProgress.updatedAt || e.lastViewedAt || e.enrolledAt
       } : {
         percentage: 0,
+        scheduleStatus: 'in-progress',
         updatedAt: e.lastViewedAt || e.enrolledAt
       }
     };
@@ -1211,4 +1230,57 @@ export const activateCourse = async (courseId, instructorId) => {
     return { message: "Khóa học đã được xuất bản trở lại (Published)." };
   }
   throw new Error("Khóa học đang ở trạng thái không thể kích hoạt nhanh.");
+};
+
+/**
+ * Gửi nhắc nhở học bù đến tất cả học sinh bị trễ tiến độ (behind)
+ */
+export const sendCourseStudyReminder = async (courseId, instructorId) => {
+  const course = await Course.findOne({ _id: courseId, instructor: instructorId });
+  if (!course) {
+    const err = new Error("Không tìm thấy khóa học hoặc bạn không có quyền gửi thông báo nhắc nhở của khóa học này.");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  // 1. Quét toàn bộ học viên có trạng thái behind của khóa học đó trong Progresses
+  const progressDocs = await Progress.find({
+    course: courseId,
+    scheduleStatus: 'behind'
+  }).select('student').lean();
+
+  const studentIds = progressDocs.map(p => p.student);
+  if (studentIds.length === 0) {
+    return {
+      message: "Không có học viên nào bị trễ tiến độ để nhắc nhở.",
+      remindedCount: 0
+    };
+  }
+
+  // 2. Tạo thông báo nhắc nhở (Lưu DB + Bắn Realtime Socket + Email backup)
+  let successCount = 0;
+  for (const studentId of studentIds) {
+    try {
+      await notificationService.createNotification({
+        recipient: studentId,
+        sender: instructorId,
+        type: "study_reminder",
+        title: `Nhắc nhở học tập: Khóa học "${course.title}"`,
+        message: `Bạn đang bị chậm lộ trình trong khóa học "${course.title}". Hãy dành thời gian học bù để kịp tiến độ nhé!`,
+        metadata: {
+          courseId: course._id,
+          courseSlug: course.slug,
+          targetScreen: 'Learning'
+        }
+      });
+      successCount++;
+    } catch (e) {
+      console.error(`Lỗi gửi nhắc nhở cho học viên ${studentId}:`, e);
+    }
+  }
+
+  return {
+    message: `Đã gửi thành công thông báo nhắc nhở học tập đến ${successCount} học viên trễ tiến độ.`,
+    remindedCount: successCount
+  };
 };

@@ -25,10 +25,16 @@ const getCourseStudents = (courseId, params) => {
   return axiosClient.get(`${path}/courses/${courseId}/students`, { params });
 };
 
+// Gửi nhắc nhở cho học viên trễ tiến độ
+const sendStudyReminder = (courseId) => {
+  return axiosClient.post(`${path}/courses/${courseId}/remind-behind`);
+};
+
 export const instructorApi = {
     getInstructorStats,
     getInstructorProfile,
     updateInstructorProfile,
     getInstructorDashboardStats,
-    getCourseStudents
+    getCourseStudents,
+    sendStudyReminder
 };
