@@ -30,7 +30,7 @@ import {
 import { fetchDashboardStats } from '../../features/instructor/instructorSlice';
 import { getCourseStudents, sendStudyReminder } from '../../features/course/courseSlice';
 
-const StatCard = ({ icon: Icon, label, value, growth, color, bgColor, formatType }) => {
+const StatCard = ({ icon: Icon, label, value, growth, color, bgColor, formatType, subtext }) => {
   const isPositive = growth >= 0;
   const growthText = growth !== undefined && growth !== null && !isNaN(growth)
     ? `${isPositive ? '+' : ''}${growth.toFixed(1)}%`
@@ -62,6 +62,9 @@ const StatCard = ({ icon: Icon, label, value, growth, color, bgColor, formatType
       <div>
         <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">{label}</p>
         <h3 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">{displayValue}</h3>
+        {subtext && (
+          <p className="text-[10px] text-gray-400 mt-2 italic font-medium leading-relaxed">{subtext}</p>
+        )}
       </div>
     </div>
   );
@@ -184,12 +187,13 @@ const InstructorDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           icon={DollarSign}
-          label={timeRange === 'all' ? 'Tổng doanh thu' : 'Doanh thu chu kỳ'}
+          label={timeRange === 'all' ? 'Doanh thu thực nhận' : 'Doanh thu thực nhận chu kỳ'}
           value={stats?.revenue || 0}
           growth={stats?.growth?.revenue}
           color="text-rose-600"
           bgColor="bg-rose-50"
           formatType="currency"
+          subtext="Doanh thu tính trên giá trị khóa học sau giảm giá và đã khấu trừ 10% VAT"
         />
         <StatCard
           icon={Users}

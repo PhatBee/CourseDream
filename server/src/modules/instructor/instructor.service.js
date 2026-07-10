@@ -6,6 +6,7 @@ import CourseRevision from "../course/courseRevision.model.js";
 import Category from "../category/category.model.js";
 import Lecture from "../course/lecture.model.js";
 import Section from "../course/section.model.js";
+import Payment from "../payment/payment.model.js";
 import User from "../auth/auth.model.js";
 import notificationService from "../notification/notification.service.js";
 import { uploadToCloudinary } from "../../config/cloudinary.js";
@@ -111,17 +112,20 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
   const kpiGrowthCurrentStart = timeRange === 'all' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) : currentPeriodStart;
   const kpiGrowthPreviousEnd = timeRange === 'all' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) : previousPeriodEnd;
 
-  // 3. Chạy Aggregation Pipeline trên Enrollment để tính KPI Doanh thu và Ghi danh
-  const kpiStats = await Enrollment.aggregate([
+  // 3. Chạy Aggregation Pipeline trên Payment để tính KPI Doanh thu và Ghi danh thực tế
+  const kpiStats = await Payment.aggregate([
     {
       $match: {
-        course: { $in: courseIds }
+        status: 'success'
       }
+    },
+    {
+      $unwind: '$items'
     },
     {
       $lookup: {
         from: 'courses',
-        localField: 'course',
+        localField: 'items.course',
         foreignField: '_id',
         as: 'courseDetails'
       }
@@ -130,11 +134,16 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
       $unwind: '$courseDetails'
     },
     {
+      $match: {
+        'courseDetails.instructor': new mongoose.Types.ObjectId(instructorId)
+      }
+    },
+    {
       $project: {
-        enrolledAt: 1,
-        price: {
+        payDate: { $ifNull: ['$payDate', '$createdAt'] },
+        instructorShare: {
           $convert: {
-            input: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] },
+            input: { $ifNull: ['$items.instructorShare', 0] },
             to: 'double',
             onError: 0,
             onNull: 0
@@ -146,14 +155,14 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
       $group: {
         _id: null,
         // Dữ liệu toàn thời gian
-        allTimeRevenue: { $sum: '$price' },
+        allTimeRevenue: { $sum: '$instructorShare' },
         allTimeEnrollments: { $sum: 1 },
         // Dữ liệu chu kỳ hiện tại
         currentRevenue: {
           $sum: {
             $cond: [
-              { $gte: ['$enrolledAt', kpiGrowthCurrentStart] },
-              '$price',
+              { $gte: ['$payDate', kpiGrowthCurrentStart] },
+              '$instructorShare',
               0
             ]
           }
@@ -164,11 +173,11 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
             $cond: [
               {
                 $and: [
-                  { $gte: ['$enrolledAt', kpiGrowthStart] },
-                  { $lt: ['$enrolledAt', kpiGrowthPreviousEnd] }
+                  { $gte: ['$payDate', kpiGrowthStart] },
+                  { $lt: ['$payDate', kpiGrowthPreviousEnd] }
                 ]
               },
-              '$price',
+              '$instructorShare',
               0
             ]
           }
@@ -176,7 +185,7 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         currentEnrollments: {
           $sum: {
             $cond: [
-              { $gte: ['$enrolledAt', kpiGrowthCurrentStart] },
+              { $gte: ['$payDate', kpiGrowthCurrentStart] },
               1,
               0
             ]
@@ -187,8 +196,8 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
             $cond: [
               {
                 $and: [
-                  { $gte: ['$enrolledAt', kpiGrowthStart] },
-                  { $lt: ['$enrolledAt', kpiGrowthPreviousEnd] }
+                  { $gte: ['$payDate', kpiGrowthStart] },
+                  { $lt: ['$payDate', kpiGrowthPreviousEnd] }
                 ]
               },
               1,
@@ -239,17 +248,22 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     ? new Date(now.getFullYear() - 1, now.getMonth(), 1) // default 12 tháng qua để biểu đồ gọn đẹp
     : currentPeriodStart;
 
-  const trendStats = await Enrollment.aggregate([
+  const trendStats = await Payment.aggregate([
     {
       $match: {
-        course: { $in: courseIds },
-        enrolledAt: { $gte: chartStart }
+        status: 'success',
+        $expr: {
+          $gte: [{ $ifNull: ['$payDate', '$createdAt'] }, chartStart]
+        }
       }
+    },
+    {
+      $unwind: '$items'
     },
     {
       $lookup: {
         from: 'courses',
-        localField: 'course',
+        localField: 'items.course',
         foreignField: '_id',
         as: 'courseDetails'
       }
@@ -258,11 +272,16 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
       $unwind: '$courseDetails'
     },
     {
+      $match: {
+        'courseDetails.instructor': new mongoose.Types.ObjectId(instructorId)
+      }
+    },
+    {
       $project: {
-        enrolledAt: 1,
-        price: {
+        payDate: { $ifNull: ['$payDate', '$createdAt'] },
+        instructorShare: {
           $convert: {
-            input: { $ifNull: ['$courseDetails.priceDiscount', { $ifNull: ['$courseDetails.price', 0] }] },
+            input: { $ifNull: ['$items.instructorShare', 0] },
             to: 'double',
             onError: 0,
             onNull: 0
@@ -275,11 +294,11 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         _id: {
           $dateToString: {
             format: groupByFormat,
-            date: '$enrolledAt',
+            date: '$payDate',
             timezone: 'Asia/Ho_Chi_Minh'
           }
         },
-        revenue: { $sum: '$price' },
+        revenue: { $sum: '$instructorShare' },
         enrollments: { $sum: 1 }
       }
     },
@@ -332,10 +351,33 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     },
     {
       $lookup: {
-        from: 'enrollments',
-        localField: '_id',
-        foreignField: 'course',
-        as: 'enrollments'
+        from: 'payments',
+        let: { courseId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ['$status', 'success'] },
+                  { $in: ['$$courseId', '$courses'] }
+                ]
+              }
+            }
+          },
+          { $unwind: '$items' },
+          {
+            $match: {
+              $expr: { $eq: ['$items.course', '$$courseId'] }
+            }
+          },
+          {
+            $project: {
+              payDate: { $ifNull: ['$payDate', '$createdAt'] },
+              instructorShare: { $ifNull: ['$items.instructorShare', 0] }
+            }
+          }
+        ],
+        as: 'paidItems'
       }
     },
     {
@@ -357,12 +399,12 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         rating: 1,
         periodEnrollments: {
           $filter: {
-            input: '$enrollments',
-            as: 'e',
-            cond: { $gte: ['$$e.enrolledAt', kpiGrowthCurrentStart] }
+            input: '$paidItems',
+            as: 'pi',
+            cond: { $gte: ['$$pi.payDate', kpiGrowthCurrentStart] }
           }
         },
-        totalEnrollmentsCount: { $size: '$enrollments' },
+        totalEnrollmentsCount: { $size: '$paidItems' },
         behindStudentsCount: {
           $size: {
             $filter: {
@@ -381,7 +423,8 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
             }
           }
         },
-        avgCompletionPercentage: { $ifNull: [{ $avg: '$progressDocs.percentage' }, 0] }
+        avgCompletionPercentage: { $ifNull: [{ $avg: '$progressDocs.percentage' }, 0] },
+        paidItems: 1
       }
     },
     {
@@ -398,32 +441,8 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         behindStudentsCount: 1,
         completedStudentsCount: 1,
         avgCompletionPercentage: 1,
-        revenue: {
-          $multiply: [
-            '$totalEnrollmentsCount',
-            {
-              $convert: {
-                input: { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] },
-                to: 'double',
-                onError: 0,
-                onNull: 0
-              }
-            }
-          ]
-        },
-        periodRevenue: {
-          $multiply: [
-            { $size: '$periodEnrollments' },
-            {
-              $convert: {
-                input: { $ifNull: ['$priceDiscount', { $ifNull: ['$price', 0] }] },
-                to: 'double',
-                onError: 0,
-                onNull: 0
-              }
-            }
-          ]
-        }
+        revenue: { $sum: '$paidItems.instructorShare' },
+        periodRevenue: { $sum: '$periodEnrollments.instructorShare' }
       }
     },
     {
@@ -483,14 +502,14 @@ export const getCourseStudents = async (courseId, instructorId, { page = 1, limi
 
   let enrollmentQuery = { course: courseId };
   let progresses = [];
-  
+
   if (scheduleStatus) {
     // Lấy progress thỏa mãn trạng thái trước
     const progressDocs = await Progress.find({
       course: courseId,
       scheduleStatus: scheduleStatus
     }).select('student percentage scheduleStatus updatedAt').lean();
-    
+
     const studentIds = progressDocs.map(p => p.student.toString());
     enrollmentQuery.student = { $in: studentIds };
     progresses = progressDocs;
@@ -914,7 +933,7 @@ export const createOrUpdateRevision = async (courseData, thumbnailFile, instruct
     const uploadResult = await uploadToCloudinary(thumbnailFile.buffer, 'dreamcourse/thumbnails');
     thumbnailUrl = uploadResult.secure_url;
   }
-  
+
   if (thumbnailUrl) {
     thumbnailUrl = thumbnailUrl.split('?')[0];
   }

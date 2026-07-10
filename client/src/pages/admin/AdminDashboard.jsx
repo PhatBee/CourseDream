@@ -28,6 +28,8 @@ const AdminDashboard = () => {
   const counts = stats?.counts || {};
   const topCourses = stats?.topCourses || [];
   const totalRevenue = revenueData?.totalRevenue || 0;
+  const totalVAT = revenueData?.totalVAT || 0;
+  const totalPlatformNet = revenueData?.totalPlatformNet || 0;
 
   // Dữ liệu giả lập cho active students (Bạn cần API backend trả về số này thực tế)
   const totalStudents = counts.users?.students || 0;
@@ -38,10 +40,22 @@ const AdminDashboard = () => {
     { title: 'Tổng giảng viên', value: counts.users?.instructors || 0, icon: UserCheck, color: 'bg-green-500' },
     { title: 'Khóa học đã xuất bản', value: counts.courses?.published || 0, icon: BookOpen, color: 'bg-orange-500' },
     {
-      title: 'Tổng doanh thu',
+      title: 'Tổng doanh thu (Gross)',
       value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalRevenue),
       icon: DollarSign,
       color: 'bg-rose-500'
+    },
+    {
+      title: 'Thuế VAT thu hộ (10%)',
+      value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalVAT),
+      icon: DollarSign,
+      color: 'bg-amber-500'
+    },
+    {
+      title: 'Doanh thu thuần nền tảng',
+      value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPlatformNet),
+      icon: DollarSign,
+      color: 'bg-emerald-500'
     },
   ];
 
@@ -57,7 +71,7 @@ const AdminDashboard = () => {
 
       {/* 1. Header & Stats Grid */}
       <div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
           {statsCards.map((stat, index) => (
             <StatsCard key={index} {...stat} />
           ))}

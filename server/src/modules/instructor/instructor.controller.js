@@ -331,4 +331,4 @@ export const activateCourse = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};
