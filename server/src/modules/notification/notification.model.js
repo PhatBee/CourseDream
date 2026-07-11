@@ -20,6 +20,7 @@ const NotificationSchema = new mongoose.Schema(
         "warning",
         "reward_voucher",
         "study_reminder",
+        "extension_success"
       ],
       required: true,
     },

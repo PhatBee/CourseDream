@@ -172,7 +172,6 @@ class EnrollmentService {
 
         const course = enrollment.course;
         const durationInWeeks = course.durationInWeeks || 12;
-        
         const currentPrice = course.priceDiscount !== undefined ? course.priceDiscount : (course.price || 0);
 
         let extensionWeeks = 0;
@@ -181,33 +180,102 @@ class EnrollmentService {
         if (enrollment.extensionCount === 0) {
             extensionWeeks = 2;
             finalPrice = 0;
-        } else {
-            switch (packageId) {
-                case '2weeks':
-                    extensionWeeks = 2;
-                    finalPrice = currentPrice * (2 / durationInWeeks);
-                    break;
-                case '4weeks':
-                    extensionWeeks = 4;
-                    finalPrice = (currentPrice * (4 / durationInWeeks)) * 0.95; // Chiết khấu 5%
-                    break;
-                case 'full':
-                    extensionWeeks = durationInWeeks;
-                    finalPrice = currentPrice * 0.7; // Chiết khấu 30%
-                    break;
-                default:
-                    const error = new Error("Gói gia hạn không hợp lệ.");
-                    error.statusCode = 400;
-                    throw error;
-            }
-        }
 
-        // --- Giả lập cổng thanh toán tại đây nếu finalPrice > 0 ---
-        // logicPaymentGate(userId, finalPrice);
+            // Xử lý gia hạn miễn phí ngay lập tức
+            const now = new Date();
+            let baseDate = new Date(enrollment.endedAt);
+            if (baseDate <= now) {
+                baseDate = now;
+            }
+            const addedMs = extensionWeeks * 7 * 24 * 60 * 60 * 1000;
+            const newEndedAt = new Date(baseDate.getTime() + addedMs);
+
+            enrollment.endedAt = newEndedAt;
+            enrollment.extensionCount += 1;
+            await enrollment.save();
+
+            const populatedEnrollment = await Enrollment.findById(enrollment._id)
+                .populate({
+                    path: "course",
+                    select: "title slug thumbnail price instructor totalLectures totalHours categories durationInWeeks",
+                    populate: [
+                        { path: "instructor", select: "name avatar" },
+                        { path: "categories", select: "name slug" }
+                    ]
+                })
+                .lean();
+
+            if (populatedEnrollment.course && populatedEnrollment.course.thumbnail) {
+                populatedEnrollment.course.thumbnail = signThumbnailUrl(populatedEnrollment.course.thumbnail);
+            }
+
+            return {
+                isPaid: false,
+                enrollment: populatedEnrollment,
+                priceCharged: 0,
+                weeksAdded: 2
+            };
+        } else {
+            if (currentPrice === 0) {
+                switch (packageId) {
+                    case '2weeks':
+                        extensionWeeks = 2;
+                        finalPrice = 20000; // 1 tuần = 10k => 2 tuần = 20k
+                        break;
+                    case '4weeks':
+                        extensionWeeks = 4;
+                        finalPrice = 35000;
+                        break;
+                    case 'full':
+                        extensionWeeks = durationInWeeks;
+                        finalPrice = 66000;
+                        break;
+                    default:
+                        const error = new Error("Gói gia hạn không hợp lệ.");
+                        error.statusCode = 400;
+                        throw error;
+                }
+            } else {
+                switch (packageId) {
+                    case '2weeks':
+                        extensionWeeks = 2;
+                        finalPrice = Math.round(currentPrice * (2 / durationInWeeks));
+                        break;
+                    case '4weeks':
+                        extensionWeeks = 4;
+                        finalPrice = Math.round((currentPrice * (4 / durationInWeeks)) * 0.95); // Chiết khấu 5%
+                        break;
+                    case 'full':
+                        extensionWeeks = durationInWeeks;
+                        finalPrice = Math.round(currentPrice * 0.7); // Chiết khấu 30%
+                        break;
+                    default:
+                        const error = new Error("Gói gia hạn không hợp lệ.");
+                        error.statusCode = 400;
+                        throw error;
+                }
+            }
+
+            // Đối với gói tính phí, chỉ tính toán và trả về thông tin để Controller tạo Payment URL
+            return {
+                isPaid: true,
+                priceCharged: finalPrice,
+                weeksAdded: extensionWeeks,
+                enrollment
+            };
+        }
+    }
+
+    async processExtensionSuccess(enrollmentId, extensionWeeks) {
+        const enrollment = await Enrollment.findById(enrollmentId).populate("course");
+        if (!enrollment) {
+            const error = new Error("Không tìm thấy thông tin ghi danh.");
+            error.statusCode = 404;
+            throw error;
+        }
 
         const now = new Date();
         let baseDate = new Date(enrollment.endedAt);
-
         if (baseDate <= now) {
             baseDate = now;
         }
@@ -234,11 +302,7 @@ class EnrollmentService {
             populatedEnrollment.course.thumbnail = signThumbnailUrl(populatedEnrollment.course.thumbnail);
         }
 
-        return {
-            enrollment: populatedEnrollment,
-            priceCharged: finalPrice,
-            weeksAdded: extensionWeeks
-        };
+        return populatedEnrollment;
     }
 }
 

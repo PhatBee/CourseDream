@@ -4,11 +4,14 @@ import { X, Calendar, CreditCard, Award, CheckCircle2 } from 'lucide-react-nativ
 import { useDispatch, useSelector } from 'react-redux';
 import { extendEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import Toast from 'react-native-toast-message';
+import { useNavigation } from '@react-navigation/native';
 
 const CourseExtensionModalMobile = ({ visible, onClose, enrollment }) => {
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const { isLoading } = useSelector(state => state.enrollment);
   const [selectedPkg, setSelectedPkg] = useState('2weeks');
+  const [paymentMethod, setPaymentMethod] = useState('vnpay');
 
   if (!enrollment || !enrollment.course) return null;
 
@@ -16,27 +19,27 @@ const CourseExtensionModalMobile = ({ visible, onClose, enrollment }) => {
   const durationInWeeks = course.durationInWeeks || 12;
   const basePrice = course.priceDiscount > 0 ? course.priceDiscount : (course.price || 0);
 
-  // Tính toán gói - GIỮ NGUYÊN SỐ THẬP PHÂN (KHÔNG LÀM TRÒN)
+  // Tính toán gói
   let packages = [
     {
       id: '2weeks',
       name: 'Gói 2 tuần',
       duration: '2 tuần',
-      price: basePrice * (2 / durationInWeeks),
+      price: basePrice === 0 ? 20000 : basePrice * (2 / durationInWeeks),
       desc: 'Hoàn thành nốt bài học còn dang dở'
     },
     {
       id: '4weeks',
       name: 'Gói 1 tháng',
       duration: '4 tuần',
-      price: (basePrice * (4 / durationInWeeks)) * 0.95,
+      price: basePrice === 0 ? 35000 : (basePrice * (4 / durationInWeeks)) * 0.95,
       desc: 'Ưu đãi tiết kiệm 5%'
     },
     {
       id: 'full',
       name: 'Gói trọn vẹn',
       duration: `${durationInWeeks} tuần`,
-      price: basePrice * 0.7,
+      price: basePrice === 0 ? 66000 : basePrice * 0.7,
       desc: `Ưu đãi 30% - Bằng thời gian gốc`
     }
   ];
@@ -53,9 +56,23 @@ const CourseExtensionModalMobile = ({ visible, onClose, enrollment }) => {
   const handleConfirm = async () => {
     const pkgId = extensionCount === 0 ? '2weeks' : selectedPkg;
     try {
-      await dispatch(extendEnrollmentThunk({ enrollmentId: enrollment._id, packageId: pkgId })).unwrap();
-      Toast.show({ type: 'success', text1: 'Gia hạn thành công!' });
-      onClose();
+      const result = await dispatch(extendEnrollmentThunk({
+        enrollmentId: enrollment._id,
+        packageId: pkgId,
+        paymentMethod: extensionCount === 0 ? 'free' : paymentMethod,
+        platform: 'mobile'
+      })).unwrap();
+
+      if (result.isPaid && result.paymentUrl) {
+        onClose();
+        navigation.navigate('PaymentWebView', {
+          paymentUrl: result.paymentUrl,
+          paymentMethod
+        });
+      } else {
+        Toast.show({ type: 'success', text1: result.message || 'Gia hạn thành công!' });
+        onClose();
+      }
     } catch (error) { /* Đã xử lý ở Slice */ }
   };
 
@@ -90,9 +107,8 @@ const CourseExtensionModalMobile = ({ visible, onClose, enrollment }) => {
                   <TouchableOpacity
                     key={pkg.id}
                     onPress={() => setSelectedPkg(pkg.id)}
-                    className={`flex-row justify-between items-center p-4 mb-3 border-2 rounded-2xl ${
-                      selectedPkg === pkg.id ? 'border-rose-500 bg-rose-50' : 'border-gray-100'
-                    }`}
+                    className={`flex-row justify-between items-center p-4 mb-3 border-2 rounded-2xl ${selectedPkg === pkg.id ? 'border-rose-500 bg-rose-50' : 'border-gray-100'
+                      }`}
                   >
                     <View className="flex-1">
                       <Text className="font-bold text-gray-900">{pkg.name}</Text>
@@ -106,6 +122,26 @@ const CourseExtensionModalMobile = ({ visible, onClose, enrollment }) => {
                     </View>
                   </TouchableOpacity>
                 ))}
+
+                <Text className="text-gray-600 text-sm mt-4 mb-2">Chọn cổng thanh toán:</Text>
+                <View className="flex-row gap-2 mb-4">
+                  {[
+                    { id: 'vnpay', name: 'VNPAY' },
+                    { id: 'momo', name: 'MoMo' },
+                    { id: 'zalopay', name: 'ZaloPay' }
+                  ].map((method) => (
+                    <TouchableOpacity
+                      key={method.id}
+                      onPress={() => setPaymentMethod(method.id)}
+                      className={`flex-1 py-3 border rounded-xl items-center ${paymentMethod === method.id ? 'border-rose-500 bg-rose-50' : 'border-gray-100 bg-white'
+                        }`}
+                    >
+                      <Text className={`font-bold ${paymentMethod === method.id ? 'text-rose-600' : 'text-gray-700'}`}>
+                        {method.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             )}
           </ScrollView>
@@ -115,7 +151,7 @@ const CourseExtensionModalMobile = ({ visible, onClose, enrollment }) => {
             <TouchableOpacity onPress={onClose} className="flex-1 py-3 rounded-xl border border-gray-200">
               <Text className="text-center font-bold text-gray-600">Hủy</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleConfirm}
               disabled={isLoading}
               className="flex-2 bg-rose-500 py-3 rounded-xl flex-row justify-center items-center px-6"

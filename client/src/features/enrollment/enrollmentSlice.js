@@ -52,10 +52,10 @@ export const activateEnrollmentThunk = createAsyncThunk(
 
 export const extendEnrollmentThunk = createAsyncThunk(
   'enrollment/extendEnrollment',
-  async ({ enrollmentId, packageId }, thunkAPI) => {
+  async ({ enrollmentId, packageId, paymentMethod = 'vnpay', platform = 'web' }, thunkAPI) => {
     try {
-      const response = await enrollmentApi.extendEnrollment(enrollmentId, packageId);
-      return response.data; // { success: true, message: '...', enrollment: {...} }
+      const response = await enrollmentApi.extendEnrollment(enrollmentId, packageId, paymentMethod, platform);
+      return response.data; // { success: true, isPaid: true/false, paymentUrl: '...', enrollment: {...} }
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
@@ -147,6 +147,12 @@ const enrollmentSlice = createSlice({
       })
       .addCase(extendEnrollmentThunk.fulfilled, (state, action) => {
         state.isLoading = false;
+        
+        // Nếu là gói gia hạn có phí, phía component sẽ chịu trách nhiệm chuyển hướng đến cổng thanh toán
+        if (action.payload.isPaid) {
+          return;
+        }
+
         const updatedEnrollment = action.payload.enrollment;
 
         if (updatedEnrollment) {

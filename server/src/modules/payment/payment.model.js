@@ -40,6 +40,14 @@ const PaymentSchema = new mongoose.Schema({
   couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Promotion" }, // Mã giảm giá đã dùng
   discountType: { type: String, enum: ['tiered', 'coupon', 'none'], default: 'none' }, // Loại khuyến mãi được áp dụng
 
+  // Metadata gia hạn
+  paymentType: { type: String, enum: ['purchase', 'extension'], default: 'purchase' },
+  extensionMetadata: {
+    enrollmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Enrollment' },
+    packageId: String,
+    extensionWeeks: Number
+  },
+
   // Metadata hệ thống
 
   ipAddr: String, // IP address của khách hàng
