@@ -13,6 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { fetchStudentDashboard } from '../../features/enrollment/enrollmentSlice';
 import { getWishlist } from '../../features/wishlist/wishlistSlice';
 import { Image } from 'expo-image';
+import { getRemainingTimeLabel } from '../../utils/enrollmentUtils';
 
 const DashboardScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -155,6 +156,7 @@ const DashboardScreen = ({ navigation }) => {
 
                 const isActivated = enrollment.isActivated;
                 const isExpired = enrollment.endedAt && new Date(enrollment.endedAt) < new Date();
+                const remainingTime = isActivated && !isExpired ? getRemainingTimeLabel(enrollment.endedAt) : null;
 
                 return (
                   <TouchableOpacity
@@ -198,6 +200,18 @@ const DashboardScreen = ({ navigation }) => {
                                 style={{ width: `${progress}%` }}
                               />
                             </View>
+                            {remainingTime && (
+                              <Text 
+                                style={{ 
+                                  fontSize: 10, 
+                                  fontWeight: '600', 
+                                  color: remainingTime.urgent ? '#e11d48' : '#7c3aed', 
+                                  marginTop: 4 
+                                }}
+                              >
+                                 {remainingTime.label}
+                              </Text>
+                            )}
                           </>
                         )}
                       </View>

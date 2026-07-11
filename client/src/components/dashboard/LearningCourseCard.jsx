@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import { toast } from 'react-hot-toast';
 import CourseExtensionModal from '../course/CourseExtensionModal';
+import { getRemainingTimeLabel } from '../../utils/enrollmentUtils';
 
 const LearningCourseCard = ({ enrollment }) => {
   const dispatch = useDispatch();
@@ -16,6 +17,7 @@ const LearningCourseCard = ({ enrollment }) => {
 
   const progress = learningProgress;
   const isExpired = endedAt && new Date(endedAt) < new Date();
+  const remainingTime = isActivated && !isExpired ? getRemainingTimeLabel(endedAt) : null;
 
   const handleActivateCourse = async (e) => {
     e.preventDefault();
@@ -68,27 +70,39 @@ const LearningCourseCard = ({ enrollment }) => {
           <ProgressBar percentage={progress.percentage} color="bg-rose-500" />
 
           <div className="mt-4 flex justify-between items-center">
-            {isExpired ? (
-              <span className="inline-flex items-center text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
-                Đã hết hạn
-              </span>
-            ) : !isActivated ? (
-              <span className="inline-flex items-center text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
-                Chưa kích hoạt
-              </span>
-            ) : progress.percentage === 100 || progress.scheduleStatus === 'completed' ? (
-              <span className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-100">
-                <Award size={14} className="mr-1" /> Hoàn thành
-              </span>
-            ) : progress.scheduleStatus === 'behind' ? (
-              <span className="inline-flex items-center text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                Trễ lộ trình
-              </span>
-            ) : (
-              <span className="inline-flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
-                Đúng tiến độ
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {isExpired ? (
+                <span className="inline-flex items-center text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
+                  Đã hết hạn
+                </span>
+              ) : !isActivated ? (
+                <span className="inline-flex items-center text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                  Chưa kích hoạt
+                </span>
+              ) : progress.percentage === 100 || progress.scheduleStatus === 'completed' ? (
+                <span className="inline-flex items-center text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-100">
+                  <Award size={14} className="mr-1" /> Hoàn thành
+                </span>
+              ) : progress.scheduleStatus === 'behind' ? (
+                <span className="inline-flex items-center text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                  Trễ lộ trình
+                </span>
+              ) : (
+                <span className="inline-flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
+                  Đúng tiến độ
+                </span>
+              )}
+
+              {isActivated && !isExpired && remainingTime && (
+                <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                  remainingTime.urgent
+                    ? 'text-amber-600 bg-amber-50 border-amber-200 animate-pulse'
+                    : 'text-purple-600 bg-purple-50 border-purple-100'
+                }`}>
+                  {remainingTime.label}
+                </span>
+              )}
+            </div>
 
             {isExpired ? (
               <button
