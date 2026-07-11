@@ -25,7 +25,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip
+  Tooltip,
+  Legend
 } from 'recharts';
 import { fetchDashboardStats } from '../../features/instructor/instructorSlice';
 import { getCourseStudents, sendStudyReminder } from '../../features/course/courseSlice';
@@ -173,8 +174,8 @@ const InstructorDashboard = () => {
               key={filter.value}
               onClick={() => setTimeRange(filter.value)}
               className={`px-4 py-2 rounded-lg text-xs lg:text-sm font-bold transition-all ${timeRange === filter.value
-                  ? 'bg-white text-rose-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-rose-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
                 }`}
             >
               {filter.label}
@@ -223,6 +224,60 @@ const InstructorDashboard = () => {
         />
       </div>
 
+      {/* Phân nhóm dòng tiền Doanh thu */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-1 border-r border-gray-100 pr-6 flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-gray-900 text-lg">Quản lý dòng tiền</h3>
+            <p className="text-xs text-gray-500 mt-1">Phân tích chuyên sâu nguồn tiền từ học viên đăng ký mới và các lượt gia hạn khóa học học tập dài hạn (LTV).</p>
+          </div>
+          <div className="mt-4 p-4 bg-rose-50/50 rounded-2xl border border-rose-100/50">
+            <span className="text-[10px] uppercase font-black tracking-wider text-rose-600 block mb-1">Định hướng Udemy</span>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Tỷ lệ gia hạn cao chứng tỏ nội dung của bạn có giá trị bền vững và giữ chân học viên tốt. Hãy liên tục cập nhật bài giảng mới để tối ưu dòng tiền gia hạn!
+            </p>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Card Bán khóa học */}
+          <div className="bg-gradient-to-br from-rose-50/30 to-rose-50/10 p-5 rounded-2xl border border-rose-100/60 flex flex-col justify-between relative overflow-hidden group">
+            <div className="absolute right-0 top-0 w-16 h-16 bg-rose-100/30 rounded-bl-full pointer-events-none"></div>
+            <div className="flex justify-between items-start">
+              <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">Bán khóa học (Purchase)</span>
+              <DollarSign className="text-rose-500" size={20} />
+            </div>
+            <div className="mt-4">
+              <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Chu kỳ hiện tại</span>
+              <h4 className="text-2xl font-black text-gray-900 mt-1">
+                {Number(stats?.purchaseRevenue || 0).toLocaleString("vi-VN")} đ
+              </h4>
+              <p className="text-[11px] text-gray-450 mt-1.5 pt-1.5 border-t border-blue-100/30">
+                Lũy kế toàn thời gian: <strong className="text-gray-700 font-extrabold">{Number(stats?.allTimePurchaseRevenue || 0).toLocaleString("vi-VN")} đ</strong>
+              </p>
+            </div>
+          </div>
+
+          {/* Card Gia hạn khóa học */}
+          <div className="bg-gradient-to-br from-purple-50/30 to-purple-50/10 p-5 rounded-2xl border border-purple-100/60 flex flex-col justify-between relative overflow-hidden group">
+            <div className="absolute right-0 top-0 w-16 h-16 bg-purple-100/30 rounded-bl-full pointer-events-none"></div>
+            <div className="flex justify-between items-start">
+              <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">Gia hạn (Extension)</span>
+              <DollarSign className="text-purple-500" size={20} />
+            </div>
+            <div className="mt-4">
+              <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Chu kỳ hiện tại</span>
+              <h4 className="text-2xl font-black text-gray-900 mt-1">
+                {Number(stats?.extensionRevenue || 0).toLocaleString("vi-VN")} đ
+              </h4>
+              <p className="text-[11px] text-gray-450 mt-1.5 pt-1.5 border-t border-purple-100/30">
+                Lũy kế toàn thời gian: <strong className="text-gray-700 font-extrabold">{Number(stats?.allTimeExtensionRevenue || 0).toLocaleString("vi-VN")} đ</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Profile CTA */}
       <div className="bg-gradient-to-r from-rose-50 to-orange-50 p-6 rounded-2xl border border-rose-100/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -248,21 +303,39 @@ const InstructorDashboard = () => {
             <p className="text-xs text-gray-500 mt-0.5">Biểu diễn tăng trưởng doanh thu và học viên đăng ký mới</p>
           </div>
 
-          <div className="flex gap-1 border-b border-gray-100 pb-1 sm:border-0 sm:pb-0">
+          <div className="flex gap-1 border-b border-gray-100 pb-1 sm:border-0 sm:pb-0 overflow-x-auto">
             <button
               onClick={() => setActiveChartTab('revenue')}
-              className={`px-4 py-2 text-xs lg:text-sm font-bold border-b-2 transition-all ${activeChartTab === 'revenue'
-                  ? 'border-rose-600 text-rose-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-700'
+              className={`px-3 py-2 text-xs lg:text-sm font-bold border-b-2 whitespace-nowrap transition-all ${activeChartTab === 'revenue'
+                ? 'border-rose-600 text-rose-600'
+                : 'border-transparent text-gray-450 hover:text-gray-700'
                 }`}
             >
-              Doanh thu
+              Doanh thu tổng hợp
+            </button>
+            <button
+              onClick={() => setActiveChartTab('purchaseRevenue')}
+              className={`px-3 py-2 text-xs lg:text-sm font-bold border-b-2 whitespace-nowrap transition-all ${activeChartTab === 'purchaseRevenue'
+                ? 'border-rose-600 text-rose-600'
+                : 'border-transparent text-gray-450 hover:text-gray-700'
+                }`}
+            >
+              Bán khóa học
+            </button>
+            <button
+              onClick={() => setActiveChartTab('extensionRevenue')}
+              className={`px-3 py-2 text-xs lg:text-sm font-bold border-b-2 whitespace-nowrap transition-all ${activeChartTab === 'extensionRevenue'
+                ? 'border-rose-600 text-rose-600'
+                : 'border-transparent text-gray-450 hover:text-gray-700'
+                }`}
+            >
+              Gia hạn
             </button>
             <button
               onClick={() => setActiveChartTab('enrollments')}
-              className={`px-4 py-2 text-xs lg:text-sm font-bold border-b-2 transition-all ${activeChartTab === 'enrollments'
-                  ? 'border-rose-600 text-rose-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-700'
+              className={`px-3 py-2 text-xs lg:text-sm font-bold border-b-2 whitespace-nowrap transition-all ${activeChartTab === 'enrollments'
+                ? 'border-rose-600 text-rose-600'
+                : 'border-transparent text-gray-450 hover:text-gray-700'
                 }`}
             >
               Lượng ghi danh
@@ -276,9 +349,13 @@ const InstructorDashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
+                    <linearGradient id="colorPurchase" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FF1D8D" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#FF1D8D" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorExtension" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#9945FF" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#9945FF" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -291,10 +368,65 @@ const InstructorDashboard = () => {
                     tickFormatter={(val) => val === 0 ? '0' : `${(val / 1000).toLocaleString()}k`}
                   />
                   <Tooltip
-                    formatter={(value) => [`${Number(value).toLocaleString("vi-VN")} đ`, "Doanh thu"]}
+                    formatter={(value, name) => [
+                      `${Number(value).toLocaleString("vi-VN")} đ`,
+                      name === 'purchaseRevenue' ? 'Bán khóa học' : name === 'extensionRevenue' ? 'Gia hạn' : 'Doanh thu'
+                    ]}
                     contentStyle={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
                   />
-                  <Area type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Area type="monotone" dataKey="purchaseRevenue" name="Bán khóa học" stroke="#FF1D8D" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPurchase)" />
+                  <Area type="monotone" dataKey="extensionRevenue" name="Gia hạn" stroke="#9945FF" strokeWidth={2.5} fillOpacity={1} fill="url(#colorExtension)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : activeChartTab === 'purchaseRevenue' ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorPurchaseOnly" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FF1D8D" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#FF1D8D" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="date" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(val) => val === 0 ? '0' : `${(val / 1000).toLocaleString()}k`}
+                  />
+                  <Tooltip
+                    formatter={(value) => [`${Number(value).toLocaleString("vi-VN")} đ`, "Bán khóa học"]}
+                    contentStyle={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
+                  />
+                  <Area type="monotone" dataKey="purchaseRevenue" stroke="#FF1D8D" strokeWidth={3} fillOpacity={1} fill="url(#colorPurchaseOnly)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : activeChartTab === 'extensionRevenue' ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorExtensionOnly" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#9945FF" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#9945FF" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="date" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(val) => val === 0 ? '0' : `${(val / 1000).toLocaleString()}k`}
+                  />
+                  <Tooltip
+                    formatter={(value) => [`${Number(value).toLocaleString("vi-VN")} đ`, "Gia hạn"]}
+                    contentStyle={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
+                  />
+                  <Area type="monotone" dataKey="extensionRevenue" stroke="#9945FF" strokeWidth={3} fillOpacity={1} fill="url(#colorExtensionOnly)" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -304,10 +436,15 @@ const InstructorDashboard = () => {
                   <XAxis dataKey="date" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
                   <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip
-                    formatter={(value) => [value, "Lượt ghi danh"]}
+                    formatter={(value, name) => [
+                      value,
+                      name === 'purchaseEnrollments' ? 'Ghi danh bán khóa học' : name === 'extensionEnrollments' ? 'Ghi danh gia hạn' : 'Lượng ghi danh'
+                    ]}
                     contentStyle={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
                   />
-                  <Bar dataKey="enrollments" fill="#e11d48" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Bar dataKey="purchaseEnrollments" name="Bán mới" fill="#FF1D8D" stackId="enrollments" radius={[0, 0, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="extensionEnrollments" name="Gia hạn" fill="#9945FF" stackId="enrollments" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             )
@@ -401,10 +538,10 @@ const InstructorDashboard = () => {
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${course.status === 'published'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : course.status === 'pending'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : course.status === 'pending'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-gray-100 text-gray-600'
                         }`}>
                         {course.status}
                       </span>
@@ -418,7 +555,17 @@ const InstructorDashboard = () => {
                         </td>
                         <td className="py-4 px-6 text-right text-sm">
                           <div className="text-rose-600 font-extrabold">{Number(course.periodRevenue || 0).toLocaleString("vi-VN")} đ</div>
-                          <div className="text-[11px] text-gray-400 font-medium">Tổng: {Number(course.revenue || 0).toLocaleString("vi-VN")} đ</div>
+                          {(course.periodPurchaseRevenue > 0 || course.periodExtensionRevenue > 0) && (
+                            <div className="text-[10px] text-gray-400 font-medium mt-0.5">
+                              Mua: {Number(course.periodPurchaseRevenue || 0).toLocaleString("vi-VN")} đ | Hạn: {Number(course.periodExtensionRevenue || 0).toLocaleString("vi-VN")} đ
+                            </div>
+                          )}
+                          <div className="text-[11px] text-gray-500 font-bold mt-1.5">Tổng: {Number(course.revenue || 0).toLocaleString("vi-VN")} đ</div>
+                          {(course.purchaseRevenue > 0 || course.extensionRevenue > 0) && (
+                            <div className="text-[10px] text-gray-400 font-medium mt-0.5">
+                              Mua: {Number(course.purchaseRevenue || 0).toLocaleString("vi-VN")} đ | Hạn: {Number(course.extensionRevenue || 0).toLocaleString("vi-VN")} đ
+                            </div>
+                          )}
                         </td>
                       </>
                     ) : (
@@ -458,8 +605,8 @@ const InstructorDashboard = () => {
                             onClick={() => handleSendReminder(course._id, course.title)}
                             disabled={!course.behindStudentsCount || sendingReminder[course._id]}
                             className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${course.behindStudentsCount
-                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600'
-                                : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600'
+                              : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
                               }`}
                           >
                             {sendingReminder[course._id] ? "Đang gửi..." : "Nhắc nhở học bù"}

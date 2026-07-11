@@ -38,6 +38,10 @@ export const updateInstructorData = createAsyncThunk(
   }
 );
 
+// Thunk: Lấy số liệu Dashboard giảng viên
+// Cấu trúc dữ liệu trả về mới (response.data) bao gồm:
+// - stats: { totalCourses, totalStudents, rating, revenue (Gross), enrollments, purchaseRevenue, extensionRevenue... }
+// - recentCourses, chartData, coursePerformance
 export const fetchDashboardStats = createAsyncThunk(
   'instructor/fetchDashboardStats',
   async (timeRange, thunkAPI) => {

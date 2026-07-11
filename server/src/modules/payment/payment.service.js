@@ -66,6 +66,15 @@ export const updatePaymentStatus = async (orderId, status, paymentDetails) => {
                         itemFinalPrice = Math.round((cPrice / totalCoursePrice) * totalAmount);
                         remainingAmount -= itemFinalPrice;
                     }
+                } else {
+                    // Nếu tổng giá các khóa học bằng 0 (ví dụ gia hạn khóa học miễn phí)
+                    // thì chia đều số tiền thanh toán cho các khóa học
+                    if (idx === coursesData.length - 1) {
+                        itemFinalPrice = remainingAmount;
+                    } else {
+                        itemFinalPrice = Math.round(totalAmount / coursesData.length);
+                        remainingAmount -= itemFinalPrice;
+                    }
                 }
 
                 const netPrice = Math.round(itemFinalPrice / 1.1);
