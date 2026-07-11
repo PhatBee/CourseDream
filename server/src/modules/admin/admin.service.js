@@ -282,9 +282,21 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
   const stats = await Payment.aggregate([
     { $match: matchStage },
     {
+      $project: {
+        createdAt: 1,
+        amount: 1,
+        netPriceSum: { $sum: { $ifNull: ["$items.netPrice", 0] } },
+        vatAmountSum: { $sum: { $ifNull: ["$items.vatAmount", 0] } },
+        adminShareSum: { $sum: { $ifNull: ["$items.adminShare", 0] } }
+      }
+    },
+    {
       $group: {
         _id: groupId,
-        totalRevenue: { $sum: "$amount" },
+        gross: { $sum: "$amount" },
+        net: { $sum: "$netPriceSum" },
+        vat: { $sum: "$vatAmountSum" },
+        platformNet: { $sum: "$adminShareSum" },
         count: { $sum: 1 }
       }
     },
@@ -298,7 +310,10 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
       const found = stats.find(item => item._id.month === i);
       formattedData.push({
         label: `Tháng ${i}`,
-        value: found ? found.totalRevenue : 0,
+        value: found ? found.gross : 0,
+        net: found ? found.net : 0,
+        vat: found ? found.vat : 0,
+        platformNet: found ? found.platformNet : 0,
         count: found ? found.count : 0
       });
     }
@@ -308,26 +323,51 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
       const found = stats.find(item => item._id.day === i);
       formattedData.push({
         label: `${i}/${currentMonth}`,
-        value: found ? found.totalRevenue : 0,
+        value: found ? found.gross : 0,
+        net: found ? found.net : 0,
+        vat: found ? found.vat : 0,
+        platformNet: found ? found.platformNet : 0,
         count: found ? found.count : 0
       });
     }
   } else {
     formattedData = stats.map(item => ({
       label: `${item._id.day}/${item._id.month}`,
-      value: item.totalRevenue,
+      value: item.gross,
+      net: item.net,
+      vat: item.vat,
+      platformNet: item.platformNet,
       count: item.count
     }));
   }
 
-  const totalRevenueAllTime = await Payment.aggregate([
+  const totalStats = await Payment.aggregate([
     { $match: { status: 'success' } },
-    { $group: { _id: null, total: { $sum: "$amount" } } }
+    {
+      $project: {
+        amount: 1,
+        netPriceSum: { $sum: { $ifNull: ["$items.netPrice", 0] } },
+        vatAmountSum: { $sum: { $ifNull: ["$items.vatAmount", 0] } },
+        adminShareSum: { $sum: { $ifNull: ["$items.adminShare", 0] } }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalGross: { $sum: "$amount" },
+        totalNet: { $sum: "$netPriceSum" },
+        totalVAT: { $sum: "$vatAmountSum" },
+        totalPlatformNet: { $sum: "$adminShareSum" }
+      }
+    }
   ]);
 
   return {
     chartData: formattedData,
-    totalRevenue: totalRevenueAllTime[0]?.total || 0,
+    totalRevenue: totalStats[0]?.totalGross || 0,
+    totalNet: totalStats[0]?.totalNet || 0,
+    totalVAT: totalStats[0]?.totalVAT || 0,
+    totalPlatformNet: totalStats[0]?.totalPlatformNet || 0,
     period: { type, start, end }
   };
 };
@@ -493,27 +533,25 @@ export const getAllCoursesForAdmin = async (query) => {
             $match: {
               $expr: {
                 $and: [
-                  { $in: ['$$courseId', '$courses'] },
-                  { $eq: ['$status', 'success'] }
+                  { $eq: ['$status', 'success'] },
+                  { $in: ['$$courseId', '$courses'] }
                 ]
               }
             }
           },
-          // Chia đều amount cho số courses trong đơn hàng
+          { $unwind: '$items' },
           {
-            $project: {
-              perCourseRevenue: {
-                $divide: [
-                  '$amount',
-                  { $max: [{ $size: '$courses' }, 1] }
-                ]
-              }
+            $match: {
+              $expr: { $eq: ['$items.course', '$$courseId'] }
             }
           },
           {
             $group: {
               _id: null,
-              totalRevenue: { $sum: '$perCourseRevenue' },
+              totalGross: { $sum: { $ifNull: ['$items.finalPrice', 0] } },
+              totalVAT: { $sum: { $ifNull: ['$items.vatAmount', 0] } },
+              totalRevenue: { $sum: { $ifNull: ['$items.netPrice', 0] } },
+              adminRevenue: { $sum: { $ifNull: ['$items.adminShare', 0] } },
               totalOrders: { $sum: 1 }
             }
           }
@@ -545,7 +583,10 @@ export const getAllCoursesForAdmin = async (query) => {
     // Thêm các trường computed
     {
       $addFields: {
+        totalGross: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalGross', 0] }, 0] },
+        totalVAT: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalVAT', 0] }, 0] },
         totalRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalRevenue', 0] }, 0] },
+        adminRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.adminRevenue', 0] }, 0] },
         totalOrders: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalOrders', 0] }, 0] },
         totalStudents: { $size: '$enrollmentDocs' },
         instructor: {

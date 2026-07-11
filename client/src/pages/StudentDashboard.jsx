@@ -5,6 +5,7 @@ import LearningCourseCard from '../components/dashboard/LearningCourseCard';
 import { BookOpen, Clock, Award, TrendingUp } from 'lucide-react';
 import Spinner from '../components/common/Spinner';
 import Pagination from '../components/common/Pagination';
+import MyRewardVouchers from '../components/promotion/MyRewardVouchers';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -87,6 +88,9 @@ const StudentDashboard = () => {
           />
         </div>
       </div>
+
+      {/* 1.5. Voucher ưu đãi đặc quyền */}
+      <MyRewardVouchers />
 
       {/* 2. Behind Schedule Alerts */}
       {enrolledCourses.filter(item => item.learningProgress?.scheduleStatus === 'behind').length > 0 && (

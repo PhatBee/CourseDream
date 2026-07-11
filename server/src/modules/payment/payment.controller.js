@@ -59,14 +59,28 @@ const calculateOrderPricing = async (courseIds, couponCode, userId, forceCoupon 
     }
 
     // Map items list object to match schema structure
-    const itemsSnapshot = bestResult.items.map(i => ({
-        course: i.course._id,
-        originalPrice: i.priceDiscount ?? i.price,
-        discountPercentage: i.discountPercentage || 0,
-        discountAmount: i.appliedDiscountAmount || 0,
-        finalPrice: i.finalPrice || 0,
-        appliedType: bestResult.appliedType
-    }));
+    const itemsSnapshot = bestResult.items.map(i => {
+        const itemOriginalPrice = i.priceDiscount ?? i.price ?? 0;
+        const itemDiscountAmount = i.appliedDiscountAmount || 0;
+        const netPrice = i.finalPrice || 0; // i.finalPrice here is after discount, before VAT
+        const vatAmount = Math.round(netPrice * 0.1);
+        const itemFinalPrice = netPrice + vatAmount; // Price paid by student, including VAT
+        const instructorShare = Math.round(netPrice * 0.7);
+        const adminShare = netPrice - instructorShare;
+
+        return {
+            course: i.course._id,
+            originalPrice: itemOriginalPrice,
+            discountPercentage: i.discountPercentage || 0,
+            discountAmount: itemDiscountAmount,
+            netPrice,
+            vatAmount,
+            finalPrice: itemFinalPrice,
+            instructorShare,
+            adminShare,
+            appliedType: bestResult.appliedType
+        };
+    });
 
     return { 
         originalPrice, 

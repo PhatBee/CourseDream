@@ -83,6 +83,14 @@ export const getAvailablePromotionsCtrl = async (req, res) => {
       startDate: { $lte: now },
       endDate: { $gte: now },
       $or: [{ maxUsage: 0 }, { $expr: { $lt: ["$totalUsed", "$maxUsage"] } }],
+      $and: [
+        {
+          $or: [
+            { isDynamicReward: { $ne: true } },
+            { isDynamicReward: true, targetStudent: userId }
+          ]
+        }
+      ]
     }).lean();
 
     // Lọc bỏ những mã mà User hiện tại đã dùng hết số lượt cho phép
@@ -118,6 +126,25 @@ export const getAvailablePromotionsCtrl = async (req, res) => {
     }
 
     res.json(promotions);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getMyRewardVouchersCtrl = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const now = new Date();
+    const rewards = await Promotion.find({
+      isDynamicReward: true,
+      targetStudent: userId,
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+      status: "ACTIVE"
+    }).sort({ createdAt: -1 });
+
+    res.json(rewards);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

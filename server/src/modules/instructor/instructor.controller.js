@@ -1,7 +1,8 @@
 import {
   getInstructorProfile, updateInstructorProfile, getInstructorDashboardStats,
   getCourseStudents as getCourseStudentsService, getInstructorCourses, getCourseForEdit as getCourseForEditService,
-  createOrUpdateRevision, deleteCourse as deleteCourseService, activateCourse as activateCourseService
+  createOrUpdateRevision, deleteCourse as deleteCourseService, activateCourse as activateCourseService,
+  sendCourseStudyReminder
 } from "./instructor.service.js";
 import { generatePresignedUploadUrl, buildS3Key, signThumbnailUrl } from '../../config/aws.js';
 
@@ -49,9 +50,23 @@ export const getInstructorDashboard = async (req, res, next) => {
 export const getCourseStudents = async (req, res, next) => {
   try {
     const { courseId } = req.params;
-    const { page, limit } = req.query;
+    const { page, limit, scheduleStatus } = req.query;
     const instructorId = req.user._id;
-    const result = await getCourseStudentsService(courseId, instructorId, { page, limit });
+    const result = await getCourseStudentsService(courseId, instructorId, { page, limit, scheduleStatus });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/instructor/courses/:courseId/remind-behind
+ */
+export const sendStudyReminder = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const instructorId = req.user._id;
+    const result = await sendCourseStudyReminder(courseId, instructorId);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);
@@ -316,4 +331,4 @@ export const activateCourse = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};

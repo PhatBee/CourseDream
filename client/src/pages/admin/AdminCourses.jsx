@@ -440,7 +440,13 @@ const AdminCourses = () => {
                                             <SortHeader label="Học viên" field="students" current={sortBy} order={sortOrder} onSort={handleSort} />
                                         </th>
                                         <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-right">
-                                            <SortHeader label="Doanh thu" field="revenue" current={sortBy} order={sortOrder} onSort={handleSort} />
+                                            Tổng thu (Gross)
+                                        </th>
+                                        <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-right">
+                                            Thuế VAT (10%)
+                                        </th>
+                                        <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-right">
+                                            <SortHeader label="Doanh thu Net" field="revenue" current={sortBy} order={sortOrder} onSort={handleSort} />
                                         </th>
                                         <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Trạng thái</th>
                                         <th className="px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">
@@ -492,7 +498,9 @@ const AdminCourses = () => {
 // COURSE ROW
 // ─────────────────────────────────────────────
 const CourseRow = ({ course, index, onAction }) => {
-    const revenue = course.totalRevenue || 0;
+    const gross = course.totalGross || 0;
+    const vat = course.totalVAT || 0;
+    const net = course.adminRevenue || 0;
     const students = course.totalStudents || 0;
 
     return (
@@ -559,12 +567,22 @@ const CourseRow = ({ course, index, onAction }) => {
                 </div>
             </td>
 
-            {/* Revenue */}
+            {/* Gross Revenue */}
+            <td className="px-4 py-3 text-right whitespace-nowrap text-gray-800 font-semibold">
+                {gross > 0 ? formatVND(gross) : '—'}
+            </td>
+
+            {/* VAT */}
+            <td className="px-4 py-3 text-right whitespace-nowrap text-gray-500 font-semibold">
+                {vat > 0 ? formatVND(vat) : '—'}
+            </td>
+
+            {/* Platform Net Revenue */}
             <td className="px-4 py-3 text-right whitespace-nowrap">
                 <div className="flex items-center justify-end gap-1.5">
-                    <TrendingUp size={14} className={revenue > 0 ? 'text-emerald-500' : 'text-gray-300'} />
-                    <span className={`font-bold ${revenue > 0 ? 'text-emerald-700' : 'text-gray-400'}`}>
-                        {revenue > 0 ? formatVND(revenue) : '—'}
+                    <TrendingUp size={14} className={net > 0 ? 'text-emerald-500' : 'text-gray-300'} />
+                    <span className={`font-bold ${net > 0 ? 'text-emerald-700' : 'text-gray-400'}`}>
+                        {net > 0 ? formatVND(net) : '—'}
                     </span>
                 </div>
             </td>

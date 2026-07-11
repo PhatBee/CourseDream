@@ -17,6 +17,7 @@ const CoursePlayer = ({
   progress,
   currentLecture,
   lastWatchedTime,
+  accumulatedSeconds,
   courseSlug,       // ── THÊM: cho quiz API
   onBack,
   onNext,
@@ -132,6 +133,7 @@ const CoursePlayer = ({
             courseId={course?._id}
             courseSlug={courseSlug}
             lastWatchedTime={lastWatchedTime}
+            accumulatedSeconds={accumulatedSeconds}
             onNext={onNext}
             onPrevious={onPrev}
             onToggleComplete={onToggleComplete}

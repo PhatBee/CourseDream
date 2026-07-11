@@ -2,7 +2,8 @@ import express from "express";
 import {
   getInstructorDashboard, getProfile, updateProfile, getCourseStudents,
   presignVideoUpload, presignThumbnailUpload, presignPreviewUpload, presignResourceUpload,
-  getMyCourses, getCourseForEdit, createCourseRevision, deleteCourse, activateCourse
+  getMyCourses, getCourseForEdit, createCourseRevision, deleteCourse, activateCourse,
+  sendStudyReminder
 } from "./instructor.controller.js";
 import { verifyToken } from "../../middlewares/auth.middleware.js";
 import { checkRole } from "../../middlewares/role.middleware.js";
@@ -18,6 +19,7 @@ router.put("/profile", verifyToken, updateProfile);
 
 // Course enrolled students
 router.get("/courses/:courseId/students", verifyToken, getCourseStudents);
+router.post("/courses/:courseId/remind-behind", verifyToken, sendStudyReminder);
 
 // ==================== AWS S3 PRESIGN ROUTES ====================
 // These are mounted on /api/courses

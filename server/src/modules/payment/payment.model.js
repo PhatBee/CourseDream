@@ -8,7 +8,11 @@ const PaymentSchema = new mongoose.Schema({
     originalPrice: Number,      // Giá gốc của khóa
     discountPercentage: Number, // % giảm (tiered hoặc 0)
     discountAmount: Number,     // Số tiền giảm
-    finalPrice: Number,         // Giá thực trả
+    netPrice: Number,           // Giá sau giảm, chưa VAT
+    vatAmount: Number,          // 10% của netPrice
+    finalPrice: Number,         // Giá bao gồm VAT học viên thực trả
+    instructorShare: Number,    // 70% của netPrice
+    adminShare: Number,         // 30% của netPrice
     appliedType: { type: String, enum: ['tiered', 'coupon', 'none'] }
   }],
   orderId: { type: String, required: true, unique: true, index: true }, // vnp_TxnRef - Mã đơn hàng

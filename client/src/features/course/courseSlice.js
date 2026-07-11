@@ -131,6 +131,19 @@ export const getCourseStudents = createAsyncThunk(
   }
 );
 
+export const sendStudyReminder = createAsyncThunk(
+  'course/sendReminder',
+  async (courseId, thunkAPI) => {
+    try {
+      const response = await courseService.sendStudyReminder(courseId);
+      return response; // { success: true, data: { message, remindedCount } }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error sending study reminder';
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const courseSlice = createSlice({
   name: 'course',
   initialState,

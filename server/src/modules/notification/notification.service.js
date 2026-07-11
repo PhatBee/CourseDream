@@ -60,7 +60,7 @@ class NotificationService {
     });
 
     // Option: Cảnh báo quan trọng vừa hiện In-app vừa gửi Email
-    const importantTypes = ["warning", "system"];
+    const importantTypes = ["warning", "system", "reward_voucher", "study_reminder"];
     if (importantTypes.includes(type)) {
       const recipientUser = await User.findById(recipient).select("email name");
       if (recipientUser?.email) {

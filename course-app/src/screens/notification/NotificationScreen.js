@@ -28,6 +28,7 @@ import {
   CheckCheck,
   ShieldAlert,
   X,
+  Gift,
 } from "lucide-react-native";
 
 // 1. Đồng bộ Icon và Màu sắc giống Web (getNotificationUI)
@@ -38,6 +39,8 @@ const getNotifIcon = (type) => {
     case "enrollment_course":
     case "reminder_learning":
       return <BookOpen size={20} color="#3b82f6" />;
+    case "study_reminder":
+      return <BookOpen size={20} color="#f59e0b" />;
     case "course_approved":
       return <CheckCircle size={20} color="#10b981" />;
     case "course_rejected":
@@ -55,6 +58,8 @@ const getNotifIcon = (type) => {
       return <AlertTriangle size={20} color="#ec4899" />;
     case "course_completed":
       return <CheckCircle size={20} color="#14b8a6" />;
+    case "reward_voucher":
+      return <Gift size={20} color="#d97706" />;
     default:
       return <Bell size={20} color="#9ca3af" />;
   }
@@ -67,6 +72,8 @@ const getNotifBg = (type) => {
     case "enrollment_course":
     case "reminder_learning":
       return "bg-blue-100";
+    case "study_reminder":
+      return "bg-amber-100";
     case "course_approved":
       return "bg-emerald-100";
     case "course_rejected":
@@ -84,6 +91,8 @@ const getNotifBg = (type) => {
       return "bg-pink-100";
     case "course_completed":
       return "bg-teal-100";
+    case "reward_voucher":
+      return "bg-amber-100";
     default:
       return "bg-gray-100";
   }
@@ -177,10 +186,12 @@ const NotificationScreen = () => {
         }
         break;
       case "purchase_success":
-        navigation.navigate("MyCourses");
+      case "reward_voucher":
+        navigation.navigate("MainTabs", { screen: "MyLearningTab" });
         break;
       case "enrollment_course":
       case "reminder_learning":
+      case "study_reminder":
         if (metadata?.courseSlug)
           navigation.navigate("Learning", { slug: metadata.courseSlug });
         break;
@@ -198,9 +209,8 @@ const NotificationScreen = () => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      className={`flex-row items-start px-4 py-4 border-b border-gray-100 ${
-        item.read ? "bg-white" : "bg-rose-50/40"
-      }`}
+      className={`flex-row items-start px-4 py-4 border-b border-gray-100 ${item.read ? "bg-white" : "bg-rose-50/40"
+        }`}
       onPress={() => handleNotificationPress(item)}
       activeOpacity={0.7}
     >
@@ -230,11 +240,11 @@ const NotificationScreen = () => {
         </Text>
         {item.type === "warning" && item.metadata?.reportReasonLabel && (
           <View className="flex-row mt-1.5">
-             <View className="bg-rose-100 px-2 py-0.5 rounded border border-rose-200">
-               <Text className="text-[10px] font-bold text-rose-700 uppercase">
-                 {item.metadata.reportReasonLabel}
-               </Text>
-             </View>
+            <View className="bg-rose-100 px-2 py-0.5 rounded border border-rose-200">
+              <Text className="text-[10px] font-bold text-rose-700 uppercase">
+                {item.metadata.reportReasonLabel}
+              </Text>
+            </View>
           </View>
         )}
       </View>
@@ -352,65 +362,65 @@ const NotificationScreen = () => {
 
                 <View className="mb-5 flex-row">
                   <Text className="w-24 text-[11px] font-bold text-gray-500 uppercase mt-1">
-                     {(deletedPopup.metadata?.targetType === "course" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.courseSlug && !deletedPopup.metadata?.discussionId))
-                       ? "Khóa học"
-                       : (deletedPopup.metadata?.targetType === "discussion" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.discussionId && !deletedPopup.metadata?.replyId))
-                       ? "Thảo luận"
-                       : (deletedPopup.metadata?.targetType === "reply" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.replyId))
-                       ? "Bình luận"
-                       : "Nội dung"}
+                    {(deletedPopup.metadata?.targetType === "course" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.courseSlug && !deletedPopup.metadata?.discussionId))
+                      ? "Khóa học"
+                      : (deletedPopup.metadata?.targetType === "discussion" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.discussionId && !deletedPopup.metadata?.replyId))
+                        ? "Thảo luận"
+                        : (deletedPopup.metadata?.targetType === "reply" || (!deletedPopup.metadata?.targetType && deletedPopup.metadata?.replyId))
+                          ? "Bình luận"
+                          : "Nội dung"}
                   </Text>
                   <View className="flex-1">
-                     {(() => {
-                        const m = deletedPopup.metadata;
-                        const isCourse = m?.targetType === "course" || (!m?.targetType && m?.courseSlug && !m?.discussionId);
-                        const isDiscussion = m?.targetType === "discussion" || (!m?.targetType && m?.discussionId && !m?.replyId);
-                        const isReply = m?.targetType === "reply" || (!m?.targetType && m?.replyId);
+                    {(() => {
+                      const m = deletedPopup.metadata;
+                      const isCourse = m?.targetType === "course" || (!m?.targetType && m?.courseSlug && !m?.discussionId);
+                      const isDiscussion = m?.targetType === "discussion" || (!m?.targetType && m?.discussionId && !m?.replyId);
+                      const isReply = m?.targetType === "reply" || (!m?.targetType && m?.replyId);
 
-                        if (isCourse) {
-                           return m?.isDeleted ? (
-                             <Text className="text-sm font-bold text-gray-500 line-through">
-                                {m?.originalContent?.replace("Khóa học: ", "") || "Khóa học"}
-                             </Text>
-                           ) : (
-                             <TouchableOpacity onPress={() => {
-                                setDeletedPopup(null);
-                                if (m?.courseSlug) navigation.navigate("CourseDetail", { slug: m.courseSlug });
-                             }}>
-                                <Text className="text-sm font-bold text-blue-600 underline">
-                                   {m?.originalContent?.replace("Khóa học: ", "") || "Đi đến khóa học"}
+                      if (isCourse) {
+                        return m?.isDeleted ? (
+                          <Text className="text-sm font-bold text-gray-500 line-through">
+                            {m?.originalContent?.replace("Khóa học: ", "") || "Khóa học"}
+                          </Text>
+                        ) : (
+                          <TouchableOpacity onPress={() => {
+                            setDeletedPopup(null);
+                            if (m?.courseSlug) navigation.navigate("CourseDetail", { slug: m.courseSlug });
+                          }}>
+                            <Text className="text-sm font-bold text-blue-600 underline">
+                              {m?.originalContent?.replace("Khóa học: ", "") || "Đi đến khóa học"}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      } else {
+                        return (
+                          <View>
+                            <View className="bg-gray-100 border border-gray-200 p-3 rounded-lg shadow-sm">
+                              <Text className="text-gray-700 text-xs italic leading-5">
+                                "{m?.originalContent || deletedPopup.message}"
+                              </Text>
+                            </View>
+                            {!m?.isDeleted && (
+                              <TouchableOpacity
+                                className="mt-2.5 bg-blue-50 border border-blue-100 rounded self-start px-2.5 py-1.5"
+                                onPress={() => {
+                                  setDeletedPopup(null);
+                                  if (isDiscussion && m?.courseSlug && m?.lessonId && m?.discussionId) {
+                                    navigation.navigate("Learning", { slug: m.courseSlug, lectureId: m.lessonId, discussionId: m.discussionId });
+                                  } else if (isReply && m?.courseSlug && m?.lessonId && m?.discussionId && m?.replyId) {
+                                    navigation.navigate("Learning", { slug: m.courseSlug, lectureId: m.lessonId, discussionId: m.discussionId, replyId: m.replyId });
+                                  }
+                                }}
+                              >
+                                <Text className="text-blue-600 text-xs font-bold">
+                                  {isDiscussion ? "Thảo luận gốc ↗" : "Bình luận gốc ↗"}
                                 </Text>
-                             </TouchableOpacity>
-                           );
-                        } else {
-                           return (
-                              <View>
-                                 <View className="bg-gray-100 border border-gray-200 p-3 rounded-lg shadow-sm">
-                                    <Text className="text-gray-700 text-xs italic leading-5">
-                                      "{m?.originalContent || deletedPopup.message}"
-                                    </Text>
-                                 </View>
-                                 {!m?.isDeleted && (
-                                    <TouchableOpacity
-                                      className="mt-2.5 bg-blue-50 border border-blue-100 rounded self-start px-2.5 py-1.5"
-                                      onPress={() => {
-                                         setDeletedPopup(null);
-                                         if (isDiscussion && m?.courseSlug && m?.lessonId && m?.discussionId) {
-                                            navigation.navigate("Learning", { slug: m.courseSlug, lectureId: m.lessonId, discussionId: m.discussionId });
-                                         } else if (isReply && m?.courseSlug && m?.lessonId && m?.discussionId && m?.replyId) {
-                                            navigation.navigate("Learning", { slug: m.courseSlug, lectureId: m.lessonId, discussionId: m.discussionId, replyId: m.replyId });
-                                         }
-                                      }}
-                                    >
-                                       <Text className="text-blue-600 text-xs font-bold">
-                                          {isDiscussion ? "Thảo luận gốc ↗" : "Bình luận gốc ↗"}
-                                       </Text>
-                                    </TouchableOpacity>
-                                 )}
-                              </View>
-                           );
-                        }
-                     })()}
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        );
+                      }
+                    })()}
                   </View>
                 </View>
 

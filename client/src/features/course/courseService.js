@@ -42,6 +42,11 @@ const getCourseStudents = async ({ courseId, params }) => {
   return response.data;
 };
 
+const sendStudyReminder = async (courseId) => {
+  const response = await instructorApi.sendStudyReminder(courseId);
+  return response.data;
+};
+
 // ==================== ADMIN SERVICES ====================
 
 const courseService = {
@@ -53,6 +58,7 @@ const courseService = {
   deleteCourse,
   activateCourse,
   getCourseStudents,
+  sendStudyReminder,
 };
 
 export default courseService;

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   BellOff,
   AlertTriangle,
+  Gift,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
@@ -37,6 +38,10 @@ const getNotificationUI = (type) => {
       return { icon: MessageCircle, bg: "bg-blue-100", text: "text-blue-500" };
     case "reminder_learning":
       return { icon: BookOpen, bg: "bg-indigo-100", text: "text-indigo-500" };
+    case "study_reminder":
+      return { icon: BookOpen, bg: "bg-amber-100", text: "text-amber-500" };
+    case "reward_voucher":
+      return { icon: Gift, bg: "bg-amber-100", text: "text-amber-600" };
     case "system":
     default:
       return { icon: Info, bg: "bg-gray-100", text: "text-gray-500" };
@@ -111,8 +116,12 @@ const NotificationMenu = ({ open, onClose }) => {
         if (metadata?.url) navigate(metadata.url);
         break;
       case "reminder_learning":
+      case "study_reminder":
         if (metadata?.courseSlug)
-          navigate(`/courses/${metadata.courseSlug}/learn`);
+          navigate(`/courses/${metadata.courseSlug}/overview`);
+        break;
+      case "reward_voucher":
+        navigate("/profile/dashboard");
         break;
       default:
         break;
@@ -171,11 +180,10 @@ const NotificationMenu = ({ open, onClose }) => {
                     <li
                       key={n._id}
                       onClick={() => handleNotificationClick(n)}
-                      className={`p-3 rounded-xl cursor-pointer transition-all border ${
-                        n.read
+                      className={`p-3 rounded-xl cursor-pointer transition-all border ${n.read
                           ? "bg-white border-transparent hover:bg-gray-50"
                           : "bg-blue-50/40 border-blue-50 hover:bg-blue-50/80"
-                      }`}
+                        }`}
                     >
                       <div className="flex gap-3 items-start">
                         {/* Icon Block */}
@@ -188,11 +196,10 @@ const NotificationMenu = ({ open, onClose }) => {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start gap-2">
                             <p
-                              className={`text-sm ${
-                                !n.read
+                              className={`text-sm ${!n.read
                                   ? "font-bold text-gray-900"
                                   : "font-medium text-gray-700"
-                              } line-clamp-1`}
+                                } line-clamp-1`}
                             >
                               {n.title}
                             </p>
@@ -203,20 +210,19 @@ const NotificationMenu = ({ open, onClose }) => {
                           </div>
 
                           <div
-                            className={`text-[13px] whitespace-pre-line mt-1 leading-relaxed text-justify ${
-                              !n.read
+                            className={`text-[13px] whitespace-pre-line mt-1 leading-relaxed text-justify ${!n.read
                                 ? "text-gray-700"
                                 : "text-gray-500 line-clamp-2"
-                            }`}
+                              }`}
                           >
                             {n.message}
                           </div>
-                          
+
                           {n.type === "warning" && n.metadata?.reportReasonLabel && (
                             <div className="mt-1.5 flex flex-wrap gap-1">
-                               <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 uppercase">
-                                 {n.metadata.reportReasonLabel}
-                               </span>
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 uppercase">
+                                {n.metadata.reportReasonLabel}
+                              </span>
                             </div>
                           )}
 
@@ -268,91 +274,91 @@ const NotificationMenu = ({ open, onClose }) => {
                 <div className="space-y-6">
                   {/* Row 1: Lý do */}
                   <div className="flex items-start gap-4">
-                     <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">Lý do vi phạm</div>
-                     <div className="flex-1">
-                        <span className="inline-block px-3 py-1 bg-rose-100 text-rose-700 font-bold rounded-lg text-[13px] border border-rose-200">
-                           {warningDetailPopup.metadata?.reportReasonLabel || "Vi phạm tiêu chuẩn cộng đồng"}
-                        </span>
-                     </div>
+                    <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">Lý do vi phạm</div>
+                    <div className="flex-1">
+                      <span className="inline-block px-3 py-1 bg-rose-100 text-rose-700 font-bold rounded-lg text-[13px] border border-rose-200">
+                        {warningDetailPopup.metadata?.reportReasonLabel || "Vi phạm tiêu chuẩn cộng đồng"}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Row 2: Nội dung gốc & Link */}
                   <div className="flex items-start gap-4">
-                     <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">
-                        {(warningDetailPopup.metadata?.targetType === "course" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.courseSlug && !warningDetailPopup.metadata?.discussionId))
-                           ? "Khóa học"
-                           : (warningDetailPopup.metadata?.targetType === "discussion" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.discussionId && !warningDetailPopup.metadata?.replyId))
-                           ? "Thảo luận"
-                           : (warningDetailPopup.metadata?.targetType === "reply" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.replyId))
-                           ? "Bình luận"
-                           : "Nội dung"}
-                     </div>
-                     <div className="flex-1 min-w-0">
-                        {(() => {
-                           const m = warningDetailPopup.metadata;
-                           const isCourse = m?.targetType === "course" || (!m?.targetType && m?.courseSlug && !m?.discussionId);
-                           const isDiscussion = m?.targetType === "discussion" || (!m?.targetType && m?.discussionId && !m?.replyId);
-                           const isReply = m?.targetType === "reply" || (!m?.targetType && m?.replyId);
+                    <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">
+                      {(warningDetailPopup.metadata?.targetType === "course" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.courseSlug && !warningDetailPopup.metadata?.discussionId))
+                        ? "Khóa học"
+                        : (warningDetailPopup.metadata?.targetType === "discussion" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.discussionId && !warningDetailPopup.metadata?.replyId))
+                          ? "Thảo luận"
+                          : (warningDetailPopup.metadata?.targetType === "reply" || (!warningDetailPopup.metadata?.targetType && warningDetailPopup.metadata?.replyId))
+                            ? "Bình luận"
+                            : "Nội dung"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {(() => {
+                        const m = warningDetailPopup.metadata;
+                        const isCourse = m?.targetType === "course" || (!m?.targetType && m?.courseSlug && !m?.discussionId);
+                        const isDiscussion = m?.targetType === "discussion" || (!m?.targetType && m?.discussionId && !m?.replyId);
+                        const isReply = m?.targetType === "reply" || (!m?.targetType && m?.replyId);
 
-                           if (isCourse) {
-                              return m?.isDeleted ? (
-                                <span className="text-[15px] font-bold text-gray-500 line-through">
-                                  {m?.originalContent?.replace("Khóa học: ", "") || "Khóa học"}
-                                </span>
-                              ) : (
-                                <button 
+                        if (isCourse) {
+                          return m?.isDeleted ? (
+                            <span className="text-[15px] font-bold text-gray-500 line-through">
+                              {m?.originalContent?.replace("Khóa học: ", "") || "Khóa học"}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setWarningDetailPopup(null);
+                                onClose();
+                                navigate(`/courses/${m?.courseSlug}`);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 font-medium underline decoration-blue-300 underline-offset-2 break-words block text-[14px] text-justify"
+                            >
+                              {m?.originalContent?.replace("Khóa học: ", "") || "Đi đến khóa học"}
+                            </button>
+                          );
+                        } else {
+                          return (
+                            <div>
+                              <div className="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200 italic shadow-sm whitespace-pre-line break-words text-justify">
+                                "{m?.originalContent}"
+                              </div>
+
+                              {!m?.isDeleted && (
+                                <button
                                   onClick={() => {
                                     setWarningDetailPopup(null);
                                     onClose();
-                                    navigate(`/courses/${m?.courseSlug}`);
+                                    navigate(`/courses/${m?.courseSlug}/learn/lecture/${m?.lessonId}?discussionId=${m?.discussionId}${isReply ? `&replyId=${m?.replyId}` : ""}`);
                                   }}
-                                  className="text-blue-600 hover:text-blue-800 font-medium underline decoration-blue-300 underline-offset-2 break-words block text-[14px] text-justify"
+                                  className="inline-block mt-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors text-left"
                                 >
-                                  {m?.originalContent?.replace("Khóa học: ", "") || "Đi đến khóa học"}
+                                  {isDiscussion ? "Thảo luận gốc " : "Bình luận gốc "}
                                 </button>
-                              );
-                           } else {
-                              return (
-                                 <div>
-                                    <div className="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200 italic shadow-sm whitespace-pre-line break-words text-justify">
-                                      "{m?.originalContent}"
-                                    </div>
-                                    
-                                    {!m?.isDeleted && (
-                                       <button
-                                         onClick={() => {
-                                            setWarningDetailPopup(null);
-                                            onClose();
-                                            navigate(`/courses/${m?.courseSlug}/learn/lecture/${m?.lessonId}?discussionId=${m?.discussionId}${isReply ? `&replyId=${m?.replyId}` : ""}`);
-                                         }}
-                                         className="inline-block mt-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors text-left"
-                                       >
-                                          {isDiscussion ? "Thảo luận gốc " : "Bình luận gốc "}
-                                       </button>
-                                    )}
-                                 </div>
-                              );
-                           }
-                        })()}
-                     </div>
+                              )}
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
                   </div>
 
                   {/* Ghi chú Admin */}
                   {warningDetailPopup.metadata?.adminNote && (
-                     <div className="flex items-start gap-4 pt-4 border-t border-gray-100">
-                        <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">Ghi chú</div>
-                        <div className="flex-1">
-                           <div className="text-[14px] font-medium text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-200 text-justify">
-                             {warningDetailPopup.metadata.adminNote}
-                           </div>
+                    <div className="flex items-start gap-4 pt-4 border-t border-gray-100">
+                      <div className="w-[120px] shrink-0 text-[13px] font-bold text-gray-500 uppercase mt-1">Ghi chú</div>
+                      <div className="flex-1">
+                        <div className="text-[14px] font-medium text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-200 text-justify">
+                          {warningDetailPopup.metadata.adminNote}
                         </div>
-                     </div>
+                      </div>
+                    </div>
                   )}
 
                   {warningDetailPopup.metadata?.isDeleted && (
-                     <p className="text-xs text-rose-500 font-medium italic mt-2 text-right">
-                       ** Nội dung vi phạm đã bị gỡ bỏ khỏi hệ thống.
-                     </p>
+                    <p className="text-xs text-rose-500 font-medium italic mt-2 text-right">
+                      ** Nội dung vi phạm đã bị gỡ bỏ khỏi hệ thống.
+                    </p>
                   )}
                 </div>
               </div>

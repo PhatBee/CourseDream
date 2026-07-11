@@ -21,13 +21,14 @@ const toggleLectureCompletion = ({ courseSlug, lectureId }) => {
 
 /**
  * Lưu thời gian xem video (gọi định kỳ mỗi 10s)
- * @param {{ courseSlug, lectureId, watchedSeconds }} params
+ * @param {{ courseSlug, lectureId, watchedSeconds, playbackRate }} params
  */
-const saveVideoProgress = ({ courseSlug, lectureId, watchedSeconds }) => {
+const saveVideoProgress = ({ courseSlug, lectureId, watchedSeconds, playbackRate = 1 }) => {
   return axiosClient.post(`${progressPath}/video`, {
     courseSlug,
     lectureId,
     watchedSeconds,
+    playbackRate,
   });
 };
 
@@ -97,4 +98,4 @@ export const learningApi = {
   getQuizHistory,
   getQuizReview,
 };
-
+

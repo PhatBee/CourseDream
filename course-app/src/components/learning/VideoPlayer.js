@@ -29,8 +29,6 @@ import VideoQuizOverlayMobile from './VideoQuizOverlayMobile';
 import QuizProgressMarkersMobile from './QuizProgressMarkersMobile';
 import CustomProgressBar from './CustomProgressBar';
 import * as ScreenOrientation from 'expo-screen-orientation';
-
-
 /**
  * VideoPlayer — Mobile, dùng expo-video
  * ─ AWS CloudFront Signed URL
@@ -43,34 +41,44 @@ import * as ScreenOrientation from 'expo-screen-orientation';
  */
 const VideoPlayer = forwardRef((
   {
-  currentLecture,
-  courseId,
-  courseSlug,       // ── THÊM: dùng cho quiz API
-  thumbnail,
-  lastWatchedTime = 0,
-  onProgress,
-  onComplete,
-  playerHeight,     // ── THÊM: chiều cao tuỳ chỉnh (dùng cho landscape)
-}, ref) => {
+    currentLecture,
+    courseId,
+    courseSlug,       // ── THÊM: dùng cho quiz API
+    thumbnail,
+    lastWatchedTime = 0,
+    accumulatedSeconds = 0,
+    onProgress,
+    onComplete,
+    onWatchStats,
+    playerHeight,     // ── THÊM: chiều cao tuỳ chỉnh (dùng cho landscape)
+    isFullscreen: isFullscreenProp,
+    onFullscreenToggle,
+  }, ref) => {
   const videoViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const quizTriggeredRef = useRef(new Set()); // ── Đã trigger quiz nào trong session
-
   const dispatch = useDispatch();
   const progress = useSelector((state) => state.learning.progress);
   const completedQuizzes = useSelector((state) => state.learning.completedQuizzes) || [];
   const isLoadingProgress = useSelector((state) => state.learning.isLoading);
-
   // ─── Ref luôn giữ giá trị lastWatchedTime mới nhất (tránh closure stale) ───
   const lastWatchedTimeRef = useRef(lastWatchedTime);
   const initialSeekDoneRef = useRef(false);
   const isSeekingRef = useRef(false);
-
+  // ─── Tích lũy thời gian học thực tế cục bộ (chống tua) ───
+  const [localAccumulated, setLocalAccumulated] = useState(0);
+  const localAccumulatedRef = useRef(0);
+  const lastPlayheadRef = useRef(0);
+  // Đồng bộ localAccumulated và lastPlayheadRef
+  useEffect(() => {
+    setLocalAccumulated(accumulatedSeconds || 0);
+    localAccumulatedRef.current = accumulatedSeconds || 0;
+    lastPlayheadRef.current = lastWatchedTime || 0;
+  }, [accumulatedSeconds, lastWatchedTime, currentLecture?._id]);
   // ─── Quiz state ──────────────────────────────────────────────────────────
-  const [activeQuiz, setActiveQuiz]         = useState(null);  // { quizIndex, quiz }
-  const [quizBlocked, setQuizBlocked]       = useState(false);
+  const [activeQuiz, setActiveQuiz] = useState(null);  // { quizIndex, quiz }
+  const [quizBlocked, setQuizBlocked] = useState(false);
   // ✅ isReviewOpen đã được chuyển lên LearningScreen — VideoPlayer không còn quản lý
-
   // ✅ FIX: Dùng refs cho activeQuiz, quizBlocked, completedQuizzes và isLoadingProgress bên trong timeUpdate listener
   //    → tránh dependency array re-subscribe gây race condition
   //    → tránh closure stale khi completedQuizzes chưa load từ server
@@ -79,20 +87,16 @@ const VideoPlayer = forwardRef((
   const completedQuizzesRef = useRef(completedQuizzes); // ✅ FIX: Ref cho completedQuizzes
   const isLoadingProgressRef = useRef(isLoadingProgress); // ✅ FIX: Ref cho isLoadingProgress
   const lastKnownTimeRef = useRef(0); // ✅ FIX: Vị trí trước khi seek
-
   // Sync refs với state
   useEffect(() => { activeQuizRef.current = activeQuiz; }, [activeQuiz]);
   useEffect(() => { quizBlockedRef.current = quizBlocked; }, [quizBlocked]);
   useEffect(() => { completedQuizzesRef.current = completedQuizzes; }, [completedQuizzes]);
   useEffect(() => { isLoadingProgressRef.current = isLoadingProgress; }, [isLoadingProgress]);
-
-  // Reset initialSeekDone khi đổi bài mới
+  // Reset initialSeekDone khi đổi bài mới hoặc URL thay đổi
   useEffect(() => {
     initialSeekDoneRef.current = false;
-  }, [currentLecture?._id]);
-
+  }, [currentLecture?._id, videoUrl]);
   const quizzes = currentLecture?.quizzes || [];
-
   const isQuizDone = useCallback((quizIndex) => {
     if (!currentLecture?._id) return false;
     return completedQuizzes.some(
@@ -101,35 +105,31 @@ const VideoPlayer = forwardRef((
         && q.isCorrect !== false // backward-compat
     );
   }, [completedQuizzes, currentLecture?._id]);
-
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreenLocal, setIsFullscreenLocal] = useState(false);
+  const isFullscreen = isFullscreenProp !== undefined ? isFullscreenProp : isFullscreenLocal;
   const [isPlaying, setIsPlaying] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef(null);
-
   const resetControlsTimeout = useCallback(() => {
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     controlsTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
     }, 4000);
   }, []);
-
   const toggleControls = useCallback(() => {
     setShowControls(prev => !prev);
     resetControlsTimeout();
   }, [resetControlsTimeout]);
-
   // Sync orientation unlock on unmount
   useEffect(() => {
     return () => {
-      ScreenOrientation.unlockAsync().catch(() => {});
+      ScreenOrientation.unlockAsync().catch(() => { });
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
   }, []);
-
   // Listen to playingChange event to update local controls isPlaying state
   useEffect(() => {
     if (!player) return;
@@ -138,7 +138,6 @@ const VideoPlayer = forwardRef((
     });
     return () => sub.remove();
   }, [player]);
-
   // Auto hide controls in playing state
   useEffect(() => {
     if (isPlaying) {
@@ -148,22 +147,29 @@ const VideoPlayer = forwardRef((
       setShowControls(true);
     }
   }, [isPlaying, resetControlsTimeout]);
-
   // Handle Fullscreen Toggle
   const handleFullscreenToggle = async () => {
     try {
-      if (isFullscreen) {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        setIsFullscreen(false);
-      } else {
+      const nextFullscreen = !isFullscreen;
+      if (nextFullscreen) {
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_LEFT);
-        setIsFullscreen(true);
+      } else {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        setTimeout(async () => {
+          try {
+            await ScreenOrientation.unlockAsync();
+          } catch (_) {}
+        }, 1000);
+      }
+      if (onFullscreenToggle) {
+        onFullscreenToggle(nextFullscreen);
+      } else {
+        setIsFullscreenLocal(nextFullscreen);
       }
     } catch (err) {
       console.warn('[VideoPlayer] Fullscreen toggle error:', err);
     }
   };
-
   // ✅ FIX: Forward seek restriction helper
   const findBlockedQuiz = useCallback((fromTime, toTime) => {
     if (!quizzes.length || toTime <= fromTime) return null;
@@ -179,7 +185,6 @@ const VideoPlayer = forwardRef((
     }
     return null;
   }, [quizzes, isQuizDone]);
-
   const handleSeek = (seconds) => {
     if (player) {
       try {
@@ -206,7 +211,6 @@ const VideoPlayer = forwardRef((
       }
     }
   };
-
   const handleRewind5s = () => {
     if (player) {
       try {
@@ -223,7 +227,6 @@ const VideoPlayer = forwardRef((
       }
     }
   };
-
   const handleForward5s = () => {
     if (player) {
       try {
@@ -251,24 +254,19 @@ const VideoPlayer = forwardRef((
       }
     }
   };
-
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-
   // ─── Marker tracking state ──────────────────────────────────────────────────────
   const [markerCurrentTime, setMarkerCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
   const [playedPercent, setPlayedPercent] = useState(0);
-
   // ─── Fetch CloudFront Signed URL ─────────────────────────────────────────────
   const fetchVideoUrl = useCallback(async () => {
     if (!currentLecture?._id || !courseId) return;
-
     setIsLoadingUrl(true);
     setUrlError(null);
     setVideoUrl(null);
     // Reset ref khi đổi bài mới
     lastWatchedTimeRef.current = 0;
-
     try {
       const res = await courseApi.getVideoPlayUrl(courseId, currentLecture._id);
       const { videoUrl: signedUrl } = res.data.data;
@@ -284,22 +282,18 @@ const VideoPlayer = forwardRef((
       setIsLoadingUrl(false);
     }
   }, [currentLecture?._id, courseId]);
-
   useEffect(() => {
     if (currentLecture?._id) fetchVideoUrl();
   }, [fetchVideoUrl]);
-
   // ─── Tạo player với expo-video ────────────────────────────────────────────────
   const player = useVideoPlayer(videoUrl || '', (p) => {
     p.loop = false;
     p.timeUpdateEventInterval = 0.25;
     if (videoUrl) p.play();
   });
-
-  // ─── Effect: URL thay đổi → load source + reset seek state ─────────────
+  // ─── Effect: URL thay đổi → load source mới + reset seek state ──────────────────
   useEffect(() => {
     if (!player || !videoUrl) return;
-
     const setupPlayer = async () => {
       try {
         await player.replaceAsync(videoUrl);
@@ -308,49 +302,64 @@ const VideoPlayer = forwardRef((
         console.warn('[VideoPlayer] replaceAsync error:', e);
       }
     };
-
     initialSeekDoneRef.current = false;
     setupPlayer();
   }, [videoUrl]);
 
   // ─── Effect: lastWatchedTime prop thay đổi (fetchVideoProgress trả về sau) ──
-  // Sync ref + seek bằng retry loop cho đến khi thành công
+  // Sync ref + seek bằng retry loop khi player đã sẵn sàng
   useEffect(() => {
-    // Luôn sync ref trước tiên
     lastWatchedTimeRef.current = lastWatchedTime;
-
     if (!player || lastWatchedTime <= 5 || initialSeekDoneRef.current) return;
-
+    let interval = null;
     let attempts = 0;
-    const interval = setInterval(() => {
-      try {
-        if (!player || initialSeekDoneRef.current) {
-          clearInterval(interval);
-          return;
+    let subscription = null;
+    const startSeekInterval = () => {
+      if (interval || initialSeekDoneRef.current) return;
+      interval = setInterval(() => {
+        try {
+          if (!player || initialSeekDoneRef.current) {
+            clearInterval(interval);
+            return;
+          }
+          // Chỉ thực hiện gán currentTime khi player sẵn sàng
+          if (player.status === 'readyToPlay') {
+            player.currentTime = lastWatchedTime;
+            const diff = Math.abs(player.currentTime - lastWatchedTime);
+            if (diff < 2) {
+              initialSeekDoneRef.current = true;
+              clearInterval(interval);
+              return;
+            }
+          }
+        } catch (e) {
+          // error, retry
         }
-        player.currentTime = lastWatchedTime;
-        // Kiểm tra xem currentTime đã gần khớp với time chưa
-        const diff = Math.abs(player.currentTime - lastWatchedTime);
-        if (diff < 2) {
-          initialSeekDoneRef.current = true;
+        attempts++;
+        if (attempts > 15) {
           clearInterval(interval);
         }
-      } catch (e) {
-        // error, retry
-      }
-      attempts++;
-      if (attempts > 15) {
-        clearInterval(interval);
-      }
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [lastWatchedTime]);
-
+      }, 200);
+    };
+    // Nếu đã readyToPlay, chạy loop ngay
+    if (player.status === 'readyToPlay') {
+      startSeekInterval();
+    } else {
+      // Ngược lại, lắng nghe statusChange để kích hoạt loop khi readyToPlay
+      subscription = player.addListener('statusChange', (event) => {
+        if (event.status === 'readyToPlay') {
+          startSeekInterval();
+        }
+      });
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+      if (subscription) subscription.remove();
+    };
+  }, [player, lastWatchedTime]);
   // ─── Subscribe to player status — cập nhật currentTime & duration cho Markers, kiểm tra Gatekeeper ────────
   useEffect(() => {
     if (!player) return;
-
     const subscription = player.addListener('timeUpdate', (event) => {
       try {
         if (isSeekingRef.current) return;
@@ -362,20 +371,41 @@ const VideoPlayer = forwardRef((
           if (dur && isFinite(dur) && dur > 0) {
             setVideoDuration(dur);
             setPlayedPercent((ct / dur) * 100);
+            if (onWatchStats) {
+              onWatchStats({
+                localAccumulated: localAccumulatedRef.current,
+                videoDuration: dur,
+              });
+            }
           }
+          // ── Tích luỹ thời gian học thực tế cục bộ (chống tua) ──
+          const prevPlayhead = lastPlayheadRef.current;
+          const diff = ct - prevPlayhead;
+          const currentRate = player.playbackRate || 1;
+          const maxAllowedClientDiff = Math.max(1.5, 1.5 * currentRate);
 
+          if (diff > 0 && diff <= maxAllowedClientDiff) {
+            const limit = dur || currentLecture?.duration || 1;
+            const updatedAcc = Math.min(localAccumulatedRef.current + diff, limit);
+            localAccumulatedRef.current = updatedAcc;
+            setLocalAccumulated(updatedAcc);
+            if (onWatchStats) {
+              onWatchStats({
+                localAccumulated: updatedAcc,
+                videoDuration: dur || currentLecture?.duration || 0,
+              });
+            }
+          }
+          lastPlayheadRef.current = ct;
           // ✅ FIX: Dùng refs thay vì state/closure → tránh race condition. Bỏ qua nếu đang tải tiến độ/khóa học.
           if (activeQuizRef.current || quizBlockedRef.current || !quizzes.length || isLoadingProgressRef.current) return;
-
           // ✅ FIX: Đọc completedQuizzes từ ref (luôn cập nhật nhất)
           const currentCompletedQuizzes = completedQuizzesRef.current || [];
-
           // Sắp xếp các quiz theo thứ tự thời gian tăng dần
           const sortedQuizzes = [...quizzes]
             .map((q, i) => ({ ...q, index: i }))
             .filter((q) => q.isActive !== false)
             .sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
-
           for (const quiz of sortedQuizzes) {
             const ts = Number(quiz.timestamp);
             const isDone = currentCompletedQuizzes.some(
@@ -388,7 +418,6 @@ const VideoPlayer = forwardRef((
                 return qLectureMatch && qIndexMatch && q.isCorrect !== false;
               }
             );
-
             // ✅ FIX: Chỉ trigger khi video phát bình thường qua mốc (cửa sổ nhỏ),
             //    không trigger lại nếu đã triggered trong session này
             const inWindow = ct >= ts && ct <= ts + 2.5;
@@ -397,16 +426,23 @@ const VideoPlayer = forwardRef((
               try {
                 player.pause();
                 player.currentTime = ts;
-              } catch (_) {}
-
+              } catch (_) { }
               // Tự động thoát Fullscreen nếu đang bật
               try {
                 if (isFullscreen) {
-                  ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
-                  setIsFullscreen(false);
+                  ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => { });
+                  setTimeout(async () => {
+                    try {
+                      await ScreenOrientation.unlockAsync();
+                    } catch (_) {}
+                  }, 1000);
+                  if (onFullscreenToggle) {
+                    onFullscreenToggle(false);
+                  } else {
+                    setIsFullscreenLocal(false);
+                  }
                 }
-              } catch (_) {}
-
+              } catch (_) { }
               quizTriggeredRef.current.add(quiz.index); // ✅ FIX: Đánh dấu đã trigger
               setActiveQuiz({ quizIndex: quiz.index, quiz });
               setQuizBlocked(true);
@@ -418,24 +454,22 @@ const VideoPlayer = forwardRef((
         console.warn('[VideoPlayer] timeUpdate handler error:', e);
       }
     });
-
     return () => {
       subscription?.remove();
     };
   }, [player, quizzes, currentLecture?._id]); // ✅ FIX: Removed completedQuizzes from deps — read from ref instead
-
   // ─── Interval gửi onProgress mỗi 10s ─────────────────────────────────────────
   useEffect(() => {
     if (!player || !onProgress) return;
-
     const subscription = player.addListener('playingChange', ({ isPlaying }) => {
       if (isPlaying) {
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = setInterval(() => {
           try {
             const currentTime = player.currentTime;
+            const currentRate = player.playbackRate || 1;
             if (currentTime > 0 && !player.paused) {
-              onProgress(currentTime);
+              onProgress(currentTime, currentRate);
             }
           } catch (e) {
             // ignore
@@ -445,15 +479,15 @@ const VideoPlayer = forwardRef((
         // Khi pause: gửi ngay + clear interval
         try {
           const currentTime = player.currentTime;
-          if (currentTime > 0) onProgress(currentTime);
-        } catch (e) {}
+          const currentRate = player.playbackRate || 1;
+          if (currentTime > 0) onProgress(currentTime, currentRate);
+        } catch (e) { }
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
           progressIntervalRef.current = null;
         }
       }
     });
-
     return () => {
       subscription?.remove();
       if (progressIntervalRef.current) {
@@ -462,7 +496,6 @@ const VideoPlayer = forwardRef((
       }
     };
   }, [player, onProgress]);
-
   // ─── Lắng nghe khi video kết thúc ────────────────────────────────────────────
   useEffect(() => {
     if (!player || !onComplete) return;
@@ -475,14 +508,12 @@ const VideoPlayer = forwardRef((
     });
     return () => subscription?.remove();
   }, [player, onComplete]);
-
   // ─── Reset quiz state khi đổi bài giảng ─────────────────────────────────────
   useEffect(() => {
     quizTriggeredRef.current.clear();
     setActiveQuiz(null);
     setQuizBlocked(false);
   }, [currentLecture?._id]);
-
   // ─── submitAnswer (mobile) ────────────────────────────────────────────────────
   const handleQuizSubmit = useCallback(async (answer) => {
     if (!activeQuiz || !courseSlug || !currentLecture?._id) return { correct: false, hint: null };
@@ -494,7 +525,6 @@ const VideoPlayer = forwardRef((
         answer,
       });
       const { correct, hint } = res.data.data;
-
       if (correct) {
         const lectureId = String(currentLecture._id);
         const quizIndex = activeQuiz.quizIndex;
@@ -506,16 +536,14 @@ const VideoPlayer = forwardRef((
       return { correct: false, hint: null };
     }
   }, [activeQuiz, courseSlug, currentLecture?._id, dispatch]);
-
   const handleQuizCorrect = useCallback(() => {
     setActiveQuiz(null);
     setQuizBlocked(false);
     // ✅ FIX: Debounce 200ms trước khi resume → đợi completedQuizzes update trong Redux
     setTimeout(() => {
-      try { player?.play(); } catch (_) {}
+      try { player?.play(); } catch (_) { }
     }, 200);
   }, [player]);
-
   // ─── seekToQuiz — exposed via useImperativeHandle ────────────────────────
   /**
    * ✅ API công khai (ref): LearningScreen gọi videoPlayerRef.current.seekToQuiz(ts)
@@ -537,10 +565,9 @@ const VideoPlayer = forwardRef((
       try {
         player.currentTime = Math.max(0, targetTs - 1);
         player.play();
-      } catch (_) {}
+      } catch (_) { }
     },
   }), [player, quizzes]);
-
   // ─── handleRetakeQuiz (nội bộ — hiện không dùng vì Modal đã lên LearningScreen) ─
   // Giữ lại để onRetakeAll vẫn có thể clear triggeredRef
   const handleRetakeQuiz = useCallback((quizIndex) => {
@@ -552,9 +579,8 @@ const VideoPlayer = forwardRef((
       quizTriggeredRef.current.delete(quizIndex);
       player.currentTime = Math.max(0, ts - 1);
       player.play();
-    } catch (_) {}
+    } catch (_) { }
   }, [quizzes, player]);
-
   // ─── Fullscreen handler ────────────────────────────────────────────────────────
   const handleFullscreen = useCallback(() => {
     if (!videoViewRef.current || !videoUrl) return;
@@ -564,7 +590,6 @@ const VideoPlayer = forwardRef((
       videoViewRef.current.enterFullscreen();
     }
   }, [isFullscreen, videoUrl]);
-
   // ─── Chưa chọn bài học → Hiện Thumbnail ──────────────────────────────────────
   if (!currentLecture) {
     return (
@@ -584,7 +609,6 @@ const VideoPlayer = forwardRef((
       </View>
     );
   }
-
   // ─── Loading Signed URL ───────────────────────────────────────────────────────
   if (isLoadingUrl) {
     return (
@@ -594,7 +618,6 @@ const VideoPlayer = forwardRef((
       </View>
     );
   }
-
   // ─── Error ────────────────────────────────────────────────────────────────────
   if (urlError) {
     return (
@@ -608,7 +631,6 @@ const VideoPlayer = forwardRef((
       </View>
     );
   }
-
   // ─── Không có URL ──────────────────────────────────────────────────────────────
   if (!videoUrl) {
     return (
@@ -617,20 +639,23 @@ const VideoPlayer = forwardRef((
       </View>
     );
   }
-
   // ─── Main Video Player (expo-video) ───────────────────────────────────────────
   const containerStyle = isFullscreen
     ? [styles.fullscreenContainer, { width: windowWidth, height: windowHeight }]
     : [styles.container, playerHeight ? { height: playerHeight } : null];
-
   const handlePlayPause = () => {
-    if (isPlaying) {
-      player.pause();
-    } else {
-      player.play();
+    try {
+      if (player.playing) {
+        player.pause();
+        setIsPlaying(false);
+      } else {
+        player.play();
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.warn('[VideoPlayer] handlePlayPause error:', err);
     }
   };
-
   return (
     <View style={containerStyle}>
       {/* Container của video view để bắt sự kiện tap */}
@@ -648,25 +673,23 @@ const VideoPlayer = forwardRef((
           contentFit="contain"
         />
       </TouchableOpacity>
-
       {/* ── Custom Overlay Controls ── */}
       {showControls && (
         <View style={styles.controlsOverlay} pointerEvents="box-none">
           {/* Hàng nút điều khiển ở chính giữa màn hình */}
           <View style={styles.centerControlRow}>
             {/* Tua về 5s */}
-            <TouchableOpacity 
-              style={styles.centerControlBtn} 
+            <TouchableOpacity
+              style={styles.centerControlBtn}
               onPress={handleRewind5s}
               activeOpacity={0.8}
             >
               <RotateCcw size={22} color="#fff" />
               <Text style={styles.skipTimeText}>-5s</Text>
             </TouchableOpacity>
-
             {/* Nút Play/Pause chính giữa */}
-            <TouchableOpacity 
-              style={styles.playCenterBtn} 
+            <TouchableOpacity
+              style={styles.playCenterBtn}
               onPress={handlePlayPause}
               activeOpacity={0.8}
             >
@@ -676,10 +699,9 @@ const VideoPlayer = forwardRef((
                 <Play size={28} color="#fff" />
               )}
             </TouchableOpacity>
-
             {/* Tua đi 5s */}
-            <TouchableOpacity 
-              style={styles.centerControlBtn} 
+            <TouchableOpacity
+              style={styles.centerControlBtn}
               onPress={handleForward5s}
               activeOpacity={0.8}
             >
@@ -687,7 +709,6 @@ const VideoPlayer = forwardRef((
               <Text style={styles.skipTimeText}>+5s</Text>
             </TouchableOpacity>
           </View>
-
           {/* Thanh điều khiển ở cạnh dưới (Bottom Controls Bar) */}
           <View style={styles.bottomControlsBar} pointerEvents="box-none">
             {/* Custom Unified Progress Bar */}
@@ -701,7 +722,6 @@ const VideoPlayer = forwardRef((
                 onSeek={handleSeek}
               />
             </View>
-
             {/* Nút Fullscreen tùy chỉnh */}
             <TouchableOpacity
               style={styles.fullscreenBtnCustom}
@@ -718,7 +738,6 @@ const VideoPlayer = forwardRef((
           </View>
         </View>
       )}
-
       {/* Resume badge — hiện khi có lastWatchedTime > 5s */}
       {!isFullscreen && lastWatchedTime > 5 && !activeQuiz && (
         <View style={styles.resumeBadge} pointerEvents="none">
@@ -729,10 +748,7 @@ const VideoPlayer = forwardRef((
           </Text>
         </View>
       )}
-
       {/* Nút Xem lại câu hỏi — ĐÃ CHUYỂN lên LearningScreen (infoBar) */}
-
-
       {/* ── Quiz Overlay — Sử dụng Modal hiển thị đè toàn màn hình ── */}
       {activeQuiz && (
         <VideoQuizOverlayMobile
@@ -744,10 +760,7 @@ const VideoPlayer = forwardRef((
     </View>
   );
 });
-
-
 const PLAYER_HEIGHT = 230;
-
 const styles = StyleSheet.create({
   container: {
     width: '100%',
@@ -889,5 +902,4 @@ const styles = StyleSheet.create({
   },
   // Nút Xem lại câu hỏi — ĐÃ XÓA (chuyển lên LearningScreen)
 });
-
 export default VideoPlayer;

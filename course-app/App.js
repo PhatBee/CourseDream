@@ -177,10 +177,11 @@ const MainNavigator = () => {
 export default function App() {
   // Deep Linking Configuration
   const linking = {
-    prefixes: ['courseapp://'],
+    prefixes: ['courseapp://', 'https://course-dream-react.vercel.app'],
     config: {
       screens: {
         PaymentResult: 'payment/result',
+        Learning: 'learning/:slug',
       },
     },
   };
