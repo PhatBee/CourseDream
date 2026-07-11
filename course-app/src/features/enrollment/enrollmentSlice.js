@@ -18,7 +18,7 @@ export const fetchMyEnrollments = createAsyncThunk(
     try {
       const response = await enrollmentApi.getMyEnrollments();
       // Backend trả về: { total: 5, enrollments: [...] }
-      return response.data; 
+      return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
@@ -54,6 +54,19 @@ export const activateEnrollmentThunk = createAsyncThunk(
   }
 );
 
+export const extendEnrollmentThunk = createAsyncThunk(
+  'enrollment/extendEnrollment',
+  async ({ enrollmentId, packageId }, thunkAPI) => {
+    try {
+      const response = await enrollmentApi.extendEnrollment(enrollmentId, packageId);
+      return response.data; // { success: true, enrollment: {...} }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 const enrollmentSlice = createSlice({
   name: 'enrollment',
   initialState,
@@ -80,7 +93,7 @@ const enrollmentSlice = createSlice({
       .addCase(fetchMyEnrollments.fulfilled, (state, action) => {
         state.isLoading = false;
         state.items = action.payload.enrollments;
-        
+
         state.enrolledCourseIds = action.payload.enrollments.map(enrollment => {
           return enrollment.course ? enrollment.course._id : null;
         }).filter(id => id !== null);
@@ -96,7 +109,7 @@ const enrollmentSlice = createSlice({
       .addCase(fetchStudentDashboard.fulfilled, (state, action) => {
         state.isLoading = false;
         state.dashboardData = action.payload.data;
-        
+
         state.enrolledCourseIds = action.payload.data.map(enrollment => {
           return enrollment.course ? enrollment.course._id : null;
         }).filter(id => id !== null);
@@ -134,6 +147,30 @@ const enrollmentSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+      })
+      .addCase(extendEnrollmentThunk.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(extendEnrollmentThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const updatedEnrollment = action.payload.enrollment;
+        if (updatedEnrollment) {
+          const idx = state.items.findIndex(item => item._id === updatedEnrollment._id);
+          if (idx !== -1) state.items[idx] = { ...state.items[idx], ...updatedEnrollment };
+
+          const dIdx = state.dashboardData.findIndex(item => item._id === updatedEnrollment._id);
+          if (dIdx !== -1) {
+            state.dashboardData[dIdx] = {
+              ...state.dashboardData[dIdx],
+              endedAt: updatedEnrollment.endedAt,
+              extensionCount: updatedEnrollment.extensionCount
+            };
+          }
+        }
+      })
+      .addCase(extendEnrollmentThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        Toast.show({ type: 'error', text1: 'Lỗi gia hạn', text2: action.payload });
       });
   },
 });

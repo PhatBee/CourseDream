@@ -1,17 +1,19 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
-import { Star, Heart, ShoppingCart } from 'lucide-react-native';
+import { Star, Heart, ShoppingCart, RefreshCw } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
 import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import Toast from 'react-native-toast-message';
+import CourseExtensionModalMobile from '../course/CourseExtensionModalMobile';
 
 const CourseCardAllCourse = React.memo(({ course }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const [isExtVisible, setIsExtVisible] = useState(false);
   const { enrolledCourseIds } = useSelector(state => state.enrollment);
   const { items: wishlistItems } = useSelector(state => state.wishlist);
   const { items: cartItems } = useSelector(state => state.cart);
@@ -111,6 +113,7 @@ const CourseCardAllCourse = React.memo(({ course }) => {
   }, [user, inCart, dispatch, navigation, _id]);
 
   return (
+    <>
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.9}
@@ -152,9 +155,14 @@ const CourseCardAllCourse = React.memo(({ course }) => {
         {/* Giá hoặc trạng thái đã ghi danh */}
         {isEnrolled ? (
           isExpired ? (
-            <View className="bg-gray-100 px-2 py-1 rounded-lg items-center justify-center border border-gray-200 mt-1">
-              <Text className="text-gray-500 font-bold text-[10px] uppercase tracking-wider">Đã hết hạn học</Text>
-            </View>
+            <TouchableOpacity
+                onPress={() => setIsExtVisible(true)}
+                activeOpacity={0.8}
+                className="bg-red-500 px-2 py-1.5 rounded-lg items-center justify-center border border-red-600 mt-1 active:bg-red-600 flex-row"
+              >
+                <RefreshCw size={10} color="white" style={{ marginRight: 3 }} />
+                <Text className="text-white font-bold text-[10px] uppercase tracking-wider">Gia hạn học</Text>
+            </TouchableOpacity>
           ) : !isActivated ? (
             <TouchableOpacity
               onPress={handleActivate}
@@ -195,6 +203,12 @@ const CourseCardAllCourse = React.memo(({ course }) => {
         )}
       </View>
     </TouchableOpacity>
+    <CourseExtensionModalMobile
+      visible={isExtVisible}
+      onClose={() => setIsExtVisible(false)}
+      enrollment={enrollmentInfo}
+    />
+    </>
   );
 });
 

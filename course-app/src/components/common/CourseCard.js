@@ -1,26 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Star, Heart, ShoppingCart } from 'lucide-react-native';
+import { Star, Heart, ShoppingCart, RefreshCw } from 'lucide-react-native';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlist/wishlistSlice';
 import { addToCart, removeFromCart } from '../../features/cart/cartSlice';
 import { activateEnrollmentThunk } from '../../features/enrollment/enrollmentSlice';
 import { useSelector, useDispatch } from 'react-redux';
+import CourseExtensionModalMobile from '../course/CourseExtensionModalMobile';
 
 // --- SUB-COMPONENT: Footer xử lý logic hiển thị Giá hoặc Nút Học ---
-const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart, inCart, isActivated, isExpired, onActivate }) => {
+const CourseCardFooter = ({ isEnrolled, price, displayPrice, hasDiscount, formatPrice, onAddToCart, inCart, isActivated, isExpired, onActivate, onExtend }) => {
 
   // TRƯỜNG HỢP 1: Đã sở hữu khóa học
   if (isEnrolled) {
     if (isExpired) {
       return (
-        <View className="mt-2">
-          <View className="bg-gray-100 px-3 py-2 rounded-lg items-center justify-center border border-gray-200">
-            <Text className="text-gray-500 font-bold text-xs uppercase tracking-wider">Đã hết hạn học</Text>
+        <View className="flex-row items-center justify-between mt-2 gap-2">
+          {/* Nhãn thông báo hết hạn màu Rose nhạt */}
+          <View className="bg-rose-50 border border-rose-100 px-2 py-2 rounded-lg flex-1 items-center justify-center">
+            <Text className="text-rose-600 font-extrabold text-[10px] uppercase tracking-wider">Hết hạn học</Text>
           </View>
+          
+          <TouchableOpacity
+            onPress={onExtend}
+            activeOpacity={0.8}
+            className="bg-rose-500 border border-rose-600 px-2 py-2 rounded-lg flex-1 items-center justify-center flex-row active:bg-rose-600"
+          >
+            <RefreshCw size={10} color="white" style={{ marginRight: 4 }} />
+            <Text className="text-white font-bold text-[10px] uppercase tracking-wider">Gia hạn</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -85,6 +96,8 @@ const CourseCard = ({ course }) => {
   const { items: wishlistItems } = useSelector(state => state.wishlist);
   const { items: cartItems } = useSelector(state => state.cart);
 
+  const [isExtVisible, setIsExtVisible] = useState(false);
+
   if (!course) return null;
 
   const {
@@ -106,7 +119,7 @@ const CourseCard = ({ course }) => {
 
 
 
-  const enrollmentInfo = useSelector((state) => 
+  const enrollmentInfo = useSelector((state) =>
     state.enrollment.items.find(item => item.course?._id === _id || item.course === _id)
   );
 
@@ -117,8 +130,8 @@ const CourseCard = ({ course }) => {
   const isExpired = enrollmentInfo?.endedAt
     ? new Date(enrollmentInfo.endedAt) < new Date()
     : course.endedAt
-    ? new Date(course.endedAt) < new Date()
-    : false;
+      ? new Date(course.endedAt) < new Date()
+      : false;
 
   const handleActivate = () => {
     if (!enrollmentId) {
@@ -209,71 +222,78 @@ const CourseCard = ({ course }) => {
   };
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={0.9}
-      className="w-60 bg-white rounded-2xl shadow-sm overflow-hidden mr-4 mb-2 border border-gray-100"
-      style={{
-        elevation: 3,
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      }}
-    >
-      {/* Image Area */}
-      <View className="relative w-full h-32 rounded-xl overflow-hidden bg-gray-100">
-        <Image source={imageUrl}
-          placeholder={require('../../../assets/images/default-course.jpg')}
-          style={{ width: '100%', height: '100%' }}
-          contentFit="cover" />
+    <>
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.9}
+        className="w-60 bg-white rounded-2xl shadow-sm overflow-hidden mr-4 mb-2 border border-gray-100"
+        style={{
+          elevation: 3,
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        {/* Image Area */}
+        <View className="relative w-full h-32 rounded-xl overflow-hidden bg-gray-100">
+          <Image source={imageUrl}
+            placeholder={require('../../../assets/images/default-course.jpg')}
+            style={{ width: '100%', height: '100%' }}
+            contentFit="cover" />
 
-        {/* Wishlist Heart Button */}
-        <TouchableOpacity
-          onPress={handleToggleWishlist}
-          className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm"
-        >
-          {/* Đổi màu tim dựa trên trạng thái */}
-          <Heart
-            size={16}
-            color={isWishlisted ? "#e11d48" : "#9ca3af"}
-            fill={isWishlisted ? "#e11d48" : "transparent"}
-          />
-        </TouchableOpacity>
+          {/* Wishlist Heart Button */}
+          <TouchableOpacity
+            onPress={handleToggleWishlist}
+            className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm"
+          >
+            {/* Đổi màu tim dựa trên trạng thái */}
+            <Heart
+              size={16}
+              color={isWishlisted ? "#e11d48" : "#9ca3af"}
+              fill={isWishlisted ? "#e11d48" : "transparent"}
+            />
+          </TouchableOpacity>
 
-        {/* Category Badge */}
-        <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
-          <Text className="text-white text-[10px] font-medium" numberOfLines={1}>{categoryName}</Text>
-        </View>
-      </View>
-
-      {/* Content Area */}
-      <View className="p-3 justify-between flex-1">
-        <View>
-          <Text className="text-gray-900 font-bold text-sm mb-1 leading-5 text-justify" numberOfLines={2}>{title}</Text>
-          <Text className="text-gray-500 text-xs mb-2" numberOfLines={1}>{instructor?.name || 'Unknown'}</Text>
-
-          {/* Rating */}
-          <View className="flex-row items-center mb-1">
-            <Star size={10} color="#f59e0b" fill="#f59e0b" />
-            <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
-            <Text className="text-[10px] text-gray-400 ml-1">({reviewCount || 0})</Text>
+          {/* Category Badge */}
+          <View className="absolute top-2 left-2 bg-rose-500/90 px-2 py-0.5 rounded-full">
+            <Text className="text-white text-[10px] font-medium" numberOfLines={1}>{categoryName}</Text>
           </View>
         </View>
 
-        {/* Footer Component (Price or Enrolled Status) */}
-        <CourseCardFooter
-          isEnrolled={isEnrolled}
-          price={price}
-          displayPrice={finalPrice}
-          hasDiscount={hasDiscount}
-          formatPrice={formatCurrency}
-          onAddToCart={handleAddToCart}
-          inCart={inCart}
-          isActivated={isActivated}
-          isExpired={isExpired}
-          onActivate={handleActivate}
-        />
+        {/* Content Area */}
+        <View className="p-3 justify-between flex-1">
+          <View>
+            <Text className="text-gray-900 font-bold text-sm mb-1 leading-5 text-justify" numberOfLines={2}>{title}</Text>
+            <Text className="text-gray-500 text-xs mb-2" numberOfLines={1}>{instructor?.name || 'Unknown'}</Text>
 
-      </View>
-    </TouchableOpacity>
+            {/* Rating */}
+            <View className="flex-row items-center mb-1">
+              <Star size={10} color="#f59e0b" fill="#f59e0b" />
+              <Text className="text-xs font-bold text-gray-700 ml-1">{rating ? rating.toFixed(1) : '0.0'}</Text>
+              <Text className="text-[10px] text-gray-400 ml-1">({reviewCount || 0})</Text>
+            </View>
+          </View>
+
+          {/* Footer Component (Price or Enrolled Status) */}
+          <CourseCardFooter
+            isEnrolled={isEnrolled}
+            price={price}
+            displayPrice={finalPrice}
+            hasDiscount={hasDiscount}
+            formatPrice={formatCurrency}
+            onAddToCart={handleAddToCart}
+            inCart={inCart}
+            isActivated={isActivated}
+            isExpired={isExpired}
+            onActivate={handleActivate}
+            onExtend={() => setIsExtVisible(true)}
+          />
+        </View>
+      </TouchableOpacity>
+      <CourseExtensionModalMobile
+        visible={isExtVisible}
+        onClose={() => setIsExtVisible(false)}
+        enrollment={enrollmentInfo}
+      />
+    </>
   );
 };
 
