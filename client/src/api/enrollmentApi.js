@@ -19,8 +19,8 @@ const enrollmentApi = {
     return axiosClient.post(`${path}/${enrollmentId}/activate`);
   },
 
-  extendEnrollment: (enrollmentId, packageId) => {
-    return axiosClient.post(`${path}/${enrollmentId}/extend`, { packageId });
+  extendEnrollment: (enrollmentId, packageId, paymentMethod = 'vnpay', platform = 'web') => {
+    return axiosClient.post(`${path}/${enrollmentId}/extend`, { packageId, paymentMethod, platform });
   }
 };
 

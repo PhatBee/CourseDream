@@ -42,62 +42,62 @@ const signCourseResources = (courseData) => {
  * - KHÔNG hỗ trợ Google/Facebook
  */
 export const loginAdmin = async ({ email, password }) => {
-    const user = await User.findOne({ email });
-    if (!user) {
-        const error = new Error('Email hoặc mật khẩu không đúng');
-        error.statusCode = 401;
-        throw error;
-    }
+  const user = await User.findOne({ email });
+  if (!user) {
+    const error = new Error('Email hoặc mật khẩu không đúng');
+    error.statusCode = 401;
+    throw error;
+  }
 
-    // [BẢO MẬT] Chỉ cho phép tài khoản Admin
-    if (user.role !== 'admin') {
-        const error = new Error('Bạn không có quyền truy cập trang quản trị.');
-        error.statusCode = 403;
-        throw error;
-    }
+  // [BẢO MẬT] Chỉ cho phép tài khoản Admin
+  if (user.role !== 'admin') {
+    const error = new Error('Bạn không có quyền truy cập trang quản trị.');
+    error.statusCode = 403;
+    throw error;
+  }
 
-    // [BẢO MẬT] Chỉ cho phép đăng nhập bằng Local
-    if (user.authProvider !== 'local' || !user.password) {
-        const error = new Error('Tài khoản Admin phải đăng nhập bằng Email và Mật khẩu.');
-        error.statusCode = 403;
-        throw error;
-    }
+  // [BẢO MẬT] Chỉ cho phép đăng nhập bằng Local
+  if (user.authProvider !== 'local' || !user.password) {
+    const error = new Error('Tài khoản Admin phải đăng nhập bằng Email và Mật khẩu.');
+    error.statusCode = 403;
+    throw error;
+  }
 
-    if (!user.isVerified) {
-        const error = new Error('Tài khoản Admin chưa được kích hoạt.');
-        error.statusCode = 401;
-        throw error;
-    }
+  if (!user.isVerified) {
+    const error = new Error('Tài khoản Admin chưa được kích hoạt.');
+    error.statusCode = 401;
+    throw error;
+  }
 
-    if (!user.isActive) {
-        const error = new Error('Tài khoản Admin đã bị vô hiệu hóa. Vui lòng liên hệ hệ thống.');
-        error.statusCode = 403;
-        throw error;
-    }
+  if (!user.isActive) {
+    const error = new Error('Tài khoản Admin đã bị vô hiệu hóa. Vui lòng liên hệ hệ thống.');
+    error.statusCode = 403;
+    throw error;
+  }
 
-    const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) {
-        const error = new Error('Email hoặc mật khẩu không đúng');
-        error.statusCode = 401;
-        throw error;
-    }
+  const isMatch = await comparePassword(password, user.password);
+  if (!isMatch) {
+    const error = new Error('Email hoặc mật khẩu không đúng');
+    error.statusCode = 401;
+    throw error;
+  }
 
-    const accessToken = generateAccessToken(user._id, user.role);
-    const refreshToken = generateRefreshToken(user._id);
+  const accessToken = generateAccessToken(user._id, user.role);
+  const refreshToken = generateRefreshToken(user._id);
 
-    user.refreshToken = refreshToken;
-    await user.save();
+  user.refreshToken = refreshToken;
+  await user.save();
 
-    const userResponse = {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        createdAt: user.createdAt,
-    };
+  const userResponse = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar,
+    createdAt: user.createdAt,
+  };
 
-    return { user: userResponse, accessToken, refreshToken };
+  return { user: userResponse, accessToken, refreshToken };
 };
 
 export const getPendingApplications = async () => {
@@ -285,6 +285,7 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
       $project: {
         createdAt: 1,
         amount: 1,
+        paymentType: 1,
         netPriceSum: { $sum: { $ifNull: ["$items.netPrice", 0] } },
         vatAmountSum: { $sum: { $ifNull: ["$items.vatAmount", 0] } },
         adminShareSum: { $sum: { $ifNull: ["$items.adminShare", 0] } }
@@ -297,6 +298,25 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
         net: { $sum: "$netPriceSum" },
         vat: { $sum: "$vatAmountSum" },
         platformNet: { $sum: "$adminShareSum" },
+        // Phân loại doanh thu bằng $cond dựa trên paymentType
+        purchaseGross: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$amount"] }
+        },
+        extensionGross: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$amount", 0] }
+        },
+        purchaseNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$netPriceSum"] }
+        },
+        extensionNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$netPriceSum", 0] }
+        },
+        purchasePlatformNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$adminShareSum"] }
+        },
+        extensionPlatformNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$adminShareSum", 0] }
+        },
         count: { $sum: 1 }
       }
     },
@@ -314,6 +334,12 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
         net: found ? found.net : 0,
         vat: found ? found.vat : 0,
         platformNet: found ? found.platformNet : 0,
+        purchaseGross: found ? found.purchaseGross : 0,
+        extensionGross: found ? found.extensionGross : 0,
+        purchaseNet: found ? found.purchaseNet : 0,
+        extensionNet: found ? found.extensionNet : 0,
+        purchasePlatformNet: found ? found.purchasePlatformNet : 0,
+        extensionPlatformNet: found ? found.extensionPlatformNet : 0,
         count: found ? found.count : 0
       });
     }
@@ -327,6 +353,12 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
         net: found ? found.net : 0,
         vat: found ? found.vat : 0,
         platformNet: found ? found.platformNet : 0,
+        purchaseGross: found ? found.purchaseGross : 0,
+        extensionGross: found ? found.extensionGross : 0,
+        purchaseNet: found ? found.purchaseNet : 0,
+        extensionNet: found ? found.extensionNet : 0,
+        purchasePlatformNet: found ? found.purchasePlatformNet : 0,
+        extensionPlatformNet: found ? found.extensionPlatformNet : 0,
         count: found ? found.count : 0
       });
     }
@@ -337,6 +369,12 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
       net: item.net,
       vat: item.vat,
       platformNet: item.platformNet,
+      purchaseGross: item.purchaseGross,
+      extensionGross: item.extensionGross,
+      purchaseNet: item.purchaseNet,
+      extensionNet: item.extensionNet,
+      purchasePlatformNet: item.purchasePlatformNet,
+      extensionPlatformNet: item.extensionPlatformNet,
       count: item.count
     }));
   }
@@ -346,6 +384,7 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
     {
       $project: {
         amount: 1,
+        paymentType: 1,
         netPriceSum: { $sum: { $ifNull: ["$items.netPrice", 0] } },
         vatAmountSum: { $sum: { $ifNull: ["$items.vatAmount", 0] } },
         adminShareSum: { $sum: { $ifNull: ["$items.adminShare", 0] } }
@@ -357,7 +396,32 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
         totalGross: { $sum: "$amount" },
         totalNet: { $sum: "$netPriceSum" },
         totalVAT: { $sum: "$vatAmountSum" },
-        totalPlatformNet: { $sum: "$adminShareSum" }
+        totalPlatformNet: { $sum: "$adminShareSum" },
+        // Phân loại lũy kế
+        totalPurchaseGross: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$amount"] }
+        },
+        totalExtensionGross: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$amount", 0] }
+        },
+        totalPurchaseNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$netPriceSum"] }
+        },
+        totalExtensionNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$netPriceSum", 0] }
+        },
+        totalPurchaseVAT: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$vatAmountSum"] }
+        },
+        totalExtensionVAT: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$vatAmountSum", 0] }
+        },
+        totalPurchasePlatformNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$adminShareSum"] }
+        },
+        totalExtensionPlatformNet: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$adminShareSum", 0] }
+        }
       }
     }
   ]);
@@ -368,9 +432,17 @@ export const getRevenueStats = async (type, yearParam, monthParam) => {
     totalNet: totalStats[0]?.totalNet || 0,
     totalVAT: totalStats[0]?.totalVAT || 0,
     totalPlatformNet: totalStats[0]?.totalPlatformNet || 0,
+    totalPurchaseGross: totalStats[0]?.totalPurchaseGross || 0,
+    totalExtensionGross: totalStats[0]?.totalExtensionGross || 0,
+    totalPurchaseNet: totalStats[0]?.totalPurchaseNet || 0,
+    totalExtensionNet: totalStats[0]?.totalExtensionNet || 0,
+    totalPurchaseVAT: totalStats[0]?.totalPurchaseVAT || 0,
+    totalExtensionVAT: totalStats[0]?.totalExtensionVAT || 0,
+    totalPurchasePlatformNet: totalStats[0]?.totalPurchasePlatformNet || 0,
+    totalExtensionPlatformNet: totalStats[0]?.totalExtensionPlatformNet || 0,
     period: { type, start, end }
   };
-};
+}
 
 export const getAllStudents = async (query) => {
   const page = parseInt(query.page) || 1;
@@ -552,6 +624,25 @@ export const getAllCoursesForAdmin = async (query) => {
               totalVAT: { $sum: { $ifNull: ['$items.vatAmount', 0] } },
               totalRevenue: { $sum: { $ifNull: ['$items.netPrice', 0] } },
               adminRevenue: { $sum: { $ifNull: ['$items.adminShare', 0] } },
+              // Phân loại doanh thu cấp khóa học
+              purchaseGross: {
+                $sum: { $cond: [{ $eq: ['$paymentType', 'extension'] }, 0, { $ifNull: ['$items.finalPrice', 0] }] }
+              },
+              extensionGross: {
+                $sum: { $cond: [{ $eq: ['$paymentType', 'extension'] }, { $ifNull: ['$items.finalPrice', 0] }, 0] }
+              },
+              purchaseRevenue: {
+                $sum: { $cond: [{ $eq: ['$paymentType', 'extension'] }, 0, { $ifNull: ['$items.netPrice', 0] }] }
+              },
+              extensionRevenue: {
+                $sum: { $cond: [{ $eq: ['$paymentType', 'extension'] }, { $ifNull: ['$items.netPrice', 0] }, 0] }
+              },
+              purchaseAdminRevenue: {
+                $sum: { $cond: [{ $eq: ['$paymentType', 'extension'] }, 0, { $ifNull: ['$items.adminShare', 0] }] }
+              },
+              extensionAdminRevenue: {
+                $sum: { $cond: [{ $eq: ['$paymentType', 'extension'] }, { $ifNull: ['$items.adminShare', 0] }, 0] }
+              },
               totalOrders: { $sum: 1 }
             }
           }
@@ -587,6 +678,12 @@ export const getAllCoursesForAdmin = async (query) => {
         totalVAT: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalVAT', 0] }, 0] },
         totalRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalRevenue', 0] }, 0] },
         adminRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.adminRevenue', 0] }, 0] },
+        purchaseGross: { $ifNull: [{ $arrayElemAt: ['$paymentStats.purchaseGross', 0] }, 0] },
+        extensionGross: { $ifNull: [{ $arrayElemAt: ['$paymentStats.extensionGross', 0] }, 0] },
+        purchaseRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.purchaseRevenue', 0] }, 0] },
+        extensionRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.extensionRevenue', 0] }, 0] },
+        purchaseAdminRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.purchaseAdminRevenue', 0] }, 0] },
+        extensionAdminRevenue: { $ifNull: [{ $arrayElemAt: ['$paymentStats.extensionAdminRevenue', 0] }, 0] },
         totalOrders: { $ifNull: [{ $arrayElemAt: ['$paymentStats.totalOrders', 0] }, 0] },
         totalStudents: { $size: '$enrollmentDocs' },
         instructor: {
@@ -1495,39 +1592,66 @@ export const getProgressScheduleStats = async () => {
     else if (item._id === 'completed') distribution.completed = item.count;
   });
 
-  const topBehindCourses = await Progress.aggregate([
+  const topBehindCourses = await Course.aggregate([
+    // Lookup sang bảng Enrollment để lấy tổng học viên thực tế đã đăng ký
     {
-      $group: {
-        _id: '$course',
-        totalStudents: { $sum: 1 },
+      $lookup: {
+        from: 'enrollments',
+        localField: '_id',
+        foreignField: 'course',
+        as: 'enrollmentDocs'
+      }
+    },
+    // Tính tổng số học viên đăng ký
+    {
+      $addFields: {
+        totalStudents: { $size: '$enrollmentDocs' }
+      }
+    },
+    // Chỉ lấy những khóa có ít nhất 3 học viên để tránh nhiễu
+    { $match: { totalStudents: { $gt: 2 } } },
+    // Lookup sang bảng Progress để đếm số học viên trễ tiến độ
+    {
+      $lookup: {
+        from: 'progresses',
+        localField: '_id',
+        foreignField: 'course',
+        as: 'progressDocs'
+      }
+    },
+    // Lọc ra các progress có scheduleStatus === 'behind'
+    {
+      $addFields: {
         behindStudents: {
-          $sum: {
-            $cond: [{ $eq: ['$scheduleStatus', 'behind'] }, 1, 0]
+          $size: {
+            $filter: {
+              input: '$progressDocs',
+              as: 'p',
+              cond: { $eq: ['$$p.scheduleStatus', 'behind'] }
+            }
           }
         }
       }
     },
-    { $match: { totalStudents: { $gt: 2 } } }, // Có ít nhất 3 học viên để tránh nhiễu
+    // Tính tỷ lệ trễ hạn chính xác: (behindStudents / totalStudents) * 100
     {
       $addFields: {
-        behindRate: { $multiply: [{ $divide: ['$behindStudents', '$totalStudents'] }, 100] }
+        behindRate: {
+          $cond: [
+            { $gt: ['$totalStudents', 0] },
+            { $multiply: [{ $divide: ['$behindStudents', '$totalStudents'] }, 100] },
+            0
+          ]
+        }
       }
     },
     { $sort: { behindRate: -1 } },
     { $limit: 5 },
-    {
-      $lookup: {
-        from: 'courses',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'courseInfo'
-      }
-    },
-    { $unwind: '$courseInfo' },
+    // Lookup thông tin instructor
     {
       $lookup: {
         from: 'users',
-        localField: 'courseInfo.instructor',
+        localField: 'instructor',
         foreignField: '_id',
         as: 'instructorInfo'
       }
@@ -1535,9 +1659,9 @@ export const getProgressScheduleStats = async () => {
     {
       $project: {
         _id: 1,
-        title: '$courseInfo.title',
-        slug: '$courseInfo.slug',
-        thumbnail: '$courseInfo.thumbnail',
+        title: 1,
+        slug: 1,
+        thumbnail: 1,
         behindRate: 1,
         totalStudents: 1,
         behindStudents: 1,
@@ -1555,4 +1679,3 @@ export const getProgressScheduleStats = async () => {
     topBehindCourses
   };
 };
-

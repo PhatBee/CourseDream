@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StatsCard = ({ title, value, icon: Icon, color, trend }) => {
+const StatsCard = ({ title, value, icon: Icon, color, trend, subtext }) => {
   // Logic xử lý màu sắc icon dựa trên prop color (VD: 'bg-rose-500' -> 'text-rose-500')
   const iconColorClass = color.replace('bg-', 'text-');
   const bgOpacityClass = color.replace('500', '50'); // Tạo nền nhạt
@@ -10,6 +10,9 @@ const StatsCard = ({ title, value, icon: Icon, color, trend }) => {
       <div>
         <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
         <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+        {subtext && (
+          <p className="text-[10px] text-gray-400 font-semibold mt-1.5 leading-relaxed">{subtext}</p>
+        )}
         
         {/* Trend Indicator (Optional) */}
         {trend && (

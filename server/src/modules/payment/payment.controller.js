@@ -117,27 +117,44 @@ const processPaymentSuccess = async (payment, transactionDetails) => {
     // => Webhook và Return URL đến cùng lúc, thread kia đã xử lý xong rồi. Tránh Race Condition.
     if (!updatedPayment) return true;
 
-    // Get plain string IDs for courses
-    const paidCourseIds = payment.courses.map(c => c._id ? c._id.toString() : c.toString());
+    // Phân biệt giao dịch mua khóa học thông thường vs giao dịch gia hạn
+    if (payment.paymentType === 'extension') {
+        const metadata = payment.extensionMetadata;
+        if (metadata && metadata.enrollmentId) {
+            // Cập nhật endedAt và extensionCount cho Enrollment
+            await enrollmentService.processExtensionSuccess(metadata.enrollmentId, metadata.extensionWeeks);
 
-    // 2. Enroll Courses
-    await enrollmentService.enrollStudent(payment.student, paidCourseIds);
+            // Gửi thông báo gia hạn thành công
+            await notificationService.createNotification({
+                recipient: payment.student,
+                type: "extension_success",
+                title: "Gia hạn khóa học thành công",
+                message: `Gia hạn khóa học thành công thêm ${metadata.extensionWeeks} tuần. Chúc bạn học tập tốt!`
+            }).catch(err => console.error("Lỗi gửi thông báo gia hạn:", err));
+        }
+    } else {
+        // Get plain string IDs for courses
+        const paidCourseIds = payment.courses.map(c => c._id ? c._id.toString() : c.toString());
 
-    // 3. Update Coupon Usage
-    if (payment.couponId) {
-        await promotionService.commitPromotion(payment.couponId, payment.student).catch(err => console.error("Commit promotion error:", err));
+        // 2. Enroll Courses
+        await enrollmentService.enrollStudent(payment.student, paidCourseIds);
+
+        // 3. Update Coupon Usage
+        if (payment.couponId) {
+            await promotionService.commitPromotion(payment.couponId, payment.student).catch(err => console.error("Commit promotion error:", err));
+        }
+
+        // 4. Clear Cart
+        await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
+        
+        // 5. Send Notification
+        await notificationService.createNotification({
+            recipient: payment.student,
+            type: "purchase_success",
+            title: "Thanh toán thành công",
+            message: "Cảm ơn bạn đã mua khóa học. Chúc bạn có những giờ học tập hiệu quả!"
+        }).catch(err => console.error("Lỗi gửi thông báo mua hàng:", err));
     }
-
-    // 4. Clear Cart
-    await cartService.removeCoursesFromCart(payment.student, paidCourseIds);
-    
-    // 5. Send Notification
-    await notificationService.createNotification({
-        recipient: payment.student,
-        type: "purchase_success",
-        title: "Thanh toán thành công",
-        message: "Cảm ơn bạn đã mua khóa học. Chúc bạn có những giờ học tập hiệu quả!"
-    }).catch(err => console.error("Lỗi gửi thông báo mua hàng:", err));
 
     return true;
 };

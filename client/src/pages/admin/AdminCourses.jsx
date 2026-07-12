@@ -568,8 +568,13 @@ const CourseRow = ({ course, index, onAction }) => {
             </td>
 
             {/* Gross Revenue */}
-            <td className="px-4 py-3 text-right whitespace-nowrap text-gray-800 font-semibold">
-                {gross > 0 ? formatVND(gross) : '—'}
+            <td className="px-4 py-3 text-right whitespace-nowrap">
+                <div className="text-gray-800 font-semibold">{gross > 0 ? formatVND(gross) : '—'}</div>
+                {gross > 0 && (
+                    <div className="text-[10px] text-gray-450 font-medium mt-0.5">
+                        Mua: {formatVND(course.purchaseGross)} | Hạn: {formatVND(course.extensionGross)}
+                    </div>
+                )}
             </td>
 
             {/* VAT */}
@@ -585,6 +590,11 @@ const CourseRow = ({ course, index, onAction }) => {
                         {net > 0 ? formatVND(net) : '—'}
                     </span>
                 </div>
+                {net > 0 && (
+                    <div className="text-[10px] text-emerald-600/75 font-semibold mt-0.5">
+                        Mua: {formatVND(course.purchaseAdminRevenue)} | Hạn: {formatVND(course.extensionAdminRevenue)}
+                    </div>
+                )}
             </td>
 
             {/* Status */}

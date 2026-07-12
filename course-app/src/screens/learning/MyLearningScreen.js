@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchMyEnrollments } from '../../features/enrollment/enrollmentSlice';
 import ProgressBar from '../../components/common/ProgressBar';
+import { getRemainingTimeLabel } from '../../utils/enrollmentUtils';
 import CourseFilter from '../../components/common/CourseFilter';
 import { getAllCategoriesSimple } from '../../features/categories/categorySlice'; // Thêm dòng này
 import axiosClient from '../../api/axiosClient';
@@ -175,6 +176,7 @@ const MyLearningScreen = ({ navigation }) => {
 
             const isActivated = item.isActivated;
             const isExpired = item.endedAt && new Date(item.endedAt) < new Date();
+            const remainingTime = isActivated && !isExpired ? getRemainingTimeLabel(item.endedAt) : null;
 
             return (
               <TouchableOpacity
@@ -211,7 +213,21 @@ const MyLearningScreen = ({ navigation }) => {
                     ) : !isActivated ? (
                       <Text className="text-xs font-semibold text-amber-500">Chưa kích hoạt - Nhấp để kích hoạt</Text>
                     ) : (
-                      <ProgressBar progress={displayProgress} showText={true} />
+                      <>
+                        <ProgressBar progress={displayProgress} showText={true} />
+                        {remainingTime && (
+                          <Text 
+                            style={{ 
+                              fontSize: 10, 
+                              fontWeight: '600', 
+                              color: remainingTime.urgent ? '#e11d48' : '#7c3aed', 
+                              marginTop: 4 
+                            }}
+                          >
+                             {remainingTime.label}
+                          </Text>
+                        )}
+                      </>
                     )}
                   </View>
                 </View>

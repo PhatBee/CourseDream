@@ -31,9 +31,17 @@ const AdminDashboard = () => {
   const totalVAT = revenueData?.totalVAT || 0;
   const totalPlatformNet = revenueData?.totalPlatformNet || 0;
 
-  // Dữ liệu giả lập cho active students (Bạn cần API backend trả về số này thực tế)
+  // Dữ liệu giả lập cho active students
   const totalStudents = counts.users?.students || 0;
   const activeStudents = Math.round(totalStudents * 0.65); // Ví dụ: 65% đã mua khóa học
+
+  const formatCompactVND = (val) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0
+    }).format(val);
+  };
 
   const statsCards = [
     { title: 'Tổng học viên', value: totalStudents, icon: Users, color: 'bg-blue-500' },
@@ -43,19 +51,22 @@ const AdminDashboard = () => {
       title: 'Tổng doanh thu (Gross)',
       value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalRevenue),
       icon: DollarSign,
-      color: 'bg-rose-500'
+      color: 'bg-rose-500',
+      subtext: `Mua: ${formatCompactVND(revenueData?.totalPurchaseGross || 0)} | Gia hạn: ${formatCompactVND(revenueData?.totalExtensionGross || 0)}`
     },
     {
       title: 'Thuế VAT thu hộ (10%)',
       value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalVAT),
       icon: DollarSign,
-      color: 'bg-amber-500'
+      color: 'bg-amber-500',
+      subtext: `Mua: ${formatCompactVND(revenueData?.totalPurchaseVAT || 0)} | Gia hạn: ${formatCompactVND(revenueData?.totalExtensionVAT || 0)}`
     },
     {
       title: 'Doanh thu thuần nền tảng',
       value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPlatformNet),
       icon: DollarSign,
-      color: 'bg-emerald-500'
+      color: 'bg-emerald-500',
+      subtext: `Mua: ${formatCompactVND(revenueData?.totalPurchasePlatformNet || 0)} | Gia hạn: ${formatCompactVND(revenueData?.totalExtensionPlatformNet || 0)}`
     },
   ];
 

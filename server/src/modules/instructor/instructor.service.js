@@ -141,6 +141,7 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     {
       $project: {
         payDate: { $ifNull: ['$payDate', '$createdAt'] },
+        paymentType: 1,
         instructorShare: {
           $convert: {
             input: { $ifNull: ['$items.instructorShare', 0] },
@@ -157,11 +158,45 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         // Dữ liệu toàn thời gian
         allTimeRevenue: { $sum: '$instructorShare' },
         allTimeEnrollments: { $sum: 1 },
+        allTimePurchaseRevenue: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$instructorShare"] }
+        },
+        allTimeExtensionRevenue: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$instructorShare", 0] }
+        },
         // Dữ liệu chu kỳ hiện tại
         currentRevenue: {
           $sum: {
             $cond: [
               { $gte: ['$payDate', kpiGrowthCurrentStart] },
+              '$instructorShare',
+              0
+            ]
+          }
+        },
+        currentPurchaseRevenue: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $gte: ['$payDate', kpiGrowthCurrentStart] },
+                  { $ne: ["$paymentType", "extension"] }
+                ]
+              },
+              '$instructorShare',
+              0
+            ]
+          }
+        },
+        currentExtensionRevenue: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $gte: ['$payDate', kpiGrowthCurrentStart] },
+                  { $eq: ["$paymentType", "extension"] }
+                ]
+              },
               '$instructorShare',
               0
             ]
@@ -175,6 +210,36 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
                 $and: [
                   { $gte: ['$payDate', kpiGrowthStart] },
                   { $lt: ['$payDate', kpiGrowthPreviousEnd] }
+                ]
+              },
+              '$instructorShare',
+              0
+            ]
+          }
+        },
+        previousPurchaseRevenue: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $gte: ['$payDate', kpiGrowthStart] },
+                  { $lt: ['$payDate', kpiGrowthPreviousEnd] },
+                  { $ne: ["$paymentType", "extension"] }
+                ]
+              },
+              '$instructorShare',
+              0
+            ]
+          }
+        },
+        previousExtensionRevenue: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $gte: ['$payDate', kpiGrowthStart] },
+                  { $lt: ['$payDate', kpiGrowthPreviousEnd] },
+                  { $eq: ["$paymentType", "extension"] }
                 ]
               },
               '$instructorShare',
@@ -212,8 +277,14 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
   const kpi = kpiStats[0] || {
     allTimeRevenue: 0,
     allTimeEnrollments: 0,
+    allTimePurchaseRevenue: 0,
+    allTimeExtensionRevenue: 0,
     currentRevenue: 0,
+    currentPurchaseRevenue: 0,
+    currentExtensionRevenue: 0,
     previousRevenue: 0,
+    previousPurchaseRevenue: 0,
+    previousExtensionRevenue: 0,
     currentEnrollments: 0,
     previousEnrollments: 0
   };
@@ -221,6 +292,8 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
   // Xác định số liệu chính hiển thị trên card dựa vào timeRange
   const finalRevenue = timeRange === 'all' ? kpi.allTimeRevenue : kpi.currentRevenue;
   const finalEnrollments = timeRange === 'all' ? kpi.allTimeEnrollments : kpi.currentEnrollments;
+  const finalPurchaseRevenue = timeRange === 'all' ? kpi.allTimePurchaseRevenue : kpi.currentPurchaseRevenue;
+  const finalExtensionRevenue = timeRange === 'all' ? kpi.allTimeExtensionRevenue : kpi.currentExtensionRevenue;
 
   // Tính tỷ lệ tăng trưởng doanh thu và ghi danh
   const revGrowth = kpi.previousRevenue > 0
@@ -279,6 +352,7 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
     {
       $project: {
         payDate: { $ifNull: ['$payDate', '$createdAt'] },
+        paymentType: 1,
         instructorShare: {
           $convert: {
             input: { $ifNull: ['$items.instructorShare', 0] },
@@ -299,7 +373,19 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
           }
         },
         revenue: { $sum: '$instructorShare' },
-        enrollments: { $sum: 1 }
+        purchaseRevenue: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, "$instructorShare"] }
+        },
+        extensionRevenue: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, "$instructorShare", 0] }
+        },
+        enrollments: { $sum: 1 },
+        purchaseEnrollments: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 0, 1] }
+        },
+        extensionEnrollments: {
+          $sum: { $cond: [{ $eq: ["$paymentType", "extension"] }, 1, 0] }
+        }
       }
     },
     {
@@ -324,7 +410,11 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
       chartData.push({
         date: `${date}/${month}`, // hiển thị dạng DD/MM cho đẹp
         revenue: existing ? existing.revenue : 0,
-        enrollments: existing ? existing.enrollments : 0
+        purchaseRevenue: existing ? existing.purchaseRevenue : 0,
+        extensionRevenue: existing ? existing.extensionRevenue : 0,
+        enrollments: existing ? existing.enrollments : 0,
+        purchaseEnrollments: existing ? existing.purchaseEnrollments : 0,
+        extensionEnrollments: existing ? existing.extensionEnrollments : 0
       });
     }
   } else {
@@ -339,7 +429,11 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
       chartData.push({
         date: `${month}/${year}`, // hiển thị dạng MM/YYYY
         revenue: existing ? existing.revenue : 0,
-        enrollments: existing ? existing.enrollments : 0
+        purchaseRevenue: existing ? existing.purchaseRevenue : 0,
+        extensionRevenue: existing ? existing.extensionRevenue : 0,
+        enrollments: existing ? existing.enrollments : 0,
+        purchaseEnrollments: existing ? existing.purchaseEnrollments : 0,
+        extensionEnrollments: existing ? existing.extensionEnrollments : 0
       });
     }
   }
@@ -373,6 +467,7 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
           {
             $project: {
               payDate: { $ifNull: ['$payDate', '$createdAt'] },
+              paymentType: 1,
               instructorShare: { $ifNull: ['$items.instructorShare', 0] }
             }
           }
@@ -442,7 +537,67 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
         completedStudentsCount: 1,
         avgCompletionPercentage: 1,
         revenue: { $sum: '$paidItems.instructorShare' },
-        periodRevenue: { $sum: '$periodEnrollments.instructorShare' }
+        periodRevenue: { $sum: '$periodEnrollments.instructorShare' },
+        purchaseRevenue: {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: '$paidItems',
+                  as: 'pi',
+                  cond: { $ne: ['$$pi.paymentType', 'extension'] }
+                }
+              },
+              as: 'f',
+              in: '$$f.instructorShare'
+            }
+          }
+        },
+        extensionRevenue: {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: '$paidItems',
+                  as: 'pi',
+                  cond: { $eq: ['$$pi.paymentType', 'extension'] }
+                }
+              },
+              as: 'f',
+              in: '$$f.instructorShare'
+            }
+          }
+        },
+        periodPurchaseRevenue: {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: '$periodEnrollments',
+                  as: 'pe',
+                  cond: { $ne: ['$$pe.paymentType', 'extension'] }
+                }
+              },
+              as: 'f',
+              in: '$$f.instructorShare'
+            }
+          }
+        },
+        periodExtensionRevenue: {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: '$periodEnrollments',
+                  as: 'pe',
+                  cond: { $eq: ['$$pe.paymentType', 'extension'] }
+                }
+              },
+              as: 'f',
+              in: '$$f.instructorShare'
+            }
+          }
+        }
       }
     },
     {
@@ -471,13 +626,21 @@ export const getInstructorDashboardStats = async (instructorId, timeRange = '30d
       totalStudents,
       rating: averageRating,
       revenue: finalRevenue,
+      purchaseRevenue: finalPurchaseRevenue,
+      extensionRevenue: finalExtensionRevenue,
       enrollments: finalEnrollments,
       conversionRate: currentConversionRate,
       growth: {
         revenue: revGrowth,
         enrollments: enrollGrowth,
         conversion: conversionGrowth
-      }
+      },
+      allTimeRevenue: kpi.allTimeRevenue,
+      allTimePurchaseRevenue: kpi.allTimePurchaseRevenue,
+      allTimeExtensionRevenue: kpi.allTimeExtensionRevenue,
+      currentRevenue: kpi.currentRevenue,
+      currentPurchaseRevenue: kpi.currentPurchaseRevenue,
+      currentExtensionRevenue: kpi.currentExtensionRevenue
     },
     recentCourses,
     chartData,

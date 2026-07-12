@@ -70,6 +70,10 @@ export const fetchDashboardStats = createAsyncThunk(
 );
 
 // 2. Thunk: Lấy biểu đồ doanh thu
+// Cấu trúc dữ liệu trả về mới gồm:
+// - chartData: Mảng chứa label, value (Gross), net, vat, platformNet, purchaseGross, extensionGross, purchaseNet, extensionNet...
+// - totalRevenue (Gross), totalNet, totalVAT, totalPlatformNet
+// - Phân loại lũy kế: totalPurchaseGross, totalExtensionGross, totalPurchaseNet, totalExtensionNet...
 export const fetchRevenueAnalytics = createAsyncThunk(
     'admin/fetchRevenueAnalytics',
     async (type, thunkAPI) => {
