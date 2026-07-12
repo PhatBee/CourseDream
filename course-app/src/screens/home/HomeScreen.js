@@ -91,7 +91,7 @@ const HomeScreen = ({ navigation }) => {
         )}
 
         {/* Categories */}
-        <View className="pl-5">
+        <View>
           <CategoryList categories={categories} navigation={navigation} />
         </View>
 

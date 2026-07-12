@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
 
 const CategoryList = ({ categories, navigation }) => {
   const handleCategoryPress = (item) => {
@@ -19,23 +20,32 @@ const CategoryList = ({ categories, navigation }) => {
       });
     }
   };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity className="items-center mr-5" onPress={() => handleCategoryPress(item)}>
-      <View className="w-16 h-16 bg-white rounded-full items-center justify-center border border-gray-100 shadow-sm mb-2">
-        {/* Nếu có icon URL thì dùng Image, tạm thời dùng Text emoji */}
-        <Text className="text-2xl">{`${item.icon || '💻'}`}</Text>
+    <TouchableOpacity 
+      activeOpacity={0.8}
+      className="items-center mr-4" 
+      onPress={() => handleCategoryPress(item)}
+    >
+      <View className="w-14 h-14 bg-rose-50/50 rounded-2xl items-center justify-center border border-rose-100/40 shadow-sm mb-2">
+        <Text className="text-xl">{`${item.icon || '💻'}`}</Text>
       </View>
-      <Text className="text-xs font-medium text-gray-600">{item.name}</Text>
+      
+      <Text 
+        numberOfLines={1} 
+        className="text-[11px] font-semibold text-gray-700 text-center max-w-[64px]"
+      >
+        {item.name}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <View className="mb-8">
-      <View className="flex-row justify-between items-center mb-4">
-        <Text className="text-lg font-bold text-gray-900">Danh mục</Text>
-        <TouchableOpacity onPress={handleSeeAll}>
-          <Text className="text-rose-500 text-sm font-medium">Xem tất cả</Text>
-        </TouchableOpacity>
+    <View className="mb-8 bg-transparent w-full">
+      <View className="mb-4 pl-5">
+        <Text className="text-lg font-bold text-gray-900">
+          Danh mục
+        </Text>
       </View>
 
       <FlatList
@@ -44,7 +54,10 @@ const CategoryList = ({ categories, navigation }) => {
         keyExtractor={item => item._id}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: 20 }}
+        contentContainerStyle={{
+          paddingLeft: 20,
+          paddingRight: 4,
+        }}
       />
     </View>
   );

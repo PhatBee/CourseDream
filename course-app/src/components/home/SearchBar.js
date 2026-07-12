@@ -12,8 +12,8 @@ const SearchBar = ({ onSearch }) => {
   };
 
   return (
-    <View className="flex-row items-center gap-3 mb-6">
-      <View className="flex-1 flex-row items-center bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+    <View className="flex-row item-center gap-2 mb-6">
+      <View className="flex-1 h-16 flex-row items-center bg-white border border-gray-200 rounded-xl px-4 shadow-sm">
         <Search size={20} color="#9ca3af" />
         <TextInput
           placeholder="Tìm kiếm khóa học..."
@@ -26,7 +26,7 @@ const SearchBar = ({ onSearch }) => {
         />
       </View>
 
-      <TouchableOpacity className="bg-rose-500 p-3 rounded-xl shadow-sm shadow-rose-200" onPress={handleSearch}>
+      <TouchableOpacity className="bg-rose-500 p-5 rounded-xl shadow-sm shadow-rose-200" onPress={handleSearch}>
         <Search size={20} color="white" />
       </TouchableOpacity>
     </View>

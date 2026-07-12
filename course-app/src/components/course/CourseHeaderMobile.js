@@ -222,7 +222,6 @@ const CourseHeaderMobile = ({ course, isEnrolled, reviewCount }) => {
           ) : (
             <View>
               {isExpired ? (
-                /* Thiết kế cấu trúc nút cạnh nhau theo yêu cầu: Hết hạn (2/3) & Gia hạn Rose (1/3) */
                 <View className="flex-row space-x-2 w-full gap-2">
                   <View className="flex-[2] bg-gray-100 py-3.5 rounded-xl items-center justify-center border border-gray-200">
                     <Text className="text-gray-400 font-bold text-sm">Khóa học đã hết hạn</Text>
