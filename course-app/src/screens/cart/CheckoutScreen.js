@@ -422,13 +422,12 @@ const CheckoutScreen = ({ navigation, route }) => {
                                 return (
                                     <View
                                         key={item._id}
-                                        className={`flex-row items-start gap-3 p-3 rounded-lg border ${
-                                            isPromoBg
+                                        className={`flex-row items-start gap-3 p-3 rounded-lg border ${isPromoBg
                                                 ? (activeDiscountType === 'coupon'
                                                     ? 'bg-green-50 border-green-200'
                                                     : 'bg-rose-50 border-rose-200')
                                                 : 'bg-gray-50 border-transparent'
-                                        }`}
+                                            }`}
                                     >
                                         <Image
                                             source={{
@@ -566,11 +565,10 @@ const CheckoutScreen = ({ navigation, route }) => {
                                             key={promo._id}
                                             onPress={() => handleSelectPromotion(promo)}
                                             disabled={previewLoading}
-                                            className={`px-4 py-2 rounded-xl border-2 mb-2 ${
-                                                isSelected
+                                            className={`px-4 py-2 rounded-xl border-2 mb-2 ${isSelected
                                                     ? 'bg-rose-600 border-rose-600'
                                                     : 'bg-white border-gray-200'
-                                            }`}
+                                                }`}
                                         >
                                             <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-700'}`}>
                                                 {promo.code}{' '}
@@ -691,11 +689,11 @@ const CheckoutScreen = ({ navigation, route }) => {
                     )}
 
                     {/* Info */}
-                    <View className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-2 mb-2">
+                    {/* <View className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-2 mb-2">
                         <Text className="text-sm text-amber-800">
                             💡 <Text className="font-bold">Lưu ý:</Text> Sau khi thanh toán thành công, bạn sẽ có quyền truy cập vĩnh viễn vào các khóa học đã mua.
                         </Text>
-                    </View>
+                    </View> */}
                 </View>
             </ScrollView>
         </SafeAreaView>

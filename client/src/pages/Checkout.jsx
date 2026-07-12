@@ -103,12 +103,12 @@ export default function Checkout() {
   const couponDiscount = preview?.discountAmount || 0;
 
   // Tự động chọn ưu đãi cao hơn hoặc theo forceCoupon
-  const appliedDiscount = forceCoupon 
-    ? couponDiscount 
+  const appliedDiscount = forceCoupon
+    ? couponDiscount
     : Math.max(tieredDiscount, couponDiscount);
 
-  const activeDiscountType = forceCoupon 
-    ? (couponDiscount > 0 ? 'coupon' : 'none') 
+  const activeDiscountType = forceCoupon
+    ? (couponDiscount > 0 ? 'coupon' : 'none')
     : (tieredDiscount >= couponDiscount && tieredDiscount > 0 ? 'tiered' : (couponDiscount > 0 ? 'coupon' : 'none'));
 
   // Số tiền sau khi áp dụng mã giảm giá
@@ -315,32 +315,32 @@ export default function Checkout() {
       let maxDiscount = 0;
 
       available.forEach(promo => {
-         let estimatedDiscount = 0;
-         if (promo.discountType === 'percent') {
-            estimatedDiscount = (subtotalDiscount * promo.discountValue) / 100;
-            if (promo.maxDiscount && estimatedDiscount > promo.maxDiscount) {
-                estimatedDiscount = promo.maxDiscount;
-            }
-         } else {
-            estimatedDiscount = promo.discountValue;
-         }
-         
-         if (estimatedDiscount > maxDiscount) {
-            maxDiscount = estimatedDiscount;
-            bestPromo = promo;
-         }
+        let estimatedDiscount = 0;
+        if (promo.discountType === 'percent') {
+          estimatedDiscount = (subtotalDiscount * promo.discountValue) / 100;
+          if (promo.maxDiscount && estimatedDiscount > promo.maxDiscount) {
+            estimatedDiscount = promo.maxDiscount;
+          }
+        } else {
+          estimatedDiscount = promo.discountValue;
+        }
+
+        if (estimatedDiscount > maxDiscount) {
+          maxDiscount = estimatedDiscount;
+          bestPromo = promo;
+        }
       });
 
       const currentTieredDiscount = tieredPreview?.totalTieredDiscount || 0;
-      
+
       // Chọn mã nếu nó cao hơn Tiered Discount HOẶC không có Tiered Discount
       if (bestPromo && maxDiscount > currentTieredDiscount) {
-          // Chỉ auto select nếu chưa có mã nào được chọn
-          if (!selectedPromotion) {
-             handleSelectPromotion(bestPromo);
-          }
+        // Chỉ auto select nếu chưa có mã nào được chọn
+        if (!selectedPromotion) {
+          handleSelectPromotion(bestPromo);
+        }
       }
-      
+
       setHasAutoSelected(true);
     }
   }, [available, availableLoading, tieredLoading, hasAutoSelected, subtotalDiscount, tieredPreview, selectedPromotion]);
@@ -570,13 +570,13 @@ export default function Checkout() {
                   if (!course) return null;
 
                   const basePriceDiscount = item.priceDiscount ?? item.price;
-                  
+
                   // Tìm discount từng phần của item
                   const itemCouponPromo = preview?.itemDiscounts?.find(d => d.courseId === course._id);
-                  const itemTieredPromo = tieredPreview?.items?.find(d => 
+                  const itemTieredPromo = tieredPreview?.items?.find(d =>
                     d.course._id === course._id || d.course === course._id
                   );
-                  
+
                   let currentPrice = basePriceDiscount;
                   let discountBadge = null;
                   let isPromoBg = false;
@@ -675,7 +675,7 @@ export default function Checkout() {
 
               {/* Promo Code Section */}
               <div className="my-6 pt-4 border-t">
-                
+
                 {/* Banner Tiered Discount */}
                 {tieredPreview && tieredPreview.totalTieredDiscount > 0 && (
                   <div className="mb-4 p-4 bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 rounded-xl shadow-sm">
@@ -706,7 +706,7 @@ export default function Checkout() {
                         <p className="font-medium mb-1 text-justify">Đang dùng mã giảm giá vì có ưu đãi tốt hơn!</p>
                         <p className="text-justify">Mã khuyến mãi giảm nhiều hơn chiết khấu thân thiết, hệ thống đã tự động chọn mức giảm tốt nhất cho bạn.</p>
                         {!forceCoupon && (
-                          <button 
+                          <button
                             onClick={() => dispatch(setForceCoupon(false))} // Already false, but just in case
                             className="text-blue-600 font-semibold underline mt-1"
                           >
@@ -720,14 +720,14 @@ export default function Checkout() {
                         <p className="text-justify">Chiết khấu mua nhiều khóa học của bạn đang có ưu đãi tốt hơn mã giảm giá này.</p>
                         <div className="flex gap-4 mt-2">
                           {!forceCoupon ? (
-                            <button 
+                            <button
                               onClick={() => dispatch(setForceCoupon(true))}
                               className="text-blue-600 font-semibold underline"
                             >
                               Bỏ qua chiết khấu thân thiết (Dùng mã coupon thay thế)
                             </button>
                           ) : (
-                            <button 
+                            <button
                               onClick={() => dispatch(setForceCoupon(false))}
                               className="text-blue-600 font-semibold underline"
                             >
@@ -751,8 +751,8 @@ export default function Checkout() {
                     <button
                       key={promo._id}
                       className={`px-4 py-2 rounded-xl transition-all duration-200 border-2 font-medium shadow-sm hover:shadow-md text-sm ${selectedPromotion === promo.code
-                          ? "bg-gradient-to-r from-rose-600 to-rose-700 text-white border-transparent hover:from-rose-700 hover:to-rose-800 shadow-rose-200"
-                          : "bg-white text-gray-700 border-gray-200 hover:border-rose-300 hover:bg-rose-50"
+                        ? "bg-gradient-to-r from-rose-600 to-rose-700 text-white border-transparent hover:from-rose-700 hover:to-rose-800 shadow-rose-200"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-rose-300 hover:bg-rose-50"
                         }`}
                       onClick={() => handleSelectPromotion(promo)}
                       type="button"
@@ -771,13 +771,13 @@ export default function Checkout() {
                 )}
               </div>
 
-              {/* Info */}
+              {/* Info
               <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-800">
                   💡 <strong>Lưu ý:</strong> Sau khi thanh toán thành công, bạn
                   sẽ có quyền truy cập vĩnh viễn vào các khóa học đã mua.
                 </p>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

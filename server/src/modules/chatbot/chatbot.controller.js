@@ -11,14 +11,15 @@ export const askChatbot = async (req, res, next) => {
 
     // 1. Generate embedding for the user message
     const messageVector = await generateCourseEmbedding(message);
-    
+
     // 2. Perform Vector Search (assuming Index is created)
     let topCourses = [];
     try {
       const searchResults = await Course.aggregate([
         {
           $vectorSearch: {
-            index: "vector_index",
+            // index: "vector_index",
+            index: "vector_index_dream_backup",
             path: "embedding",
             queryVector: messageVector,
             numCandidates: 100,
@@ -35,7 +36,7 @@ export const askChatbot = async (req, res, next) => {
           }
         }
       ]);
-      
+
       // Ngưỡng điểm của Atlas (DotProduct/Cosine) thường cao hơn, lọc > 0.6
       topCourses = searchResults.filter(c => c.score > 0.6).slice(0, 3);
     } catch (err) {
@@ -46,13 +47,13 @@ export const askChatbot = async (req, res, next) => {
       // Fallback
       const allCourses = await Course.find({ status: 'published' }).select('+embedding title shortDescription price level slug thumbnail').lean();
       const scoredCourses = allCourses.map(course => {
-        const score = course.embedding && course.embedding.length > 0 
+        const score = course.embedding && course.embedding.length > 0
           ? calculateCosineSimilarity(messageVector, course.embedding)
           : 0;
         return { ...course, score };
       });
       scoredCourses.sort((a, b) => b.score - a.score);
-      topCourses = scoredCourses.slice(0, 3).filter(c => c.score > 0.2); 
+      topCourses = scoredCourses.slice(0, 3).filter(c => c.score > 0.2);
     }
 
     // 3. Thiết lập Header cho SSE (Server-Sent Events)
@@ -72,7 +73,7 @@ export const askChatbot = async (req, res, next) => {
     // 4. Generate AI response stream
     try {
       const stream = await generateChatbotStream(message, topCourses, history);
-      
+
       for await (const chunk of stream) {
         const chunkText = chunk.text();
         res.write(`data: ${JSON.stringify({ type: 'text', text: chunkText })}\n\n`);
